@@ -1,0 +1,88 @@
+@import "tailwindcss";
+@plugin "daisyui";
+
+.plus-jakarta-sans {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+}
+
+:root {
+  --background: #f6f6f6;
+  --white: #ffffff;
+  --primary: #f17c04;
+  --primary-50: #f8bd81;
+  --primary-20: #fce5cd;
+  --black: #0d0701;
+  --black-80: #3e3934;
+  --black-50: #787571;
+  --black-20: #cfcdcc;
+  --green: #008000;
+  --lightGreen: #00800029;
+  --red: #ff0000;
+  --lightRed: #ff000029;
+  --purple: #7f41df;
+  --lightPurple: #7f41df29;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --background: #f6f6f6;
+    --white: #ffffff;
+    --primary: #f17c04;
+    --primary-50: #f8bd81;
+    --primary-20: #fce5cd;
+    --black: #0d0701;
+    --black-80: #3e3934;
+    --black-50: #787571;
+    --black-20: #cfcdcc;
+    --green: #008000;
+    --lightGreen: #00800029;
+    --red: #ff0000;
+    --lightRed: #ff000029;
+    --purple: #7f41df;
+    --lightPurple: #7f41df29;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-white: var(--white);
+  --color-primary: var(--primary);
+  --color-primary-50: var(--primary-50);
+  --color-primary-20: var(--primary-20);
+  --color-black: var(--black);
+  --color-black-80: var(--black-80);
+  --color-black-50: var(--black-50);
+  --color-black-20: var(--black-20);
+  --color-green: var(--green);
+  --color-lightGreen: var(--lightGreen);
+  --color-red: var(--red);
+  --color-lightRed: var(--lightRed);
+  --color-purple: var(--purple);
+  --color-lightPurple: var(--lightPurple);
+}
+
+html {
+  margin: 0;
+  padding: 0;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  overflow-y: scroll;
+  background-color: var(--background);
+  color: var(--black);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--black);
+}
+
+.app {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  /* overflow: hidden; */
+}
