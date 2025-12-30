@@ -2,12 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useMutation } from "../../api/customApi.js";
 import { apiendpoint } from "../../api/endpoint.js";
 import { toast } from "react-toastify";
-import MDBox from "../../components/MDBox/MDBox.js";
-import MDButton from "../../components/MDButton/MDButton.js";
-import DashboardLayout from "../LayoutContainers/DashboardLayout/index.jsx";
-import DashboardNavbar from "../Navbars/DashboardNavbar/index.jsx";
-import MDTypography from "../../components/MDTypography/index.js";
-import { Grid, Icon, IconButton } from "@mui/material";
+import { Grid, Icon, IconButton, Box, Typography, Button } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import MDInput from "../../components/MDInput/index.jsx";
 import axios from "axios";
@@ -193,13 +188,13 @@ const BlogEditor = () => {
   return (
     <>
       <DashboardNavbar />
-      <MDBox pt={6} pb={3}>
+      <Box pt={6} pb={3}>
         <Grid container spacing={6}>
           <Grid item xs={12}></Grid>
         </Grid>
         <div>
           {/* Header */}
-          <MDBox
+          <Box
             display="grid"
             variant="gradient"
             bgColor="warning"
@@ -211,7 +206,7 @@ const BlogEditor = () => {
             mb={1}
             textAlign="center"
           >
-            <MDTypography
+            <Typography
               gridRow="1"
               gridColumn="3/7"
               variant="h5"
@@ -220,29 +215,29 @@ const BlogEditor = () => {
               mt={1}
             >
               Blog Post
-            </MDTypography>
-            <MDTypography
+            </Typography>
+            <Typography
               gridRow="2"
               gridColumn="3/7"
               variant="button"
               color="white"
             >
               Blog Post Editor
-            </MDTypography>
-            <MDTypography gridColumn="8" gridRow="1/2" variant="button">
+            </Typography>
+            <Typography gridColumn="8" gridRow="1/2" variant="button">
               <IconButton size="medium" color="white" onClick={handleClose}>
                 <Icon fontSize="large" fontWeight="900">
                   close
                 </Icon>
               </IconButton>
-            </MDTypography>
-          </MDBox>
+            </Typography>
+          </Box>
 
           {/* Form */}
-          <MDBox variant="gradient" mx={2} mt={3} mb={1}>
+          <Box variant="gradient" mx={2} mt={3} mb={1}>
             {/* Meta tag data */}
-            <MDBox display="grid" mb={2}>
-              <MDBox my={2} gridRow="1" gridColumn="1/4">
+            <Box display="grid" mb={2}>
+              <Box my={2} gridRow="1" gridColumn="1/4">
                 <MDInput
                   type="text"
                   label="Meta Title"
@@ -251,8 +246,8 @@ const BlogEditor = () => {
                   onChange={handleInputChange("metaTitle")}
                   fullWidth
                 />
-              </MDBox>
-              <MDBox my={2} gridRow="1" gridColumn="5/10">
+              </Box>
+              <Box my={2} gridRow="1" gridColumn="5/10">
                 <MDInput
                   type="text"
                   label="Meta Description"
@@ -262,8 +257,8 @@ const BlogEditor = () => {
                   multiline
                   fullWidth
                 />
-              </MDBox>
-              <MDBox my={2} gridRow="1" gridColumn="11/12">
+              </Box>
+              <Box my={2} gridRow="1" gridColumn="11/12">
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                   <DatePicker
                     label="Publish Date"
@@ -277,11 +272,11 @@ const BlogEditor = () => {
                     onChange={handleDateChange}
                   />
                 </LocalizationProvider>
-              </MDBox>
-            </MDBox>
+              </Box>
+            </Box>
             {/* Blog Title and Description */}
-            <MDBox display="grid" mb={2}>
-              <MDBox my={2} gridRow="1" gridColumn="1/4">
+            <Box display="grid" mb={2}>
+              <Box my={2} gridRow="1" gridColumn="1/4">
                 <MDInput
                   type="text"
                   label="Blog Title"
@@ -291,8 +286,8 @@ const BlogEditor = () => {
                   multiline
                   fullWidth
                 />
-              </MDBox>
-              <MDBox my={2} gridRow="1" gridColumn="5/12">
+              </Box>
+              <Box my={2} gridRow="1" gridColumn="5/12">
                 <MDInput
                   type="text"
                   label="Short Description:"
@@ -302,20 +297,20 @@ const BlogEditor = () => {
                   multiline
                   fullWidth
                 />
-              </MDBox>
-            </MDBox>
+              </Box>
+            </Box>
             {/* Banner Upload */}
-            <MDBox color="gray" display="flex" gap={6}>
-              <MDTypography pb={2}>Upload Blog Banner:</MDTypography>
+            <Box color="gray" display="flex" gap={6}>
+              <Typography pb={2}>Upload Blog Banner:</Typography>
               <MDInput
                 type="file"
                 variant="standard"
                 accept="image/*"
                 onChange={handleImageChange}
               />
-            </MDBox>
+            </Box>
             {imagePath && (
-              <MDBox
+              <Box
                 mt={2}
                 display="flex"
                 justifyContent="center"
@@ -328,12 +323,12 @@ const BlogEditor = () => {
                   alt="image preview"
                   className="max-h-full max-w-full rounded-lg"
                 />
-              </MDBox>
+              </Box>
             )}
             <hr />
             {/* Blog Content Editor */}
-            <MDBox color="gray">
-              <MDTypography py={2}>Text Editor:</MDTypography>
+            <Box color="gray">
+              <Typography py={2}>Text Editor:</Typography>
               <Editor
                 apiKey="hu5s7mnpfr8f0jgu9z04b77lk7qum6i84m2v8pmww6znrvlx"
                 onInit={(_evt, editor) => (editorRef.current = editor)}
@@ -371,8 +366,8 @@ const BlogEditor = () => {
                   images_upload_url: apiendpoint.UPLOAD_IMAGE,
                 }}
               />
-              <MDBox mt={2} display="flex" gap={3}>
-                <MDButton
+              <Box mt={2} display="flex" gap={3}>
+                <Button
                   onClick={handleSavePost}
                   variant="gradient"
                   color={isSubmitting ? "secondary" : "warning"}
@@ -380,12 +375,12 @@ const BlogEditor = () => {
                   disabled={isSubmitting}
                 >
                   {id ? "Update Post" : "Save Post"}
-                </MDButton>
-              </MDBox>
-            </MDBox>
-          </MDBox>
+                </Button>
+              </Box>
+            </Box>
+          </Box>
         </div>
-      </MDBox>
+      </Box>
     </>
   );
 };

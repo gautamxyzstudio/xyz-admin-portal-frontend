@@ -5,7 +5,7 @@ import MDBox from "../../../../components/MDBox/MDBox";
 import Grid from "@mui/material/Grid";
 import MDTypography from "../../../../components/MDTypography";
 import MDButton from "../../../../components/MDButton/MDButton";
-import DataTable from "../../../../shared/components/datatable/DataTable";
+import DataTable from "../../../../shared/components/dataTable/DataTable.js";
 import EmployeeTableRow from "../../components/employeeTableRow/EmployeeTableRow";
 import EmployeeDesignationRow from "../../components/employeeDesignationRow/EmployeeDesignationRow";
 import EmployeeStatusRow from "../../components/employeestatusRow/EmployeeStatusRow";

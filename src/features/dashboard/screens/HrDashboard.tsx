@@ -6,7 +6,7 @@ import {
   useUpdateAttendanceMutation,
 } from "../dashboardApi";
 import type { IUserAttendance } from "../types";
-import DataTable from "../../../shared/components/datatable/DataTable";
+import DataTable from "../../../shared/components/dataTable/DataTable";
 import type { GridColDef } from "@mui/x-data-grid";
 import EmployeeTableRow from "../../employee/components/employeeTableRow/EmployeeTableRow";
 import {

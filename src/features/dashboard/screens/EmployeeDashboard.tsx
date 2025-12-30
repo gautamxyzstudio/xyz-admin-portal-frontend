@@ -1,19 +1,20 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect } from 'react';
-import MarkAttendance from '../components/markAttendace/MarkAttendance';
-import UpComingHolidays from '../components/upcommingHolidays/UpComingHolidays';
-import LeaveAnalytics from '../components/leaveAnalytics/LeaveAnalytics';
-import { Typography } from '@mui/material';
-import { useDispatch, useSelector } from 'react-redux';
-import { userDetailsInState, userInState } from '../../auth/authSlice';
+import { useEffect } from "react";
+import MarkAttendance from "../components/markAttendace/MarkAttendance";
+import UpComingHolidays from "../components/upcommingHolidays/UpComingHolidays";
+import LeaveAnalytics from "../components/leaveAnalytics/LeaveAnalytics";
+import { Typography } from "@mui/material";
+import { useDispatch, useSelector } from "react-redux";
+import { userDetailsInState, userInState } from "../../auth/authSlice";
 import {
   useCheckInMutation,
   useCheckOutMutation,
   useGetTodayAttendanceQuery,
-} from '../dashboardApi';
-import { dateToTimeString, formatDateToMMDDYYYY } from '../../../utils/utils';
-import { toast } from 'react-toastify';
-import { useLoadingWrapper } from '../../../wrappers/loadingWrapper/LoadingWrapper.context';
+} from "../dashboardApi";
+import { dateToTimeString, formatDateToMMDDYYYY } from "../../../utils/utils";
+import { toast } from "react-toastify";
+import { useLoadingWrapper } from "../../../wrappers/loadingWrapper/LoadingWrapper.context";
 import {
   checkIn,
   checkOut,
@@ -21,32 +22,28 @@ import {
   selectCheckInTime,
   selectCheckOutTime,
   setAttendanceId,
-} from '../dashboardSlice';
-import { useGetUserLeavesQuery } from '../../leaves/leavesApi';
-import { useUserDetailsQuery } from '../../auth/authApi';
+} from "../dashboardSlice";
+import { useGetUserLeavesQuery } from "../../leaves/leavesApi";
+import { useUserDetailsQuery } from "../../auth/authApi";
 
 const EmployeeDashboard = () => {
   const user = useSelector(userDetailsInState);
-  if (!user || user.name === undefined) return null;
   const { setIsLoading } = useLoadingWrapper();
-
   const userBasic = useSelector(userInState);
-  if (!userBasic || userBasic.id === undefined) return null;
   const { data: attendance, isLoading } = useGetTodayAttendanceQuery({
-    id: userBasic.id,
+    id: userBasic?.id ?? 0,
   });
 
   const userDetails = useSelector(userInState);
-  if (!userDetails || userDetails.id === undefined) return null;
+
   useUserDetailsQuery(
-    { id: userDetails.id },
+    { id: userDetails?.id ?? 0 },
     {
       refetchOnMountOrArgChange: true,
       skip: !userDetails?.id,
     }
   );
-  const { data: leaves } = useGetUserLeavesQuery(userDetails?.id?.toString());
-  console.log(leaves, 'leaves');
+
   const [checkInRequest] = useCheckInMutation();
   const [checkOutRequest] = useCheckOutMutation();
   const dispatch = useDispatch();
@@ -71,6 +68,10 @@ const EmployeeDashboard = () => {
   useEffect(() => {
     setIsLoading(isLoading);
   }, [isLoading]);
+  const { data: leaves } = useGetUserLeavesQuery();
+  if (!user || user.name === undefined) return null;
+  if (!userBasic || userBasic.id === undefined) return null;
+  if (!userDetails || userDetails.id === undefined) return null;
 
   const onCheckIn = async (time: Date) => {
     setIsLoading(true);
@@ -79,12 +80,12 @@ const EmployeeDashboard = () => {
       const res = await checkInRequest({
         data: {
           in: checkInTime,
-          out: '',
+          out: "",
           date: formatDateToMMDDYYYY(new Date()),
           user: userBasic.id,
         },
       }).unwrap();
-      console.log(res, 'Ressponse');
+      console.log(res, "Ressponse");
       dispatch(checkIn(checkInTime));
       dispatch(setAttendanceId(res.id));
     } catch (error) {

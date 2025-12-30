@@ -1,13 +1,11 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState, useCallback } from 'react';
-import DashboardLayout from '../../../examples/LayoutContainers/DashboardLayout/index.jsx';
-import MDTypography from '../../../components/MDTypography';
 import {
   useLazyGetAllAttendanceQuery,
   useUpdateAttendanceMutation,
 } from '../../dashboard/dashboardApi';
 import type { IUserAttendance } from '../../dashboard/types';
-import DataTable from '../../../shared/components/datatable/DataTable';
+import DataTable from '../../../shared/components/dataTable/DataTable.js';
 import type { GridColDef } from '@mui/x-data-grid';
 import EmployeeTableRow from '../../employee/components/employeeTableRow/EmployeeTableRow';
 import { getImageUrl } from '../../../utils/utils';
@@ -28,8 +26,8 @@ import {
   Stack,
   Alert,
   InputAdornment,
+  Button,
 } from '@mui/material';
-import MDButton from '../../../components/MDButton/MDButton';
 import { useLoadingWrapper } from '../../../wrappers/loadingWrapper/LoadingWrapper.context.js';
 
 // Custom hook for attendance data management
@@ -315,9 +313,9 @@ const AttendanceAdmin = () => {
       headerName: 'empCode',
       width: 80,
       renderCell: (params) => (
-        <MDTypography variant="caption" color="text" fontWeight="medium">
+        <Typography variant="caption" color="text" fontWeight="medium">
           {params?.row?.user?.user_detial?.empCode}
-        </MDTypography>
+        </Typography>
       ),
     },
     {
@@ -337,9 +335,9 @@ const AttendanceAdmin = () => {
       headerName: 'Date',
       width: 150,
       renderCell: (params) => (
-        <MDTypography variant="caption" color="text" fontWeight="medium">
+        <Typography variant="caption" color="text" fontWeight="medium">
           {params?.row?.Date}
-        </MDTypography>
+        </Typography>
       ),
     },
     {
@@ -347,9 +345,9 @@ const AttendanceAdmin = () => {
       headerName: 'Check In',
       width: 150,
       renderCell: (params) => (
-        <MDTypography variant="caption" color="text" fontWeight="medium">
+        <Typography variant="caption" color="text" fontWeight="medium">
           {convertTo12HourFormat(params?.row?.in) ?? 'In Time Missing'}
-        </MDTypography>
+        </Typography>
       ),
     },
     {
@@ -357,9 +355,9 @@ const AttendanceAdmin = () => {
       headerName: 'Check Out',
       width: 150,
       renderCell: (params) => (
-        <MDTypography variant="caption" color="text" fontWeight="medium">
+        <Typography variant="caption" color="text" fontWeight="medium">
           {convertTo12HourFormat(params?.row?.out) ?? 'Out Time Missing'}
-        </MDTypography>
+        </Typography>
       ),
     },
     {
@@ -369,13 +367,12 @@ const AttendanceAdmin = () => {
       width: 100,
       renderCell: (params) => (
         <div className="flex flex-row gap-x-3">
-          <MDButton
+          <Button
             variant="text"
-            color="orange"
             onClick={() => openModal(params.row)}
           >
             <Icon>update</Icon>&nbsp;Update
-          </MDButton>
+          </Button>
         </div>
       ),
     },
@@ -458,9 +455,9 @@ const AttendanceAdmin = () => {
                 error={!!dateError}
                 disabled={isInitialLoading || isLoading}
               />
-              <MDButton
+              <Button
                 variant="contained"
-                color="orange"
+                
                 onClick={handleFilter}
                 disabled={
                   !startDate ||
@@ -471,23 +468,23 @@ const AttendanceAdmin = () => {
                 }
               >
                 Apply Filter
-              </MDButton>
-              <MDButton
+              </Button>
+              <Button
                 variant="contained"
                 color="info"
                 onClick={handleSearch}
                 disabled={!searchQuery.trim() || isInitialLoading || isLoading}
               >
                 Search
-              </MDButton>
-              <MDButton
+              </Button>
+              <Button
                 variant="outlined"
                 color="warning"
                 onClick={handleClearFilter}
                 disabled={isInitialLoading || isLoading}
               >
                 Clear All
-              </MDButton>
+              </Button>
             </Stack>
           </Box>
 
@@ -560,22 +557,21 @@ const AttendanceAdmin = () => {
                   disabled={isLoading}
                 />
                 <Stack direction="row" spacing={2} justifyContent="flex-end">
-                  <MDButton
+                  <Button
                     variant="contained"
-                    color="orange"
                     onClick={handleUpdateAttendance}
                     disabled={isLoading}
                   >
                     Update
-                  </MDButton>
-                  <MDButton
+                  </Button>
+                  <Button
                     variant="outlined"
                     color="secondary"
                     onClick={closeModal}
                     disabled={isLoading}
                   >
                     Cancel
-                  </MDButton>
+                  </Button>
                 </Stack>
               </Stack>
             </Box>

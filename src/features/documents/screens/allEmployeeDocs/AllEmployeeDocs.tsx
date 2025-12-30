@@ -3,12 +3,9 @@ import { useState } from 'react';
 import OwnDocs from '../ownDocs/OwnDocs';
 import { useSelector } from 'react-redux';
 import { userInState } from '../../../auth/authSlice';
-import MDBox from '../../../../components/MDBox/MDBox';
-import MDButton from '../../../../components/MDButton/MDButton';
-import MDTypography from '../../../../components/MDTypography/index';
 import { employeeListInState } from '../../../employee/employeeSlice';
-import DashboardLayout from '../../../../examples/LayoutContainers/DashboardLayout/index.jsx';
 import { useGetEmployeeListQuery } from '../../../employee/employeeApis';
+import { Box, Typography, Button } from '@mui/material';
 
 // New manager component
 const AllEmployeeDocs = () => {
@@ -30,16 +27,16 @@ const AllEmployeeDocs = () => {
   return (
     <>
       {!selectedEmployee ? (
-        <MDBox>
-          <MDTypography variant="h4" fontWeight="bold" mb={3}>
+        <Box>
+          <Typography variant="h4" fontWeight="bold" mb={3}>
             Select an Employee
-          </MDTypography>
-          <MDBox>
+          </Typography>
+          <Box>
             {employeeList && employeeList.length > 0 && user && user.id ? (
               employeeList
                 .filter((employee) => employee.id !== user.id) // Hide current logged-in employee
                 .map((employee) => (
-                  <MDBox
+                  <Box
                     key={employee.id}
                     display="flex"
                     alignItems="center"
@@ -53,7 +50,7 @@ const AllEmployeeDocs = () => {
                     }}
                     onClick={() => handleEmployeeClick(employee)}
                   >
-                    <MDBox display="flex" alignItems="center">
+                    <Box display="flex" alignItems="center">
                       <img
                         src={
                           employee.image || '/static/images/avatar/default.jpg'
@@ -68,39 +65,39 @@ const AllEmployeeDocs = () => {
                         }}
                       />
                       <div>
-                        <MDTypography variant="h6">
+                        <Typography variant="h6">
                           {employee.name}
-                        </MDTypography>
-                        <MDTypography variant="body2" color="text.secondary">
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
                           {employee.designation} | {employee.email}
-                        </MDTypography>
+                        </Typography>
                       </div>
-                    </MDBox>
-                    <MDButton variant="outlined" color="orange">
+                    </Box>
+                    <Button variant="outlined" >
                       View Documents
-                    </MDButton>
-                  </MDBox>
+                    </Button>
+                  </Box>
                 ))
             ) : (
-              <MDTypography>No employees found.</MDTypography>
+              <Typography>No employees found.</Typography>
             )}
-          </MDBox>
-        </MDBox>
+          </Box>
+        </Box>
       ) : (
-        <MDBox>
-          <MDButton
+        <Box>
+          <Button
             variant="text"
             color="info"
             onClick={() => setSelectedEmployee(null)}
           >
             ← Back to Employee List
-          </MDButton>
+          </Button>
           <OwnDocs
             userId={selectedEmployee.id}
             canDelete
             employeeName={selectedEmployee.name}
           />
-        </MDBox>
+        </Box>
       )}
     </>
   );

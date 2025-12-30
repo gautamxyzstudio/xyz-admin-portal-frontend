@@ -4,10 +4,11 @@ import { forwardRef, createContext, useContext, useMemo } from "react";
 import PropTypes from "prop-types";
 
 // Material Dashboard 2 React components
-import MDBox from "../MDBox/MDBox";
+
 
 // Custom styles for MDPagination
 import MDPaginationItemRoot from "./MDPaginationItemRoot";
+import { Box } from "@mui/material";
 
 // The Pagination main context
 const Context = createContext();
@@ -34,14 +35,14 @@ const MDPagination = forwardRef(
             {children}
           </MDPaginationItemRoot>
         ) : (
-          <MDBox
+          <Box
             display="flex"
             justifyContent="flex-end"
             alignItems="center"
             sx={{ listStyle: "none" }}
           >
             {children}
-          </MDBox>
+          </Box>
         )}
       </Context.Provider>
     );

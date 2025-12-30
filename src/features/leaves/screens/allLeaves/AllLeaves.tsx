@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 
 import MDTypography from "../../../../components/MDTypography";
 import type { ILeave } from "../../leaves.types";
-import DataTable from "../../../../shared/components/datatable/DataTable";
+import DataTable from "../../../../shared/components/dataTable/DataTable.js";
 import type { GridColDef } from "@mui/x-data-grid";
 import DashboardLayout from "../../../../examples/LayoutContainers/DashboardLayout/index.jsx";
 import EmployeeTableRow from "../../../employee/components/employeeTableRow/EmployeeTableRow";
@@ -34,7 +34,7 @@ import {
   MenuItem as MuiMenuItem,
 } from "@mui/material";
 import { toast } from "react-toastify";
-import { useLoadingWrapper } from "../../../../wrappers/loadingWrapper/LoadingWrapper.context";
+import { useLoadingWrapper } from "../../../../wrappers/loadingWrapper/LoadingWrapper.context.js";
 import { useApiOperations } from "../../../../hooks/useApiOperations";
 import { useFilterState } from "../../../../hooks/useFilterState";
 import {

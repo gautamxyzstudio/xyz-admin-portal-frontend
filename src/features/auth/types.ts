@@ -34,7 +34,7 @@ export interface IUserAdvance {
   status: string;
   phoneNumber: string;
   empCode: string;
-  photo: string;
+  photo: string | null;
 }
 
 export interface IUserDetailsResponse {

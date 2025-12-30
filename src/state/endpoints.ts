@@ -39,7 +39,7 @@ export const endpoints = {
 
     return url;
   },
-  getLeavesList: ( 
+  getLeavesList: (
     page?: number,
     pageSize?: number,
     startDate?: string,
@@ -47,9 +47,9 @@ export const endpoints = {
     search?: string,
     leaveType?: string
   ) => {
-    console.log('=-=-=-=-=-=-=-');
+    console.log("=-=-=-=-=-=-=-");
 
-    console.log('leaveType', leaveType);
+    console.log("leaveType", leaveType);
     let url = `${baseUrl}/api/leave-status/all?page=${page}&pageSize=${pageSize}&sort=createdAt:desc`;
 
     if (startDate && endDate) {
@@ -65,10 +65,11 @@ export const endpoints = {
   },
   updateAttendance: `${baseUrl}/api/daily-attendance/update-attendance`,
   applyLeave: `${baseUrl}/api/leave-statuses`,
-  getUserLeaves: (id: string) =>
-    `${baseUrl}/api/leave-statuses?filters[user][id][$eq]=${id}&sort=id:desc`,
+  // getUserLeaves: (id: number) =>
+  //   `${baseUrl}/api/leave-statuses?filters[user][id][$eq]=${id}&sort=id:desc`,
+  getUserLeaves: `${baseUrl}/api/leave-statuses/my-leaves`,
   getLeaves: `${baseUrl}/api/leave-statuses`,
-  deleteLeave: (id: string) => `${baseUrl}/api/leave-statuses/${id}`,
+  deleteLeave: (id: number) => `${baseUrl}/api/leave-statuses/${id}`,
   updateLeave: (id: number) => `${baseUrl}/api/leave-statuses/${id}`,
   getLeaveRequests: `${baseUrl}/api/leave-statuses?filters[status][$eq]=pending&populate[user][populate][user_detial][populate]=Photo&sort=id:desc`,
   approveLeave: (id: number) => `${baseUrl}/api/leave-status/${id}/approve`,

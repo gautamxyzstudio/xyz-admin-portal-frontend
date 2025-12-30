@@ -2,7 +2,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState } from "react";
 import styles from "./loading.module.css";
-import loadingVideo from "../../assets/myassets/videos/loading.mp4";
+import loadingVideo from "../../assets/myAssets/videos/loading.mp4";
 
 export const LoadingWrapperContext = createContext({
   isLoading: false,

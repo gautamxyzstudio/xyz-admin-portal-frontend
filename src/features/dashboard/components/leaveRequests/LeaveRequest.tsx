@@ -25,7 +25,7 @@ import {
   getLeaveTypeTitle,
 } from "../../../../utils/utils";
 
-import DataTable from "../../../../shared/components/datatable/DataTable";
+import DataTable from "../../../../shared/components/dataTable/DataTable";
 import type { ILeave } from "../../../leaves/leaves.types";
 import EmployeeTableRow from "../../../employee/components/employeeTableRow/EmployeeTableRow";
 import { toast } from "react-toastify";

@@ -7,13 +7,12 @@ import PrivateRoute from "./PrivateRoutes";
 import HolidayList from "./features/holydayList/screens/holydayList/HolydayList";
 import AddHoliday from "./features/holydayList/screens/addHoliday/AddHoliday";
 import EditHoliday from "./features/holydayList/screens/editHoliday/EditHoliday";
-import { LoadingWrapperProvider } from "./wrappers/loadingWrapper/LoadingWrapper.context";
 import LoginPage from "./features/auth/screens/login/Login";
 import { Provider } from "react-redux";
 import store, { persistor } from "./state/store";
 import EmployeeList from "./features/employee/screens/employeeList/EmployeeList";
 import AddEmployee from "./features/employee/screens/addEmployee/AddEmployee";
-import SnackBarProvider from "./wrappers/snackbarContext/SnackbarProvider";
+import SnackBarProvider from "./wrappers/snackbarContext/SnackbarProvider.js";
 import { ToastContainer } from "react-toastify";
 import { PersistGate } from "redux-persist/integration/react";
 import LeaveList from "./features/leaves/screens/leaveList/LeaveList";
@@ -27,41 +26,141 @@ import AllLeaves from "./features/leaves/screens/allLeaves/AllLeaves";
 import AllEmployeeDocs from "./features/documents/screens/allEmployeeDocs/AllEmployeeDocs";
 import { ThemeProvider } from "@mui/material";
 import theme from "./theme/theme.js";
+import { LoadingWrapperProvider } from "./wrappers/loadingWrapper/LoadingWrapper.context.js";
+import DashboardLayout from "./layout/DashboardLayout.js";
 
 const App: React.FC = () => {
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
-        <div
-          className="app"
-        >
+        <div className="app">
           <LoadingWrapperProvider>
             <SnackBarProvider>
               <ThemeProvider theme={theme}>
+              
                 <Routes>
                   <Route element={<PrivateRoute />}>
-                    <Route path="/" element={<Dashboard />} />
-                    <Route path="employees" element={<EmployeeList />} />
-                    <Route path="attendance" element={<AttendanceList />} />
-                    <Route path="leaves" element={<LeaveList />} />
-                    <Route path="all-leaves" element={<AllLeaves />} />
-                    <Route path="leaves/create" element={<CreateLeave />} />
-                    <Route path="leaves/update" element={<CreateLeave />} />
-                    <Route path="documents" element={<EmployeeDocs />} />
+                    <Route
+                      path="/"
+                      element={
+                        <DashboardLayout>
+                          <Dashboard />
+                        </DashboardLayout>
+                      }
+                    />
+                    <Route
+                      path="employees"
+                      element={
+                        <DashboardLayout>
+                          <EmployeeList />
+                        </DashboardLayout>
+                      }
+                    />
+                    <Route
+                      path="attendance"
+                      element={
+                        <DashboardLayout>
+                          <AttendanceList />
+                        </DashboardLayout>
+                      }
+                    />
+                    <Route
+                      path="leaves"
+                      element={
+                        <DashboardLayout>
+                          <LeaveList />
+                        </DashboardLayout>
+                      }
+                    />
+                    <Route
+                      path="all-leaves"
+                      element={
+                        <DashboardLayout>
+                          <AllLeaves />
+                        </DashboardLayout>
+                      }
+                    />
+                    <Route
+                      path="leaves/create"
+                      element={
+                        <DashboardLayout>
+                          <CreateLeave />
+                        </DashboardLayout>
+                      }
+                    />
+                    <Route
+                      path="leaves/update"
+                      element={
+                        <DashboardLayout>
+                          <CreateLeave />
+                        </DashboardLayout>
+                      }
+                    />
+                    <Route
+                      path="documents"
+                      element={
+                        <DashboardLayout>
+                          <EmployeeDocs />
+                        </DashboardLayout>
+                      }
+                    />
                     <Route
                       path="all-employee-docs"
-                      element={<AllEmployeeDocs />}
+                      element={
+                        <DashboardLayout>
+                          <AllEmployeeDocs />
+                        </DashboardLayout>
+                      }
                     />
                     <Route
                       path="employees/register"
-                      element={<AddEmployee />}
+                      element={
+                        <DashboardLayout>
+                          <AddEmployee />
+                        </DashboardLayout>
+                      }
                     />
-                    <Route path="employees/:name" element={<EditEmployee />} />
-                    <Route path="profile" element={<ProfileList />} />
+                    <Route
+                      path="employees/:name"
+                      element={
+                        <DashboardLayout>
+                          <EditEmployee />
+                        </DashboardLayout>
+                      }
+                    />
+                    <Route
+                      path="profile"
+                      element={
+                        <DashboardLayout>
+                          <ProfileList />
+                        </DashboardLayout>
+                      }
+                    />
 
-                    <Route path="holidays" element={<HolidayList />} />
-                    <Route path="holidays/add" element={<AddHoliday />} />
-                    <Route path="holidays/edit/:id" element={<EditHoliday />} />
+                    <Route
+                      path="holidays"
+                      element={
+                        <DashboardLayout>
+                          <HolidayList />
+                        </DashboardLayout>
+                      }
+                    />
+                    <Route
+                      path="holidays/add"
+                      element={
+                        <DashboardLayout>
+                          <AddHoliday />
+                        </DashboardLayout>
+                      }
+                    />
+                    <Route
+                      path="holidays/edit/:id"
+                      element={
+                        <DashboardLayout>
+                          <EditHoliday />
+                        </DashboardLayout>
+                      }
+                    />
                     {/* <Route
                       path="blog"
                       element={

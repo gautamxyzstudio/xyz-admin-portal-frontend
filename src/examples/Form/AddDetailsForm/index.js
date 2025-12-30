@@ -1,9 +1,7 @@
 import React, { useState } from "react";
-import MDBox from "../../../components/MDBox/MDBox";
 import MDInput from "../../../components/MDInput";
 import { apiendpoint } from "../../../api/endpoint";
 import axios from "axios";
-import MDTypography from "../../../components/MDTypography";
 import {
   Card,
   FormControl,
@@ -13,13 +11,11 @@ import {
   InputLabel,
   MenuItem,
   Select,
+  Button,Typography, Box
 } from "@mui/material";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers-pro";
 import dayjs from "dayjs";
 import { AdapterDayjs } from "@mui/x-date-pickers-pro/AdapterDayjs";
-import MDButton from "../../../components/MDButton/MDButton";
-import DashboardLayout from "../../LayoutContainers/DashboardLayout";
-import DashboardNavbar from "../../Navbars/DashboardNavbar";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import "../styles.css";
@@ -198,12 +194,12 @@ const AddDetails = () => {
   return (
     <>
       <DashboardNavbar />
-      <MDBox pt={6} pb={3}>
+      <Box pt={6} pb={3}>
         <Grid container spacing={6}>
           <Grid item xs={12}></Grid>
         </Grid>
         <Card>
-          <MDBox
+          <Box
             display="grid"
             variant="gradient"
             bgColor="warning"
@@ -215,7 +211,7 @@ const AddDetails = () => {
             mb={1}
             textAlign="center"
           >
-            <MDTypography
+            <Typography
               gridRow="1"
               gridColumn="3/7"
               variant="h5"
@@ -224,31 +220,31 @@ const AddDetails = () => {
               mt={1}
             >
               Employee Information
-            </MDTypography>
-            <MDTypography
+            </Typography>
+            <Typography
               gridRow="2"
               gridColumn="3/7"
               variant="button"
               color="white"
             >
               Enter details to register
-            </MDTypography>
-            <MDTypography gridColumn="8" gridRow="1/2" variant="button">
+            </Typography>
+            <Typography gridColumn="8" gridRow="1/2" variant="button">
               <IconButton size="medium" color="white" onClick={handleClose}>
                 <Icon fontSize="large" fontWeight="900">
                   close
                 </Icon>
               </IconButton>
-            </MDTypography>
-          </MDBox>
-          <MDBox pt={4} pb={3} px={3}>
-            <MDBox
+            </Typography>
+          </Box>
+          <Box pt={4} pb={3} px={3}>
+            <Box
               component="form"
               role="form"
               display="grid"
               onSubmit={handleSubmit}
             >
-              <MDBox mb={1} gridRow="1" gridColumn="1/4">
+              <Box mb={1} gridRow="1" gridColumn="1/4">
                 <MDInput
                   type="text"
                   label="Name"
@@ -261,8 +257,8 @@ const AddDetails = () => {
                   error={!!errors.name}
                   helperText={errors.name}
                 />
-              </MDBox>
-              <MDBox mb={1} gridRow="2" gridColumn="1/4">
+              </Box>
+              <Box mb={1} gridRow="2" gridColumn="1/4">
                 <MDInput
                   type="email"
                   label="Email"
@@ -275,8 +271,8 @@ const AddDetails = () => {
                   error={!!errors.email}
                   helperText={errors.email}
                 />
-              </MDBox>
-              <MDBox mb={1} gridRow="3" gridColumn="1/4">
+              </Box>
+              <Box mb={1} gridRow="3" gridColumn="1/4">
                 <MDInput
                   type="text"
                   label="Designation"
@@ -289,8 +285,8 @@ const AddDetails = () => {
                   helperText={errors.designation}
                   fullWidth
                 />
-              </MDBox>
-              <MDBox mb={1} gridRow="4" gridColumn="1/4">
+              </Box>
+              <Box mb={1} gridRow="4" gridColumn="1/4">
                 <MDInput
                   type="text"
                   label="Phone Number"
@@ -303,8 +299,8 @@ const AddDetails = () => {
                   helperText={errors.phoneNumber}
                   fullWidth
                 />
-              </MDBox>
-              <MDBox mb={1} gridRow="5" gridColumn="1/4">
+              </Box>
+              <Box mb={1} gridRow="5" gridColumn="1/4">
                 <MDInput
                   type="text"
                   label="Employee Code"
@@ -317,8 +313,8 @@ const AddDetails = () => {
                   helperText={errors.empCode}
                   fullWidth
                 />
-              </MDBox>
-              <MDBox
+              </Box>
+              <Box
                 mb={1}
                 gridRow="6"
                 gridColumn="1/4"
@@ -340,8 +336,8 @@ const AddDetails = () => {
                     ))}
                   </Select>
                 </FormControl>
-              </MDBox>
-              <MDBox mb={1} mt={1} gridRow="7" gridColumn="1/4">
+              </Box>
+              <Box mb={1} mt={1} gridRow="7" gridColumn="1/4">
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                   <DatePicker
                     label="Joining Date"
@@ -358,8 +354,8 @@ const AddDetails = () => {
                     }}
                   />
                 </LocalizationProvider>
-              </MDBox>
-              <MDBox mb={1} mt={1} ml={4} gridRow="7" gridColumn="4/8">
+              </Box>
+              <Box mb={1} mt={1} ml={4} gridRow="7" gridColumn="4/8">
                 <MDInput
                   type="text"
                   label="Leave Balance"
@@ -372,17 +368,17 @@ const AddDetails = () => {
                   helperText={errors.leave_balance}
                   fullWidth
                 />
-              </MDBox>
-              <MDBox
+              </Box>
+              <Box
                 mb={1}
                 gridColumn="4/8"
                 gridRow="1/7"
                 textAlign="center"
                 color="gray"
               >
-                <MDTypography pb={2} color="grey">
+                <Typography pb={2} color="grey">
                   Upload Image:
-                </MDTypography>
+                </Typography>
                 <MDInput
                   type="file"
                   variant="standard"
@@ -390,7 +386,7 @@ const AddDetails = () => {
                   onChange={handleImageChange}
                 />
                 {imagePath && (
-                  <MDBox
+                  <Box
                     mt={2}
                     display="flex"
                     justifyContent="center"
@@ -402,11 +398,11 @@ const AddDetails = () => {
                       alt="image preview"
                       className="max-h-[300px] max-w-[300px] rounded-full"
                     />
-                  </MDBox>
+                  </Box>
                 )}
-              </MDBox>
-              <MDBox mt={4} mb={1} gridRow="8" gridColumn="1/8">
-                <MDButton
+              </Box>
+              <Box mt={4} mb={1} gridRow="8" gridColumn="1/8">
+                <Button
                   onClick={handleSubmit}
                   variant="gradient"
                   color="warning"
@@ -414,12 +410,12 @@ const AddDetails = () => {
                   disabled={!isImageUploaded || !isValid}
                 >
                   Submit
-                </MDButton>
-              </MDBox>
-            </MDBox>
-          </MDBox>
+                </Button>
+              </Box>
+            </Box>
+          </Box>
         </Card>
-      </MDBox>
+      </Box>
     </>
   );
 };

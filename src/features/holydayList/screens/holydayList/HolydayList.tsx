@@ -1,11 +1,6 @@
-import DashboardLayout from "../../../../examples/LayoutContainers/DashboardLayout/index.jsx";
-import DashboardNavbar from "../../../../examples/Navbars/DashboardNavbar/index.jsx";
-import MDBox from "../../../../components/MDBox/MDBox";
-import Grid from "@mui/material/Grid";
-import MDTypography from "../../../../components/MDTypography";
-import MDButton from "../../../../components/MDButton/MDButton";
-import DataTable from "../../../../shared/components/datatable/DataTable";
-import { Card, Icon } from "@mui/material";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import DataTable from "../../../../shared/components/dataTable/DataTable.js";
+import { Box, Button, Card,  Icon, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import {
   useDeleteHolidayMutation,
@@ -50,7 +45,7 @@ const HolydayList = () => {
     renderCell: (params) => (
       <div className="flex flex-row gap-x-3">
         {(user?.user_type === "Admin" || user?.user_type === "Hr") && (
-          <MDButton
+          <Button
             variant="text"
             color="info"
             onClick={() => {
@@ -62,18 +57,17 @@ const HolydayList = () => {
             }}
           >
             <Icon>edit</Icon>&nbsp;edit
-          </MDButton>
+          </Button>
         )}
         {(user?.user_type === "Admin" || user?.user_type === "Hr") && (
-          <MDButton
+          <Button
             variant="text"
-            color="dark"
             onClick={() => {
               deleteHolidayHandler(params.row.id);
             }}
           >
             <Icon>delete</Icon>&nbsp;delete
-          </MDButton>
+          </Button>
         )}
       </div>
     ),
@@ -85,14 +79,14 @@ const HolydayList = () => {
       headerName: "Holiday Name",
       width: 350,
       renderCell: (params) => (
-        <MDTypography
+        <Typography
           display="block"
           variant="body2"
           color="text"
           fontWeight="medium"
         >
           {params.row.attributes?.Name || params.row.Name}
-        </MDTypography>
+        </Typography>
       ),
     },
     {
@@ -106,14 +100,14 @@ const HolydayList = () => {
           : "Invalid date";
 
         return (
-          <MDTypography
+          <Typography
             display="block"
             variant="body2"
             color="text"
             fontWeight="medium"
           >
             {formattedDate}
-          </MDTypography>
+          </Typography>
         );
       },
     },
@@ -122,14 +116,14 @@ const HolydayList = () => {
       headerName: "Day",
       width: 250,
       renderCell: (params) => (
-        <MDTypography
+        <Typography
           display="block"
           variant="body2"
           color="text"
           fontWeight="medium"
         >
           {dayjs(params.row.attributes?.date || params.row.date).format("dddd")}
-        </MDTypography>
+        </Typography>
       ),
     },
   ];
@@ -141,13 +135,10 @@ const HolydayList = () => {
 
   return (
     <>
-      <DashboardNavbar />
-      <MDBox pt={3} pb={3}>
-        <Grid container spacing={6}>
-    
-        </Grid>
+      <Box pt={3} pb={3}>
+        
         <Card>
-          <MDBox
+          <Box
             mx={2}
             mt={-3}
             py={3}
@@ -156,24 +147,19 @@ const HolydayList = () => {
               display: "flex",
               justifyContent: "space-between",
             }}
-            variant="gradient"
-            bgColor="warning"
-            borderRadius="lg"
-            coloredShadow="dark"
           >
-            <MDTypography variant="h5" color="white">
+            <Typography variant="h5" color="white">
               Holiday List
-            </MDTypography>
+            </Typography>
             {(user?.user_type === "Admin" || user?.user_type === "Hr") && (
-              <MDButton
+              <Button
                 variant="contained"
-                color="orange"
                 onClick={() => navigate("/holidays/add")}
               >
                 Add Holiday
-              </MDButton>
+              </Button>
             )}
-          </MDBox>
+          </Box>
 
           <div className="h-[70vh] mt-4 w-full">
             <DataTable
@@ -188,7 +174,7 @@ const HolydayList = () => {
             />
           </div>
         </Card>
-      </MDBox>
+      </Box>
     </>
   );
 };

@@ -5,16 +5,14 @@ import PropTypes from "prop-types";
 import Card from "@mui/material/Card";
 import Divider from "@mui/material/Divider";
 import Icon from "@mui/material/Icon";
+import { Box, Typography } from "@mui/material";
 
-// Material Dashboard 2 React components
-import MDBox from "../../../../components/MDBox/MDBox";
-import MDTypography from "../../../../components/MDTypography/index";
 
 function DefaultInfoCard({ color, icon, title, description, value }) {
   return (
     <Card>
-      <MDBox p={2} mx={3} display="flex" justifyContent="center">
-        <MDBox
+      <Box p={2} mx={3} display="flex" justifyContent="center">
+        <Box
           display="grid"
           justifyContent="center"
           alignItems="center"
@@ -27,24 +25,24 @@ function DefaultInfoCard({ color, icon, title, description, value }) {
           variant="gradient"
         >
           <Icon fontSize="default">{icon}</Icon>
-        </MDBox>
-      </MDBox>
-      <MDBox pb={2} px={2} textAlign="center" lineHeight={1.25}>
-        <MDTypography variant="h6" fontWeight="medium" textTransform="capitalize">
+        </Box>
+      </Box>
+      <Box pb={2} px={2} textAlign="center" lineHeight={1.25}>
+        <Typography variant="h6" fontWeight="medium" textTransform="capitalize">
           {title}
-        </MDTypography>
+        </Typography>
         {description && (
-          <MDTypography variant="caption" color="text" fontWeight="regular">
+          <Typography variant="caption" color="text" fontWeight="regular">
             {description}
-          </MDTypography>
+          </Typography>
         )}
         {description && !value ? null : <Divider />}
         {value && (
-          <MDTypography variant="h5" fontWeight="medium">
+          <Typography variant="h5" fontWeight="medium">
             {value}
-          </MDTypography>
+          </Typography>
         )}
-      </MDBox>
+      </Box>
     </Card>
   );
 }

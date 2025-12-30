@@ -5,18 +5,18 @@ import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
 
 // @mui material components
-import { Breadcrumbs as MuiBreadcrumbs } from "@mui/material";
+import { Box, Breadcrumbs as MuiBreadcrumbs } from "@mui/material";
 import Icon from "@mui/material/Icon";
 
 // Material Dashboard 2 React components
-import MDBox from "../../components/MDBox/MDBox";
+
 import MDTypography from "../../components/MDTypography/index";
 
 function Breadcrumbs({ icon, title, route, light }) {
   const routes = route.slice(0, -1);
 
   return (
-    <MDBox mr={{ xs: 0, xl: 8 }}>
+    <Box mr={{ xs: 0, xl: 8 }}>
       <MuiBreadcrumbs
         sx={{
           "& .MuiBreadcrumbs-separator": {
@@ -71,7 +71,7 @@ function Breadcrumbs({ icon, title, route, light }) {
       >
         {title.replace("-", " ")}
       </MDTypography> */}
-    </MDBox>
+    </Box>
   );
 }
 

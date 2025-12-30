@@ -1,0 +1,37 @@
+import { useSelector } from "react-redux";
+import { Icons } from "../../../assets/myAssets/exporter";
+import CustomBox from "../../../components/CustomBox/CustomBox";
+import { userDetailsInState } from "../../../features/auth/authSlice";
+
+const TopBar = () => {
+  const user = useSelector(userDetailsInState);
+  console.log(user?.photo)
+  return (
+    <CustomBox customClasses="w-full rounded-xl p-3.5 flex items-center justify-between">
+      {/* Left */}
+      <p className="text-black-50 ml-2.5 font-semibold">Dashboard</p>
+
+      {/* Right */}
+      <div className="flex items-center gap-2.5">
+        {/* Message icon */}
+        <div className="w-10 h-10 p-2 flex items-center justify-center rounded-xl bg-gray-100 cursor-pointer sti">
+          <img src={Icons.OUTLOOK} alt="" />
+        </div>
+
+        {/* Notification icon */}
+        <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-100 cursor-pointer relative">
+          <img src={Icons.NOTIFICATION} alt="" />
+        </div>
+
+        {/* Profile image */}
+        <img
+          src={user?.photo ? user?.photo : "https://i.pravatar.cc/40"}
+          alt="profile"
+          className="w-10 h-10 rounded-xl object-cover cursor-pointer"
+        />
+      </div>
+    </CustomBox>
+  );
+};
+
+export default TopBar;

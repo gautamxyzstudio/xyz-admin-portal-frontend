@@ -1,11 +1,8 @@
 /* eslint-disable react-hooks/rules-of-hooks */
-import DashboardLayout from "../../../examples/LayoutContainers/DashboardLayout/index.jsx";
 import DashboardNavbar from "../../../examples/Navbars/DashboardNavbar/index.jsx";
-import MDBox from "../../../components/MDBox/MDBox.js";
 import { userInState } from "../../auth/authSlice.js";
 import { useSelector } from "react-redux";
-import MDTypography from "../../../components/MDTypography/index.js";
-import DataTable from "../../../shared/components/datatable/DataTable.js";
+import DataTable from "../../../shared/components/dataTable/DataTable.js";
 import type { IAttendance } from "../../dashboard/types.js";
 import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import DoorFrontIcon from "@mui/icons-material/DoorFront";
@@ -13,6 +10,7 @@ import { convertTo12HourFormat } from "../../../utils/utils.js";
 import { useEffect, useState } from "react";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useGetAttendanceListQuery } from "../attendanceApi.js";
+import { Typography, Box } from "@mui/material";
 
 const AttendanceEmployee = () => {
   const user = useSelector(userInState);
@@ -35,9 +33,9 @@ const AttendanceEmployee = () => {
         return (
           <div className="flex items-center justify-center">
             <MeetingRoomIcon sx={{ color: "green" }} fontSize="small" />
-            <MDTypography align="center">
+            <Typography align="center">
               {convertTo12HourFormat(params?.row?.in) ?? "In Time Missing"}
-            </MDTypography>
+            </Typography>
           </div>
         );
       },
@@ -50,9 +48,9 @@ const AttendanceEmployee = () => {
         return (
           <div className="flex items-center justify-center">
             <DoorFrontIcon sx={{ color: "red" }} fontSize="small" />
-            <MDTypography align="center">
+            <Typography align="center">
               {convertTo12HourFormat(params?.row?.out) ?? "Out Time Missing"}
-            </MDTypography>
+            </Typography>
           </div>
         );
       },
@@ -62,7 +60,7 @@ const AttendanceEmployee = () => {
       headerName: "Date",
       width: 160,
       renderCell: (params) => {
-        return <MDTypography align="center">{params.row.Date}</MDTypography>;
+        return <Typography align="center">{params.row.Date}</Typography>;
       },
     },
   ];
@@ -70,8 +68,8 @@ const AttendanceEmployee = () => {
   return (
     <>
       <DashboardNavbar />
-      <MDBox pt={3} pb={3}>
-        <MDBox
+      <Box pt={3} pb={3}>
+        <Box
           mx={2}
           mt={-3}
           py={3}
@@ -85,10 +83,10 @@ const AttendanceEmployee = () => {
           borderRadius="lg"
           coloredShadow="dark"
         >
-          <MDTypography variant="h6" color="white">
+          <Typography variant="h6" color="white">
             Attendance List
-          </MDTypography>
-        </MDBox>
+          </Typography>
+        </Box>
         <div>
           <div className="h-[70vh]  mt-4  w-full">
             <DataTable
@@ -103,7 +101,7 @@ const AttendanceEmployee = () => {
             />
           </div>
         </div>
-      </MDBox>
+      </Box>
     </>
   );
 };

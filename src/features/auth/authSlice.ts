@@ -1,8 +1,7 @@
-import { createSlice, type PayloadAction} from '@reduxjs/toolkit';
-import type { IAuthState, ILoginResponse, IUserDetailsResponse } from './types';
-import { authApi } from './authApi';
-import type { RootState } from '../../state/store';
-import { getImageUrl } from '../../utils/utils';
+import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import type { IAuthState, ILoginResponse, IUserDetailsResponse } from "./types";
+import { authApi } from "./authApi";
+import type { RootState } from "../../state/store";
 
 const initialState: IAuthState = {
   user: null,
@@ -10,7 +9,7 @@ const initialState: IAuthState = {
 };
 
 const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState,
   reducers: {},
   extraReducers: (builder) => {
@@ -31,9 +30,9 @@ const authSlice = createSlice({
       .addMatcher(
         authApi.endpoints.userDetails.matchFulfilled,
         (state, action: PayloadAction<IUserDetailsResponse>) => {
-          console.log('-=-=-=-=-=-=-executed-=-=-=-=-=-=-=-=-=-=-=-');
-          console.log(action?.payload, 'action?.payload');
-          console.log('-=-=-=-=-=-=-executed-=-=-=-=-=-=-=-=-=-=-=-');
+          console.log("-=-=-=-=-=-=-executed-=-=-=-=-=-=-=-=-=-=-=-");
+          console.log(action?.payload, "action?.payload");
+          console.log("-=-=-=-=-=-=-executed-=-=-=-=-=-=-=-=-=-=-=-");
           state.userDetails = {
             details_id: action?.payload?.user_detial?.id,
             email: action?.payload?.email,
@@ -46,7 +45,9 @@ const authSlice = createSlice({
             status: action?.payload?.user_detial?.status,
             phoneNumber: action?.payload?.user_detial?.phoneNumber,
             empCode: action?.payload?.user_detial?.empCode,
-            photo: getImageUrl(action?.payload?.user_detial?.Photo[0]?.url),
+            photo: action?.payload?.user_detial?.Photo
+              ? action?.payload?.user_detial?.Photo[0]?.url
+              : null,
           };
         }
       );

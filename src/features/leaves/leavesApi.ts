@@ -1,15 +1,16 @@
-import { baseApi } from '../../state/baseApi';
-import { endpoints } from '../../state/endpoints';
-import { ApiMethodType } from '../../state/types';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { baseApi } from "../../state/baseApi";
+import { endpoints } from "../../state/endpoints";
+import { ApiMethodType } from "../../state/types";
 import type {
   IApplyLeaveArgs,
   IApproveLeaveResponse,
   ILeave,
   IUpdateLeaveArgs,
-} from './leaves.types';
+} from "./leaves.types";
 
 export const enhancedLeavesApi = baseApi.enhanceEndpoints({
-  addTagTypes: ['Leaves'],
+  addTagTypes: ["Leaves"],
 });
 
 export const leavesApi = enhancedLeavesApi.injectEndpoints({
@@ -20,7 +21,7 @@ export const leavesApi = enhancedLeavesApi.injectEndpoints({
         method: ApiMethodType.post,
         body: data,
       }),
-      invalidatesTags: ['Leaves'],
+      invalidatesTags: ["Leaves"],
     }),
     getUserLeaves: builder.query<
       {
@@ -32,30 +33,32 @@ export const leavesApi = enhancedLeavesApi.injectEndpoints({
           total: number;
         };
       },
-      string
+      void
     >({
-      query: (id) => ({
-        url: endpoints.getUserLeaves(id),
+      query: () => ({
+        url: endpoints.getUserLeaves,
         method: ApiMethodType.get,
       }),
-      providesTags: ['Leaves'],
+      providesTags: ["Leaves"],
       transformResponse: (response: any) => {
-        const data = response.data.map((item) => ({
+        const data = response.data.map((item: any) => ({
+         
           ...item.attributes,
           id: item.id,
         }));
+        console.log(data, "leave")
         return {
           data,
           pagination: response.meta.pagination,
         };
       },
     }),
-    deleteLeave: builder.mutation<any, string>({
-      query: (id) => ({
+    deleteLeave: builder.mutation<any, { id: number }>({
+      query: ({ id }: { id: number }) => ({
         url: endpoints.deleteLeave(id),
         method: ApiMethodType.delete,
       }),
-      invalidatesTags: ['Leaves'],
+      invalidatesTags: ["Leaves"],
     }),
     updateLeave: builder.mutation<any, { id: number; data: IUpdateLeaveArgs }>({
       query: ({ id, data }: { id: number; data: IUpdateLeaveArgs }) => ({
@@ -63,7 +66,7 @@ export const leavesApi = enhancedLeavesApi.injectEndpoints({
         method: ApiMethodType.PUT,
         body: { data: { ...data } },
       }),
-      invalidatesTags: ['Leaves'],
+      invalidatesTags: ["Leaves"],
     }),
     getLeaveRequests: builder.query<
       {
@@ -81,9 +84,9 @@ export const leavesApi = enhancedLeavesApi.injectEndpoints({
         url: endpoints.getLeaveRequests,
         method: ApiMethodType.get,
       }),
-      providesTags: ['Leaves'],
+      providesTags: ["Leaves"],
       transformResponse: (response: any) => {
-        const data = response.data.map((item) => ({
+        const data = response.data.map((item: any) => ({
           ...item.attributes,
           id: item.id,
         }));
@@ -100,13 +103,13 @@ export const leavesApi = enhancedLeavesApi.injectEndpoints({
         method: ApiMethodType.post,
         body: {},
       }),
-      invalidatesTags: ['Leaves'],
+      invalidatesTags: ["Leaves"],
     }),
     rejectLeave: builder.mutation<IApproveLeaveResponse, { id: number }>({
       query: ({ id }: { id: number }) => ({
         url: endpoints.rejectLeave(id),
         method: ApiMethodType.post,
-        invalidatesTags: ['Leaves'],
+        invalidatesTags: ["Leaves"],
         body: {},
       }),
     }),
@@ -138,12 +141,12 @@ export const leavesApi = enhancedLeavesApi.injectEndpoints({
           search,
           leaveType
         ),
-        providesTags: ['Leaves'],
-        method: 'GET',
+        providesTags: ["Leaves"],
+        method: "GET",
       }),
-      transformResponse: (response:any) => {
-        const data = response.data.map((item) => ({
-         ...item
+      transformResponse: (response: any) => {
+        const data = response.data.map((item: any) => ({
+          ...item,
         }));
         return {
           data,

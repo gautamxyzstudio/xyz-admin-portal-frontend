@@ -11,12 +11,11 @@ import Tooltip from "@mui/material/Tooltip";
 import Icon from "@mui/material/Icon";
 
 // Material Dashboard 2 React components
-import MDBox from "../../../../components/MDBox/MDBox";
-import MDTypography from "../../../../components/MDTypography/index";
 
 // Material Dashboard 2 React base styles
 import colors from "../../../../assets/theme/base/colors";
 import typography from "../../../../assets/theme/base/typography";
+import { Box, Typography } from "@mui/material";
 
 function ProfileInfoCard({ title, description, info, social, action, shadow }) {
   const labels = [];
@@ -41,19 +40,19 @@ function ProfileInfoCard({ title, description, info, social, action, shadow }) {
 
   // Render the card info items
   const renderItems = labels.map((label, key) => (
-    <MDBox key={label} display="flex" py={1} pr={2}>
-      <MDTypography variant="button" fontWeight="bold" textTransform="capitalize">
+    <Box key={label} display="flex" py={1} pr={2}>
+      <Typography variant="button" fontWeight="bold" textTransform="capitalize">
         {label}: &nbsp;
-      </MDTypography>
-      <MDTypography variant="button" fontWeight="regular" color="text">
+      </Typography>
+      <Typography variant="button" fontWeight="regular" color="text">
         &nbsp;{values[key]}
-      </MDTypography>
-    </MDBox>
+      </Typography>
+    </Box>
   ));
 
   // Render the card social media icons
   const renderSocial = social.map(({ link, icon, color }) => (
-    <MDBox
+    <Box
       key={color}
       component="a"
       href={link}
@@ -66,40 +65,40 @@ function ProfileInfoCard({ title, description, info, social, action, shadow }) {
       lineHeight={1}
     >
       {icon}
-    </MDBox>
+    </Box>
   ));
 
   return (
     <Card sx={{ height: "100%", boxShadow: !shadow && "none" }}>
-      <MDBox display="flex" justifyContent="space-between" alignItems="center" pt={2} px={2}>
-        <MDTypography variant="h6" fontWeight="medium" textTransform="capitalize">
+      <Box display="flex" justifyContent="space-between" alignItems="center" pt={2} px={2}>
+        <Typography variant="h6" fontWeight="medium" textTransform="capitalize">
           {title}
-        </MDTypography>
-        <MDTypography component={Link} to={action.route} variant="body2" color="secondary">
+        </Typography>
+        <Typography component={Link} to={action.route} variant="body2" color="secondary">
           <Tooltip title={action.tooltip} placement="top">
             <Icon>edit</Icon>
           </Tooltip>
-        </MDTypography>
-      </MDBox>
-      <MDBox p={2}>
-        <MDBox mb={2} lineHeight={1}>
-          <MDTypography variant="button" color="text" fontWeight="light">
+        </Typography>
+      </Box>
+      <Box p={2}>
+        <Box mb={2} lineHeight={1}>
+          <Typography variant="button" color="text" fontWeight="light">
             {description}
-          </MDTypography>
-        </MDBox>
-        <MDBox opacity={0.3}>
+          </Typography>
+        </Box>
+        <Box opacity={0.3}>
           <Divider />
-        </MDBox>
-        <MDBox>
+        </Box>
+        <Box>
           {renderItems}
-          <MDBox display="flex" py={1} pr={2}>
-            <MDTypography variant="button" fontWeight="bold" textTransform="capitalize">
+          <Box display="flex" py={1} pr={2}>
+            <Typography variant="button" fontWeight="bold" textTransform="capitalize">
               social: &nbsp;
-            </MDTypography>
+            </Typography>
             {renderSocial}
-          </MDBox>
-        </MDBox>
-      </MDBox>
+          </Box>
+        </Box>
+      </Box>
     </Card>
   );
 }

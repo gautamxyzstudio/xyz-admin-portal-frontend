@@ -6,7 +6,7 @@ import MDBox from "../../../../components/MDBox/MDBox";
 import MDButton from "../../../../components/MDButton/MDButton";
 import MDTypography from "../../../../components/MDTypography";
 import { useNavigate } from "react-router-dom";
-import DataTable from "../../../../shared/components/datatable/DataTable";
+import DataTable from "../../../../shared/components/dataTable/DataTable.js";
 import { useDeleteLeaveMutation, useGetUserLeavesQuery } from "../../leavesApi";
 import { useSelector } from "react-redux";
 import { userInState } from "../../../auth/authSlice";
