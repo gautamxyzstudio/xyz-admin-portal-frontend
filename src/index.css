@@ -10,7 +10,7 @@
 :root {
   --background: #f6f6f6;
   --white: #ffffff;
-  --primary: #f17c04;
+  --primary: rgb(241, 124, 4);
   --primary-50: #f8bd81;
   --primary-20: #fce5cd;
   --black: #0d0701;
@@ -29,7 +29,7 @@
   :root {
     --background: #f6f6f6;
     --white: #ffffff;
-    --primary: #f17c04;
+    --primary: rgb(241, 124, 4);
     --primary-50: #f8bd81;
     --primary-20: #fce5cd;
     --black: #0d0701;
@@ -86,3 +86,15 @@ body {
   display: flex;
   /* overflow: hidden; */
 }
+
+
+/* Hide scrollbar but keep scroll */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+ 
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE & Edge */
+  scrollbar-width: none; /* Firefox */
+}
+ 

@@ -7,7 +7,11 @@ const CustomBox = ({
   children: React.ReactNode;
   customClasses?: string;
 }) => {
-  return <div className={`bg-white rounded-2xl ${customClasses}`}>{children}</div>;
+  return (
+    <div className={`bg-white rounded-2xl ${customClasses}`}>
+      {children}
+    </div>
+  );
 };
 
 export default CustomBox;

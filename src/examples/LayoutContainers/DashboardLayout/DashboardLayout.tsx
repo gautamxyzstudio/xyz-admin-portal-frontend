@@ -1,14 +1,14 @@
 import type React from "react";
-import TopBar from "../examples/Navbars/Topbar/TopBar";
-import SideNav from "../examples/Sidenav/SideNav";
+import TopBar from "../../Topbar/TopBar";
+import SideNav from "../../Sidenav/SideNav";
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="p-5 w-full h-full flex flex-row items-start gap-x-6 flex-nowrap">
       <SideNav />
-      <div className="w-full flex flex-col gap-y-5">
+      <div className="w-full h-full flex flex-col gap-y-5">
         <TopBar />
-        {children}
+        <div className="w-full h-full overflow-y-scroll overflow-clip scrollbar-hide">{children}</div>
       </div>
     </div>
   );

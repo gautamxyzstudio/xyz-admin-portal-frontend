@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect } from "react";
-import MarkAttendance from "../components/markAttendace/MarkAttendance";
-import UpComingHolidays from "../components/upcommingHolidays/UpComingHolidays";
+import MarkAttendance from "../components/markAttendance/MarkAttendance";
+import UpComingHolidays from "../components/upComingHolidays/UpComingHolidays";
 import LeaveAnalytics from "../components/leaveAnalytics/LeaveAnalytics";
-import { Typography } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { userDetailsInState, userInState } from "../../auth/authSlice";
 import {
@@ -25,6 +24,7 @@ import {
 } from "../dashboardSlice";
 import { useGetUserLeavesQuery } from "../../leaves/leavesApi";
 import { useUserDetailsQuery } from "../../auth/authApi";
+import { Icons } from "../../../assets/myAssets/exporter";
 
 const EmployeeDashboard = () => {
   const user = useSelector(userDetailsInState);
@@ -115,12 +115,29 @@ const EmployeeDashboard = () => {
   };
 
   return (
-    <div>
-      <Typography variant="h4" fontWeight="bold" gutterBottom>
-        Welcome back, {user.name}
-      </Typography>
-      <div className="flex justify-between flex-row  gap-x my-8 gap-y-8">
-        <UpComingHolidays />
+    <div className="w-full flex flex-col gap-y-5">
+      <div className="w-full h-auto flex flex-row gap-x-5 items-start">
+        <div className="w-[72%] flex flex-col gap-y-5">
+          <div className="w-full relative overflow-clip rounded-2xl bg-primary flex items-center justify-between py-4.5 pr-5">
+            <div className="w-65.75 h-65.75 bg-white rounded-full absolute -left-36.25 -top-39 opacity-20" />
+            <div className="w-65.75 h-65.75 bg-white rounded-full absolute -left-32.25 -top-35 opacity-10 " />
+            <div className="flex flex-col gap-y-2 ml-8 text-background">
+              <h2 className="text-[32px] leading-10 font-semibold">
+                Hey! {user.name}
+              </h2>
+              <p className="text-white text-base opacity-80">
+                Check your Attendance
+              </p>
+            </div>
+
+            <img
+              alt="people group"
+              src={Icons.GROUP_PEOPLE}
+              className="w-33 h-31.5 object-contain"
+            />
+          </div>
+          <UpComingHolidays />
+        </div>
         <MarkAttendance
           inTime={checkInTime ?? null}
           outTime={checkOutTime ?? null}
@@ -128,7 +145,9 @@ const EmployeeDashboard = () => {
           handleCheckOut={onCheckOut}
         />
       </div>
-      <LeaveAnalytics leaves={leaves} />
+      <div className="w-full h-auto flex flex-row gap-x-5 items-start">
+        <LeaveAnalytics leaves={leaves} />
+      </div>
     </div>
   );
 };

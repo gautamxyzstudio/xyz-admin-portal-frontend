@@ -1,4 +1,3 @@
-import React from "react";
 import CustomBox from "../../components/CustomBox/CustomBox";
 import CustomButton from "../../components/CustomButton/CustomButton";
 import { Logout } from "@mui/icons-material";
