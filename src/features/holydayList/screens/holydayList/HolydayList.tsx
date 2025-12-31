@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import DataTable from "../../../../shared/components/dataTable/DataTable.js";
-import { Box, Button, Card,  Icon, Typography } from "@mui/material";
+
+import {Button, Icon, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import {
   useDeleteHolidayMutation,
@@ -12,6 +12,8 @@ import dayjs from "dayjs";
 import { useSelector } from "react-redux";
 import { userInState } from "../../../auth/authSlice";
 import type { GridColDef } from "@mui/x-data-grid";
+import DataTable from "../../../../shared/components/datatable/DataTable.tsx";
+import CustomBox from "../../../../components/CustomBox/CustomBox.js";
 
 const HolydayList = () => {
   const user = useSelector(userInState);
@@ -134,35 +136,18 @@ const HolydayList = () => {
   }
 
   return (
-    <>
-      <Box pt={3} pb={3}>
-        
-        <Card>
-          <Box
-            mx={2}
-            mt={-3}
-            py={3}
-            px={2}
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-            }}
-          >
-            <Typography variant="h5" color="white">
-              Holiday List
-            </Typography>
-            {(user?.user_type === "Admin" || user?.user_type === "Hr") && (
-              <Button
-                variant="contained"
-                onClick={() => navigate("/holidays/add")}
-              >
-                Add Holiday
-              </Button>
-            )}
-          </Box>
-
-          <div className="h-[70vh] mt-4 w-full">
-            <DataTable
+    <CustomBox customClasses="p-5 h-full">
+     
+        <p className="text-black mb-7 text-2xl font-semibold leading-8">Holiday List</p>
+        <DataTable
+          rows={holidays}
+          columns={columns}
+          isDataEmpty={holidays.length === 0}
+         tableHeight={365}
+          withPagination={false}
+          isLoading={isLoading}
+        />
+        {/* <DataTable
               columns={columns}
               rows={holidays}
               isDataEmpty={holidays.length === 0}
@@ -171,11 +156,9 @@ const HolydayList = () => {
               isLoading={isLoading}
               withPagination={false}
               tableHeightPercent={100}
-            />
-          </div>
-        </Card>
-      </Box>
-    </>
+            /> */}
+    
+    </CustomBox>
   );
 };
 

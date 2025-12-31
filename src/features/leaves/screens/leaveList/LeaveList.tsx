@@ -1,16 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import DashboardLayout from "../../../../examples/LayoutContainers/DashboardLayout/index.jsx";
-import DashboardNavbar from "../../../../examples/Navbars/DashboardNavbar/index.jsx";
-import { Card, Grid, Menu, MenuItem } from "@mui/material";
-import MDBox from "../../../../components/MDBox/MDBox";
-import MDButton from "../../../../components/MDButton/MDButton";
-import MDTypography from "../../../../components/MDTypography";
+
+import {
+  Card,
+  Grid,
+  Menu,
+  MenuItem,
+  Box,
+  Typography,
+  Button,
+} from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import DataTable from "../../../../shared/components/dataTable/DataTable.js";
+
 import { useDeleteLeaveMutation, useGetUserLeavesQuery } from "../../leavesApi";
 import { useSelector } from "react-redux";
 import { userInState } from "../../../auth/authSlice";
-import MenuIcon from "@mui/icons-material/Menu";
+
 import { toast } from "react-toastify";
 import { useLoadingWrapper } from "../../../../wrappers/loadingWrapper/LoadingWrapper.context.js";
 import {
@@ -21,6 +25,11 @@ import {
 import EmptyScreenView from "../../../../shared/components/EmptyScreenView/EmptyScreenView";
 import { useEffect } from "react";
 import type { GridColDef } from "@mui/x-data-grid";
+import CustomBox from "../../../../components/CustomBox/CustomBox.js";
+import DataTable from "../../../../shared/components/datatable/DataTable.js";
+import StatCard from "../../../../shared/components/StatCard/StatCard.tsx";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import { Icons } from "../../../../assets/myAssets/exporter.ts";
 
 const LeaveList = () => {
   const navigate = useNavigate();
@@ -29,14 +38,7 @@ const LeaveList = () => {
   const [deleteLeave] = useDeleteLeaveMutation();
 
   // Only make the query if user exists and has an id
-  const {
-    data: leaves,
-    isLoading,
-    error,
-    refetch,
-  } = useGetUserLeavesQuery(user?.id?.toString() ?? "", {
-    skip: !user?.id,
-  });
+  const { data: leaves, isLoading, error, refetch } = useGetUserLeavesQuery();
 
   // Handle query errors
   useEffect(() => {
@@ -46,7 +48,7 @@ const LeaveList = () => {
     }
   }, [error]);
 
-  const handleDeleteLeave = async (id: string) => {
+  const handleDeleteLeave = async (id: number) => {
     if (!id) {
       toast.error("Invalid leave ID");
       return;
@@ -54,7 +56,7 @@ const LeaveList = () => {
 
     try {
       setIsLoading(true);
-      const response = await deleteLeave(id).unwrap();
+      const response = await deleteLeave({ id: id }).unwrap();
       if (response) {
         toast.success("Leave deleted successfully");
         // Refetch the leaves data to update the list
@@ -86,11 +88,9 @@ const LeaveList = () => {
   if (!user?.id) {
     return (
       <>
-        <DashboardNavbar />
-        <MDBox pt={3} pb={3}>
-          <Grid container spacing={6}></Grid>
+        <Box pt={3} pb={3}>
           <Card>
-            <MDBox
+            <Box
               mx={2}
               mt={-3}
               py={3}
@@ -100,17 +100,17 @@ const LeaveList = () => {
               borderRadius="lg"
               coloredShadow="dark"
             >
-              <MDTypography variant="h6" color="white">
+              <Typography variant="h6" color="white">
                 Leaves
-              </MDTypography>
-            </MDBox>
+              </Typography>
+            </Box>
             <div className="h-[70vh] mt-4 w-full flex items-center justify-center">
-              <MDTypography variant="h6" color="text">
+              <Typography variant="h6" color="text">
                 Loading user information...
-              </MDTypography>
+              </Typography>
             </div>
           </Card>
-        </MDBox>
+        </Box>
       </>
     );
   }
@@ -119,11 +119,36 @@ const LeaveList = () => {
   if (error) {
     return (
       <>
-        <DashboardNavbar />
-        <MDBox pt={3} pb={3}>
+        <div className="flex gap-2.5">
+          <StatCard
+            title="Earn Leaves"
+            value="07"
+            iconSrc={Icons.EARN}
+            iconBgColor="bg-[#49B6791A]"
+          />
+          <StatCard
+            title="Casual Leave"
+            value="03"
+            iconSrc={Icons.CASUALLEAVE}
+            iconBgColor="bg-[#2F4CBA1A]"
+          />
+          <StatCard
+            title="Sick Leave"
+            value="09"
+            iconSrc={Icons.SICKLEAVE}
+            iconBgColor="bg-[#6CADDD1A]"
+          />
+          <StatCard
+            title="Sick Leave"
+            value="09"
+            iconSrc={Icons.UNPAIDLEAVE}
+            iconBgColor="bg-[#FF00001A]"
+          />
+        </div>
+        <Box pt={3} pb={3}>
           <Grid container spacing={6}></Grid>
           <Card>
-            <MDBox
+            <Box
               mx={2}
               mt={-3}
               py={3}
@@ -133,26 +158,26 @@ const LeaveList = () => {
               borderRadius="lg"
               coloredShadow="dark"
             >
-              <MDTypography variant="h6" color="white">
+              <Typography variant="h6" color="white">
                 Leaves
-              </MDTypography>
-            </MDBox>
+              </Typography>
+            </Box>
             <div className="h-[70vh] mt-4 w-full flex items-center justify-center">
-              <MDBox textAlign="center">
-                <MDTypography variant="h6" color="error" mb={2}>
+              <Box textAlign="center">
+                <Typography variant="h6" color="error" mb={2}>
                   Failed to load leaves
-                </MDTypography>
-                <MDButton
+                </Typography>
+                <Button
                   variant="contained"
                   color="primary"
                   onClick={() => refetch()}
                 >
                   Try Again
-                </MDButton>
-              </MDBox>
+                </Button>
+              </Box>
             </div>
           </Card>
-        </MDBox>
+        </Box>
       </>
     );
   }
@@ -164,7 +189,7 @@ const LeaveList = () => {
       width: 160,
       renderCell: (params) => {
         return (
-          <MDTypography
+          <Typography
             display="block"
             variant="h6"
             color="text"
@@ -173,7 +198,7 @@ const LeaveList = () => {
             {params?.row?.createdAt
               ? formatDateToReadable(params.row.createdAt)
               : "N/A"}
-          </MDTypography>
+          </Typography>
         );
       },
     },
@@ -183,14 +208,14 @@ const LeaveList = () => {
       width: 160,
       renderCell: (params) => {
         return (
-          <MDTypography
+          <Typography
             display="block"
             variant="h6"
             color="text"
             fontWeight="medium"
           >
             {params?.row?.title || "N/A"}
-          </MDTypography>
+          </Typography>
         );
       },
     },
@@ -200,7 +225,7 @@ const LeaveList = () => {
       width: 160,
       renderCell: (params) => {
         return (
-          <MDTypography
+          <Typography
             display="block"
             variant="h6"
             color="text"
@@ -209,7 +234,7 @@ const LeaveList = () => {
             {params?.row?.leave_duration
               ? getLeaveTypeTitle(params.row.leave_duration)
               : "N/A"}
-          </MDTypography>
+          </Typography>
         );
       },
     },
@@ -219,14 +244,14 @@ const LeaveList = () => {
       width: 250,
       renderCell: (params) => {
         return (
-          <MDTypography
+          <Typography
             display="block"
             variant="caption"
             color="text"
             fontWeight="medium"
           >
             {params?.row?.description || "N/A"}
-          </MDTypography>
+          </Typography>
         );
       },
     },
@@ -242,7 +267,7 @@ const LeaveList = () => {
             ? "success"
             : "error";
         return (
-          <MDTypography
+          <Typography
             display="block"
             variant="h6"
             sx={{
@@ -252,7 +277,7 @@ const LeaveList = () => {
             color={color}
           >
             {params?.row?.status || "N/A"}
-          </MDTypography>
+          </Typography>
         );
       },
     },
@@ -262,7 +287,7 @@ const LeaveList = () => {
       width: 160,
       renderCell: (params) => {
         return (
-          <MDTypography
+          <Typography
             display="block"
             variant="h6"
             color="text"
@@ -271,7 +296,7 @@ const LeaveList = () => {
             {params?.row?.start_date
               ? formatDateToReadable(params.row.start_date)
               : "N/A"}
-          </MDTypography>
+          </Typography>
         );
       },
     },
@@ -281,7 +306,7 @@ const LeaveList = () => {
       width: 160,
       renderCell: (params) => {
         return (
-          <MDTypography
+          <Typography
             display="block"
             variant="h6"
             color="text"
@@ -290,7 +315,7 @@ const LeaveList = () => {
             {params?.row?.end_date
               ? formatDateToReadable(params.row.end_date)
               : "N/A"}
-          </MDTypography>
+          </Typography>
         );
       },
     },
@@ -300,7 +325,7 @@ const LeaveList = () => {
       width: 160,
       renderCell: (params) => {
         return (
-          <MDTypography
+          <Typography
             display="block"
             variant="h6"
             color="text"
@@ -309,7 +334,7 @@ const LeaveList = () => {
             {params?.row?.start_time
               ? convertTo12HourFormat(params.row.start_time)
               : "N/A"}
-          </MDTypography>
+          </Typography>
         );
       },
     },
@@ -319,7 +344,7 @@ const LeaveList = () => {
       width: 160,
       renderCell: (params) => {
         return (
-          <MDTypography
+          <Typography
             display="block"
             variant="h6"
             color="text"
@@ -330,7 +355,7 @@ const LeaveList = () => {
                 ? "First"
                 : "Second"
               : "N/A"}
-          </MDTypography>
+          </Typography>
         );
       },
     },
@@ -372,11 +397,8 @@ const LeaveList = () => {
 
   return (
     <>
-      <DashboardNavbar />
-      <MDBox pt={3} pb={3}>
-        <Grid container spacing={6}></Grid>
-        <Card>
-          <MDBox
+      <CustomBox>
+        {/* <Box
             mx={2}
             mt={-3}
             py={3}
@@ -390,40 +412,49 @@ const LeaveList = () => {
             borderRadius="lg"
             coloredShadow="dark"
           >
-            <MDTypography variant="h6" color="white">
+            <Typography variant="h6" color="white">
               Leaves
-            </MDTypography>
-            <MDButton
+            </Typography>
+            <Button
               variant="contained"
               color="orange"
               onClick={() => navigate("/leaves/create")}
             >
               Request Leave
-            </MDButton>
-          </MDBox>
+            </Button>
+          </Box> */}
 
-          <div className="h-[70vh] mt-4 w-full">
-            {!isLoading && (!leaves?.data || leaves.data.length === 0) ? (
-              <EmptyScreenView
-                isDataEmpty={true}
-                emptyViewTitle="No Leave Found"
-                emptyViewSubTitle="Please request a leave"
-              />
-            ) : (
-              <DataTable
-                columns={columns}
-                rows={leaves?.data || []}
-                isDataEmpty={!leaves?.data || leaves.data.length === 0}
-                emptyViewTitle="No Leave Found"
-                emptyViewSubTitle="Please request a leave"
-                isLoading={isLoading}
-                withPagination={false}
-                tableHeightPercent={100}
-              />
-            )}
-          </div>
-        </Card>
-      </MDBox>
+        <div className="h-[70vh] mt-4 w-full">
+          {!isLoading && (!leaves?.data || leaves.data.length === 0) ? (
+            <EmptyScreenView
+              isDataEmpty={true}
+              emptyViewTitle="No Leave Found"
+              emptyViewSubTitle="Please request a leave"
+            />
+          ) : (
+            <DataTable
+              columns={columns}
+              rows={leaves?.data || []}
+              isDataEmpty={!leaves?.data || leaves.data.length === 0}
+              emptyViewTitle="No Leave Found"
+              emptyViewSubTitle="Please request a leave"
+              isLoading={isLoading}
+              withPagination={false}
+              tableHeight={100}
+            />
+            // <DataTable
+            //   columns={columns}
+            //   rows={leaves?.data || []}
+            //   isDataEmpty={!leaves?.data || leaves.data.length === 0}
+            //   emptyViewTitle="No Leave Found"
+            //   emptyViewSubTitle="Please request a leave"
+            //   isLoading={isLoading}
+            //   withPagination={false}
+            //   tableHeightPercent={100}
+            // />
+          )}
+        </div>
+      </CustomBox>
     </>
   );
 };

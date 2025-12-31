@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { memo, useCallback, useMemo } from 'react';
-import { TableVirtuoso, type TableComponents } from 'react-virtuoso';
+import { memo, useCallback, useMemo } from "react";
+import { TableVirtuoso, type TableComponents } from "react-virtuoso";
 import {
   Table,
   TableBody,
@@ -10,79 +10,79 @@ import {
   TableRow,
   Paper,
   TableFooter,
-  TablePagination,
-} from '@mui/material';
-import type { GridRenderCellParams, GridValidRowModel } from '@mui/x-data-grid';
-import { useDemoData } from '@mui/x-data-grid-generator';
-import type { IDataTableProps } from './DataTable.types';
-import EmptyScreenView from '../EmptyScreenView/EmptyScreenView';
-import React from 'react';
+} from "@mui/material";
+import type { GridRenderCellParams, GridValidRowModel } from "@mui/x-data-grid";
+import { useDemoData } from "@mui/x-data-grid-generator";
+import type { IDataTableProps } from "./DataTable.types";
+import React from "react";
+ import EmptyScreenView from "../EmptyScreenView/EmptyScreenView";
 
 const DataTable: React.FC<IDataTableProps> = ({
   rows,
   columns,
   isLoading,
-  tableHeightPercent = 100,
+  tableHeight = 100,
   headerView,
   withPagination,
-  onPressPageChange,
-  totalCount,
-  page,
+  paginationControls,
   emptyViewSubTitle,
   emptyViewTitle,
   isDataEmpty,
-  error}) => {
+  error,
+  customStyles,
+  illustrationStyes,
+  onRowClick,
+}) => {
   const { data } = useDemoData({
     rowLength: 10,
     maxColumns: 9,
-    dataSet: 'Employee',
+    dataSet: "Employee",
   });
 
   const tableContainerStyles = useMemo(() => {
     return {
-      boxShadow: 'none',
-      backgroundColor: '#fff',
-      height: `${tableHeightPercent}%`,
-      scrollbarWidth: 'none',
-      '&::-webkit-scrollbar': {
-        display: 'none',
+      boxShadow: "none",
+      backgroundColor: "#fff",
+      height: `${tableHeight}px !important`,
+      minHeight: "220px",
+      scrollbarWidth: "none",
+      "&::-webkit-scrollbar": {
+        display: "none",
       },
     };
-  }, [tableHeightPercent]);
+  }, [tableHeight]);
 
   const tableStyles = useMemo(() => {
     return {
-      boxShadow: 'none',
-      borderCollapse: 'separate',
-      position: 'sticky',
-      tableLayout: 'fixed',
-      width: '100%',
+      boxShadow: "none",
+      borderCollapse: "separate",
+      position: "sticky",
+      tableLayout: "fixed",
+      width: "100%",
     };
   }, []);
 
   const rowStyles = useMemo(() => {
-    return { border: 'none' };
+    return { borderBottomColor: "#0D07011F", padding: "10px" };
   }, []);
 
   const tableCellStyles = useMemo(() => {
     return {
-      backgroundColor: '#FAFAFA',
-      color: '#868686',
-      borderRight: '1px solid #EBEBEB',
-      height: 10,
-      '.MuiTableCell-head': {
-        padding: '8px',
-      },
-      borderBottomColor: '#EBEBEB',
+      color: "#0F0700",
+      fontSize: "14px",
+      fontWeight: 400,
+      border: 0,
     };
   }, []);
 
   const tableHeadStyles = useMemo(() => {
     return {
-      display: 'table-header-group',
-      padding: '1rem 1rem 0 1rem',
-      borderRadius: '0.75rem 0.75rem 0 0',
-      backgroundColor: '#FAFAFA',
+      display: "table-header-group",
+      top: "-2px !important",
+      backgroundColor: "#F8F8F8",
+      "& .MuiTableCell-root": {
+        padding: "10px",
+      },
     };
   }, []);
 
@@ -101,16 +101,29 @@ const DataTable: React.FC<IDataTableProps> = ({
     )),
     TableRow,
     TableBody: React.forwardRef<HTMLTableSectionElement>((props, ref) => (
-      <TableBody {...props} ref={ref} />
+      <TableBody
+        {...props}
+        ref={ref}
+        sx={{
+          "& .MuiTableRow-root": {
+            borderBottom: "1px solid #F8F8F8 ",
+            borderRadius: "8px",
+            cursor: onRowClick ? "pointer" : "unset",
+            "&:hover": {
+              backgroundColor: "#F8F8F8",
+            },
+          },
+        }}
+      />
     )),
     TableFoot: React.forwardRef<HTMLTableSectionElement>((props, ref) => (
       <TableFooter
         sx={{
-          position: 'relative !important',
-          display: 'flex !important',
-          width: '100%',
-          justifyContent: 'center',
-          alignItems: 'center',
+          position: "relative !important",
+          display: "flex !important",
+          width: "100%",
+          justifyContent: "center",
+          alignItems: "center",
         }}
         {...props}
         ref={ref}
@@ -124,20 +137,21 @@ const DataTable: React.FC<IDataTableProps> = ({
         {columns.map((column, _index) => {
           return (
             <TableCell
-              className="bg-white"
               style={{
-                position: column.headerName === 'Action' ? 'sticky' : 'unset',
-                right: column.headerName === 'Action' ? 0 : 'unset',
-                zIndex: column.headerName === 'Action' ? 1 : 0.5,
-                cursor: column.headerName === 'Action' ? 'pointer' : 'unset',
-                backgroundColor:
-                  column.headerName === 'Action' ? '#fafafa' : '#fff',
+                position: column.headerName === "Action" ? "sticky" : "unset",
+                right: column.headerName === "Action" ? 0 : "unset",
+                zIndex: column.headerName === "Action" ? 1 : 0.5,
+                cursor: column.headerName === "Action" ? "pointer" : "unset",
               }}
               key={_index}
-              sx={{ ...rowStyles, width: column.width }}
+              sx={{
+                ...rowStyles,
+                width: column.width,
+              }}
               align="left"
+              onClick={() => onRowClick?.(row as any,)} // ✅ row click trigger
             >
-              {column.field === 'sNum' ? (
+              {column.field === "sNum" ? (
                 <span>{index + 1}</span>
               ) : (
                 <>
@@ -151,7 +165,7 @@ const DataTable: React.FC<IDataTableProps> = ({
         })}
       </>
     ),
-    [columns, rowStyles]
+    [columns, rowStyles, onRowClick]
   );
 
   const rowContentLoading = useCallback(
@@ -186,11 +200,21 @@ const DataTable: React.FC<IDataTableProps> = ({
             align="left"
             style={{
               width: column.width,
-              position: column.headerName === 'Action' ? 'sticky' : 'unset',
-              right: column.headerName === 'Action' ? 0 : 'unset',
-              zIndex: column.headerName === 'Action' ? 1 : 0.5,
+              position: column.headerName === "Action" ? "sticky" : "unset",
+              right: column.headerName === "Action" ? 0 : "unset",
+              zIndex: column.headerName === "Action" ? 1 : 0.5,
             }}
-            sx={tableCellStyles}
+            sx={{
+              ...tableCellStyles,
+              "&:first-of-type": {
+                borderTopLeftRadius: "8px",
+                borderBottomLeftRadius: "8px",
+              },
+              "&:last-of-type": {
+                borderTopRightRadius: "8px",
+                borderBottomRightRadius: "8px",
+              },
+            }}
           >
             {column.headerName}
           </TableCell>
@@ -201,8 +225,8 @@ const DataTable: React.FC<IDataTableProps> = ({
   );
 
   return (
-    <div className="w-full h-full bg-white border overflow-hidden border-[#dbdbdb] rounded-lg">
-      <div className="w-full mb-4">{headerView}</div>
+    <div className={`w-full h-full flex flex-col ${customStyles}`}>
+      <div className="w-full">{headerView}</div>
       {!isLoading && rows?.length === 0 ? (
         <div className="h-full flex justify-center items-center">
           <EmptyScreenView
@@ -210,6 +234,8 @@ const DataTable: React.FC<IDataTableProps> = ({
             emptyViewSubTitle={emptyViewSubTitle}
             error={error}
             isDataEmpty={isDataEmpty}
+            illustrationStyes={illustrationStyes}
+           
           />
         </div>
       ) : (
@@ -221,23 +247,7 @@ const DataTable: React.FC<IDataTableProps> = ({
           itemContent={isLoading ? rowContentLoading : rowContent}
         />
       )}
-      {withPagination && !isDataEmpty && onPressPageChange && (
-        <TablePagination
-          className="stick"
-          component="div"
-          sx={{
-            '.MuiTablePagination-toolbar': {
-              minHeight: '40px',
-            },
-          }}
-          height={32}
-          count={totalCount ?? 0}
-          page={page ? page - 1 : 0}
-          rowsPerPage={10}
-          rowsPerPageOptions={[]}
-          onPageChange={onPressPageChange}
-        />
-      )}
+      {withPagination && !isDataEmpty && paginationControls}
     </div>
   );
 };
