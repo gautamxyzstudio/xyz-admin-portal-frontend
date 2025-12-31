@@ -1,37 +1,30 @@
-import { useState } from 'react';
-import { Grid } from '@mui/material';
-import { Add } from '@mui/icons-material';
-import MDBox from '../../../../components/MDBox/MDBox';
-import MDTypography from '../../../../components/MDTypography/index';
-import MDButton from '../../../../components/MDButton/MDButton';
-import { useGetDocumentsByUserQuery } from '../../documentsApi';
-import ActivityIndicator from '../../../../shared/components/activityIndicator/ActivityIndicator';
-import DashboardLayout from '../../../../examples/LayoutContainers/DashboardLayout/index.jsx';
+import { useState } from "react";
+import { useSelector } from "react-redux";
+import { userInState } from "../../../auth/authSlice";
+import { useGetDocumentsByUserQuery } from "../../documentsApi";
+import ActivityIndicator from "../../../../shared/components/activityIndicator/ActivityIndicator";
+
 import {
-  DocumentCard,
   UploadDialog,
   PreviewDialog,
   EmptyState,
-} from '../employee/components';
-import type { IDocumentResponse } from '../../documents.types';
-import { useSelector } from 'react-redux';
-import { userInState } from '../../../auth/authSlice';
+} from "../employee/components";
 
-// Add props for userId and canDelete
+import type { IDocumentResponse } from "../../documents.types";
+import { Icons } from "../../../../assets/myAssets/exporter";
+import CustomButton from "../../../../components/CustomButton/CustomButton";
+
 interface OwnDocsProps {
   userId?: number;
   canDelete?: boolean;
   employeeName?: string;
 }
 
-const OwnDocs: React.FC<OwnDocsProps> = ({
-  userId,
-  canDelete = false,
-  employeeName,
-}) => {
+const OwnDocs: React.FC<OwnDocsProps> = ({ userId, employeeName }) => {
+  const user = useSelector(userInState);
+
   const [openUploadDialog, setOpenUploadDialog] = useState(false);
   const [openPreviewDialog, setOpenPreviewDialog] = useState(false);
-  const user = useSelector(userInState);
   const [previewDocument, setPreviewDocument] =
     useState<IDocumentResponse | null>(null);
 
@@ -39,8 +32,8 @@ const OwnDocs: React.FC<OwnDocsProps> = ({
 
   const {
     data: documentsData,
-    isFetching: isLoadingDocuments,
-    error: documentsError,
+    isFetching: isLoading,
+    error,
   } = useGetDocumentsByUserQuery(effectiveUserId ?? 0, {
     skip: !effectiveUserId,
   });
@@ -50,95 +43,135 @@ const OwnDocs: React.FC<OwnDocsProps> = ({
     setOpenPreviewDialog(true);
   };
 
-  if (isLoadingDocuments) {
+  /* ---------------- Loading ---------------- */
+  if (isLoading) {
     return (
-      <MDBox
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="400px"
-      >
+      <div className="flex justify-center items-center min-h-[300px]">
         <ActivityIndicator size={80} />
-      </MDBox>
+      </div>
     );
   }
 
-  if (documentsError) {
+  /* ---------------- Error ---------------- */
+  if (error) {
     return (
-      <MDBox
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="400px"
-      >
-        <MDTypography variant="h6" color="error">
+      <div className="flex justify-center items-center min-h-75">
+        <p className="text-red-500 font-medium">
           Failed to load documents. Please try again.
-        </MDTypography>
-      </MDBox>
+        </p>
+      </div>
     );
   }
 
   return (
-    <>
-      {/* Header */}
-      <MDBox
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        mb={3}
-      >
-        <MDTypography variant="h4" fontWeight="bold">
-          {employeeName ? `${employeeName}'s Documents` : 'My Documents'}
-        </MDTypography>
-        {!userId && (
-          <MDButton
-            variant="outlined"
-            color="info"
-            sx={{ color: '#FF7312', borderColor: '#FF7312' }}
-            startIcon={<Add />}
-            onClick={() => setOpenUploadDialog(true)}
-          >
-            Upload Document
-          </MDButton>
-        )}
-      </MDBox>
+    <div className="p-6 bg-white rounded-xl">
+      {/* ---------------- Upload Box  ---------------- */}
+      <h3 className="text-2xl font-semibold leading-8">Documents</h3>
+      {!userId && (
+        <div className="border border-dashed border-[#787571] rounded-xl p-8 mb-6 mt-4">
+          <div className="flex items-center gap-8">
+            {/* <img src="/upload-docs.svg" alt="upload" className="w-40" /> */}
+            <img src={Icons.UPLOADDOCUMENTS} alt="" />
 
-      {/* Documents Grid */}
-      {documentsData?.data && documentsData.data.length > 0 ? (
-        <Grid container spacing={3}>
-          {documentsData.data.map((document) => (
-            <Grid item xs={12} sm={6} md={4} lg={3} key={document.id}>
-              <DocumentCard
-                document={document}
-                onPreview={handlePreviewDocument}
-                canDelete={canDelete}
+            <div>
+              <h3 className="text-lg font-semibold">
+                Choose a file or drag & drop it here
+              </h3>
+              <p className="text-sm text-gray-500 mt-1">
+                Supports: PNG, JPG, JPEG, WEBP up to 50MB
+              </p>
+              <CustomButton
+                onClick={() => setOpenUploadDialog(true)}
+                label="Upload File"
+                buttonStyle="primaryOutline"
+                customStyles="mt-3 "
               />
-            </Grid>
-          ))}
-        </Grid>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------- My Documents ---------------- */}
+      <h3 className="text-2xl font-semibold leading-8 mb-4">
+        {employeeName ? `${employeeName}'s Documents` : "My Documents"}
+      </h3>
+
+      {documentsData?.data?.length ? (
+        <div className="space-y-3">
+          {documentsData.data.map((doc: IDocumentResponse) => {
+            const file = doc.attributes.document.data.attributes;
+
+            return (
+              <div
+                key={doc.id}
+                className="flex items-center justify-between bg-background rounded-xl px-4 py-3"
+              >
+                {/* Left */}
+                <div className="flex items-center gap-4   relative">
+                  <span className="bg-orange-500 text-white text-xs font-semibold px-0.5 py-0.4 rounded absolute top-8 -left-3 ">
+                    {file.ext.toUpperCase()}
+                  </span>
+                  <img className="w-12" src={Icons.FILE} alt="" />
+
+                  <div>
+                    <p className="text-sm font-medium">
+                      {doc.attributes.documentName}
+                    </p>
+                    <p className=" flex items-center gap-2 text-xs text-gray-500 mt-1">
+                      • {(file.size / 1024).toFixed(1)} MB 
+                      <img src={Icons.TICK} alt="" />
+                       Uploaded{" "}
+                      {new Date(doc.attributes.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Right */}
+                <div className="flex items-center gap-4 text-orange-500">
+                  <img
+                  className="cursor-pointer"
+                    onClick={() =>
+                      window.open(
+                        `${import.meta.env.VITE_API_BASE_URL}${file.url}`,
+                        "_blank"
+                      )
+                    }
+                    src={Icons.DOWNLOAD}
+                  />
+
+                  <img
+                  className="cursor-pointer"
+                    onClick={() => handlePreviewDocument(doc)}
+                    src={Icons.VIEW}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
       ) : (
         <EmptyState
           onUploadClick={() => setOpenUploadDialog(true)}
           showUploadButton={!userId}
           subtitle={
-            userId ? 'No documents found for this employee.' : undefined
+            userId ? "No documents found for this employee." : undefined
           }
         />
       )}
 
-      {/* Upload Dialog */}
+      {/* ---------------- Upload Dialog ---------------- */}
       <UploadDialog
         open={openUploadDialog}
         onClose={() => setOpenUploadDialog(false)}
       />
 
-      {/* Preview Dialog */}
+      {/* ---------------- Preview Dialog ---------------- */}
       <PreviewDialog
         open={openPreviewDialog}
         onClose={() => setOpenPreviewDialog(false)}
         document={previewDocument}
       />
-    </>
+    </div>
   );
 };
 

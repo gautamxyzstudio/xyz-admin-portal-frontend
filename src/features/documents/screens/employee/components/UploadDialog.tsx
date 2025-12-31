@@ -1,227 +1,157 @@
-import { useState } from 'react';
-import { styled } from '@mui/material/styles';
-import {
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-} from '@mui/material';
-import { CloudUpload } from '@mui/icons-material';
-import MDBox from '../../../../../components/MDBox/MDBox';
-import MDTypography from '../../../../../components/MDTypography/index';
-import MDButton from '../../../../../components/MDButton/MDButton';
-import { useAddNewDocumentMutation } from '../../../documentsApi';
-import { useUploadFileMutation } from '../../../../../shared/api/sharedApi';
-import type { ICustomErrorResponse } from '../../../../../state/types';
-import ActivityIndicator from '../../../../../shared/components/activityIndicator/ActivityIndicator';
-import { userInState } from '../../../../auth/authSlice';
-import { useSelector } from 'react-redux';
-import { useSnackBarContext } from '../../../../../wrappers/snackbarContext/useSnackBarContext';
+import { useState, useRef } from "react";
 
-const VisuallyHiddenInput = styled('input')({
-  clip: 'rect(0 0 0 0)',
-  clipPath: 'inset(50%)',
-  height: 1,
-  overflow: 'hidden',
-  position: 'absolute',
-  bottom: 0,
-  left: 0,
-  whiteSpace: 'nowrap',
-  width: 1,
-});
+import { useSelector } from "react-redux";
+import { userInState } from "../../../../auth/authSlice";
+import { useAddNewDocumentMutation } from "../../../documentsApi";
+import { useUploadFileMutation } from "../../../../../shared/api/sharedApi";
+import { useSnackBarContext } from "../../../../../wrappers/snackbarContext/useSnackBarContext";
+import ActivityIndicator from "../../../../../shared/components/activityIndicator/ActivityIndicator";
+import type { ICustomErrorResponse } from "../../../../../state/types";
+import LinearGradient from "../../../../../components/LinearGradient/LinearGradient";
+import { MdOutlineFileUpload } from "react-icons/md";
 
-interface UploadDialogProps {
+interface Props {
   open: boolean;
   onClose: () => void;
 }
 
-const UploadDialog: React.FC<UploadDialogProps> = ({ open, onClose }) => {
-  const [documentName, setDocumentName] = useState('');
+const UploadDialog = ({ open, onClose }: Props) => {
   const user = useSelector(userInState);
+  const { displaySnackbar } = useSnackBarContext();
+
+  const [documentName, setDocumentName] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const { displaySnackbar } = useSnackBarContext();
   const [uploadFile, { isLoading: isUploading }] = useUploadFileMutation();
-  const [addDocument, { isLoading: isAddingDocument }] =
-    useAddNewDocumentMutation();
+  const [addDocument, { isLoading: isAdding }] = useAddNewDocumentMutation();
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
-    }
+  if (!open) return null;
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
   };
 
   const handleUpload = async () => {
-    if (!selectedFile || !documentName.trim()) {
-      displaySnackbar('error', 'Please select a file and enter document name');
+    if (!documentName.trim() || !selectedFile) {
+      displaySnackbar("error", "Please enter name & select file");
       return;
     }
 
-    if (typeof user?.id !== 'number') {
-      displaySnackbar('error', 'User information is missing. Cannot upload document.');
+    if (!user?.id) {
+      displaySnackbar("error", "User information not available");
       return;
     }
 
     try {
-      // Upload file first
       const formData = new FormData();
-      formData.append('files', selectedFile);
-      const uploadResponse = await uploadFile(formData).unwrap();
+      formData.append("files", selectedFile);
 
-      // Create document with uploaded file ID
-      const documentData = {
+      const uploadRes = await uploadFile(formData).unwrap();
+
+      await addDocument({
         data: {
           documentName: documentName.trim(),
-          document: uploadResponse[0].id.toString(),
+          document: uploadRes[0].id.toString(),
           user: user.id,
         },
-      };
+      }).unwrap();
 
-      await addDocument(documentData).unwrap();
-
-      displaySnackbar('success', 'Document uploaded successfully');
+      displaySnackbar("success", "Document uploaded successfully");
       handleClose();
-    } catch (error) {
-      console.error('Upload error:', error);
-      const errorResponse = error as ICustomErrorResponse;
-      displaySnackbar(
-        'error',
-        errorResponse.message || 'Failed to upload document'
-      );
+    } catch (err) {
+      const error = err as ICustomErrorResponse;
+      displaySnackbar("error", error.message || "Upload failed");
     }
   };
 
   const handleClose = () => {
-    setDocumentName('');
+    setDocumentName("");
     setSelectedFile(null);
     setPreviewUrl(null);
     onClose();
   };
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        <MDTypography variant="h6" fontWeight="bold">
-          Upload New Document
-        </MDTypography>
-      </DialogTitle>
-      <DialogContent>
-        <MDBox mt={2}>
-          <TextField
-            fullWidth
-            label="Document Name"
-            value={documentName}
-            onChange={(e) => setDocumentName(e.target.value)}
-            placeholder="Enter document name"
-            margin="normal"
-          />
+    <div className="fixed  inset-0 z-999 bg-black/40 flex items-center justify-center">
+      <div className="bg-white w-full max-w-md rounded-xl p-6">
+        <h2 className="text-lg font-semibold mb-1">Upload New Document</h2>
+        <LinearGradient customClasses="mb-3" />
+        <label className="text-[#797571] text-base font-normal leading-6.5">
+          {" "}
+          Documents Name
+        </label>
+        <input
+          type="text"
+          placeholder=" Name"
+          value={documentName}
+          onChange={(e) => setDocumentName(e.target.value)}
+          className="w-full border border-[#CFCDCC] rounded-lg px-3 py-2 mb-4 text-[#797571] outline-0"
+        />
+        <label className="text-[#797571] text-base font-normal leading-6.5">
+          {" "}
+          Upload File
+        </label>
+        <label className="justify-between border-2 border-dashed border-[#797571] rounded-lg p-1 flex flex-col mt-1">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <MdOutlineFileUpload />
+              <span className="text-sm text-gray-500">
+                {selectedFile ? selectedFile.name : "upload document"}
+              </span>
+            </div>
 
-          <MDBox mt={3} textAlign="center">
-            <Button
-              component="label"
-              variant="outlined"
-              color="info"
-              sx={{
-                color: '#FF7312',
-                borderColor: '#FF7312',
-                '&:hover': {
-                  borderColor: '#FF7312',
-                },
-              }}
-              startIcon={<CloudUpload />}
+            {/* hidden input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              hidden
+              onChange={handleFileSelect}
+            />
+ 
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="text-base   p-2 rounded-md bg-[#F7F7F7] text-[#797571] font-bold"
             >
               Select File
-              <VisuallyHiddenInput
-                type="file"
-                onChange={handleFileSelect}
-                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
-              />
-            </Button>
+            </button>
+          </div>
+        </label>
 
-            {selectedFile && (
-              <MDBox>
-                <MDTypography variant="body2" color="text">
-                  Selected: {selectedFile.name}
-                </MDTypography>
-                <MDTypography variant="caption" color="text">
-                  Size: {formatFileSize(selectedFile.size)}
-                </MDTypography>
-              </MDBox>
-            )}
+        {previewUrl && selectedFile?.type.startsWith("image/") && (
+          <img
+            src={previewUrl}
+            alt="preview"
+            className="mt-4 max-h-40 mx-auto rounded"
+          />
+        )}
 
-            {previewUrl && selectedFile?.type.startsWith('image/') && (
-              <MDBox mt={2}>
-                <img
-                  src={previewUrl}
-                  alt="Preview"
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '200px',
-                    objectFit: 'contain',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
-                  }}
-                />
-              </MDBox>
+        <div className="flex  gap-3 mt-6">
+          <button
+            onClick={handleUpload}
+            disabled={isUploading || isAdding}
+            className="px-4 py-2 border bg-[#FF7300] rounded-lg text-white w-37.5"
+          >
+            {isUploading || isAdding ? (
+              <ActivityIndicator size={18} />
+            ) : (
+              "Upload"
             )}
-          </MDBox>
-        </MDBox>
-      </DialogContent>
-      <DialogActions>
-        <MDButton
-          onClick={handleClose}
-          color="secondary"
-          variant="outlined"
-          sx={{
-            color: '#FF7312',
-            borderColor: '#FF7312',
-            '&:hover': {
-              borderColor: '#FF7312',
-            },
-          }}
-        >
-          Cancel
-        </MDButton>
-        <MDButton
-          onClick={handleUpload}
-          variant="outlined"
-          color="info"
-          sx={{
-            color: '#FF7312',
-            borderColor: '#FF7312',
-            '&:hover': {
-              borderColor: '#FF7312',
-            },
-          }}
-          disabled={
-            !selectedFile ||
-            !documentName.trim() ||
-            isUploading ||
-            isAddingDocument
-          }
-        >
-          {isUploading || isAddingDocument ? (
-            <ActivityIndicator size={20} />
-          ) : (
-            'Upload'
-          )}
-        </MDButton>
-      </DialogActions>
-    </Dialog>
+          </button>
+          <button
+            onClick={handleClose}
+            className="px-4 py-2  bg-[#F7F7F7] rounded-lg text-[#797571] w-37.5 font-bold"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 

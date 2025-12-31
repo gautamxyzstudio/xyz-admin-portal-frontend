@@ -110,7 +110,7 @@ const DataTable: React.FC<IDataTableProps> = ({
             borderRadius: "8px",
             cursor: onRowClick ? "pointer" : "unset",
             "&:hover": {
-              backgroundColor: "#F8F8F8",
+              backgroundColor: "#F8F8F8", 
             },
           },
         }}

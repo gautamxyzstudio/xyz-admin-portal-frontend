@@ -28,7 +28,6 @@ import type { GridColDef } from "@mui/x-data-grid";
 import CustomBox from "../../../../components/CustomBox/CustomBox.js";
 import DataTable from "../../../../shared/components/datatable/DataTable.js";
 import StatCard from "../../../../shared/components/StatCard/StatCard.tsx";
-import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import { Icons } from "../../../../assets/myAssets/exporter.ts";
 
 const LeaveList = () => {
@@ -77,7 +76,6 @@ const LeaveList = () => {
       } else if (error?.data?.message) {
         errorMessage = error.data.message;
       }
-
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);

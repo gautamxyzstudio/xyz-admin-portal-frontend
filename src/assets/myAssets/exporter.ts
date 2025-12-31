@@ -9,6 +9,11 @@ import NOTIFICATION from "./icons/notification.svg";
 import OUTLOOK from "./icons/outlook.svg";
 import GROUP_PEOPLE from "./icons/groupPeople.svg";
 import OFFICE from "./icons/office.svg";
+import  UPLOADDOCUMENTS from "../images/uploadDocument.svg"
+import DOWNLOAD from "./icons/download.svg"
+import VIEW from "./icons/view.svg"
+import FILE from "./icons/file.svg"
+import TICK from "./icons/tick.svg"
 
 export const Icons = {
   CROSS_ICON,
@@ -21,6 +26,11 @@ export const Icons = {
   UNPAIDLEAVE,
   GROUP_PEOPLE,
   OFFICE,
+  UPLOADDOCUMENTS,
+  DOWNLOAD,
+  VIEW,
+  FILE,
+  TICK
 };
 
 // Images

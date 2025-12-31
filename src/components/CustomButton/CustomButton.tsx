@@ -5,12 +5,14 @@ interface CustomButtonProps {
   icon?: React.ReactNode;
   onClick?: () => void;
   disabled?: boolean;
-  buttonStyle?: "primary" | "secondary" | "disabled";
+  buttonStyle?: "primary" | "secondary" | "disabled" | "primaryOutline";
   customStyles?: string;
   type?: "button" | "reset" | "submit";
 }
 
-const getButtonStyles = (style: "primary" | "secondary" | "disabled") => {
+const getButtonStyles = (
+  style: "primary" | "secondary" | "disabled" | "primaryOutline"
+) => {
   switch (style) {
     case "primary":
       return `bg-primary text-white cursor-pointer`;
@@ -18,6 +20,8 @@ const getButtonStyles = (style: "primary" | "secondary" | "disabled") => {
       return `bg-background text-black-50 cursor-pointer`;
     case "disabled":
       return `bg-gray-300 text-white cursor-not-allowed`;
+    case "primaryOutline":
+      return `bg-white text-primary border border-2   cursor-pointer`;
   }
 };
 const CustomButton: React.FC<CustomButtonProps> = ({

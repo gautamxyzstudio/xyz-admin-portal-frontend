@@ -1,138 +1,78 @@
-import { Card, CardContent, IconButton, Chip } from '@mui/material';
-import { Visibility, Download, Delete } from '@mui/icons-material';
-import MDBox from '../../../../../components/MDBox/MDBox';
-import MDTypography from '../../../../../components/MDTypography/index';
-import type { IDocumentResponse } from '../../../documents.types';
-import { useDeleteDocumentMutation } from '../../../documentsApi';
-import { toast } from 'react-toastify';
 
-interface DocumentCardProps {
+import type { IDocumentResponse } from "../../../documents.types";
+import { useDeleteDocumentMutation } from "../../../documentsApi";
+import { toast } from "react-toastify";
+
+interface Props {
   document: IDocumentResponse;
-  onPreview: (document: IDocumentResponse) => void;
+  onPreview: (doc: IDocumentResponse) => void;
   canDelete?: boolean;
 }
 
-const DocumentCard: React.FC<DocumentCardProps> = ({
-  document,
-  onPreview,
-  canDelete,
-}) => {
-  const [deleteDocument, { isLoading: isDeleting }] =
-    useDeleteDocumentMutation();
+const DocumentCard = ({ document, onPreview, canDelete }: Props) => {
+  const [deleteDocument, { isLoading }] = useDeleteDocumentMutation();
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const getFileIcon = (mimeType: string) => {
-    if (mimeType.startsWith('image/')) return '🖼️';
-    if (mimeType.includes('pdf')) return '📄';
-    if (mimeType.includes('word') || mimeType.includes('document')) return '📝';
-    if (mimeType.includes('excel') || mimeType.includes('spreadsheet'))
-      return '📊';
-    return '📎';
-  };
+  const attrs = document.attributes.document.data.attributes;
 
   const handleDelete = async () => {
     try {
       await deleteDocument(document.id).unwrap();
-      toast.success('Document deleted successfully');
-    } catch (error) {
-      toast.error('Failed to delete document');
+      toast.success("Document deleted");
+    } catch {
+      toast.error("Delete failed");
     }
   };
 
+  const getIcon = () => {
+    if (attrs.mime.startsWith("image")) return "🖼️";
+    if (attrs.mime.includes("pdf")) return "📄";
+    if (attrs.mime.includes("word")) return "📝";
+    if (attrs.mime.includes("excel")) return "📊";
+    return "📎";
+  };
+
   return (
-    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <CardContent sx={{ flexGrow: 1, p: 2 }}>
-        <MDBox display="flex" alignItems="center" mb={1}>
-          <span style={{ fontSize: '2rem', marginRight: '8px' }}>
-            {getFileIcon(document.attributes.document.data.attributes.mime)}
-          </span>
-          <MDTypography variant="h6" fontWeight="medium" noWrap>
+    <div className="bg-white rounded-lg p-4 flex justify-between items-center shadow-sm">
+      <div className="flex items-center gap-3">
+        <span className="text-2xl">{getIcon()}</span>
+
+        <div>
+          <p className="font-medium text-sm">
             {document.attributes.documentName}
-          </MDTypography>
-        </MDBox>
+          </p>
 
-        <MDBox mb={0.5}>
-          <Chip
-            sx={{ color: '#FF7312', borderColor: '#FF7312' }}
-            label={document.attributes.document.data.attributes.ext.toUpperCase()}
-            size="small"
-            color="primary"
-            variant="outlined"
-          />
-        </MDBox>
+          <p className="text-xs text-gray-500">
+            {attrs.ext.toUpperCase()} • {(attrs.size / 1024).toFixed(2)} MB
+          </p>
+        </div>
+      </div>
 
-        <MDBox mb={0.5}>
-          <MDTypography variant="caption" color="text">
-            Size:{' '}
-            {formatFileSize(
-              document.attributes.document.data.attributes.size * 1024
-            )}
-          </MDTypography>
-        </MDBox>
+      <div className="flex items-center gap-3 text-[#FF7312]">
+        <button onClick={() => onPreview(document)}>👁</button>
+    
 
-        <MDBox mb={0.5}>
-          <MDTypography variant="caption" color="text">
-            Uploaded: {formatDate(document.attributes.createdAt)}
-          </MDTypography>
-        </MDBox>
+        <button
+          onClick={() =>
+            window.open(
+              `${import.meta.env.VITE_API_BASE_URL}${attrs.url}`,
+              "_blank"
+            )
+          }
+        >
+          ⬇
+        </button>
 
-        <MDBox display="flex" gap={1} mt="auto">
-          <IconButton
-            sx={{ color: '#FF7312' }}
-            size="small"
-            color="primary"
-            onClick={() => onPreview(document)}
-            title="Preview"
+        {canDelete && (
+          <button
+            onClick={handleDelete}
+            disabled={isLoading}
+            className="text-red-500"
           >
-            <Visibility />
-          </IconButton>
-          <IconButton
-            size="small"
-            color="secondary"
-            onClick={() =>
-              window.open(
-                // @ts-ignore
-                `${import.meta.env.VITE_API_BASE_URL}${
-                  document.attributes.document.data.attributes.url
-                }`,
-                '_blank'
-              )
-            }
-            title="Download"
-          >
-            <Download sx={{ color: '#FF7312' }} />
-          </IconButton>
-          {canDelete && (
-            <IconButton
-              size="small"
-              color="error"
-              onClick={handleDelete}
-              title="Delete"
-              disabled={isDeleting}
-            >
-              <Delete />
-            </IconButton>
-          )}
-        </MDBox>
-      </CardContent>
-    </Card>
+            🗑
+          </button>
+        )}
+      </div>
+    </div>
   );
 };
 
