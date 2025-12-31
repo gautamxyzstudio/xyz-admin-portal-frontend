@@ -22,7 +22,7 @@ export type IRegisterUserResponse = {
     provider: string;
     confirmed: boolean;
     blocked: boolean;
-    user_type: 'Admin' | 'Employee' | 'Hr' | 'Seo';
+    user_type: "Admin" | "Employee" | "Hr" | "Seo";
     createdAt: string;
     updatedAt: string;
   };
@@ -126,4 +126,14 @@ export interface IEmployeeFromResponse {
 export type IUpdateLeaveBalanceArgs = {
   leave_balance: number;
   unpaid_leave_balance: number;
+};
+
+export type ILeaveBalance = {
+  data: {
+    year: number;
+    el_balance: number;
+    cl_balance: number;
+    sl_balance: number;
+    unpaid_balance: number;
+  };
 };

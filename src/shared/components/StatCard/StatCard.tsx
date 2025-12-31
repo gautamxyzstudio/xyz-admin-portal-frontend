@@ -1,13 +1,16 @@
-import { Typography } from "@mui/material";
 import React from "react";
 import CustomBox from "../../../components/CustomBox/CustomBox";
 
 interface StatCardProps {
   title: string;
-  value: string | number;
+  value: string;
   iconSrc?: string;
   bgColor?: string;
   iconBgColor?: string;
+  subTitle?: string;
+  subTitleColor?: string;
+  subTitleBgColor?: string;
+  dashboard?: boolean;
 }
 
 const StatCard: React.FC<StatCardProps> = ({
@@ -15,38 +18,39 @@ const StatCard: React.FC<StatCardProps> = ({
   value,
   iconSrc,
   iconBgColor,
+  subTitle,
+  subTitleColor,
+  subTitleBgColor,
+  dashboard,
 }) => {
   return (
-    <CustomBox customClasses="w-full px-4 py-4">
-      <div className="flex justify-between">
+    <CustomBox customClasses="w-full p-5">
+      <div className="flex items-start justify-between w-full">
         {/* Text */}
-        <Typography
-          sx={{
-            fontSize: "14px",
-            color: "#6B7280",
-            fontWeight: 500,
-          }}
-        >
-          {title}
-        </Typography>
- 
+        <p className="text-base text-black">{title}</p>
+
         {iconSrc && (
           <img
             src={iconSrc}
             alt="icon"
-            className={`${iconBgColor} p-2 rounded-lg `}
+            className={`${iconBgColor} p-2 rounded-lg w-13 h-13`}
           />
         )}
       </div>
-      <Typography
-        sx={{
-          fontSize: "32px",
-          fontWeight: 700,
-          marginTop: "28px",
-        }}
+      <p
+        className={`${
+          dashboard ? "text-2xl font-semibold mt-6" : "text-4xl font-bold mt-5"
+        }`}
       >
         {value}
-      </Typography>
+      </p>
+      {subTitle && (
+        <p
+          className={`${subTitleColor} ${subTitleBgColor} text-sm p-2 rounded-lg w-full text-center mt-1.5`}
+        >
+          {subTitle}
+        </p>
+      )}
     </CustomBox>
   );
 };

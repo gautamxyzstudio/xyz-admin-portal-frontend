@@ -13,15 +13,14 @@ import {
 } from "@mui/material";
 import type { GridRenderCellParams, GridValidRowModel } from "@mui/x-data-grid";
 import { useDemoData } from "@mui/x-data-grid-generator";
-import type { IDataTableProps } from "./DataTable.types";
 import React from "react";
- import EmptyScreenView from "../EmptyScreenView/EmptyScreenView";
+import EmptyScreenView from "../EmptyScreenView/EmptyScreenView";
+import type { ICustomDataTableProps } from "./CustomDataTable.types";
 
-const DataTable: React.FC<IDataTableProps> = ({
+const CustomDataTable: React.FC<ICustomDataTableProps> = ({
   rows,
   columns,
   isLoading,
-  tableHeight = 100,
   headerView,
   withPagination,
   paginationControls,
@@ -43,14 +42,14 @@ const DataTable: React.FC<IDataTableProps> = ({
     return {
       boxShadow: "none",
       backgroundColor: "#fff",
-      height: `${tableHeight}px !important`,
-      minHeight: "220px",
+      // height: `${tableHeight}px !important`,
+      // minHeight: "220px",
       scrollbarWidth: "none",
       "&::-webkit-scrollbar": {
         display: "none",
       },
     };
-  }, [tableHeight]);
+  }, []);
 
   const tableStyles = useMemo(() => {
     return {
@@ -149,7 +148,7 @@ const DataTable: React.FC<IDataTableProps> = ({
                 width: column.width,
               }}
               align="left"
-              onClick={() => onRowClick?.(row as any,)} // ✅ row click trigger
+              onClick={() => onRowClick?.(row as any)} // ✅ row click trigger
             >
               {column.field === "sNum" ? (
                 <span>{index + 1}</span>
@@ -235,7 +234,6 @@ const DataTable: React.FC<IDataTableProps> = ({
             error={error}
             isDataEmpty={isDataEmpty}
             illustrationStyes={illustrationStyes}
-           
           />
         </div>
       ) : (
@@ -252,4 +250,4 @@ const DataTable: React.FC<IDataTableProps> = ({
   );
 };
 
-export default memo(DataTable);
+export default memo(CustomDataTable);

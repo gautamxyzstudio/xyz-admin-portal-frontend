@@ -1,8 +1,5 @@
-/* eslint-disable react-hooks/rules-of-hooks */
-import DashboardNavbar from "../../../examples/Navbars/DashboardNavbar/index.jsx";
 import { userInState } from "../../auth/authSlice.js";
 import { useSelector } from "react-redux";
-import DataTable from "../../../shared/components/dataTable/DataTable.js";
 import type { IAttendance } from "../../dashboard/types.js";
 import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import DoorFrontIcon from "@mui/icons-material/DoorFront";
@@ -11,17 +8,18 @@ import { useEffect, useState } from "react";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useGetAttendanceListQuery } from "../attendanceApi.js";
 import { Typography, Box } from "@mui/material";
+import CustomDataTable from "../../../shared/components/customDataTable/CustomDataTable.js";
 
 const AttendanceEmployee = () => {
   const user = useSelector(userInState);
   const [attendanceList, setAttendanceList] = useState<IAttendance[]>([]);
   const { data, isLoading } = useGetAttendanceListQuery({ id: user?.id ?? 0 });
-
   useEffect(() => {
     if (data) {
       setAttendanceList(data);
     }
   }, [data]);
+
   if (!user || user.id === undefined) return null;
 
   const columns: GridColDef[] = [
@@ -67,9 +65,9 @@ const AttendanceEmployee = () => {
 
   return (
     <>
-      <DashboardNavbar />
+      
       <Box pt={3} pb={3}>
-        <Box
+        {/* <Box
           mx={2}
           mt={-3}
           py={3}
@@ -86,10 +84,10 @@ const AttendanceEmployee = () => {
           <Typography variant="h6" color="white">
             Attendance List
           </Typography>
-        </Box>
+        </Box> */}
         <div>
           <div className="h-[70vh]  mt-4  w-full">
-            <DataTable
+            <CustomDataTable
               columns={columns}
               rows={attendanceList}
               isDataEmpty={attendanceList.length === 0}
@@ -97,7 +95,6 @@ const AttendanceEmployee = () => {
               emptyViewSubTitle="Please check in and check out to see your attendance"
               isLoading={isLoading}
               withPagination={false}
-              tableHeightPercent={100}
             />
           </div>
         </div>

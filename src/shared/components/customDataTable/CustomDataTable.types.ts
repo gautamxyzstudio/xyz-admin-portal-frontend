@@ -4,7 +4,7 @@ import type { GridColDef, GridRenderCellParams, GridRowsProp } from "@mui/x-data
 import type React from "react";
 import type { IEmptyScreenViewProps } from "../EmptyScreenView/EmptyScreenView.types";
 
-export interface IDataTableProps extends TableProps, IEmptyScreenViewProps {
+export interface ICustomDataTableProps extends TableProps, IEmptyScreenViewProps {
   columns: GridColDef[];
   rows: GridRowsProp;
   isLoading: boolean;

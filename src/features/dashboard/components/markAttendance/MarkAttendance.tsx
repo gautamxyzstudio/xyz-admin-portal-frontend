@@ -3,7 +3,6 @@ import { timeStringToDate } from "../../../../utils/utils";
 import CustomBox from "../../../../components/CustomBox/CustomBox";
 import LinearGradient from "../../../../components/LinearGradient/LinearGradient";
 import CustomButton from "../../../../components/CustomButton/CustomButton";
-
 import { TbLogin, TbLogin2 } from "react-icons/tb";
 import { Icons } from "../../../../assets/myAssets/exporter";
 
@@ -64,20 +63,6 @@ const MarkAttendance = ({
     return () => clearInterval(timer);
   }, [inTime, outTime]);
 
-  // const formatTime = (totalSeconds: number): string => {
-  //   const hours = Math.floor(totalSeconds / 3600)
-  //     .toString()
-  //     .padStart(2, "0");
-
-  //   const minutes = Math.floor((totalSeconds % 3600) / 60)
-  //     .toString()
-  //     .padStart(2, "0");
-
-  //   const seconds = (totalSeconds % 60).toString().padStart(2, "0");
-
-  //   return `${hours} H: ${minutes} M: ${seconds} S`;
-  // };
-
   const hours = Math.floor(elapsedSeconds / 3600)
     .toString()
     .padStart(2, "0");
@@ -89,7 +74,7 @@ const MarkAttendance = ({
   const seconds = (elapsedSeconds % 60).toString().padStart(2, "0");
 
   return (
-    <CustomBox customClasses="w-[26%] h-full flex flex-col items-center p-5 text-black">
+    <CustomBox customClasses="w-[297px] h-full flex flex-col items-center p-5 text-black">
       <div className="w-full flex flex-col items-center gap-y-2">
         <h3 className="text-xl font-semibold">Daily Attendance</h3>
         <LinearGradient />
@@ -152,7 +137,7 @@ const MarkAttendance = ({
             customStyles="w-full py-3.5!"
           />
         )}
-        <div className="bg-background py-2 px-4 rounded-md flex flex-row gap-x-1.5 flex-nowrap items-center w-full">
+        <div className="bg-background p-2 rounded-md flex flex-row gap-x-1.5 flex-nowrap items-center w-full">
           <div className="flex flex-row flex-nowrap gap-x-0.5 items-center">
             <img className="w-6 h-6" alt="office" src={Icons.OFFICE} />
             <span className="text-primary text-sm">Office</span>

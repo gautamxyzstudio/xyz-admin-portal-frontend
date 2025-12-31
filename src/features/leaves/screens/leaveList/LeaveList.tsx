@@ -1,41 +1,34 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-import {
-  Card,
-  Grid,
-  Menu,
-  MenuItem,
-  Box,
-  Typography,
-  Button,
-} from "@mui/material";
-import { useNavigate } from "react-router-dom";
-
-import { useDeleteLeaveMutation, useGetUserLeavesQuery } from "../../leavesApi";
+import { Card, Grid, Box, Typography, Button } from "@mui/material";
+import { useGetUserLeavesQuery } from "../../leavesApi";
 import { useSelector } from "react-redux";
 import { userInState } from "../../../auth/authSlice";
-
 import { toast } from "react-toastify";
-import { useLoadingWrapper } from "../../../../wrappers/loadingWrapper/LoadingWrapper.context.js";
+// import { useLoadingWrapper } from "../../../../wrappers/loadingWrapper/LoadingWrapper.context.js";
 import {
   convertTo12HourFormat,
   formatDateToReadable,
   getLeaveTypeTitle,
 } from "../../../../utils/utils";
 import EmptyScreenView from "../../../../shared/components/EmptyScreenView/EmptyScreenView";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import type { GridColDef } from "@mui/x-data-grid";
 import CustomBox from "../../../../components/CustomBox/CustomBox.js";
-import DataTable from "../../../../shared/components/datatable/DataTable.js";
 import StatCard from "../../../../shared/components/StatCard/StatCard.tsx";
-import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import { Icons } from "../../../../assets/myAssets/exporter.ts";
+import { useGeLeaveBalanceQuery } from "../../../employee/employeeApis.ts";
+import type { ILeaveBalance } from "../../../employee/types.ts";
+import StatCardSkeleton from "../../../../shared/components/StatCard/StatCardSkeleton.tsx";
+import CustomDataTable from "../../../../shared/components/customDataTable/CustomDataTable.tsx";
+import CustomButton from "../../../../components/CustomButton/CustomButton.tsx";
+import { TbPlus } from "react-icons/tb";
+import { useNavigate } from "react-router";
 
 const LeaveList = () => {
   const navigate = useNavigate();
-  const { setIsLoading } = useLoadingWrapper();
+  // const { setIsLoading } = useLoadingWrapper();
   const user = useSelector(userInState);
-  const [deleteLeave] = useDeleteLeaveMutation();
+  // const [deleteLeave] = useDeleteLeaveMutation();
+  const { data: leaveBalance } = useGeLeaveBalanceQuery<ILeaveBalance>();
 
   // Only make the query if user exists and has an id
   const { data: leaves, isLoading, error, refetch } = useGetUserLeavesQuery();
@@ -48,41 +41,41 @@ const LeaveList = () => {
     }
   }, [error]);
 
-  const handleDeleteLeave = async (id: number) => {
-    if (!id) {
-      toast.error("Invalid leave ID");
-      return;
-    }
+  // const handleDeleteLeave = async (id: number) => {
+  //   if (!id) {
+  //     toast.error("Invalid leave ID");
+  //     return;
+  //   }
 
-    try {
-      setIsLoading(true);
-      const response = await deleteLeave({ id: id }).unwrap();
-      if (response) {
-        toast.success("Leave deleted successfully");
-        // Refetch the leaves data to update the list
-        refetch();
-      }
-    } catch (error: any) {
-      console.error("Error deleting leave:", error);
+  //   try {
+  //     setIsLoading(true);
+  //     const response = await deleteLeave({ id: id }).unwrap();
+  //     if (response) {
+  //       toast.success("Leave deleted successfully");
+  //       // Refetch the leaves data to update the list
+  //       refetch();
+  //     }
+  //   } catch (error: any) {
+  //     console.error("Error deleting leave:", error);
 
-      // Provide more specific error messages based on the error
-      let errorMessage = "Failed to delete leave";
-      if (error?.status === 404) {
-        errorMessage = "Leave not found";
-      } else if (error?.status === 403) {
-        errorMessage = "You are not authorized to delete this leave";
-      } else if (error?.status === 400) {
-        errorMessage =
-          "Cannot delete leave. It may have already been processed";
-      } else if (error?.data?.message) {
-        errorMessage = error.data.message;
-      }
+  //     // Provide more specific error messages based on the error
+  //     let errorMessage = "Failed to delete leave";
+  //     if (error?.status === 404) {
+  //       errorMessage = "Leave not found";
+  //     } else if (error?.status === 403) {
+  //       errorMessage = "You are not authorized to delete this leave";
+  //     } else if (error?.status === 400) {
+  //       errorMessage =
+  //         "Cannot delete leave. It may have already been processed";
+  //     } else if (error?.data?.message) {
+  //       errorMessage = error.data.message;
+  //     }
 
-      toast.error(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  //     toast.error(errorMessage);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   // Show loading state if user is not available yet
   if (!user?.id) {
@@ -90,21 +83,12 @@ const LeaveList = () => {
       <>
         <Box pt={3} pb={3}>
           <Card>
-            <Box
-              mx={2}
-              mt={-3}
-              py={3}
-              px={2}
-              variant="gradient"
-              bgColor="warning"
-              borderRadius="lg"
-              coloredShadow="dark"
-            >
+            <CustomBox customClasses="p-6">
               <Typography variant="h6" color="white">
                 Leaves
               </Typography>
-            </Box>
-            <div className="h-[70vh] mt-4 w-full flex items-center justify-center">
+            </CustomBox>
+            <div className="h-full mt-4 w-full flex items-center justify-center">
               <Typography variant="h6" color="text">
                 Loading user information...
               </Typography>
@@ -118,51 +102,48 @@ const LeaveList = () => {
   // Show error state if there's a query error
   if (error) {
     return (
-      <>
-        <div className="flex gap-2.5">
-          <StatCard
-            title="Earn Leaves"
-            value="07"
-            iconSrc={Icons.EARN}
-            iconBgColor="bg-[#49B6791A]"
-          />
-          <StatCard
-            title="Casual Leave"
-            value="03"
-            iconSrc={Icons.CASUALLEAVE}
-            iconBgColor="bg-[#2F4CBA1A]"
-          />
-          <StatCard
-            title="Sick Leave"
-            value="09"
-            iconSrc={Icons.SICKLEAVE}
-            iconBgColor="bg-[#6CADDD1A]"
-          />
-          <StatCard
-            title="Sick Leave"
-            value="09"
-            iconSrc={Icons.UNPAIDLEAVE}
-            iconBgColor="bg-[#FF00001A]"
-          />
+      <div className="w-full flex flex-col gap-y-5">
+        <div className="w-full flex flex-row flex-nowrap items-start gap-x-5">
+          {isLoading
+            ? [1, 2, 3, 4].map((_, idx) => <StatCardSkeleton key={idx} />)
+            : leaveBalance && (
+                <React.Fragment>
+                  <StatCard
+                    title="Earn Leaves"
+                    value={leaveBalance?.el_balance.toLocaleString()}
+                    iconSrc={Icons.EARN}
+                    iconBgColor="bg-[#49B6791A]"
+                  />
+                  <StatCard
+                    title="Casual Leave"
+                    value={leaveBalance?.cl_balance.toLocaleString()}
+                    iconSrc={Icons.CASUAL_LEAVE}
+                    iconBgColor="bg-[#2F4CBA1A]"
+                  />
+                  <StatCard
+                    title="Sick Leave"
+                    value={leaveBalance?.sl_balance.toLocaleString()}
+                    iconSrc={Icons.SICK_LEAVE}
+                    iconBgColor="bg-[#6CADDD1A]"
+                  />
+                  <StatCard
+                    title="Unpaid Leave"
+                    value={leaveBalance?.unpaid_balance.toLocaleString()}
+                    iconSrc={Icons.UNPAID_LEAVE}
+                    iconBgColor="bg-[#FF00001A]"
+                  />
+                </React.Fragment>
+              )}
         </div>
         <Box pt={3} pb={3}>
           <Grid container spacing={6}></Grid>
           <Card>
-            <Box
-              mx={2}
-              mt={-3}
-              py={3}
-              px={2}
-              variant="gradient"
-              bgColor="warning"
-              borderRadius="lg"
-              coloredShadow="dark"
-            >
+            <CustomBox>
               <Typography variant="h6" color="white">
                 Leaves
               </Typography>
-            </Box>
-            <div className="h-[70vh] mt-4 w-full flex items-center justify-center">
+            </CustomBox>
+            <div className="h-full mt-4 w-full flex items-center justify-center">
               <Box textAlign="center">
                 <Typography variant="h6" color="error" mb={2}>
                   Failed to load leaves
@@ -178,7 +159,7 @@ const LeaveList = () => {
             </div>
           </Card>
         </Box>
-      </>
+      </div>
     );
   }
 
@@ -359,72 +340,54 @@ const LeaveList = () => {
         );
       },
     },
-    {
-      field: "action",
-      headerName: "Action",
-      width: 80,
-      renderCell: (params) => {
-        return (
-          <div className="flex  w-full h-full justify-center items-center">
-            <Menu
-              disabled={params?.row?.status === "pending" ? false : true}
-              className={`w-full h-full flex justify-center items-center ${
-                params?.row?.status !== "pending" ? "opacity-10" : ""
-              }`}
-            >
-              <MenuItem
-                className="z-50!"
-                onClick={() =>
-                  navigate(`/leaves/update`, {
-                    state: { leave: params.row },
-                  })
-                }
-              >
-                Edit
-              </MenuItem>
-              <MenuItem
-                className="z-50!"
-                onClick={() => handleDeleteLeave(params.row.id)}
-              >
-                Delete
-              </MenuItem>
-            </Menu>
-          </div>
-        );
-      },
-    },
   ];
 
   return (
-    <>
-      <CustomBox>
-        {/* <Box
-            mx={2}
-            mt={-3}
-            py={3}
-            px={2}
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-            }}
-            variant="gradient"
-            bgColor="warning"
-            borderRadius="lg"
-            coloredShadow="dark"
-          >
-            <Typography variant="h6" color="white">
-              Leaves
-            </Typography>
-            <Button
-              variant="contained"
-              color="orange"
-              onClick={() => navigate("/leaves/create")}
-            >
-              Request Leave
-            </Button>
-          </Box> */}
+    <div className="w-full h-full flex flex-col gap-y-5">
+      <div className="w-full flex flex-row flex-nowrap items-start gap-x-5">
+        {isLoading
+          ? [1, 2, 3, 4].map((_, idx) => <StatCardSkeleton key={idx} />)
+          : leaveBalance && (
+              <React.Fragment>
+                <StatCard
+                  title="Earn Leaves"
+                  value={leaveBalance?.el_balance.toLocaleString()}
+                  iconSrc={Icons.EARN}
+                  iconBgColor="bg-[#49B6791A]"
+                />
+                <StatCard
+                  title="Casual Leave"
+                  value={leaveBalance?.cl_balance.toLocaleString()}
+                  iconSrc={Icons.CASUAL_LEAVE}
+                  iconBgColor="bg-[#2F4CBA1A]"
+                />
+                <StatCard
+                  title="Sick Leave"
+                  value={leaveBalance?.sl_balance.toLocaleString()}
+                  iconSrc={Icons.SICK_LEAVE}
+                  iconBgColor="bg-[#6CADDD1A]"
+                />
+                <StatCard
+                  title="Unpaid Leave"
+                  value={leaveBalance?.unpaid_balance.toLocaleString()}
+                  iconSrc={Icons.UNPAID_LEAVE}
+                  iconBgColor="bg-[#FF00001A]"
+                />
+              </React.Fragment>
+            )}
+      </div>
+      <CustomBox customClasses="w-full p-5 h-full">
+        <div className="w-full flex flex-nowrap justify-between items-center">
+          <span className="text-2xl font-semibold">Leaves</span>
+          <CustomButton
+            label="Apply Leave"
+            buttonStyle="primary"
+            icon={<TbPlus size={24} />}
+             onClick={() => navigate("/leaves/create")}
+          />
+        </div>
 
-        <div className="h-[70vh] mt-4 w-full">
+        <div className="mt-5 w-full h-full">
           {!isLoading && (!leaves?.data || leaves.data.length === 0) ? (
             <EmptyScreenView
               isDataEmpty={true}
@@ -432,7 +395,7 @@ const LeaveList = () => {
               emptyViewSubTitle="Please request a leave"
             />
           ) : (
-            <DataTable
+            <CustomDataTable
               columns={columns}
               rows={leaves?.data || []}
               isDataEmpty={!leaves?.data || leaves.data.length === 0}
@@ -440,22 +403,12 @@ const LeaveList = () => {
               emptyViewSubTitle="Please request a leave"
               isLoading={isLoading}
               withPagination={false}
-              tableHeight={100}
+              tableHeight={300}
             />
-            // <DataTable
-            //   columns={columns}
-            //   rows={leaves?.data || []}
-            //   isDataEmpty={!leaves?.data || leaves.data.length === 0}
-            //   emptyViewTitle="No Leave Found"
-            //   emptyViewSubTitle="Please request a leave"
-            //   isLoading={isLoading}
-            //   withPagination={false}
-            //   tableHeightPercent={100}
-            // />
           )}
         </div>
       </CustomBox>
-    </>
+    </div>
   );
 };
 

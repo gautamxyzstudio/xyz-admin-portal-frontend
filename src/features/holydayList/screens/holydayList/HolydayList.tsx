@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
-import {Button, Icon, Typography } from "@mui/material";
+import { Button, Icon, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import {
   useDeleteHolidayMutation,
@@ -12,8 +11,8 @@ import dayjs from "dayjs";
 import { useSelector } from "react-redux";
 import { userInState } from "../../../auth/authSlice";
 import type { GridColDef } from "@mui/x-data-grid";
-import DataTable from "../../../../shared/components/datatable/DataTable.tsx";
 import CustomBox from "../../../../components/CustomBox/CustomBox.js";
+import CustomDataTable from "../../../../shared/components/customDataTable/CustomDataTable.js";
 
 const HolydayList = () => {
   const user = useSelector(userInState);
@@ -137,27 +136,17 @@ const HolydayList = () => {
 
   return (
     <CustomBox customClasses="p-5 h-full">
-     
-        <p className="text-black mb-7 text-2xl font-semibold leading-8">Holiday List</p>
-        <DataTable
-          rows={holidays}
-          columns={columns}
-          isDataEmpty={holidays.length === 0}
-         tableHeight={365}
-          withPagination={false}
-          isLoading={isLoading}
-        />
-        {/* <DataTable
-              columns={columns}
-              rows={holidays}
-              isDataEmpty={holidays.length === 0}
-              emptyViewTitle="No Holidays Found"
-              emptyViewSubTitle="Please add a holiday to the system"
-              isLoading={isLoading}
-              withPagination={false}
-              tableHeightPercent={100}
-            /> */}
-    
+      <p className="text-black mb-7 text-2xl font-semibold leading-8">
+        Holiday List
+      </p>
+      <CustomDataTable
+        rows={holidays}
+        columns={columns}
+        isDataEmpty={holidays.length === 0}
+        tableHeight={365}
+        withPagination={false}
+        isLoading={isLoading}
+      />
     </CustomBox>
   );
 };

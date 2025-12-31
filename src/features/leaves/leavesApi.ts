@@ -26,12 +26,6 @@ export const leavesApi = enhancedLeavesApi.injectEndpoints({
     getUserLeaves: builder.query<
       {
         data: ILeave[];
-        pagination: {
-          page: number;
-          pageSize: number;
-          pageCount: number;
-          total: number;
-        };
       },
       void
     >({
@@ -41,15 +35,10 @@ export const leavesApi = enhancedLeavesApi.injectEndpoints({
       }),
       providesTags: ["Leaves"],
       transformResponse: (response: any) => {
-        const data = response.data.map((item: any) => ({
-         
-          ...item.attributes,
-          id: item.id,
-        }));
-        console.log(data, "leave")
+        const data = response.data.map((item: ILeave) => ({ ...item }));
+        console.log(data, "leave");
         return {
           data,
-          pagination: response.meta.pagination,
         };
       },
     }),

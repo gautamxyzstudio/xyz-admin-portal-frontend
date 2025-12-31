@@ -3,7 +3,7 @@ import CustomButton from "../../components/CustomButton/CustomButton";
 import { Logout } from "@mui/icons-material";
 import { Images } from "../../assets/myAssets/exporter";
 import { useDispatch } from "react-redux";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 const SideNav = () => {
   const dispatcher = useDispatch();
@@ -15,13 +15,15 @@ const SideNav = () => {
     }
   };
   return (
-    <CustomBox customClasses="px-6 pt-6 pb-5 flex w-61 h-full flex-col justify-between">
+    <CustomBox customClasses="px-6 pt-6 pb-5 flex w-[17%] h-full flex-col justify-between">
       <div className="w-full flex flex-col gap-y-12">
-        <img
-          className="w-[90%] h-full"
-          src={Images.BRANDLOGO}
-          alt="XYZ Studio"
-        />
+        <Link to="/">
+          <img
+            className="w-[90%] h-full"
+            src={Images.BRANDLOGO}
+            alt="XYZ Studio"
+          />
+        </Link>
         <div></div>
       </div>
       <CustomButton

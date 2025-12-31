@@ -65,7 +65,7 @@ const UpComingHolidays = () => {
   const displayHolidays =
     currentMonthHolidays.length > 0
       ? currentMonthHolidays
-      : processedHolidays.slice(0, 3); // Show up to 3 upcoming holidays if no current month holidays
+      : processedHolidays.slice(0,1); // Show up to 3 upcoming holidays if no current month holidays
 
   const formatDayWithSuffix = (day: number) => {
     if (day >= 11 && day <= 13) return `${day}th`;
