@@ -27,7 +27,7 @@ import AllEmployeeDocs from "./features/documents/screens/allEmployeeDocs/AllEmp
 import { ThemeProvider } from "@mui/material";
 import theme from "./theme/theme.js";
 import { LoadingWrapperProvider } from "./wrappers/loadingWrapper/LoadingWrapper.context.js";
-import DashboardLayout from "./layout/DashboardLayout.js";
+import DashboardLayout from "./examples/LayoutContainers/DashboardLayout/DashboardLayout.js";
 
 const App: React.FC = () => {
   return (

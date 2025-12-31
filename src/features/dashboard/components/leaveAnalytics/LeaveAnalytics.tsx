@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { Card, Typography, Box, CircularProgress } from '@mui/material';
 import { CheckCircle, HourglassEmpty, Cancel } from '@mui/icons-material';

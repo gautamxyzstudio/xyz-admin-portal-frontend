@@ -1,5 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export const getImageUrl = (url: string) => {
-  // @ts-ignore
   return `${import.meta.env.VITE_API_BASE_URL}${url}`;
 };
 
@@ -112,3 +112,10 @@ export const getWeekDates = (): {
 
 export const getString = (value: string | undefined) => value ?? '';
 export const getError = (error: { message?: string } | undefined) => error?.message ?? '';
+
+// export const formatDateTo = (date: Date): string => {
+//   const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Months are zero-indexed
+//   const day = date.getDate().toString().padStart(2, '0');
+//   const year = date.getFullYear();
+//   return `${month}/${day}/${year}`;
+// };

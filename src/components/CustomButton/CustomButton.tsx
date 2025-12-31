@@ -13,11 +13,11 @@ interface CustomButtonProps {
 const getButtonStyles = (style: "primary" | "secondary" | "disabled") => {
   switch (style) {
     case "primary":
-      return `bg-primary text-white`;
+      return `bg-primary text-white cursor-pointer`;
     case "secondary":
-      return `bg-background text-black-50`;
+      return `bg-background text-black-50 cursor-pointer`;
     case "disabled":
-      return `bg-gray-400 text-gray-200 cursor-not-allowed`;
+      return `bg-gray-300 text-white cursor-not-allowed`;
   }
 };
 const CustomButton: React.FC<CustomButtonProps> = ({
@@ -36,7 +36,7 @@ const CustomButton: React.FC<CustomButtonProps> = ({
       disabled={disabled}
       className={`${getButtonStyles(
         buttonStyle
-      )} ${customStyles} flex items-center justify-center gap-x-2 px-4 py-2 rounded-md font-bold text-base leading-6 transition-opacity duration-200 cursor-pointer`}
+      )} ${customStyles} flex items-center justify-center gap-x-1 px-4 py-2 rounded-md font-bold text-base leading-6 transition-opacity duration-200`}
     >
       {icon && <span>{icon}</span>}
       <span>{label}</span>

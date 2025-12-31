@@ -1,13 +1,13 @@
 import { useSelector } from "react-redux";
-import { Icons } from "../../../assets/myAssets/exporter";
-import CustomBox from "../../../components/CustomBox/CustomBox";
-import { userDetailsInState } from "../../../features/auth/authSlice";
+import { Icons } from "../../assets/myAssets/exporter";
+import CustomBox from "../../components/CustomBox/CustomBox";
+import { userDetailsInState } from "../../features/auth/authSlice";
 
 const TopBar = () => {
   const user = useSelector(userDetailsInState);
   console.log(user?.photo)
   return (
-    <CustomBox customClasses="w-full rounded-xl p-3.5 flex items-center justify-between">
+    <CustomBox customClasses="w-full rounded-xl p-3.5 flex items-center justify-between sticky top-0 shadow z-99">
       {/* Left */}
       <p className="text-black-50 ml-2.5 font-semibold">Dashboard</p>
 
