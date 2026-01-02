@@ -41,6 +41,7 @@ import DOCUMENT_FILL from "./icons/documentFill.svg";
 import EMPLOYEE_FILL from "./icons/employeeFill.svg";
 import HOLIDAYS_FILL from "./icons/holidaysFill.svg";
 import LEAVES_FILL from "./icons/leavesFill.svg";
+import UPDATE_IMG from "./icons/update-img.svg"
 export const Icons = {
   CROSS_ICON,
   PROFILE_PICTURE,
@@ -84,6 +85,7 @@ export const Icons = {
   HOLIDAYS_FILL,
   LEAVES,
   LEAVES_FILL,
+  UPDATE_IMG
 };
 
 // Images

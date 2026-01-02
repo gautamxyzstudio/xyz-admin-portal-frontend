@@ -2,10 +2,12 @@ import { useSelector } from "react-redux";
 import { Icons } from "../../assets/myAssets/exporter";
 import CustomBox from "../../components/CustomBox/CustomBox";
 import { userDetailsInState } from "../../features/auth/authSlice";
+import { useNavigate } from "react-router";
 
 const TopBar = () => {
+    const navigate = useNavigate();
   const user = useSelector(userDetailsInState);
-  console.log(user?.photo)
+  console.log(user?.photo);
   return (
     <CustomBox customClasses="w-full rounded-xl p-3.5 flex items-center justify-between sticky top-0 shadow z-99">
       {/* Left */}
@@ -26,6 +28,7 @@ const TopBar = () => {
         {/* Profile image */}
         <img
           src={user?.photo ? user?.photo : "https://i.pravatar.cc/40"}
+          onClick={() => navigate("/profile")}
           alt="profile"
           className="w-10 h-10 rounded-xl object-cover cursor-pointer"
         />

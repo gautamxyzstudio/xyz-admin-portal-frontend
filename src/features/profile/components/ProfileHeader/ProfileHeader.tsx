@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../../../state/store";
 import { FaCamera } from "react-icons/fa";
-import { Images } from "../../../../assets/myAssets/exporter";
+import { Icons, Images } from "../../../../assets/myAssets/exporter";
 
 const ProfileHeader: React.FC = () => {
   const userDetails = useSelector((state: RootState) => state.auth.userDetails);
@@ -24,15 +24,15 @@ const ProfileHeader: React.FC = () => {
   return (
     <div className="w-full rounded-xl overflow-hidden bg-white">
       {/* Banner Image */}
-      <div className="relative w-full h-40  ">
+      <div className="relative w-full h-40">
         <img
           src={Images.BANNER}
           alt="Banner"
           className="w-full h-41.75 object-cover rounded-2xl"
         />
         {/* Edit icon on banner */}
-        <button className="absolute right-4 bottom-2 bg-white p-2 rounded-full shadow-md hover:bg-gray-100">
-          <FaCamera className="text-gray-700" />
+        <button className="absolute right-4 bottom-2 bg-white p-2 rounded-lg cursor-pointer">
+        <img src={Icons.UPDATE_IMG} alt="" />
         </button>
       </div>
 
@@ -43,10 +43,10 @@ const ProfileHeader: React.FC = () => {
             src={avatarSrc}
             alt={userDetails?.name || "Profile"}
             onError={() => setAvatarError(true)}
-            className=" w-38 h-38  rounded-full border-4 border-white object-cover shadow-lg"
+            className="w-38 h-38  rounded-full border-4 border-white object-cover shadow-lg"
           />
           {/* Edit icon on avatar */}
-          <button className="absolute bottom-7 right-0 bg-orange-500 text-white p-1 rounded-full border-2 border-white shadow-md hover:bg-orange-600">
+          <button className="absolute bottom-4 right-3 bg-[#F17C04] text-white p-1 rounded-full border-white shadow-md cursor-pointer">
             <FaCamera size={12} />
           </button>
         </div>

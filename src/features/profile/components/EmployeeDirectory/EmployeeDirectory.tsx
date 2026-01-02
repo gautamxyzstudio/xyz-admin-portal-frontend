@@ -41,7 +41,7 @@ const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
           {filteredEmployeeList?.map((employee: IEmployee) => (
             <div
               key={employee.id}
-              className="flex  gap-4 p-4 items-start bg-[#F7F7F7]  rounded-2xl"
+              className="flex flex-row gap-4 p-4 items-center bg-[#F7F7F7]  rounded-2xl"
             >
               {/* Avatar */}
               <img
@@ -52,7 +52,7 @@ const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
 
               {/* Info */}
               <div className="flex w-full justify-between items-center">
-                <div className="flex flex-col">
+                <div className="flex flex-col w-1/2">
                   <h4 className="font-semibold text-base">{employee.name}</h4>
 
                   <p className="text-sm text-gray-500">
@@ -60,10 +60,10 @@ const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
                   </p>
                 </div>
 
-                <div className="flex flex-col   ">
+                <div className="flex flex-col w-[30%] ">
                   <div className="flex items-center gap-1 mt-1">
                     <img
-                      className="bg-[#FFE4CA] rounded-sm p-2 w-8 h-8  "
+                      className="bg-[#FFE4CA] rounded-sm p-2 w-8 h-8"
                       onClick={() => handleEmailClick(employee.email)}
                       src={Icons.OUTLOOK_PRIMARY}
                       alt=""

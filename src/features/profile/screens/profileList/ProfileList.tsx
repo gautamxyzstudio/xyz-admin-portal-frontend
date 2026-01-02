@@ -43,9 +43,9 @@ const ProfileList = () => {
         {/* Tabs Header */}
         <div className="flex w-full gap-2 px-7 ">
           <button
-            className={`px-6 py-3 text-sm font-medium w-full ${
+            className={`px-6 py-3 text-sm font-medium w-full cursor-pointer ${
               tabValue === 0
-                ? " bg-[#FFE4CA] text-orange-500 rounded-lg "
+                ? " bg-[#FFE4CA] text-orange-500 rounded-lg"
                 : "text-gray-500 bg-[#F7F7F7] rounded-lg"
             }`}
             onClick={() => setTabValue(0)}
@@ -54,7 +54,7 @@ const ProfileList = () => {
           </button>
 
           <button
-            className={`px-6 py-3 text-sm font-medium w-full  ${
+            className={`px-6 py-3 text-sm font-medium w-full cursor-pointer  ${
               tabValue === 1
                 ? "bg-[#FFE4CA] text-orange-500 rounded-lg"
                 : "text-gray-500 bg-[#F7F7F7] rounded-lg"
