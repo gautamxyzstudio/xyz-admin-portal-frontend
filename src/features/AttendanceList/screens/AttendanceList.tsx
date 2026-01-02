@@ -7,13 +7,13 @@ const AttendanceList = () => {
   const user = useSelector(userInState);
 
   return (
-    <div>
+    <>
       {user?.user_type === 'Admin' || user?.user_type === 'Hr' ? (
         <AttendanceAdmin />
       ) : (
         <AttendanceEmployee />
       )}
-    </div>
+    </>
   );
 };
 

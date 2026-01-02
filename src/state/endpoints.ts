@@ -11,9 +11,8 @@ export const endpoints = {
     `${baseUrl}/api/user/${id}/leave-balance`,
   getEmployeeLeaveBalance: (id: string) =>
     `${baseUrl}/api/user/${id}/leave-balance`,
-  getLeaveBalance:`${baseUrl}/api/leave-balance/me`,
+  getLeaveBalance: `${baseUrl}/api/leave-balance/me`,
   employeeList: (user_type: string) => `${baseUrl}/api/users/${user_type}`,
-  getAttendance: (id: number) => `${baseUrl}/api/daily-attendance/${id}`,
   deleteUser: (id: string) => `${baseUrl}/api/users/${id}`,
   updateUser: (id: string) => `${baseUrl}/api/users/${id}`,
   deleteEmployee: (id: string) => `${baseUrl}/api/emp-details/${id}`,
@@ -21,6 +20,13 @@ export const endpoints = {
     `${baseUrl}/api/daily-attendance/today/${id}`,
   checkIn: `${baseUrl}/api/daily-attendance/check-in`,
   checkOut: `${baseUrl}/api/daily-attendance/check-out`,
+  getAttendance: (id: number, startDate?: string, endDate?: string) => {
+    let url = `${baseUrl}/api/daily-attendance/${id}`;
+    if (startDate) {
+      url += `?fromDate=${startDate}&toDate=${endDate}`;
+    }
+    return url;
+  },
   getAllAttendance: (
     page: number,
     pageSize: number,

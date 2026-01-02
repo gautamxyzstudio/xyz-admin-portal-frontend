@@ -1,5 +1,6 @@
 import React from "react";
 import "react-toastify/dist/ReactToastify.css";
+import "react-datepicker/dist/react-datepicker.css";
 import { Routes, Route } from "react-router-dom";
 import PrivateRoute from "./PrivateRoutes";
 // import BlogPost from './layouts/blogPost/index.jsx';
