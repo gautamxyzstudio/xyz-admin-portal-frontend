@@ -14,7 +14,7 @@ const InformationCards = ({
   leaveBalance: string;
    upComingHolidays: ProcessedHoliday
 }) => {
-  console.log(upComingHolidays, "HOlidays")
+  // console.log(upComingHolidays.date, "HOlidays")
   return (
     <div className="flex w-full flex-row flex-nowrap gap-x-5">
       <StatCard

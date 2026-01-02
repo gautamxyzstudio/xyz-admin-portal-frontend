@@ -9,6 +9,7 @@ import {
   Paper,
   Stack,
   Avatar,
+  Button,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import {
@@ -18,7 +19,6 @@ import {
 } from "../../../leaves/leavesApi";
 import { useGetEmployeeLeaveBalanceQuery } from "../../../employee/employeeApis";
 import type { GridColDef } from "@mui/x-data-grid";
-import MDTypography from "../../../../components/MDTypography";
 import {
   convertTo12HourFormat,
   formatDateToReadable,
@@ -35,7 +35,6 @@ import {
   selectLeaveRequests,
   setLeaveRequests,
 } from "../../screens/dashboardHrSlice";
-import MDButton from "../../../../components/MDButton/MDButton";
 import { useNavigate } from "react-router-dom";
 import CustomDataTable from "../../../../shared/components/customDataTable/CustomDataTable";
 
@@ -132,14 +131,14 @@ const LeaveRequest = () => {
       width: 150,
       renderCell: (params) => {
         return (
-          <MDTypography
+          <Typography
             display="block"
             variant="h6"
             color="text"
             fontWeight="medium"
           >
             {formatDateToReadable(params?.row?.createdAt)}
-          </MDTypography>
+          </Typography>
         );
       },
     },
@@ -171,7 +170,7 @@ const LeaveRequest = () => {
       width: 160,
       renderCell: (params) => {
         return (
-          <MDTypography
+          <Typography
             display="-webkit-box"
             variant="h6"
             color="text"
@@ -183,7 +182,7 @@ const LeaveRequest = () => {
             }}
           >
             {params?.row?.title}
-          </MDTypography>
+          </Typography>
         );
       },
     },
@@ -193,14 +192,14 @@ const LeaveRequest = () => {
       width: 160,
       renderCell: (params) => {
         return (
-          <MDTypography
+          <Typography
             display="block"
             variant="h6"
             color="text"
             fontWeight="medium"
           >
             {getLeaveTypeTitle(params?.row?.leave_duration)}
-          </MDTypography>
+          </Typography>
         );
       },
     },
@@ -210,14 +209,14 @@ const LeaveRequest = () => {
       width: 160,
       renderCell: (params) => {
         return (
-          <MDTypography
+          <Typography
             display="block"
             variant="h6"
             color="text"
             fontWeight="medium"
           >
             {formatDateToReadable(params?.row?.start_date)}
-          </MDTypography>
+          </Typography>
         );
       },
     },
@@ -227,14 +226,14 @@ const LeaveRequest = () => {
       width: 160,
       renderCell: (params) => {
         return (
-          <MDTypography
+          <Typography
             display="block"
             variant="h6"
             color="text"
             fontWeight="medium"
           >
             {formatDateToReadable(params?.row?.end_date)}
-          </MDTypography>
+          </Typography>
         );
       },
     },
@@ -246,9 +245,9 @@ const LeaveRequest = () => {
       renderCell: (params) => {
         return (
           <div className="flex w-full h-full justify-center items-center">
-            <MDButton
+            <Button
               variant="text"
-              color="orange"
+             
               onClick={() => {
                 setSelectedLeave(params?.row as ILeave);
                 setOpen(true);
@@ -261,7 +260,7 @@ const LeaveRequest = () => {
               }}
             >
               View Details
-            </MDButton>
+            </Button>
           </div>
         );
       },
@@ -274,13 +273,13 @@ const LeaveRequest = () => {
           Leave Requests
         </Typography>
         {leaveRequestsFromStore && leaveRequestsFromStore.length > 0 && (
-          <MDButton
+          <Button
             variant="contained"
-            color="orange"
+           
             onClick={() => navigate("/leaves/create")}
           >
             View All
-          </MDButton>
+          </Button>
         )}
       </div>
       <CustomDataTable
@@ -337,7 +336,7 @@ const LeaveRequest = () => {
           {/* User Details Section */}
           <Box sx={{ mb: 3, p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
             <Grid container spacing={2} alignItems="center">
-              <Grid item>
+              <Grid >
                 <Avatar
                  
                   src={`${import.meta.env.VITE_API_BASE_URL}${
@@ -348,7 +347,7 @@ const LeaveRequest = () => {
                   sx={{ width: 60, height: 60 }}
                 />
               </Grid>
-              <Grid item xs>
+              <Grid container>
                 <Typography variant="h6" gutterBottom>
                   {selectedLeave?.user?.data?.attributes?.username}
                 </Typography>
@@ -359,7 +358,7 @@ const LeaveRequest = () => {
             </Grid>
             <Divider sx={{ my: 2 }} />
             <Grid container spacing={2}>
-              <Grid item xs={6}>
+              <Grid >
                 <Typography variant="subtitle2" color="text.secondary">
                   Leave Balance
                 </Typography>
@@ -370,7 +369,7 @@ const LeaveRequest = () => {
                   days
                 </Typography>
               </Grid>
-              <Grid item xs={6}>
+              <Grid>
                 <Typography variant="subtitle2" color="text.secondary">
                   Unpaid Leave Balance
                 </Typography>
@@ -391,7 +390,7 @@ const LeaveRequest = () => {
           <Divider sx={{ mb: 2 }} />
 
           <Grid container spacing={2}>
-            <Grid item xs={12}>
+            <Grid >
               <Typography variant="subtitle2" color="text.secondary">
                 Title
               </Typography>
@@ -400,7 +399,7 @@ const LeaveRequest = () => {
               </Typography>
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid >
               <Typography variant="subtitle2" color="text.secondary">
                 Description
               </Typography>
@@ -409,7 +408,7 @@ const LeaveRequest = () => {
               </Typography>
             </Grid>
 
-            <Grid item xs={6}>
+            <Grid >
               <Typography variant="subtitle2" color="text.secondary">
                 Leave Type
               </Typography>
@@ -429,7 +428,7 @@ const LeaveRequest = () => {
               />
             </Grid>
 
-            <Grid item xs={6}>
+            <Grid >
               <Typography variant="subtitle2" color="text.secondary">
                 Status
               </Typography>
@@ -447,7 +446,7 @@ const LeaveRequest = () => {
               />
             </Grid>
 
-            <Grid item xs={6}>
+            <Grid >
               <Typography variant="subtitle2" color="text.secondary">
                 Start Date
               </Typography>
@@ -456,7 +455,7 @@ const LeaveRequest = () => {
               </Typography>
             </Grid>
 
-            <Grid item xs={6}>
+            <Grid >
               <Typography variant="subtitle2" color="text.secondary">
                 End Date
               </Typography>
@@ -466,7 +465,7 @@ const LeaveRequest = () => {
             </Grid>
 
             {selectedLeave?.start_time && (
-              <Grid item xs={6}>
+              <Grid >
                 <Typography variant="subtitle2" color="text.secondary">
                   Start Time
                 </Typography>
@@ -477,7 +476,7 @@ const LeaveRequest = () => {
             )}
 
             {selectedLeave?.leave_duration === "half_day" && (
-              <Grid item xs={6}>
+              <Grid >
                 <Typography variant="subtitle2" color="text.secondary">
                   Half Day
                 </Typography>
@@ -488,7 +487,7 @@ const LeaveRequest = () => {
             )}
 
             {selectedLeave?.decline_reason && (
-              <Grid item xs={12}>
+              <Grid >
                 <Typography variant="subtitle2" color="text.secondary">
                   Decline Reason
                 </Typography>
@@ -499,23 +498,23 @@ const LeaveRequest = () => {
             )}
 
             {selectedLeave?.status === "pending" && (
-              <Grid item xs={12}>
+              <Grid >
                 <Divider sx={{ my: 2 }} />
                 <Stack direction="row" spacing={2} justifyContent="flex-end">
-                  <MDButton
+                  <Button
                     variant="contained"
-                    color="orange"
+                   
                     onClick={() => handleReject(selectedLeave)}
                   >
                     Reject
-                  </MDButton>
-                  <MDButton
+                  </Button>
+                  <Button
                     variant="outlined"
-                    color="orange"
+                   
                     onClick={() => handleApprove(selectedLeave)}
                   >
                     Approve
-                  </MDButton>
+                  </Button>
                 </Stack>
               </Grid>
             )}

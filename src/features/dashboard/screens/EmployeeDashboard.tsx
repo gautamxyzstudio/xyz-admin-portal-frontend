@@ -2,7 +2,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useMemo } from "react";
 import MarkAttendance from "../components/markAttendance/MarkAttendance";
-import UpComingHolidays from "../components/upComingHolidays/UpComingHolidays";
 import LeaveAnalytics from "../components/leaveAnalytics/LeaveAnalytics";
 import { useDispatch, useSelector } from "react-redux";
 import { userDetailsInState, userInState } from "../../auth/authSlice";
@@ -83,45 +82,6 @@ const EmployeeDashboard = () => {
   }, [isLoading]);
 
   // upComing Holiday
-  // const processedHolidays = useMemo(() => {
-  //   if (!holidays?.data) return [];
-
-  //   const currentDate = new Date();
-  //   const currentMonth = currentDate.getMonth();
-  //   const currentYear = currentDate.getFullYear();
-
-  //   // Process holidays and filter for current month or upcoming
-  //   const validHolidays = holidays.data
-  //     .map((holiday: any) => {
-  //       const holidayData = holiday.attributes || holiday;
-  //       const holidayDate = new Date(holidayData.date);
-
-  //       return {
-  //         id: holiday.id,
-  //         name: holidayData.Name,
-  //         date: holidayDate,
-  //         formattedDate: holidayDate.toLocaleDateString("en-US", {
-  //           day: "numeric",
-  //           month: "long",
-  //           year: "numeric",
-  //         }),
-  //         day: holidayDate.getDate(),
-  //         month: holidayDate.getMonth(),
-  //         year: holidayDate.getFullYear(),
-  //       };
-  //     })
-  //     .filter((holiday: any) => {
-  //       // Show holidays from current month or future months
-  //       return (
-  //         holiday.year > currentYear ||
-  //         (holiday.year === currentYear && holiday.month >= currentMonth)
-  //       );
-  //     })
-  //     .sort((a: any, b: any) => a.date.getTime() - b.date.getTime());
-
-  //   return validHolidays;
-  // }, [holidays]);
-
   const processedHolidays = useMemo<ProcessedHoliday[]>(() => {
   if (!holidays?.data) return [];
 
@@ -150,18 +110,6 @@ const EmployeeDashboard = () => {
     .sort((a:any, b:any) => a.date.getTime() - b.date.getTime());
 }, [holidays]);
 
-
-  // const currentMonthHolidays = useMemo(() => {
-  //   const currentDate = new Date();
-  //   const currentMonth = currentDate.getMonth();
-  //   const currentYear = currentDate.getFullYear();
-
-  //   return processedHolidays.filter(
-  //     (holiday: any) =>
-  //       holiday.month === currentMonth && holiday.year === currentYear
-  //   );
-  // }, [processedHolidays]);
-
   if (!user || user.name === undefined) return null;
   if (!userBasic || userBasic.id === undefined) return null;
   if (!userDetails || userDetails.id === undefined) return null;
@@ -178,7 +126,7 @@ const EmployeeDashboard = () => {
           user: userBasic.id,
         },
       }).unwrap();
-      console.log(res, "Ressponse");
+      // console.log(res, "Ressponse");
       dispatch(checkIn(checkInTime));
       dispatch(setAttendanceId(res.id));
     } catch (error) {
@@ -224,8 +172,8 @@ const EmployeeDashboard = () => {
 
   return (
     <div className="w-full flex flex-col gap-y-5">
-      <div className="w-full h-auto flex flex-row gap-x-5 items-start">
-        <div className="w-[72%] flex flex-col gap-y-5">
+      <div className="w-full h-auto flex flex-row gap-x-5 items-start justify-between">
+        <div className="w-[71%] flex flex-col gap-y-5">
           <div className="w-full relative overflow-clip rounded-2xl bg-primary flex items-center justify-between py-4.5 pr-5">
             <div className="w-65.75 h-65.75 bg-white rounded-full absolute -left-36.25 -top-39 opacity-20" />
             <div className="w-65.75 h-65.75 bg-white rounded-full absolute -left-32.25 -top-35 opacity-10 " />
@@ -259,7 +207,6 @@ const EmployeeDashboard = () => {
               />
             )
           )}
-          <UpComingHolidays />
         </div>
         <MarkAttendance
           inTime={checkInTime ?? null}

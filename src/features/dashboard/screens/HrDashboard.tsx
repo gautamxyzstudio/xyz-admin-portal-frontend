@@ -13,7 +13,6 @@ import {
   getImageUrl,
   getWeekDates,
 } from "../../../utils/utils";
-import MDTypography from "../../../components/MDTypography";
 import {
   Box,
   Icon,
@@ -22,8 +21,8 @@ import {
   TextField,
   Stack,
   Alert,
+  Button,
 } from "@mui/material";
-import MDButton from "../../../components/MDButton/MDButton";
 import LeaveRequest from "../components/leaveRequests/LeaveRequest";
 import { useLoadingWrapper } from "../../../wrappers/loadingWrapper/LoadingWrapper.context";
 import { toast } from "react-toastify";
@@ -180,9 +179,9 @@ const HrDashboard = () => {
       headerName: "empCode",
       width: 80,
       renderCell: (params) => (
-        <MDTypography variant="caption" color="text" fontWeight="medium">
+        <Typography variant="caption" color="text" fontWeight="medium">
           {params?.row?.user?.user_detial?.empCode}
-        </MDTypography>
+        </Typography>
       ),
     },
     {
@@ -202,9 +201,9 @@ const HrDashboard = () => {
       headerName: "Date",
       width: 150,
       renderCell: (params) => (
-        <MDTypography variant="caption" color="text" fontWeight="medium">
+        <Typography variant="caption" color="text" fontWeight="medium">
           {params?.row?.Date}
-        </MDTypography>
+        </Typography>
       ),
     },
     {
@@ -212,9 +211,9 @@ const HrDashboard = () => {
       headerName: "Check In",
       width: 150,
       renderCell: (params) => (
-        <MDTypography variant="caption" color="text" fontWeight="medium">
+        <Typography variant="caption" color="text" fontWeight="medium">
           {convertTo12HourFormat(params?.row?.in) ?? "In Time Missing"}
-        </MDTypography>
+        </Typography>
       ),
     },
     {
@@ -222,9 +221,9 @@ const HrDashboard = () => {
       headerName: "Check Out",
       width: 150,
       renderCell: (params) => (
-        <MDTypography variant="caption" color="text" fontWeight="medium">
+        <Typography variant="caption" color="text" fontWeight="medium">
           {convertTo12HourFormat(params?.row?.out) ?? "Out Time Missing"}
-        </MDTypography>
+        </Typography>
       ),
     },
     {
@@ -234,16 +233,16 @@ const HrDashboard = () => {
       width: 100,
       renderCell: (params) => (
         <div className="flex flex-row gap-x-3">
-          <MDButton
+          <Button
             variant="text"
-            color="orange"
+         
             onClick={() => {
               setSelectedAttendance(params.row);
               setOpen(true);
             }}
           >
             <Icon>update</Icon>&nbsp;Update
-          </MDButton>
+          </Button>
         </div>
       ),
     },
@@ -264,16 +263,16 @@ const HrDashboard = () => {
         ) : error ? (
           <div className="h-[70vh] w-full flex items-center justify-center">
             <div className="text-center">
-              <MDTypography variant="h6" color="error" mb={2}>
+              <Typography variant="h6" color="error" mb={2}>
                 Failed to load attendance data
-              </MDTypography>
-              <MDButton
+              </Typography>
+              <Button
                 variant="contained"
                 color="primary"
                 onClick={() => getAllAttendanceHandler(true)}
               >
                 Try Again
-              </MDButton>
+              </Button>
             </div>
           </div>
         ) : (
@@ -338,14 +337,13 @@ const HrDashboard = () => {
                 fullWidth
               />
               <Stack direction="row" spacing={2} justifyContent="flex-end">
-                <MDButton
+                <Button
                   variant="contained"
-                  color="orange"
                   onClick={handleUpdateAttendance}
                 >
                   Update
-                </MDButton>
-                <MDButton
+                </Button>
+                <Button
                   variant="outlined"
                   color="secondary"
                   onClick={() => {
@@ -354,7 +352,7 @@ const HrDashboard = () => {
                   }}
                 >
                   Cancel
-                </MDButton>
+                </Button>
               </Stack>
             </Stack>
           </Box>
