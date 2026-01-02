@@ -74,7 +74,7 @@ const MarkAttendance = ({
   const seconds = (elapsedSeconds % 60).toString().padStart(2, "0");
 
   return (
-    <CustomBox customClasses="w-[297px] h-full flex flex-col items-center p-5 text-black">
+    <CustomBox customClasses="w-[28%] h-full flex flex-col items-center p-4 text-black">
       <div className="w-full flex flex-col items-center gap-y-2">
         <h3 className="text-xl font-semibold">Daily Attendance</h3>
         <LinearGradient />
@@ -91,19 +91,19 @@ const MarkAttendance = ({
       <div className="mt-4.5 w-full flex flex-col gap-y-2.5 items-center">
         <div className="w-full flex flex-row flex-nowrap gap-x-4">
           <div className="w-full flex flex-col items-center">
-            <div className="bg-background px-3 py-2.5 rounded-lg font-bold text-4xl leading-11">
+            <div className="w-full text-center bg-background p-2.5 rounded-lg font-bold text-4xl leading-11">
               {hours}
             </div>
             <p className="text-black-50 text-sm">Hours</p>
           </div>
           <div className="w-full flex flex-col items-center">
-            <div className="bg-background px-3 py-2.5 rounded-lg font-bold text-4xl leading-11">
+            <div className="w-full text-center bg-background p-2.5 rounded-lg font-bold text-4xl leading-11">
               {minutes}
             </div>
             <p className="text-black-50 text-sm">Minutes</p>
           </div>
           <div className="w-full flex flex-col items-center">
-            <div className="bg-background px-3 py-2.5 rounded-lg font-bold text-4xl leading-11">
+            <div className="w-full text-center bg-background p-2.5 rounded-lg font-bold text-4xl leading-11">
               {seconds}
             </div>
             <p className="text-black-50 text-sm">Seconds</p>

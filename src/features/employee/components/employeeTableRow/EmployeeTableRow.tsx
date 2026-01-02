@@ -1,19 +1,26 @@
-import MDBox from '../../../../components/MDBox/MDBox';
-import MDTypography from '../../../../components/MDTypography';
+import { Box, Typography } from "@mui/material";
 
-const EmployeeTableRow = ({ image, name, email }) => {
+const EmployeeTableRow = ({
+  image,
+  name,
+  email,
+}: {
+  image: string;
+  name: string;
+  email: string;
+}) => {
   return (
-    <MDBox
+    <Box
       display="flex"
       sx={{
-        overflow: 'scroll',
+        overflow: "scroll",
       }}
       alignItems="center"
       lineHeight={1}
     >
       <img src={image} alt="" className="size-12 object-center rounded-full" />
-      <MDBox ml={2} lineHeight={1}>
-        <MDTypography
+      <Box ml={2} lineHeight={1}>
+        <Typography
           display="block"
           variant="caption"
           color="text"
@@ -21,10 +28,10 @@ const EmployeeTableRow = ({ image, name, email }) => {
           fontWeight="bold"
         >
           {name}
-        </MDTypography>
-        <MDTypography variant="caption">{email}</MDTypography>
-      </MDBox>
-    </MDBox>
+        </Typography>
+        <Typography variant="caption">{email}</Typography>
+      </Box>
+    </Box>
   );
 };
 

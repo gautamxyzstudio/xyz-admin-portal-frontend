@@ -46,7 +46,7 @@ const OwnDocs: React.FC<OwnDocsProps> = ({ userId, employeeName }) => {
   /* ---------------- Loading ---------------- */
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[300px]">
+      <div className="flex justify-center items-center min-h-75">
         <ActivityIndicator size={80} />
       </div>
     );
@@ -71,7 +71,7 @@ const OwnDocs: React.FC<OwnDocsProps> = ({ userId, employeeName }) => {
         <div className="border border-dashed border-[#787571] rounded-xl p-8 mb-6 mt-4">
           <div className="flex items-center gap-8">
             {/* <img src="/upload-docs.svg" alt="upload" className="w-40" /> */}
-            <img src={Icons.UPLOADDOCUMENTS} alt="" />
+            <img src={Icons.UPLOAD_DOCUMENTS} alt="UPLOAD_DOCUMENTS" />
 
             <div>
               <h3 className="text-lg font-semibold">

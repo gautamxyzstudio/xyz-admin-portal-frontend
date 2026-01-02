@@ -9,17 +9,32 @@ import NOTIFICATION from "./icons/notification.svg";
 import OUTLOOK from "./icons/outlook.svg";
 import GROUP_PEOPLE from "./icons/groupPeople.svg";
 import OFFICE from "./icons/office.svg";
-import  UPLOADDOCUMENTS from "../images/uploadDocument.svg"
-import DOWNLOAD from "./icons/download.svg"
-import VIEW from "./icons/view.svg"
-import FILE from "./icons/file.svg"
-import TICK from "./icons/tick.svg"
+import UPLOAD_DOCUMENTS from "../images/uploadDocument.svg";
+import DOWNLOAD from "./icons/download.svg";
+import VIEW from "./icons/view.svg";
+import FILE from "./icons/file.svg";
+import TICK from "./icons/tick.svg";
 import LEAVE_BALANCE from "./icons/leaveBalance.svg";
 import PRESENTS_EMP from "./icons/presentsEmployee.svg";
 import TOTAL_EMP from "./icons/totalEmployee.svg";
 import TOTAL_LEAVE from "./icons/totalLeave.svg";
 import UPCOMING_HOLIDAY from "./icons/upComingHoliday.svg";
-
+import ALL_EMP_DOC from "./icons/allEmpDoc.svg";
+import ATTENDANCE from "./icons/attendance.svg";
+import BLOG from "./icons/blog.svg";
+import DASHBOARD from "./icons/dashboard.svg";
+import DOCUMENT from "./icons/document.svg";
+import EMPLOYEE from "./icons/employee.svg";
+import HOLIDAYS from "./icons/holidays.svg";
+import LEAVES from "./icons/leaves.svg";
+import ALL_EMP_DOC_FILL from "./icons/allEmpDocFill.svg";
+import ATTENDANCE_FILL from "./icons/attendanceFill.svg";
+import BLOG_FILL from "./icons/blogFill.svg";
+import DASHBOARD_FILL from "./icons/dashboardFill.svg";
+import DOCUMENT_FILL from "./icons/documentFill.svg";
+import EMPLOYEE_FILL from "./icons/employeeFill.svg";
+import HOLIDAYS_FILL from "./icons/holidaysFill.svg";
+import LEAVES_FILL from "./icons/leavesFill.svg";
 export const Icons = {
   CROSS_ICON,
   PROFILE_PICTURE,
@@ -31,7 +46,7 @@ export const Icons = {
   UNPAID_LEAVE,
   GROUP_PEOPLE,
   OFFICE,
-  UPLOADDOCUMENTS,
+  UPLOAD_DOCUMENTS,
   DOWNLOAD,
   VIEW,
   FILE,
@@ -41,11 +56,27 @@ export const Icons = {
   TOTAL_EMP,
   TOTAL_LEAVE,
   UPCOMING_HOLIDAY,
+  ALL_EMP_DOC,
+  ALL_EMP_DOC_FILL,
+  ATTENDANCE,
+  ATTENDANCE_FILL,
+  BLOG,
+  BLOG_FILL,
+  DASHBOARD,
+  DASHBOARD_FILL,
+  DOCUMENT,
+  DOCUMENT_FILL,
+  EMPLOYEE,
+  EMPLOYEE_FILL,
+  HOLIDAYS,
+  HOLIDAYS_FILL,
+  LEAVES,
+  LEAVES_FILL,
 };
 
 // Images
-import BRANDLOGO from "../images/logo-ct.webp";
+import BRAND_LOGO from "../images/logo-ct.webp";
 
 export const Images = {
-  BRANDLOGO,
+  BRAND_LOGO,
 };
