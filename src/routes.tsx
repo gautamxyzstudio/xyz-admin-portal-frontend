@@ -76,14 +76,6 @@ const routes = [
     route: "/all-employee-docs",
     permissions: ["Admin", "Hr"], // Admin, HR, and Employees can manage documents
   },
-  {
-    name: "Profile",
-    key: "profile",
-    icon: Icons.LEAVES,
-    iconFill: Icons.LEAVES_FILL,
-    route: "/profile",
-    permissions: ["Employee", "Seo", "Hr"], // All users can access profile
-  },
 ];
 
 // Function to filter routes based on user permissions
