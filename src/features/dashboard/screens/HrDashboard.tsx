@@ -6,7 +6,6 @@ import {
   useUpdateAttendanceMutation,
 } from "../dashboardApi";
 import type { IUserAttendance } from "../types";
-import DataTable from "../../../shared/components/dataTable/DataTable";
 import type { GridColDef } from "@mui/x-data-grid";
 import EmployeeTableRow from "../../employee/components/employeeTableRow/EmployeeTableRow";
 import {
@@ -29,6 +28,7 @@ import LeaveRequest from "../components/leaveRequests/LeaveRequest";
 import { useLoadingWrapper } from "../../../wrappers/loadingWrapper/LoadingWrapper.context";
 import { toast } from "react-toastify";
 import EmptyScreenView from "../../../shared/components/EmptyScreenView/EmptyScreenView";
+import CustomDataTable from "../../../shared/components/customDataTable/CustomDataTable";
 
 const HrDashboard = () => {
   const [getAllAttendance, { isFetching: isLoading, error }] =
@@ -277,7 +277,7 @@ const HrDashboard = () => {
             </div>
           </div>
         ) : (
-          <DataTable
+          <CustomDataTable
             columns={columns}
             rows={attendanceData}
             isDataEmpty={!attendanceData || attendanceData.length === 0}

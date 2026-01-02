@@ -5,7 +5,6 @@ import {
   useUpdateAttendanceMutation,
 } from '../../dashboard/dashboardApi';
 import type { IUserAttendance } from '../../dashboard/types';
-import DataTable from '../../../shared/components/dataTable/DataTable.js';
 import type { GridColDef } from '@mui/x-data-grid';
 import EmployeeTableRow from '../../employee/components/employeeTableRow/EmployeeTableRow';
 import { getImageUrl } from '../../../utils/utils';
@@ -29,6 +28,7 @@ import {
   Button,
 } from '@mui/material';
 import { useLoadingWrapper } from '../../../wrappers/loadingWrapper/LoadingWrapper.context.js';
+import CustomDataTable from '../../../shared/components/customDataTable/CustomDataTable.js';
 
 // Custom hook for attendance data management
 const useAttendanceData = () => {
@@ -488,7 +488,7 @@ const AttendanceAdmin = () => {
             </Stack>
           </Box>
 
-          <DataTable
+          <CustomDataTable
             columns={columns}
             rows={attendanceData}
             isDataEmpty={attendanceData.length === 0}

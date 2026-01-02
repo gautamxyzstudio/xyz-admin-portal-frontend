@@ -1,12 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { Card, Typography, Box, CircularProgress } from '@mui/material';
+import { Card, Typography } from '@mui/material';
 import { CheckCircle, HourglassEmpty, Cancel } from '@mui/icons-material';
 import { green, orange, red } from '@mui/material/colors';
 import MDBox from '../../../../components/MDBox/MDBox';
 import MDButton from '../../../../components/MDButton/MDButton';
-import { useSelector } from 'react-redux';
-import { userDetailsInState } from '../../../auth/authSlice';
 import { useNavigate } from 'react-router-dom';
 import {
   formatDateToReadable,
@@ -14,7 +12,6 @@ import {
 } from '../../../../utils/utils';
 
 const LeaveAnalytics = ({ leaves }: { leaves: any }) => {
-  const userDetails = useSelector(userDetailsInState);
   const navigate = useNavigate();
 
   // Get recent leaves (last 3)
@@ -48,8 +45,8 @@ const LeaveAnalytics = ({ leaves }: { leaves: any }) => {
 
   return (
     <Card sx={{ width: '100%', p: 3 }}>
-      <MDBox mb={3}>
-        <div className="flex flex-row justify-between items-center">
+      {/* <MDBox mb={3}> */}
+        {/* <div className="flex flex-row justify-between items-center">
           <Typography variant="h5" fontWeight="bold" gutterBottom>
             Leaves
           </Typography>
@@ -61,10 +58,10 @@ const LeaveAnalytics = ({ leaves }: { leaves: any }) => {
           >
             Apply Leave
           </MDButton>
-        </div>
+        </div> */}
 
         {/* Leave Balance Circles */}
-        <div className="flex flex-row justify-start items-start mt-4 space-x-8">
+        {/* <div className="flex flex-row justify-start items-start mt-4 space-x-8">
           <Box
             sx={{
               display: 'flex',
@@ -121,9 +118,9 @@ const LeaveAnalytics = ({ leaves }: { leaves: any }) => {
             >
               Available days
             </Typography>
-          </Box>
+          </Box> */}
 
-          <Box
+          {/* <Box
             sx={{
               display: 'flex',
               flexDirection: 'column',
@@ -154,9 +151,9 @@ const LeaveAnalytics = ({ leaves }: { leaves: any }) => {
                   variant="h3"
                   component="div"
                   sx={{ color: 'text.primary', fontWeight: 'bold' }}
-                >
-                  {userDetails?.unpaid_leave_balance ?? 0}
-                </Typography>
+                > */}
+                  {/* {userDetails?.unpaid_leave_balance ?? 0} */}
+                {/* </Typography>
               </Box>
             </Box>
             <Typography
@@ -180,8 +177,8 @@ const LeaveAnalytics = ({ leaves }: { leaves: any }) => {
               Unpaid days
             </Typography>
           </Box>
-        </div>
-      </MDBox>
+        </div> */}
+      {/* // </MDBox> */}
 
       <MDBox>
         <div className="flex flex-row justify-between items-center mb-3">

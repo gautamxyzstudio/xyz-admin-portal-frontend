@@ -1,8 +1,8 @@
 // Icons
-import EARN from "../images/earn.svg"
-import CASUALLEAVE from "../images/casualLeave.svg"
-import SICKLEAVE from "../images/SickLeave.svg"
-import UNPAIDLEAVE from "../images/unpaidLeave.svg"
+import EARN from "./icons/earn.svg";
+import CASUAL_LEAVE from "./icons/casualLeave.svg";
+import SICK_LEAVE from "./icons/SickLeave.svg";
+import UNPAID_LEAVE from "./icons/unpaidLeave.svg";
 import CROSS_ICON from "./icons/cross.svg";
 import PROFILE_PICTURE from "./icons/profile-picture.svg";
 import NOTIFICATION from "./icons/notification.svg";
@@ -14,6 +14,11 @@ import DOWNLOAD from "./icons/download.svg"
 import VIEW from "./icons/view.svg"
 import FILE from "./icons/file.svg"
 import TICK from "./icons/tick.svg"
+import LEAVE_BALANCE from "./icons/leaveBalance.svg";
+import PRESENTS_EMP from "./icons/presentsEmployee.svg";
+import TOTAL_EMP from "./icons/totalEmployee.svg";
+import TOTAL_LEAVE from "./icons/totalLeave.svg";
+import UPCOMING_HOLIDAY from "./icons/upComingHoliday.svg";
 
 export const Icons = {
   CROSS_ICON,
@@ -21,16 +26,21 @@ export const Icons = {
   NOTIFICATION,
   OUTLOOK,
   EARN,
-  CASUALLEAVE,
-  SICKLEAVE,
-  UNPAIDLEAVE,
+  CASUAL_LEAVE,
+  SICK_LEAVE,
+  UNPAID_LEAVE,
   GROUP_PEOPLE,
   OFFICE,
   UPLOADDOCUMENTS,
   DOWNLOAD,
   VIEW,
   FILE,
-  TICK
+  TICK,
+  LEAVE_BALANCE,
+  PRESENTS_EMP,
+  TOTAL_EMP,
+  TOTAL_LEAVE,
+  UPCOMING_HOLIDAY,
 };
 
 // Images

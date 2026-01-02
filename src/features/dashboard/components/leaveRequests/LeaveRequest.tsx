@@ -24,8 +24,6 @@ import {
   formatDateToReadable,
   getLeaveTypeTitle,
 } from "../../../../utils/utils";
-
-import DataTable from "../../../../shared/components/dataTable/DataTable";
 import type { ILeave } from "../../../leaves/leaves.types";
 import EmployeeTableRow from "../../../employee/components/employeeTableRow/EmployeeTableRow";
 import { toast } from "react-toastify";
@@ -39,6 +37,7 @@ import {
 } from "../../screens/dashboardHrSlice";
 import MDButton from "../../../../components/MDButton/MDButton";
 import { useNavigate } from "react-router-dom";
+import CustomDataTable from "../../../../shared/components/customDataTable/CustomDataTable";
 
 const LeaveRequest = () => {
   const { data: leaveRequests, isLoading } = useGetLeaveRequestsQuery(
@@ -284,7 +283,7 @@ const LeaveRequest = () => {
           </MDButton>
         )}
       </div>
-      <DataTable
+      <CustomDataTable
         columns={columns as unknown as GridColDef[]}
         rows={leaveRequestsFromStore || []}
         isLoading={isLoading}

@@ -1,11 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState, useCallback } from "react";
-
 import MDTypography from "../../../../components/MDTypography";
 import type { ILeave } from "../../leaves.types";
-import DataTable from "../../../../shared/components/dataTable/DataTable.js";
 import type { GridColDef } from "@mui/x-data-grid";
-import DashboardLayout from "../../../../examples/LayoutContainers/DashboardLayout/index.jsx";
 import EmployeeTableRow from "../../../employee/components/employeeTableRow/EmployeeTableRow";
 import {
   convertTo12HourFormat,
@@ -44,6 +42,7 @@ import {
 } from "../../leavesApi";
 import MDButton from "../../../../components/MDButton/MDButton";
 import { useGetEmployeeLeaveBalanceQuery } from "../../../employee/employeeApis";
+import CustomDataTable from "../../../../shared/components/customDataTable/CustomDataTable.js";
 
 // Custom hook for leaves data management
 const useLeavesData = () => {
@@ -792,7 +791,7 @@ const AllLeaves = () => {
             </Stack>
           </Box>
 
-          <DataTable
+          <CustomDataTable
             columns={columns}
             rows={leavesData}
             isLoading={isFetching}

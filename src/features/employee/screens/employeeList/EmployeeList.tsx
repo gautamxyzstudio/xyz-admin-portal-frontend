@@ -1,11 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import DashboardLayout from "../../../../examples/LayoutContainers/DashboardLayout/index.jsx";
-import DashboardNavbar from "../../../../examples/Navbars/DashboardNavbar/index.jsx";
 import MDBox from "../../../../components/MDBox/MDBox";
 import Grid from "@mui/material/Grid";
 import MDTypography from "../../../../components/MDTypography";
 import MDButton from "../../../../components/MDButton/MDButton";
-import DataTable from "../../../../shared/components/dataTable/DataTable.js";
 import EmployeeTableRow from "../../components/employeeTableRow/EmployeeTableRow";
 import EmployeeDesignationRow from "../../components/employeeDesignationRow/EmployeeDesignationRow";
 import EmployeeStatusRow from "../../components/employeestatusRow/EmployeeStatusRow";
@@ -22,13 +19,14 @@ import { useLoadingWrapper } from "../../../../wrappers/loadingWrapper/LoadingWr
 import { toast } from "react-toastify";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useNavigate } from "react-router-dom";
+import CustomDataTable from "../../../../shared/components/customDataTable/CustomDataTable.js";
 
 const EmployeeList = () => {
   const user = useSelector(userInState);
   const navigate = useNavigate();
   const { setIsLoading } = useLoadingWrapper();
   const { isLoading } = useGetEmployeeListQuery({
-    user_type: user.user_type,
+    user_type: user ? user.user_type : "",
   });
   const [deleteUser] = useDeleteUserMutation();
   const [deleteEmployee] = useDeleteEmployeeMutation();
@@ -154,7 +152,6 @@ const EmployeeList = () => {
 
   return (
     <>
-      <DashboardNavbar />
       <MDBox pt={3} pb={3}>
         <Grid container spacing={6}>
           <div className="w-full">
@@ -188,7 +185,7 @@ const EmployeeList = () => {
               </MDBox>
 
               <div className="h-[70vh]  mt-4  w-full">
-                <DataTable
+                <CustomDataTable
                   columns={columns}
                   rows={filteredEmployeeList}
                   isDataEmpty={filteredEmployeeList.length === 0}
@@ -196,7 +193,6 @@ const EmployeeList = () => {
                   emptyViewSubTitle="Please add an employee to the system"
                   isLoading={isLoading}
                   withPagination={false}
-                  tableHeightPercent={100}
                 />
               </div>
             </div>

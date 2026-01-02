@@ -11,6 +11,7 @@ export const endpoints = {
     `${baseUrl}/api/user/${id}/leave-balance`,
   getEmployeeLeaveBalance: (id: string) =>
     `${baseUrl}/api/user/${id}/leave-balance`,
+  getLeaveBalance:`${baseUrl}/api/leave-balance/me`,
   employeeList: (user_type: string) => `${baseUrl}/api/users/${user_type}`,
   getAttendance: (id: number) => `${baseUrl}/api/daily-attendance/${id}`,
   deleteUser: (id: string) => `${baseUrl}/api/users/${id}`,

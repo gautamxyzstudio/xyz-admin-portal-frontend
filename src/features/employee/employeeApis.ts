@@ -1,17 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { baseApi } from '../../state/baseApi';
-import { endpoints } from '../../state/endpoints';
-import { ApiMethodType } from '../../state/types';
+import { baseApi } from "../../state/baseApi";
+import { endpoints } from "../../state/endpoints";
+import { ApiMethodType } from "../../state/types";
 import type {
   IAddEmployeeArgs,
   IEditEmployeeArgs,
   IRegisterUserArgs,
   IRegisterUserResponse,
   IUpdateLeaveBalanceArgs,
-} from './types';
+} from "./types";
 
 export const enhancedEmployeeApi = baseApi.enhanceEndpoints({
-  addTagTypes: ['Employee'],
+  addTagTypes: ["Employee"],
 });
 
 export const employeeApis = enhancedEmployeeApi.injectEndpoints({
@@ -34,7 +34,7 @@ export const employeeApis = enhancedEmployeeApi.injectEndpoints({
           data: data,
         },
       }),
-      invalidatesTags: ['Employee'],
+      invalidatesTags: ["Employee"],
     }),
     updateUserLeaveBalance: builder.mutation<
       any,
@@ -52,6 +52,12 @@ export const employeeApis = enhancedEmployeeApi.injectEndpoints({
         method: ApiMethodType.get,
       }),
     }),
+    geLeaveBalance: builder.query<any, void>({
+      query: () => ({
+        url: endpoints.getLeaveBalance,
+        method: ApiMethodType.get,
+      }),
+    }),
     updateEmployeeDetails: builder.mutation<
       any,
       { id: string; data: IEditEmployeeArgs }
@@ -63,7 +69,7 @@ export const employeeApis = enhancedEmployeeApi.injectEndpoints({
           data: data,
         },
       }),
-      invalidatesTags: ['Employee'],
+      invalidatesTags: ["Employee"],
     }),
     deleteUser: builder.mutation<any, { id: string }>({
       query: ({ id }) => ({
@@ -76,7 +82,7 @@ export const employeeApis = enhancedEmployeeApi.injectEndpoints({
         url: endpoints.deleteEmployee(id),
         method: ApiMethodType.delete,
       }),
-      invalidatesTags: ['Employee'],
+      invalidatesTags: ["Employee"],
     }),
 
     getEmployeeList: builder.query<any, { user_type: string }>({
@@ -84,7 +90,7 @@ export const employeeApis = enhancedEmployeeApi.injectEndpoints({
         url: endpoints.employeeList(user_type),
         method: ApiMethodType.get,
       }),
-      providesTags: ['Employee'],
+      providesTags: ["Employee"],
     }),
   }),
 });
@@ -98,4 +104,5 @@ export const {
   useGetEmployeeLeaveBalanceQuery,
   useDeleteUserMutation,
   useDeleteEmployeeMutation,
+  useGeLeaveBalanceQuery,
 } = employeeApis;
