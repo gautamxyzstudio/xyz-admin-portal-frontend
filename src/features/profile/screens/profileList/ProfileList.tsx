@@ -3,20 +3,6 @@ import { useSelector } from "react-redux";
 import type { RootState } from "../../../../state/store";
 import { useLazyUserDetailsQuery } from "../../../auth/authApi";
 
-// @mui material components
-import Grid from "@mui/material/Grid";
-import Card from "@mui/material/Card";
-import Box from "@mui/material/Box";
-import Tabs from "@mui/material/Tabs";
-import Tab from "@mui/material/Tab";
-
-// Material Dashboard 2 React components
-import MDBox from "../../../../components/MDBox/MDBox";
-
-// Material Dashboard 2 React example components
-import DashboardLayout from "../../../../examples/LayoutContainers/DashboardLayout/index.jsx";
-import DashboardNavbar from "../../../../examples/Navbars/DashboardNavbar/index.jsx";
-
 // Profile components
 import ProfileHeader from "../../components/ProfileHeader/ProfileHeader";
 import ProfileInformation from "../../components/ProfileInformation/ProfileInformation";
@@ -28,20 +14,10 @@ interface TabPanelProps {
   value: number;
 }
 
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
+function TabPanel({ children, value, index }: TabPanelProps) {
+  if (value !== index) return null;
 
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`profile-tabpanel-${index}`}
-      aria-labelledby={`profile-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
-    </div>
-  );
+  return <div className="p-6">{children}</div>;
 }
 
 const ProfileList = () => {
@@ -55,48 +31,50 @@ const ProfileList = () => {
     }
   }, [user?.id, getUserDetails]);
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
-  };
-
   return (
-    <>
-      <DashboardNavbar />
-      <MDBox pt={3} pb={3}>
-        <Grid container spacing={3}>
-          {/* Profile Header */}
-          <div className="w-full">
-            <ProfileHeader />
-          </div>
+    <div className="pt-6 pb-6 p-6 bg-white rounded-2xl ">
+      {/* Profile Header */}
+      <div className="w-full mb-6">
+        <ProfileHeader />
+      </div>
 
-          {/* Tabs */}
-          <div className="w-full">
-            <Card>
-              <MDBox sx={{ borderBottom: 1, borderColor: "divider" }}>
-                <Tabs
-                  value={tabValue}
-                  onChange={handleTabChange}
-                  aria-label="profile tabs"
-                >
-                  <Tab label="Profile Information" />
-                  <Tab label="Employee Directory" />
-                </Tabs>
-              </MDBox>
+      {/* Tabs Container */}
+      <div className="w-full bg-white rounded-lg ">
+        {/* Tabs Header */}
+        <div className="flex w-full gap-2 px-7 ">
+          <button
+            className={`px-6 py-3 text-sm font-medium w-full ${
+              tabValue === 0
+                ? " bg-[#FFE4CA] text-orange-500 rounded-lg "
+                : "text-gray-500 bg-[#F7F7F7] rounded-lg"
+            }`}
+            onClick={() => setTabValue(0)}
+          >
+            Profile Information
+          </button>
 
-              {/* Profile Information Tab */}
-              <TabPanel value={tabValue} index={0}>
-                <ProfileInformation />
-              </TabPanel>
+          <button
+            className={`px-6 py-3 text-sm font-medium w-full  ${
+              tabValue === 1
+                ? "bg-[#FFE4CA] text-orange-500 rounded-lg"
+                : "text-gray-500 bg-[#F7F7F7] rounded-lg"
+            }`}
+            onClick={() => setTabValue(1)}
+          >
+            Employee Directory
+          </button>
+        </div>
 
-              {/* Employee Directory Tab */}
-              <TabPanel value={tabValue} index={1}>
-                <EmployeeDirectory />
-              </TabPanel>
-            </Card>
-          </div>
-        </Grid>
-      </MDBox>
-    </>
+        {/* Tabs Content */}
+        <TabPanel value={tabValue} index={0}>
+          <ProfileInformation />
+        </TabPanel>
+
+        <TabPanel value={tabValue} index={1}>
+          <EmployeeDirectory />
+        </TabPanel>
+      </div>
+    </div>
   );
 };
 

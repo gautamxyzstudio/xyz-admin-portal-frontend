@@ -1,180 +1,129 @@
 import { useSelector } from "react-redux";
 import type { RootState } from "../../../../state/store";
-
-// @mui material components
-import Grid from "@mui/material/Grid";
-import Card from "@mui/material/Card";
-
-// @mui icons
-import EmailIcon from "@mui/icons-material/Email";
-import PhoneIcon from "@mui/icons-material/Phone";
-import WorkIcon from "@mui/icons-material/Work";
-import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
-import PersonIcon from "@mui/icons-material/Person";
-import BadgeIcon from "@mui/icons-material/Badge";
-
-// Material Dashboard 2 React components
-import MDBox from "../../../../components/MDBox/MDBox";
-import MDTypography from "../../../../components/MDTypography/index";
-
-// Utils
 import dayjs from "dayjs";
+import LinearGradient from "../../../../components/LinearGradient/LinearGradient";
+import { Icons } from "../../../../assets/myAssets/exporter";
+
+// const IconWrapper = ({ children }: { children: React.ReactNode }) => (
+//   <div className="w-10 h-10 flex items-center justify-center bg-orange-100 text-orange-500 rounded-md mr-4">
+//     {children}
+//   </div>
+// );
 
 const ProfileInformation: React.FC = () => {
   const userDetails = useSelector((state: RootState) => state.auth.userDetails);
 
-  const formatDate = (dateString: string) => {
-    return dayjs(dateString).format("MMMM DD, YYYY");
-  };
+  const formatDate = (dateString: string) =>
+    dayjs(dateString).format("DD MMM, YYYY");
 
   return (
-    <Grid container spacing={3} flex={1}>
-      <div className="w-1/2">
-        <Card sx={{ height: "100%" }}>
-          <MDBox p={3}>
-            <MDTypography variant="h6" fontWeight="bold" mb={3}>
-              Personal Information
-            </MDTypography>
-            <MDBox>
-              <MDBox display="flex" alignItems="center" mb={2}>
-                <PersonIcon sx={{ mr: 2, color: "#FF7312" }} />
-                <MDBox>
-                  <MDTypography variant="caption" color="text.secondary">
-                    Full Name
-                  </MDTypography>
-                  <MDTypography variant="body1" fontWeight="medium">
+    <>
+      <div className="flex flex-col md:flex-row gap-6 mb-6">
+        {/* Personal Information */}
+        <div className="flex-1 bg-white rounded-lg  p-2">
+          <h3 className="text-lg font-semibold mb-5 text-gray-800">
+            Personal <span className="text-orange-500">Information</span>
+          </h3>
+
+          <div className="space-y-4">
+            <div className="flex justify-between">
+              <div className="flex items-center gap-2">
+                <img
+                  className="bg-[#FFE4CA] p-2 rounded-[10px]"
+                  src={Icons.PROFILE}
+                  alt=""
+                />
+                <div>
+                  <p className="text-xs text-gray-400">Full Name</p>
+                  <p className="font-medium text-gray-800">
                     {userDetails?.name || "Not Available"}
-                  </MDTypography>
-                </MDBox>
-              </MDBox>
+                  </p>
+                </div>
+              </div>
 
-              <MDBox display="flex" alignItems="center" mb={2}>
-                <WorkIcon sx={{ mr: 2, color: "#FF7312" }} />
-                <MDBox>
-                  <MDTypography variant="caption" color="text.secondary">
-                    Designation
-                  </MDTypography>
-                  <MDTypography variant="body1" fontWeight="medium">
+              <div className="flex items-center gap-2">
+                <img
+                  className="bg-[#FFE4CA] p-2 rounded-[10px]"
+                  src={Icons.DESIGNATION}
+                  alt=""
+                />
+                <div>
+                  <p className="text-xs text-gray-400">Designation</p>
+                  <p className="font-medium text-gray-800">
                     {userDetails?.designation || "Not Available"}
-                  </MDTypography>
-                </MDBox>
-              </MDBox>
-
-              <MDBox display="flex" alignItems="center" mb={2}>
-                <BadgeIcon sx={{ mr: 2, color: "#FF7312" }} />
-                <MDBox>
-                  <MDTypography variant="caption" color="text.secondary">
-                    Employee Code
-                  </MDTypography>
-                  <MDTypography variant="body1" fontWeight="medium">
-                    {userDetails?.empCode || "Not Available"}
-                  </MDTypography>
-                </MDBox>
-              </MDBox>
-
-              <MDBox display="flex" alignItems="center" mb={2}>
-                <CalendarTodayIcon sx={{ mr: 2, color: "#FF7312" }} />
-                <MDBox>
-                  <MDTypography variant="caption" color="text.secondary">
-                    Joining Date
-                  </MDTypography>
-                  <MDTypography variant="body1" fontWeight="medium">
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <img
+                  className="bg-[#FFE4CA] p-2 rounded-[10px]"
+                  src={Icons.JOINING_DATE}
+                  alt=""
+                />
+                <div>
+                  <p className="text-xs text-gray-400">Joining Date</p>
+                  <p className="font-medium text-gray-800">
                     {userDetails?.joining_date
                       ? formatDate(userDetails.joining_date)
                       : "Not Available"}
-                  </MDTypography>
-                </MDBox>
-              </MDBox>
-            </MDBox>
-          </MDBox>
-        </Card>
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <img
+                className="bg-[#FFE4CA] p-2 rounded-[10px]"
+                src={Icons.EMPLOYED_CODE}
+                alt=""
+              />
+              <div>
+                <p className="text-xs text-gray-400">Employee Code</p>
+                <p className="font-medium text-gray-800">
+                  {userDetails?.empCode || "Not Available"}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+      <LinearGradient />
+      {/* Contact Information */}
+      <div className="flex-1 bg-white rounded-lg p-1 mt-8">
+        <h3 className="text-lg font-semibold mb-5 text-gray-800">
+          Contact <span className="text-orange-500">Information</span>
+        </h3>
 
-      <div className="flex-1">
-        <Card sx={{ height: "100%" }}>
-          <MDBox p={3}>
-            <MDTypography variant="h6" fontWeight="bold" mb={3}>
-              Contact Information
-            </MDTypography>
-            <MDBox>
-              <MDBox display="flex" alignItems="center" mb={2}>
-                <EmailIcon sx={{ mr: 2, color: "#FF7312" }} />
-                <MDBox>
-                  <MDTypography variant="caption" color="text.secondary">
-                    Email Address
-                  </MDTypography>
-                  <MDTypography variant="body1" fontWeight="medium">
-                    {userDetails?.email || "Not Available"}
-                  </MDTypography>
-                </MDBox>
-              </MDBox>
+        <div className="flex justify-between space-y-4">
+          <div className="flex items-center gap-2">
+            <img
+              className="bg-[#FFE4CA] p-2 rounded-[10px]"
+              src={Icons.OUTLOOK_PRIMARY}
+              alt=""
+            />
+            <div>
+              <p className="text-xs text-gray-400">Email Address</p>
+              <p className="font-medium text-gray-800">
+                {userDetails?.email || "Not Available"}
+              </p>
+            </div>
+          </div>
 
-              <MDBox display="flex" alignItems="center" mb={2}>
-                <PhoneIcon sx={{ mr: 2, color: "#FF7312" }} />
-                <MDBox>
-                  <MDTypography variant="caption" color="text.secondary">
-                    Phone Number
-                  </MDTypography>
-                  <MDTypography variant="body1" fontWeight="medium">
-                    {userDetails?.phoneNumber || "Not Available"}
-                  </MDTypography>
-                </MDBox>
-              </MDBox>
-            </MDBox>
-          </MDBox>
-        </Card>
+          <div className="flex items-center gap-2 ">
+            <img
+              className="bg-[#FFE4CA] p-3 rounded-[10px] "
+              src={Icons.CALL_ICON}
+              alt=""
+            />
+            <div>
+              <p className="text-xs text-gray-400">Phone Number</p>
+              <p className="font-medium text-gray-800">
+                {userDetails?.phoneNumber || "Not Available"}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
-
-      <div className="w-full">
-        <Card>
-          <MDBox p={3}>
-            <MDTypography variant="h6" fontWeight="bold" mb={3}>
-              Leave Information
-            </MDTypography>
-            <Grid container spacing={3}>
-              <Grid container spacing={3}>
-                <MDBox
-                  textAlign="center"
-                  p={2}
-                  bgcolor="primary.light"
-                  borderRadius={2}
-                >
-                  <MDTypography
-                    variant="h4"
-                    fontWeight="bold"
-                    color="primary.main"
-                  >
-                    {userDetails?.leave_balance || 0}
-                  </MDTypography>
-                  <MDTypography variant="body2" color="text.secondary">
-                    Paid Leave Balance
-                  </MDTypography>
-                </MDBox>
-              </Grid>
-              <Grid container spacing={3}>
-                <MDBox
-                  textAlign="center"
-                  p={2}
-                  bgcolor="warning.light"
-                  borderRadius={2}
-                >
-                  <MDTypography
-                    variant="h4"
-                    fontWeight="bold"
-                    color="warning.main"
-                  >
-                    {userDetails?.unpaid_leave_balance || 0}
-                  </MDTypography>
-                  <MDTypography variant="body2" color="text.secondary">
-                    Unpaid Leave Balance
-                  </MDTypography>
-                </MDBox>
-              </Grid>
-            </Grid>
-          </MDBox>
-        </Card>
-      </div>
-    </Grid>
+    </>
   );
 };
 

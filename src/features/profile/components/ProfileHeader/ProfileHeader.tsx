@@ -1,70 +1,76 @@
-import { useState } from 'react';
-import { useSelector } from 'react-redux';
-import type { RootState } from '../../../../state/store';
-
-// @mui material components
-import Card from '@mui/material/Card';
-import Avatar from '@mui/material/Avatar';
-import Chip from '@mui/material/Chip';
-
-// Material Dashboard 2 React components
-import MDBox from '../../../../components/MDBox/MDBox';
-import MDTypography from '../../../../components/MDTypography/index';
+import { useState } from "react";
+import { useSelector } from "react-redux";
+import type { RootState } from "../../../../state/store";
+import { FaCamera } from "react-icons/fa";
+import { Images } from "../../../../assets/myAssets/exporter";
 
 const ProfileHeader: React.FC = () => {
   const userDetails = useSelector((state: RootState) => state.auth.userDetails);
   const [avatarError, setAvatarError] = useState(false);
 
-  const getStatusColor = (status: string) => {
-    return status === 'active' ? 'success' : 'error';
-  };
+  const getStatusText = (status: string) =>
+    status === "active" ? "Active" : "Inactive";
 
-  const getStatusText = (status: string) => {
-    return status === 'active' ? 'Active' : 'Inactive';
-  };
+  const getStatusClasses = (status: string) =>
+    status === "active"
+      ? "bg-[#0080001F] text-[#008000]"
+      : "bg-red-100 text-red-800";
 
   const avatarSrc =
     !avatarError && userDetails?.photo
       ? userDetails.photo
-      : '/static/images/avatar/default.jpg';
+      : "/static/images/avatar/default.jpg";
 
   return (
-    <Card>
-      <MDBox
-        display="flex"
-        alignItems="center"
-        p={3}
-        variant="gradient"
-        bgColor="warning"
-        borderRadius="lg"
-        coloredShadow="dark"
-      >
-        <Avatar
-          src={avatarSrc}
-          alt={userDetails?.name || 'Profile'}
-          sx={{
-            width: 120,
-            height: 120,
-            border: '4px solid white',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-          }}
-          onError={() => setAvatarError(true)}
+    <div className="w-full rounded-xl overflow-hidden bg-white">
+      {/* Banner Image */}
+      <div className="relative w-full h-40  ">
+        <img
+          src={Images.BANNER}
+          alt="Banner"
+          className="w-full h-41.75 object-cover rounded-2xl"
         />
-        <MDBox ml={3}>
-          <MDTypography variant="h4" fontWeight="bold" color="white">
-            {userDetails?.name || 'User Name'}
-          </MDTypography>
-          <MDTypography variant="h6" color="white" opacity={0.9}>
-            {userDetails?.designation || 'Designation'}
-          </MDTypography>
-          <Chip
-            label={getStatusText(userDetails?.status || 'active')}
-            color={getStatusColor(userDetails?.status || 'active')}
-            sx={{ mt: 1, color: 'white' }}
+        {/* Edit icon on banner */}
+        <button className="absolute right-4 bottom-2 bg-white p-2 rounded-full shadow-md hover:bg-gray-100">
+          <FaCamera className="text-gray-700" />
+        </button>
+      </div>
+
+      {/* Avatar and Info */}
+      <div className="flex items-center p-6 -mt-21">
+        <div className="relative">
+          <img
+            src={avatarSrc}
+            alt={userDetails?.name || "Profile"}
+            onError={() => setAvatarError(true)}
+            className=" w-38 h-38  rounded-full border-4 border-white object-cover shadow-lg"
           />
-        </MDBox>
-      </MDBox>
-    </Card>
+          {/* Edit icon on avatar */}
+          <button className="absolute bottom-7 right-0 bg-orange-500 text-white p-1 rounded-full border-2 border-white shadow-md hover:bg-orange-600">
+            <FaCamera size={12} />
+          </button>
+        </div>
+
+        {/* User Info */}
+        <div className="ml-2 mt-14 flex gap-1 ">
+          <div className="flex flex-col">
+            <h2 className="text-2xl font-semibold text-gray-900 leading-8">
+              {userDetails?.name || "User Name"}
+            </h2>
+            <p className="text-gray-600 font-normal text-base">
+              {userDetails?.designation || "Designation"}
+            </p>
+          </div>
+          <span
+            className={`flex px-2 w-20 h-10 font-medium items-center mt-3 justify-center rounded-[50px]  ${getStatusClasses(
+              userDetails?.status || "active"
+            )}`}
+          >
+            {getStatusText(userDetails?.status || "active")}
+          </span>
+        </div>
+      </div>
+    </div>
   );
 };
 

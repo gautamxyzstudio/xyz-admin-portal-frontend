@@ -19,6 +19,13 @@ import PRESENTS_EMP from "./icons/presentsEmployee.svg";
 import TOTAL_EMP from "./icons/totalEmployee.svg";
 import TOTAL_LEAVE from "./icons/totalLeave.svg";
 import UPCOMING_HOLIDAY from "./icons/upComingHoliday.svg";
+import CALL_ICON from "./icons/call-icon.svg";
+import  OUTLOOK_PRIMARY from "./icons/outlook-primary.svg";
+import PROFILE from "./icons/profile.svg";
+import EMPLOYED_CODE from "./icons/employed-code.svg";
+import DESIGNATION from "./icons/designation.svg";
+import JOINING_DATE from "./icons/joining-date.svg"
+
 
 export const Icons = {
   CROSS_ICON,
@@ -41,11 +48,21 @@ export const Icons = {
   TOTAL_EMP,
   TOTAL_LEAVE,
   UPCOMING_HOLIDAY,
+  CALL_ICON,
+  OUTLOOK_PRIMARY,
+  PROFILE,
+  EMPLOYED_CODE,
+  DESIGNATION,
+  JOINING_DATE
+
+
 };
 
 // Images
 import BRANDLOGO from "../images/logo-ct.webp";
+import BANNER from "../images/banner.webp"
 
 export const Images = {
   BRANDLOGO,
+  BANNER
 };
