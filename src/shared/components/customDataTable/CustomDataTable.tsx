@@ -62,7 +62,11 @@ const CustomDataTable: React.FC<ICustomDataTableProps> = ({
   }, []);
 
   const rowStyles = useMemo(() => {
-    return { borderBottomColor: "#0D07011F", padding: "10px" };
+    return {
+      borderBottomColor: "#0D07011F",
+      padding: "10px",
+      fontFamily: '"Plus Jakarta Sans", sans-serif',
+    };
   }, []);
 
   const tableCellStyles = useMemo(() => {
@@ -71,6 +75,7 @@ const CustomDataTable: React.FC<ICustomDataTableProps> = ({
       fontSize: "14px",
       fontWeight: 400,
       border: 0,
+      fontFamily: '"Plus Jakarta Sans", sans-serif',
     };
   }, []);
 
@@ -109,7 +114,7 @@ const CustomDataTable: React.FC<ICustomDataTableProps> = ({
             borderRadius: "8px",
             cursor: onRowClick ? "pointer" : "unset",
             "&:hover": {
-              backgroundColor: "#F8F8F8", 
+              backgroundColor: "#F8F8F8",
             },
           },
         }}
