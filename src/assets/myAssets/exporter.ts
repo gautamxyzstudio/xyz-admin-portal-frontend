@@ -45,6 +45,8 @@ import UPDATE_IMG from "./icons/update-img.svg";
 import ANNOUNCE from "./icons/announcement.svg";
 import ANNIVERSARY from "./icons/anniversary.svg";
 import BIRTHDAY from "./icons/birthday.svg";
+import EDIT from "./icons/edit.svg";
+import DELETE from "./icons/delete.svg";
 
 export const Icons = {
   CROSS_ICON,
@@ -93,6 +95,8 @@ export const Icons = {
   ANNIVERSARY,
   ANNOUNCE,
   BIRTHDAY,
+  EDIT,
+  DELETE,
 };
 
 // Images

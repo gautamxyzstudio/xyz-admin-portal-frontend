@@ -32,6 +32,7 @@ export const useMutation = () => {
       ]);
 
       if (result.data) {
+        console.log(result.data, "Respoe")
         updateState({ data: result.data, isSuccess: true });
         return result.data;
       } else {
@@ -49,6 +50,7 @@ export const useMutation = () => {
       const customError = error as AxiosError;
       console.log("====================================");
       console.log(JSON.stringify(error));
+      console.log(customError, "Error")
       console.log("====================================");
       const filteredError = {
         statusCode: customError.response?.status ?? 0,

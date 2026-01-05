@@ -2,8 +2,6 @@ import React from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { Routes, Route } from "react-router-dom";
 import PrivateRoute from "./PrivateRoutes";
-// import BlogPost from './layouts/blogPost/index.jsx';
-// import Editor from './examples/Editor/index.jsx';
 import HolidayList from "./features/holydayList/screens/holydayList/HolydayList";
 import AddHoliday from "./features/holydayList/screens/addHoliday/AddHoliday";
 import EditHoliday from "./features/holydayList/screens/editHoliday/EditHoliday";
@@ -28,6 +26,7 @@ import { ThemeProvider } from "@mui/material";
 import theme from "./theme/theme.js";
 import { LoadingWrapperProvider } from "./wrappers/loadingWrapper/LoadingWrapper.context.js";
 import DashboardLayout from "./examples/LayoutContainers/DashboardLayout/DashboardLayout.js";
+import BlogList from "./features/blogs/screens/blogList/BlogList.js";
 
 const App: React.FC = () => {
   return (
@@ -37,7 +36,6 @@ const App: React.FC = () => {
           <LoadingWrapperProvider>
             <SnackBarProvider>
               <ThemeProvider theme={theme}>
-              
                 <Routes>
                   <Route element={<PrivateRoute />}>
                     <Route
@@ -161,29 +159,18 @@ const App: React.FC = () => {
                         </DashboardLayout>
                       }
                     />
-                    {/* <Route
+                    <Route
                       path="blog"
                       element={
-                        
-                          <BlogPost />
-                        
+                        <DashboardLayout>
+                          <BlogList />
+                        </DashboardLayout>
                       }
                     />
-                    <Route
-                      path="blog/post_blog"
-                      element={
-                        
-                          <Editor />
-                        
-                      }
-                    />
+                    {/* <Route path="blog/post_blog" element={<Editor />} />
                     <Route
                       path="blog/edit_blog/:id" // Route for editing a blog post
-                      element={
-                        
-                          <Editor />
-                        
-                      }
+                      element={<Editor />}
                     /> */}
                   </Route>
                   <Route path="/login" element={<LoginPage />} />
