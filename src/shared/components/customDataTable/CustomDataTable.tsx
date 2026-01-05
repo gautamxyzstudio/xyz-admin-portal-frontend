@@ -28,7 +28,7 @@ const CustomDataTable: React.FC<ICustomDataTableProps> = ({
   emptyViewTitle,
   isDataEmpty,
   error,
-  customStyles,
+  customStyles = "",
   illustrationStyes,
   onRowClick,
 }) => {
@@ -42,8 +42,6 @@ const CustomDataTable: React.FC<ICustomDataTableProps> = ({
     return {
       boxShadow: "none",
       backgroundColor: "#fff",
-      // height: `${tableHeight}px !important`,
-      // minHeight: "220px",
       scrollbarWidth: "none",
       "&::-webkit-scrollbar": {
         display: "none",
@@ -64,7 +62,7 @@ const CustomDataTable: React.FC<ICustomDataTableProps> = ({
   const rowStyles = useMemo(() => {
     return {
       borderBottomColor: "#0D07011F",
-      padding: "10px",
+      padding: "14px",
       fontFamily: '"Plus Jakarta Sans", sans-serif',
     };
   }, []);
@@ -230,7 +228,7 @@ const CustomDataTable: React.FC<ICustomDataTableProps> = ({
 
   return (
     <div className={`w-full h-full flex flex-col ${customStyles}`}>
-      <div className="w-full">{headerView}</div>
+      {headerView}
       {!isLoading && rows?.length === 0 ? (
         <div className="h-full flex justify-center items-center">
           <EmptyScreenView
