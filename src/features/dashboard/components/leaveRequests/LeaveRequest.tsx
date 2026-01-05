@@ -1,44 +1,50 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import {
-  Box,
-  Modal,
-  Typography,
-  Divider,
-  Chip,
-  Grid,
-  Paper,
-  Stack,
-  Avatar,
-  Button,
-} from "@mui/material";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+
 import {
   useApproveLeaveMutation,
   useGetLeaveRequestsQuery,
   useRejectLeaveMutation,
 } from "../../../leaves/leavesApi";
 import { useGetEmployeeLeaveBalanceQuery } from "../../../employee/employeeApis";
-import type { GridColDef } from "@mui/x-data-grid";
-import {
-  convertTo12HourFormat,
-  formatDateToReadable,
-  getLeaveTypeTitle,
-} from "../../../../utils/utils";
-import type { ILeave } from "../../../leaves/leaves.types";
-import EmployeeTableRow from "../../../employee/components/employeeTableRow/EmployeeTableRow";
-import { toast } from "react-toastify";
-import { useLoadingWrapper } from "../../../../wrappers/loadingWrapper/LoadingWrapper.context";
-import { useDispatch, useSelector } from "react-redux";
+
 import {
   approveLeaveRequest,
   rejectLeaveRequest,
   selectLeaveRequests,
   setLeaveRequests,
 } from "../../screens/dashboardHrSlice";
-import { useNavigate } from "react-router-dom";
+
+import type { ILeave } from "../../../leaves/leaves.types";
 import CustomDataTable from "../../../../shared/components/customDataTable/CustomDataTable";
+import EmployeeTableRow from "../../../employee/components/employeeTableRow/EmployeeTableRow";
+
+import {
+  convertTo12HourFormat,
+  formatDateToReadable,
+  getLeaveTypeTitle,
+} from "../../../../utils/utils";
+
+import { useLoadingWrapper } from "../../../../wrappers/loadingWrapper/LoadingWrapper.context";
 
 const LeaveRequest = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { setIsLoading } = useLoadingWrapper();
+
+  const [open, setOpen] = useState(false);
+  const [selectedLeave] = useState<ILeave | null>(null);
+  const [latestLeaveBalance, setLatestLeaveBalance] = useState<{
+    leave_balance: number;
+    unpaid_leave_balance: number;
+  } | null>(null);
+
+  /* ===================== API ===================== */
   const { data: leaveRequests, isLoading } = useGetLeaveRequestsQuery(
     undefined,
     {
@@ -47,35 +53,23 @@ const LeaveRequest = () => {
   );
 
   const [approveLeave] = useApproveLeaveMutation();
-  const { setIsLoading } = useLoadingWrapper();
   const [rejectLeave] = useRejectLeaveMutation();
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
+
   const leaveRequestsFromStore = useSelector(selectLeaveRequests);
-  const [selectedLeave, setSelectedLeave] = useState<ILeave | null>(null);
-  const [latestLeaveBalance, setLatestLeaveBalance] = useState<{
-    leave_balance: number;
-    unpaid_leave_balance: number;
-  } | null>(null);
 
-  // Check if data has been loaded but is empty
-  const hasLoadedEmptyData =
-    !isLoading && leaveRequestsFromStore && leaveRequestsFromStore.length === 0;
+  const { data: leaveBalanceData } = useGetEmployeeLeaveBalanceQuery(
+    {
+      id: selectedLeave?.user?.data?.id?.toString() || "",
+    },
+    { skip: !selectedLeave }
+  );
 
+  /* ===================== EFFECTS ===================== */
   useEffect(() => {
     if (leaveRequests?.data) {
       dispatch(setLeaveRequests(leaveRequests.data));
     }
   }, [leaveRequests?.data]);
-
-  // Query for fetching latest leave balance
-  const { data: leaveBalanceData, refetch: refetchLeaveBalance } =
-    useGetEmployeeLeaveBalanceQuery({
-      id: selectedLeave?.user?.data?.id?.toString() || "",
-    });
-
-  // Update latest leave balance when data is fetched
 
   useEffect(() => {
     if (leaveBalanceData) {
@@ -83,83 +77,62 @@ const LeaveRequest = () => {
     }
   }, [leaveBalanceData]);
 
-  const handleApprove = async (data: ILeave) => {
+  /* ===================== ACTIONS ===================== */
+  const handleApprove = async (leave: ILeave) => {
     try {
-      setOpen(false);
       setIsLoading(true);
-      const response = await approveLeave({ id: data.id ?? 0 }).unwrap();
-
-      if (response) {
-        dispatch(approveLeaveRequest({ id: data.id }));
-        toast.success("Leave approved successfully");
-      }
-    } catch (error) {
+      await approveLeave({ id: leave.id ?? 0 }).unwrap();
+      dispatch(approveLeaveRequest({ id: leave.id }));
+      toast.success("Leave approved successfully");
+      setOpen(false);
+    } catch {
       toast.error("Failed to approve leave");
-      console.log(error);
     } finally {
-      setOpen(false);
       setIsLoading(false);
     }
   };
 
-  const handleReject = async (data: ILeave) => {
+  const handleReject = async (leave: ILeave) => {
     try {
-      setOpen(false);
       setIsLoading(true);
-      const response = await rejectLeave({ id: data.id ?? 0 }).unwrap();
-      if (response) {
-        dispatch(rejectLeaveRequest({ id: data.id }));
-        toast.success("Leave rejected successfully");
-      }
-    } catch (error) {
-      toast.error("Failed to reject leave");
-      console.log(error);
-    } finally {
+      await rejectLeave({ id: leave.id ?? 0 }).unwrap();
+      dispatch(rejectLeaveRequest({ id: leave.id }));
+      toast.success("Leave rejected successfully");
       setOpen(false);
+    } catch {
+      toast.error("Failed to reject leave");
+    } finally {
       setIsLoading(false);
     }
   };
 
-  const handleClose = () => {
-    setOpen(false);
-  };
-
-  const columns: GridColDef[] = [
+  /* ===================== TABLE COLUMNS ===================== */
+  const columns = [
     {
       field: "date",
       headerName: "Date",
       width: 150,
-      renderCell: (params) => {
-        return (
-          <Typography
-            display="block"
-            variant="h6"
-            color="text"
-            fontWeight="medium"
-          >
-            {formatDateToReadable(params?.row?.createdAt)}
-          </Typography>
-        );
-      },
+      renderCell: ({ row }: any) => (
+        <p className="text-sm font-medium">
+          {formatDateToReadable(row.createdAt)}
+        </p>
+      ),
     },
     {
       field: "user",
       headerName: "User",
-      width: 350,
-      renderCell: (params) => {
+      width: 160,
+      renderCell: ({ row }: any) => {
         const photo = `${import.meta.env.VITE_API_BASE_URL}${
-          params.row.user?.data?.attributes?.user_detial?.data?.attributes
-            ?.Photo?.data[0]?.attributes?.url ?? ""
+          row.user?.data?.attributes?.user_detial?.data?.attributes?.Photo
+            ?.data?.[0]?.attributes?.url ?? ""
         }`;
-
-        console.log("==-=-=-=-=-=-=-=PHOTO=-=-=-=-=-=-=-=-=-=-");
-        console.log(photo);
 
         return (
           <EmployeeTableRow
             image={photo}
-            name={params.row.user?.data?.attributes?.username}
-            email={params.row.user?.data?.attributes?.email}
+            name={row.user?.data?.attributes?.username}
+            email={row.user?.data?.attributes?.email}
           />
         );
       },
@@ -167,362 +140,172 @@ const LeaveRequest = () => {
     {
       field: "title",
       headerName: "Title",
-      width: 160,
-      renderCell: (params) => {
-        return (
-          <Typography
-            display="-webkit-box"
-            variant="h6"
-            color="text"
-            fontWeight="medium"
-            sx={{
-              overflow: "hidden",
-              WebkitBoxOrient: "vertical",
-              WebkitLineClamp: 2,
-            }}
-          >
-            {params?.row?.title}
-          </Typography>
-        );
-      },
+      width: 200,
+      renderCell: ({ row }: any) => (
+        <p className="text-sm line-clamp-2">{row.title}</p>
+      ),
     },
     {
       field: "leaveType",
       headerName: "Leave Type",
       width: 160,
-      renderCell: (params) => {
-        return (
-          <Typography
-            display="block"
-            variant="h6"
-            color="text"
-            fontWeight="medium"
-          >
-            {getLeaveTypeTitle(params?.row?.leave_duration)}
-          </Typography>
-        );
-      },
+      renderCell: ({ row }: any) => (
+        <span className="text-sm font-medium">
+          {getLeaveTypeTitle(row.leave_duration)}
+        </span>
+      ),
     },
     {
       field: "startDate",
       headerName: "Start Date",
-      width: 160,
-      renderCell: (params) => {
-        return (
-          <Typography
-            display="block"
-            variant="h6"
-            color="text"
-            fontWeight="medium"
-          >
-            {formatDateToReadable(params?.row?.start_date)}
-          </Typography>
-        );
-      },
+      width: 150,
+      renderCell: ({ row }: any) => (
+        <span>{formatDateToReadable(row.start_date)}</span>
+      ),
     },
     {
       field: "endDate",
       headerName: "End Date",
-      width: 160,
-      renderCell: (params) => {
-        return (
-          <Typography
-            display="block"
-            variant="h6"
-            color="text"
-            fontWeight="medium"
-          >
-            {formatDateToReadable(params?.row?.end_date)}
-          </Typography>
-        );
-      },
-    },
-
-    {
-      field: "action",
-      headerName: "Action",
-      width: 120,
-      renderCell: (params) => {
-        return (
-          <div className="flex w-full h-full justify-center items-center">
-            <Button
-              variant="text"
-             
-              onClick={() => {
-                setSelectedLeave(params?.row as ILeave);
-                setOpen(true);
-                // Fetch latest leave balance when modal opens
-                if (params?.row?.user?.data?.id) {
-                  setTimeout(() => {
-                    refetchLeaveBalance();
-                  }, 100);
-                }
-              }}
-            >
-              View Details
-            </Button>
-          </div>
-        );
-      },
+      width: 150,
+      renderCell: ({ row }: any) => (
+        <span>{formatDateToReadable(row.end_date)}</span>
+      ),
     },
   ];
+
+  /* ===================== UI ===================== */
   return (
-    <div className="w-full h-full mt-8">
-      <div className="flex justify-between  items-center mb-4">
-        <Typography variant="h4" fontWeight="bold" gutterBottom>
-          Leave Requests
-        </Typography>
-        {leaveRequestsFromStore && leaveRequestsFromStore.length > 0 && (
-          <Button
-            variant="contained"
-           
+     <div className="mt-6 w-full h-[50vh] bg-white rounded-xl p-4 flex flex-col">
+    {/* // <div className="w-full h-full mt-8   p-3 bg-white rounded-2xl  "> */}
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold">Leave Requests</h2>
+
+        {leaveRequestsFromStore?.length > 0 && (
+          <button
             onClick={() => navigate("/leaves/create")}
+            className="px-4 py-2  text-primary rounded-lg text-base font-bold"
           >
             View All
-          </Button>
+          </button>
         )}
       </div>
+
       <CustomDataTable
-        columns={columns as unknown as GridColDef[]}
         rows={leaveRequestsFromStore || []}
+        columns={columns}
         isLoading={isLoading}
-        isDataEmpty={
-          !leaveRequestsFromStore || leaveRequestsFromStore.length === 0
-        }
-        emptyViewTitle={
-          hasLoadedEmptyData ? "No leave requests found" : "Loading..."
-        }
-        emptyViewSubTitle={
-          hasLoadedEmptyData
-            ? "There are currently no pending leave requests to review"
-            : "Please wait while we fetch the data"
-        }
-        withPagination={
-          leaveRequestsFromStore && leaveRequestsFromStore.length > 0
-        }
-        totalCount={leaveRequests?.pagination?.total || 0}
-        page={leaveRequests?.pagination?.page || 1}
-        onPressPageChange={(_event, page) => {
-          console.log(page);
-        }}
+        isDataEmpty={!leaveRequestsFromStore?.length}
+        emptyViewTitle="No leave requests found"
+        emptyViewSubTitle="There are no pending leave requests"
+        withPagination={false}
       />
-      <Modal
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-        open={open}
-        onClose={handleClose}
-      >
-        <Paper
-          elevation={3}
-          sx={{
-            width: 500,
-            maxHeight: "80vh",
-            backgroundColor: "white",
-            borderRadius: 2,
-            padding: 3,
-            overflow: "auto",
-            position: "relative",
-            zIndex: 1,
-          }}
-        >
-          <Typography variant="h5" fontWeight="bold" gutterBottom>
-            Leave Details
-          </Typography>
-          <Divider sx={{ my: 2 }} />
 
-          {/* User Details Section */}
-          <Box sx={{ mb: 3, p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
-            <Grid container spacing={2} alignItems="center">
-              <Grid >
-                <Avatar
-                 
-                  src={`${import.meta.env.VITE_API_BASE_URL}${
-                    selectedLeave?.user?.data?.attributes?.user_detial?.data
-                      ?.attributes?.Photo?.data[0]?.attributes?.url ?? ""
-                  }`}
-                  alt={selectedLeave?.user?.data?.attributes?.username}
-                  sx={{ width: 60, height: 60 }}
+      {/* ===================== MODAL ===================== */}
+      {open && selectedLeave && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white w-130 max-h-[80vh] overflow-y-auto rounded-xl p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold">Leave Details</h3>
+              <button onClick={() => setOpen(false)}>✕</button>
+            </div>
+
+            {/* User */}
+            <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-lg">
+              <img
+                src={`${import.meta.env.VITE_API_BASE_URL}${
+                  selectedLeave.user?.data?.attributes?.user_detial?.data
+                    ?.attributes?.Photo?.data?.[0]?.attributes?.url ?? ""
+                }`}
+                className="w-14 h-14 rounded-full object-cover"
+              />
+              <div>
+                <p className="font-semibold">
+                  {selectedLeave.user?.data?.attributes?.username}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {selectedLeave.user?.data?.attributes?.user_type}
+                </p>
+              </div>
+            </div>
+
+            {/* Balances */}
+            <div className="grid grid-cols-2 gap-4 mt-4">
+              <Detail
+                label="Leave Balance"
+                value={`${latestLeaveBalance?.leave_balance ?? 0} days`}
+              />
+              <Detail
+                label="Unpaid Leave"
+                value={`${latestLeaveBalance?.unpaid_leave_balance ?? 0} days`}
+                danger
+              />
+            </div>
+
+            {/* Details */}
+            <div className="mt-6 space-y-3">
+              <Detail label="Title" value={selectedLeave.title} />
+              <Detail label="Description" value={selectedLeave.description} />
+              <Detail
+                label="Leave Type"
+                value={getLeaveTypeTitle(selectedLeave.leave_duration)}
+              />
+              <Detail label="Status" value={selectedLeave.status} />
+              <Detail
+                label="Start Date"
+                value={formatDateToReadable(selectedLeave.start_date)}
+              />
+              <Detail
+                label="End Date"
+                value={formatDateToReadable(selectedLeave.end_date)}
+              />
+
+              {selectedLeave.start_time && (
+                <Detail
+                  label="Start Time"
+                  value={convertTo12HourFormat(selectedLeave.start_time)}
                 />
-              </Grid>
-              <Grid container>
-                <Typography variant="h6" gutterBottom>
-                  {selectedLeave?.user?.data?.attributes?.username}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {selectedLeave?.user?.data?.attributes?.user_type}
-                </Typography>
-              </Grid>
-            </Grid>
-            <Divider sx={{ my: 2 }} />
-            <Grid container spacing={2}>
-              <Grid >
-                <Typography variant="subtitle2" color="text.secondary">
-                  Leave Balance
-                </Typography>
-                <Typography variant="h6" color="primary">
-                  {latestLeaveBalance?.leave_balance ??
-                    (selectedLeave?.user?.data?.attributes?.leave_balance ||
-                      0)}{" "}
-                  days
-                </Typography>
-              </Grid>
-              <Grid>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Unpaid Leave Balance
-                </Typography>
-                <Typography variant="h6" color="error">
-                  {latestLeaveBalance?.unpaid_leave_balance ??
-                    (selectedLeave?.user?.data?.attributes
-                      ?.unpaid_leave_balance ||
-                      0)}{" "}
-                  days
-                </Typography>
-              </Grid>
-            </Grid>
-          </Box>
+              )}
+            </div>
 
-          <Typography variant="h6" gutterBottom>
-            Request Details
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
-
-          <Grid container spacing={2}>
-            <Grid >
-              <Typography variant="subtitle2" color="text.secondary">
-                Title
-              </Typography>
-              <Typography variant="body1" gutterBottom>
-                {selectedLeave?.title}
-              </Typography>
-            </Grid>
-
-            <Grid >
-              <Typography variant="subtitle2" color="text.secondary">
-                Description
-              </Typography>
-              <Typography variant="body1" gutterBottom>
-                {selectedLeave?.description}
-              </Typography>
-            </Grid>
-
-            <Grid >
-              <Typography variant="subtitle2" color="text.secondary">
-                Leave Type
-              </Typography>
-              <Chip
-                label={selectedLeave?.leave_duration
-                  ?.replace("_", " ")
-                  .toUpperCase()}
-                color={
-                  selectedLeave?.leave_duration === "full_day"
-                    ? "primary"
-                    : selectedLeave?.leave_duration === "half_day"
-                    ? "secondary"
-                    : "info"
-                }
-                size="small"
-                sx={{ mt: 0.5 }}
-              />
-            </Grid>
-
-            <Grid >
-              <Typography variant="subtitle2" color="text.secondary">
-                Status
-              </Typography>
-              <Chip
-                label={selectedLeave?.status?.toUpperCase()}
-                color={
-                  selectedLeave?.status === "approved"
-                    ? "success"
-                    : selectedLeave?.status === "rejected"
-                    ? "error"
-                    : "warning"
-                }
-                size="small"
-                sx={{ mt: 0.5 }}
-              />
-            </Grid>
-
-            <Grid >
-              <Typography variant="subtitle2" color="text.secondary">
-                Start Date
-              </Typography>
-              <Typography variant="body1">
-                {formatDateToReadable(selectedLeave?.start_date ?? "")}
-              </Typography>
-            </Grid>
-
-            <Grid >
-              <Typography variant="subtitle2" color="text.secondary">
-                End Date
-              </Typography>
-              <Typography variant="body1">
-                {formatDateToReadable(selectedLeave?.end_date ?? "")}
-              </Typography>
-            </Grid>
-
-            {selectedLeave?.start_time && (
-              <Grid >
-                <Typography variant="subtitle2" color="text.secondary">
-                  Start Time
-                </Typography>
-                <Typography variant="body1">
-                  {convertTo12HourFormat(selectedLeave.start_time)}
-                </Typography>
-              </Grid>
+            {selectedLeave.status === "pending" && (
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  className="px-4 py-2 border rounded-lg text-sm"
+                  onClick={() => handleReject(selectedLeave)}
+                >
+                  Reject
+                </button>
+                <button
+                  className="px-4 py-2 bg-primary text-white rounded-lg text-sm"
+                  onClick={() => handleApprove(selectedLeave)}
+                >
+                  Approve
+                </button>
+              </div>
             )}
-
-            {selectedLeave?.leave_duration === "half_day" && (
-              <Grid >
-                <Typography variant="subtitle2" color="text.secondary">
-                  Half Day
-                </Typography>
-                <Typography variant="body1">
-                  {selectedLeave?.is_first_half ? "First Half" : "Second Half"}
-                </Typography>
-              </Grid>
-            )}
-
-            {selectedLeave?.decline_reason && (
-              <Grid >
-                <Typography variant="subtitle2" color="text.secondary">
-                  Decline Reason
-                </Typography>
-                <Typography variant="body1" color="error">
-                  {selectedLeave.decline_reason}
-                </Typography>
-              </Grid>
-            )}
-
-            {selectedLeave?.status === "pending" && (
-              <Grid >
-                <Divider sx={{ my: 2 }} />
-                <Stack direction="row" spacing={2} justifyContent="flex-end">
-                  <Button
-                    variant="contained"
-                   
-                    onClick={() => handleReject(selectedLeave)}
-                  >
-                    Reject
-                  </Button>
-                  <Button
-                    variant="outlined"
-                   
-                    onClick={() => handleApprove(selectedLeave)}
-                  >
-                    Approve
-                  </Button>
-                </Stack>
-              </Grid>
-            )}
-          </Grid>
-        </Paper>
-      </Modal>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
+/* ===================== SMALL HELPER ===================== */
+const Detail = ({
+  label,
+  value,
+  danger,
+}: {
+  label: string;
+  value?: string;
+  danger?: boolean;
+}) => (
+  <div>
+    <p className="text-xs text-gray-500">{label}</p>
+    <p className={`text-sm font-medium ${danger ? "text-red-500" : ""}`}>
+      {value || "-"}
+    </p>
+  </div>
+);
 
 export default LeaveRequest;

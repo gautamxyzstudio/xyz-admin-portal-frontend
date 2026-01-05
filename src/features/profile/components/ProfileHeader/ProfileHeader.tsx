@@ -13,8 +13,8 @@ const ProfileHeader: React.FC = () => {
 
   const getStatusClasses = (status: string) =>
     status === "active"
-      ? "bg-[#0080001F] text-[#008000]"
-      : "bg-red-100 text-red-800";
+      ? "bg-lightGreen text-green"
+      : "bg-lightRed text-red";
 
   const avatarSrc =
     !avatarError && userDetails?.photo
@@ -46,7 +46,7 @@ const ProfileHeader: React.FC = () => {
             className="w-38 h-38  rounded-full border-4 border-white object-cover shadow-lg"
           />
           {/* Edit icon on avatar */}
-          <button className="absolute bottom-4 right-3 bg-[#F17C04] text-white p-1 rounded-full border-white shadow-md cursor-pointer">
+          <button className="absolute bottom-4 right-3 bg-primary text-white p-1 rounded-full border-white shadow-md cursor-pointer">
             <FaCamera size={12} />
           </button>
         </div>
@@ -54,10 +54,10 @@ const ProfileHeader: React.FC = () => {
         {/* User Info */}
         <div className="ml-2 mt-14 flex gap-1 ">
           <div className="flex flex-col">
-            <h2 className="text-2xl font-semibold text-gray-900 leading-8">
+            <h2 className="text-2xl font-semibold text-black leading-8">
               {userDetails?.name || "User Name"}
             </h2>
-            <p className="text-gray-600 font-normal text-base">
+            <p className="text-black-80 font-normal text-base">
               {userDetails?.designation || "Designation"}
             </p>
           </div>

@@ -16,7 +16,7 @@ import FILE from "./icons/file.svg";
 import TICK from "./icons/tick.svg";
 import LEAVE_BALANCE from "./icons/leaveBalance.svg";
 import PRESENTS_EMP from "./icons/presentsEmployee.svg";
-import TOTAL_EMP from "./icons/totalEmployee.svg";
+import TOTAL_EMP from "./icons/total-Employee.svg";
 import TOTAL_LEAVE from "./icons/totalLeave.svg";
 import UPCOMING_HOLIDAY from "./icons/upComingHoliday.svg";
 import CALL_ICON from "./icons/call-icon.svg";
@@ -41,7 +41,9 @@ import DOCUMENT_FILL from "./icons/documentFill.svg";
 import EMPLOYEE_FILL from "./icons/employeeFill.svg";
 import HOLIDAYS_FILL from "./icons/holidaysFill.svg";
 import LEAVES_FILL from "./icons/leavesFill.svg";
-import UPDATE_IMG from "./icons/update-img.svg"
+import UPDATE_IMG from "./icons/update-img.svg";
+import PLUS_ICON from "./icons/plus-icon.svg";
+import TODAYABSENT from "./icons/today-Absents.svg"
 export const Icons = {
   CROSS_ICON,
   PROFILE_PICTURE,
@@ -85,7 +87,9 @@ export const Icons = {
   HOLIDAYS_FILL,
   LEAVES,
   LEAVES_FILL,
-  UPDATE_IMG
+  UPDATE_IMG,
+  PLUS_ICON,
+  TODAYABSENT,
 };
 
 // Images

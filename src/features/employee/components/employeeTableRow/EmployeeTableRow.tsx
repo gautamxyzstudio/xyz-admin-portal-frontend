@@ -1,37 +1,27 @@
-import { Box, Typography } from "@mui/material";
-
-const EmployeeTableRow = ({
-  image,
-  name,
-  email,
-}: {
+type EmployeeTableRowProps = {
   image: string;
   name: string;
   email: string;
-}) => {
+};
+
+const EmployeeTableRow = ({name }: EmployeeTableRowProps) => {
   return (
-    <Box
-      display="flex"
-      sx={{
-        overflow: "scroll",
-      }}
-      alignItems="center"
-      lineHeight={1}
-    >
-      <img src={image} alt="" className="size-12 object-center rounded-full" />
-      <Box ml={2} lineHeight={1}>
-        <Typography
-          display="block"
-          variant="caption"
-          color="text"
-          textTransform="capitalize"
-          fontWeight="bold"
-        >
+    <div className="flex items-center gap-3">
+      {/* <img
+        src={image}
+        alt={name}
+        className="w-12 h-12 rounded-full object-cover"
+      /> */}
+
+      <div className="leading-tight">
+        <p className="text-xs font-semibold capitalize text-gray-900">
           {name}
-        </Typography>
-        <Typography variant="caption">{email}</Typography>
-      </Box>
-    </Box>
+        </p>
+        {/* <p className="text-xs text-gray-500">
+          {email}
+        </p> */}
+      </div>
+    </div>
   );
 };
 

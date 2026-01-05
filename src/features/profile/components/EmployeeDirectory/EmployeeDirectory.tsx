@@ -60,7 +60,7 @@ const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
                   </p>
                 </div>
 
-                <div className="flex flex-col w-[30%] ">
+                <div className="flex flex-col w-[40%] ">
                   <div className="flex items-center gap-1 mt-1">
                     <img
                       className="bg-[#FFE4CA] rounded-sm p-2 w-8 h-8"

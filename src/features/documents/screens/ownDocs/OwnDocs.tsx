@@ -18,6 +18,7 @@ interface OwnDocsProps {
   userId?: number;
   canDelete?: boolean;
   employeeName?: string;
+  CustomClass?:string
 }
 
 const OwnDocs: React.FC<OwnDocsProps> = ({ userId, employeeName }) => {
@@ -62,42 +63,49 @@ const OwnDocs: React.FC<OwnDocsProps> = ({ userId, employeeName }) => {
       </div>
     );
   }
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(1)} KB`;
+    }
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
 
   return (
     <div className="p-6 bg-white rounded-xl">
       {/* ---------------- Upload Box  ---------------- */}
-      <h3 className="text-2xl font-semibold leading-8">Documents</h3>
       {!userId && (
-        <div className="border border-dashed border-[#787571] rounded-xl p-8 mb-6 mt-4">
-          <div className="flex items-center gap-8">
-            {/* <img src="/upload-docs.svg" alt="upload" className="w-40" /> */}
-            <img src={Icons.UPLOAD_DOCUMENTS} alt="UPLOAD_DOCUMENTS" />
+        <>
+          <h3 className="text-2xl font-semibold leading-8">Documents</h3>
+          <div className="border border-dashed border-[#787571] rounded-xl p-8 mb-6 mt-4">
+            <div className="flex items-center gap-8">
+              {/* <img src="/upload-docs.svg" alt="upload" className="w-40" /> */}
+              <img src={Icons.UPLOAD_DOCUMENTS} alt="UPLOAD_DOCUMENTS" />
 
-            <div>
-              <h3 className="text-lg font-semibold">
-                Choose a file or drag & drop it here
-              </h3>
-              <p className="text-sm text-gray-500 mt-1">
-                Supports: PNG, JPG, JPEG, WEBP up to 50MB
-              </p>
-              <CustomButton
-                onClick={() => setOpenUploadDialog(true)}
-                label="Upload File"
-                buttonStyle="primaryOutline"
-                customStyles="mt-3 "
-              />
+              <div>
+                <h3 className="text-lg font-semibold">
+                  Choose a file or drag & drop it here
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  Supports: PNG, JPG, JPEG, WEBP up to 50MB
+                </p>
+                <CustomButton
+                  onClick={() => setOpenUploadDialog(true)}
+                  label="Upload File"
+                  buttonStyle="primaryOutline"
+                  customStyles="mt-3 "
+                />
+              </div>
             </div>
           </div>
-        </div>
+        </>
       )}
-
       {/* ---------------- My Documents ---------------- */}
-      <h3 className="text-2xl font-semibold leading-8 mb-4">
+      <h3 className="text-2xl font-semibold leading-8 mb-4 sticky top-0 z-9 bg-white  ">
         {employeeName ? `${employeeName}'s Documents` : "My Documents"}
       </h3>
 
       {documentsData?.data?.length ? (
-        <div className="space-y-3">
+        <div className="space-y-3 ">
           {documentsData.data.map((doc: IDocumentResponse) => {
             const file = doc.attributes.document.data.attributes;
 
@@ -107,7 +115,7 @@ const OwnDocs: React.FC<OwnDocsProps> = ({ userId, employeeName }) => {
                 className="flex items-center justify-between bg-background rounded-xl px-4 py-3"
               >
                 {/* Left */}
-                <div className="flex items-center gap-4   relative">
+                <div className="flex items-center gap-4    relative">
                   <span className="bg-orange-500 text-white text-xs font-semibold px-0.5 py-0.4 rounded absolute top-8 -left-3 ">
                     {file.ext.toUpperCase()}
                   </span>
@@ -117,10 +125,10 @@ const OwnDocs: React.FC<OwnDocsProps> = ({ userId, employeeName }) => {
                     <p className="text-sm font-medium">
                       {doc.attributes.documentName}
                     </p>
-                    <p className=" flex items-center gap-2 text-xs text-gray-500 mt-1">
-                      • {(file.size / 1024).toFixed(1)} MB 
+                    <p className="flex items-center gap-2 text-xs  text-gray-500 mt-1">
+                      • {formatFileSize(file.size)}
                       <img src={Icons.TICK} alt="" />
-                       Uploaded{" "}
+                      Uploaded{" "}
                       {new Date(doc.attributes.createdAt).toLocaleString()}
                     </p>
                   </div>
@@ -129,7 +137,7 @@ const OwnDocs: React.FC<OwnDocsProps> = ({ userId, employeeName }) => {
                 {/* Right */}
                 <div className="flex items-center gap-4 text-orange-500">
                   <img
-                  className="cursor-pointer"
+                    className="cursor-pointer"
                     onClick={() =>
                       window.open(
                         `${import.meta.env.VITE_API_BASE_URL}${file.url}`,
@@ -140,7 +148,7 @@ const OwnDocs: React.FC<OwnDocsProps> = ({ userId, employeeName }) => {
                   />
 
                   <img
-                  className="cursor-pointer"
+                    className="cursor-pointer"
                     onClick={() => handlePreviewDocument(doc)}
                     src={Icons.VIEW}
                   />

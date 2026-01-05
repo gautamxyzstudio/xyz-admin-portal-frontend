@@ -1,105 +1,106 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from 'react';
-import OwnDocs from '../ownDocs/OwnDocs';
-import { useSelector } from 'react-redux';
-import { userInState } from '../../../auth/authSlice';
-import { employeeListInState } from '../../../employee/employeeSlice';
-import { useGetEmployeeListQuery } from '../../../employee/employeeApis';
-import { Box, Typography, Button } from '@mui/material';
+import { useState } from "react";
+import { useSelector } from "react-redux";
+import OwnDocs from "../ownDocs/OwnDocs";
+import { userInState } from "../../../auth/authSlice";
+import { employeeListInState } from "../../../employee/employeeSlice";
+import { useGetEmployeeListQuery } from "../../../employee/employeeApis";
+import CustomBox from "../../../../components/CustomBox/CustomBox";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import { Icons } from "../../../../assets/myAssets/exporter";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+type SelectedEmployee = {
+  id: number;
+  name: string;
+};
 
-// New manager component
 const AllEmployeeDocs = () => {
   const user = useSelector(userInState);
-  const [selectedEmployee, setSelectedEmployee] = useState<{ id: number; name: string } | null>(null);
-
-  // We'll use employeeListInState to get the list
   const employeeList = useSelector(employeeListInState);
 
-  // Fetch employees if list is empty and user is HR/Admin
-  useGetEmployeeListQuery({ user_type: user?.user_type ?? '' });
+  const [selectedEmployee, setSelectedEmployee] =
+    useState<SelectedEmployee | null>(null);
 
-  // Handler for selecting an employee
+  // Fetch employee list
+  useGetEmployeeListQuery({ user_type: user?.user_type ?? "" });
+
   const handleEmployeeClick = (employee: any) => {
-    setSelectedEmployee(employee);
+    setSelectedEmployee({
+      id: employee.id,
+      name: employee.name,
+    });
   };
 
-  // For HR/Admin, show employee list first, then docs for selected employee
   return (
-    <>
+    <CustomBox customClasses="p-6 w-full h-full flex flex-col">
       {!selectedEmployee ? (
-        <Box>
-          <Typography variant="h4" fontWeight="bold" mb={3}>
-            Select an Employee
-          </Typography>
-          <Box>
-            {employeeList && employeeList.length > 0 && user && user.id ? (
-              employeeList
-                .filter((employee) => employee.id !== user.id) // Hide current logged-in employee
+        <div className="w-full h-full flex flex-col  gap-y-4">
+          <h2 className="text-xl font-semibold">Select an Employee</h2>
+
+          {employeeList && employeeList.length > 0 && user?.id ? (
+            <div className="space-y-3 flex flex-col w-full overflow-y-scroll scrollbar-hide h-full">
+              {employeeList
+                .filter((employee) => employee.id !== user.id)
                 .map((employee) => (
-                  <Box
+                  <div
                     key={employee.id}
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="space-between"
-                    p={2}
-                    mb={1}
-                    sx={{
-                      border: '1px solid #eee',
-                      borderRadius: 2,
-                      cursor: 'pointer',
-                    }}
                     onClick={() => handleEmployeeClick(employee)}
+                    className="flex items-center justify-between p-4 bg-background rounded-lg cursor-pointer"
                   >
-                    <Box display="flex" alignItems="center">
+                    <div className="flex items-center gap-4">
                       <img
                         src={
-                          employee.image || '/static/images/avatar/default.jpg'
+                          employee.image || "/static/images/avatar/default.jpg"
                         }
                         alt={employee.name}
-                        style={{
-                          width: 48,
-                          height: 48,
-                          borderRadius: '50%',
-                          objectFit: 'cover',
-                          marginRight: 16,
-                        }}
+                        className="w-16 h-16 rounded-xl object-cover"
                       />
-                      <div>
-                        <Typography variant="h6">
+
+                      <div className="">
+                        <p className="font-semibold text-black">
                           {employee.name}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {employee.designation} | {employee.email}
-                        </Typography>
+                        </p>
+                        <p className="text-sm flex gap-2 text-black-80 leading-3.5 mt-1.5">
+                          • {employee.designation}{" "}
+                          <img src={Icons.TICK} alt="" /> {employee.email}
+                        </p>
                       </div>
-                    </Box>
-                    <Button variant="outlined" >
-                      View Documents
-                    </Button>
-                  </Box>
-                ))
-            ) : (
-              <Typography>No employees found.</Typography>
-            )}
-          </Box>
-        </Box>
+                    </div>
+                    <button className="flex items-center gap-2 px-5 py-3.5 text-sm text-primary font-bold  bg-primary-20  rounded-md ">
+                      <VisibilityIcon
+                        className="text-primary"
+                        fontSize="small"
+                      />
+                      View Document
+                    </button>
+                  </div>
+                ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-sm">No employees found.</p>
+          )}
+        </div>
       ) : (
-        <Box>
-          <Button
-            variant="text"
-            color="info"
-            onClick={() => setSelectedEmployee(null)}
-          >
-            ← Back to Employee List
-          </Button>
-          <OwnDocs
-            userId={selectedEmployee.id}
-            canDelete
-            employeeName={selectedEmployee.name}
-          />
-        </Box>
+        <>
+          <div className="">
+            <button
+              onClick={() => setSelectedEmployee(null)}
+              className="flex items-center gap-1 text-sm font-bold text-primary cursor-pointer"
+            >
+              <ArrowBackIcon className="font-bold" fontSize="small" />
+              Back
+            </button>
+          </div>
+          <div className="w-full h-full overflow-scroll scrollbar-hide bg-white">
+            <OwnDocs
+              userId={selectedEmployee.id}
+              canDelete
+              employeeName={selectedEmployee.name}
+            />
+          </div>
+        </>
       )}
-    </>
+    </CustomBox>
   );
 };
 

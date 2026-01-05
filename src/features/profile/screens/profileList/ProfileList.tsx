@@ -41,24 +41,28 @@ const ProfileList = () => {
       {/* Tabs Container */}
       <div className="w-full bg-white rounded-lg ">
         {/* Tabs Header */}
-        <div className="flex w-full gap-2 px-7 ">
+        <div className="flex w-full gap-2 px-7">
           <button
-            className={`px-6 py-3 text-sm font-medium w-full cursor-pointer ${
-              tabValue === 0
-                ? " bg-[#FFE4CA] text-orange-500 rounded-lg"
-                : "text-gray-500 bg-[#F7F7F7] rounded-lg"
-            }`}
+            className={`px-6 py-3 text-sm font-medium w-full cursor-pointer rounded-lg
+      transition-all duration-500 ease-in-out
+      ${
+        tabValue === 0
+          ? "bg-[#FFE4CA] text-primary"
+          : "text-black-80 bg-[#F7F7F7]"
+      }`}
             onClick={() => setTabValue(0)}
           >
             Profile Information
           </button>
 
           <button
-            className={`px-6 py-3 text-sm font-medium w-full cursor-pointer  ${
-              tabValue === 1
-                ? "bg-[#FFE4CA] text-orange-500 rounded-lg"
-                : "text-gray-500 bg-[#F7F7F7] rounded-lg"
-            }`}
+            className={`px-6 py-3 text-sm font-medium w-full cursor-pointer rounded-lg
+      transition duration-500 ease-in-out
+      ${
+        tabValue === 1
+          ? "bg-[#FFE4CA] text-primary"
+          : "text-black-80 bg-[#F7F7F7]"
+      }`}
             onClick={() => setTabValue(1)}
           >
             Employee Directory
