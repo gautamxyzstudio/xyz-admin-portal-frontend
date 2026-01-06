@@ -49,6 +49,7 @@ import ANNIVERSARY from "./icons/anniversary.svg";
 import BIRTHDAY from "./icons/birthday.svg";
 import EDIT from "./icons/edit.svg";
 import DELETE from "./icons/delete.svg";
+import SERACH_ICON from "./icons/search-icon.svg"
 
 export const Icons = {
   CROSS_ICON,
@@ -101,6 +102,7 @@ export const Icons = {
   BIRTHDAY,
   EDIT,
   DELETE,
+  SERACH_ICON
 };
 
 // Images

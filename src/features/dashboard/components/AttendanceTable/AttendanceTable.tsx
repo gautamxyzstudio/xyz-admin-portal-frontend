@@ -10,7 +10,6 @@ import type { IUserAttendance } from "../../types";
 import EmployeeTableRow from "../../../employee/components/employeeTableRow/EmployeeTableRow";
 import {
   convertTo12HourFormat,
-  getImageUrl,
   getWeekDates,
 } from "../../../../utils/utils";
 import CustomDataTable from "../../../../shared/components/customDataTable/CustomDataTable";
@@ -19,12 +18,15 @@ import { toast } from "react-toastify";
 import { useLoadingWrapper } from "../../../../wrappers/loadingWrapper/LoadingWrapper.context";
 import { useAppSelector } from "../../../../state/store";
 import { selectLeaveRequests } from "../../screens/dashboardHrSlice";
+import { useNavigate } from "react-router";
+import dayjs from "dayjs";
 
 const AttendanceTable = () => {
   const [getAllAttendance, { isFetching: isLoading, error }] =
     useLazyGetAllAttendanceQuery();
   const [updateAttendance] = useUpdateAttendanceMutation();
   const { setIsLoading } = useLoadingWrapper();
+  const navigate = useNavigate();
 
   const [attendanceData, setAttendanceData] = useState<IUserAttendance[]>([]);
   const [page, setPage] = useState(1);
@@ -136,20 +138,26 @@ const AttendanceTable = () => {
       field: "employee",
       headerName: "Employee",
       width: 220,
-      renderCell: ({ row }: any) => (
+      renderCell: (params:any) => (
         <EmployeeTableRow
-          image={getImageUrl(row.user?.user_detial?.Photo?.[0]?.url)}
-          name={row.user?.user_detial?.name}
-          email={row.user?.email}
+          name={params?.row?.user?.user_detial?.name}
+          showImage={false}
+          showEmail={false}
         />
       ),
     },
+
     {
       field: "date",
       headerName: "Date",
       width: 140,
-      renderCell: ({ row }: any) => <span>{row.Date}</span>,
+      renderCell: (params: any) => (
+        <span>
+          {params.row.Date ? dayjs(params.row.Date).format("DD/MM/YYYY") : "-"}
+        </span>
+      ),
     },
+
     {
       field: "checkIn",
       headerName: "Check In",
@@ -173,10 +181,15 @@ const AttendanceTable = () => {
     <div className="mt-6 w-full h-[50vh] bg-white rounded-xl flex flex-col">
       {/* ===== Sticky Header ===== */}
       <div className="sticky top-0 z-10 bg-white px-4 py-3 flex justify-between rounded-2xl ">
-        <h3 className="text-xl font-bold">Attendance Logs</h3>
+        <h3 className="text-[24px] font-semibold text-black">
+          Attendance Logs
+        </h3>
 
         {leaveRequestsFromStore?.length > 0 && (
-          <button className="px-4 py-2  text-primary rounded-lg text-base font-bold">
+          <button
+            onClick={() => navigate("/attendance")}
+            className="px-4 py-2  text-primary rounded-lg text-base font-bold cursor-pointer"
+          >
             View All
           </button>
         )}

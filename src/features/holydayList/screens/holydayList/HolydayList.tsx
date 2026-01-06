@@ -140,6 +140,7 @@ const HolydayList = () => {
         Holiday List
       </p>
       <CustomDataTable
+        customStyles="pb-10"
         rows={holidays}
         columns={columns}
         isDataEmpty={holidays.length === 0}

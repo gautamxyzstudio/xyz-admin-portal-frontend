@@ -31,6 +31,7 @@ import {
 } from "../../../../utils/utils";
 
 import { useLoadingWrapper } from "../../../../wrappers/loadingWrapper/LoadingWrapper.context";
+import dayjs from "dayjs";
 
 const LeaveRequest = () => {
   const dispatch = useDispatch();
@@ -123,20 +124,16 @@ const LeaveRequest = () => {
       headerName: "User",
       width: 160,
       renderCell: ({ row }: any) => {
-        const photo = `${import.meta.env.VITE_API_BASE_URL}${
-          row.user?.data?.attributes?.user_detial?.data?.attributes?.Photo
-            ?.data?.[0]?.attributes?.url ?? ""
-        }`;
-
         return (
           <EmployeeTableRow
-            image={photo}
             name={row.user?.data?.attributes?.username}
-            email={row.user?.data?.attributes?.email}
+            showImage={false}
+            showEmail={false}
           />
         );
       },
     },
+
     {
       field: "title",
       headerName: "Title",
@@ -155,35 +152,51 @@ const LeaveRequest = () => {
         </span>
       ),
     },
+    // {
+    //   field: "startDate",
+    //   headerName: "Start Date",
+    //   width: 150,
+    //   renderCell: ({ row }: any) => (
+    //     <span>{formatDateToReadable(row.start_date)}</span>
+    //   ),
+    // },
     {
-      field: "startDate",
-      headerName: "Start Date",
+      field: "StartDate",
+      headerName: "StartDate",
       width: 150,
-      renderCell: ({ row }: any) => (
-        <span>{formatDateToReadable(row.start_date)}</span>
+      renderCell: (params: any) => (
+        <span>
+          {params.row.start_date
+            ? dayjs(params.row.start_date).format("DD/MM/YYYY")
+            : ""}
+        </span>
       ),
     },
     {
       field: "endDate",
       headerName: "End Date",
-      width: 150,
-      renderCell: ({ row }: any) => (
-        <span>{formatDateToReadable(row.end_date)}</span>
+      width: 140,
+      renderCell: (params: any) => (
+        <span>
+          {params.row.end_date
+            ? dayjs(params.row.end_date).format("DD/MM/YYYY")
+            : ""}
+        </span>
       ),
     },
   ];
 
   /* ===================== UI ===================== */
   return (
-     <div className="mt-6 w-full h-[50vh] bg-white rounded-xl p-4 flex flex-col">
-    {/* // <div className="w-full h-full mt-8   p-3 bg-white rounded-2xl  "> */}
+    <div className="mt-6 w-full h-[50vh] bg-white rounded-xl p-4 flex flex-col">
+      {/* // <div className="w-full h-full mt-8   p-3 bg-white rounded-2xl  "> */}
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">Leave Requests</h2>
+        <h3 className="text-[24px] font-semibold text-black">Leave Requests</h3>
 
         {leaveRequestsFromStore?.length > 0 && (
           <button
-            onClick={() => navigate("/leaves/create")}
-            className="px-4 py-2  text-primary rounded-lg text-base font-bold"
+            onClick={() => navigate("/all-leaves")}
+            className="px-4 py-2  text-primary rounded-lg text-base font-bold cursor-pointer"
           >
             View All
           </button>

@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { toast } from "react-toastify";
-import DashboardLayout from "../../../../examples/LayoutContainers/DashboardLayout/index.jsx";
-import DashboardNavbar from "../../../../examples/Navbars/DashboardNavbar/index.jsx";
+
 import { useLoadingWrapper } from "../../../../wrappers/loadingWrapper/LoadingWrapper.context.js";
 import AddEmployeeForm from "../../components/addEmployeeForm/AddEmployeeForm";
 import type { AddEmployeeFormData } from "../../components/addEmployeeForm/AddEmployeeForm.types";
@@ -77,7 +76,7 @@ const AddEmployee = () => {
 
   return (
     <>
-      <DashboardNavbar />
+      
       <AddEmployeeForm onPressSubmit={createUserHandler} />
     </>
   );

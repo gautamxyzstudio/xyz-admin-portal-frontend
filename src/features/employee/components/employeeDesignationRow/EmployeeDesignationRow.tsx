@@ -1,17 +1,13 @@
-import MDBox from '../../../../components/MDBox/MDBox';
-import MDTypography from '../../../../components/MDTypography';
+type props = {
+  title: string;
+};
 
-const EmployeeDesignationRow = ({ title }) => (
-  <MDBox lineHeight={1} textAlign="left">
-    <MDTypography
-      display="block"
-      variant="caption"
-      color="text"
-      fontWeight="medium"
-    >
-      {title}
-    </MDTypography>
-  </MDBox>
-);
+const EmployeeDesignationRow = ({ title }:props) => {
+  return (
+    <span className="text-xs font-medium text-gray-700">
+      {title || "-"}
+    </span>
+  );
+};
 
 export default EmployeeDesignationRow;

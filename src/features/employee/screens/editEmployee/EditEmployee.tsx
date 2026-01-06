@@ -1,25 +1,24 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect } from 'react';
-import DashboardLayout from '../../../../examples/LayoutContainers/DashboardLayout/index.jsx';
-import DashboardNavbar from '../../../../examples/Navbars/DashboardNavbar/index.jsx';
-import { useLocation, useNavigate } from 'react-router-dom';
-import type { IEmployee } from '../../types';
-import { Controller, useForm } from 'react-hook-form';
-import PhotoUpload from '../../../../shared/components/photoUpload/PhotoUpload';
-import FormTextInput from '../../../../shared/components/formInput/FormInput';
-import { Autocomplete, Switch, TextField } from '@mui/material';
-import { EmployeeRole } from '../../../../shared/enums';
-import dayjs from 'dayjs';
-import PickerInput from '../../../../shared/components/pickerInput/PickerInput';
+import { useEffect } from "react";
+
+import { useLocation, useNavigate } from "react-router-dom";
+import type { IEmployee } from "../../types";
+import { Controller, useForm } from "react-hook-form";
+import PhotoUpload from "../../../../shared/components/photoUpload/PhotoUpload";
+import FormTextInput from "../../../../shared/components/formInput/FormInput";
+import { Autocomplete, Switch, TextField } from "@mui/material";
+import { EmployeeRole } from "../../../../shared/enums";
+import dayjs from "dayjs";
+import PickerInput from "../../../../shared/components/pickerInput/PickerInput";
 import {
   useGetEmployeeLeaveBalanceQuery,
   useUpdateEmployeeDetailsMutation,
   useUpdateUserLeaveBalanceMutation,
-} from '../../employeeApis';
-import { toast } from 'react-toastify';
-import { useLoadingWrapper } from '../../../../wrappers/loadingWrapper/LoadingWrapper.context.js';
-import { getError, getString } from '../../../../utils/utils.js';
+} from "../../employeeApis";
+import { toast } from "react-toastify";
+import { useLoadingWrapper } from "../../../../wrappers/loadingWrapper/LoadingWrapper.context.js";
+import { getError, getString } from "../../../../utils/utils.js";
+import CustomBox from "../../../../components/CustomBox/CustomBox.js";
 
 type EditEmployeeForm = {
   name: string;
@@ -34,7 +33,6 @@ type EditEmployeeForm = {
   employeeCode: string;
   role: string;
 };
-
 
 const EditEmployee = () => {
   const { employee } = useLocation()?.state as { employee: IEmployee };
@@ -56,17 +54,17 @@ const EditEmployee = () => {
     formState: { errors },
   } = useForm<EditEmployeeForm>({
     defaultValues: {
-      name: '',
-      phone: '',
+      name: "",
+      phone: "",
       status: employee.status,
-      joiningDate: '',
+      joiningDate: "",
       avatar: null,
-      photoId: employee.imageId ? employee.imageId.toString() : '',
-      leaveBalance: '',
-      unpaidLeaveBalance: '',
-      designation: '',
-      employeeCode: '',
-      role: '',
+      photoId: employee.imageId ? employee.imageId.toString() : "",
+      leaveBalance: "",
+      unpaidLeaveBalance: "",
+      designation: "",
+      employeeCode: "",
+      role: "",
     },
   });
 
@@ -78,25 +76,28 @@ const EditEmployee = () => {
   // Populate leave balance fields when data is fetched
   useEffect(() => {
     if (leaveBalance) {
-      setValue('leaveBalance', leaveBalance.leave_balance.toString());
-      setValue('unpaidLeaveBalance', leaveBalance.unpaid_leave_balance.toString());
+      setValue("leaveBalance", leaveBalance.leave_balance.toString());
+      setValue(
+        "unpaidLeaveBalance",
+        leaveBalance.unpaid_leave_balance.toString()
+      );
     }
   }, [leaveBalance, setValue]);
 
   // Populate form fields with employee data
   useEffect(() => {
     if (employee) {
-      setValue('name', employee.name);
-      setValue('phone', employee.phoneNumber);
-      setValue('role', employee.role);
-      setValue('designation', employee.designation);
-      setValue('employeeCode', employee.empCode);
-      setValue('joiningDate', employee.joiningDate);
-      setValue('leaveBalance', employee.leave_balance.toString());
-      setValue('unpaidLeaveBalance', employee.unpaid_leave_balance.toString());
-      setValue('avatar', employee.image);
-      setValue('photoId', employee.imageId ? employee.imageId.toString() : '');
-      setValue('status', employee.status);
+      setValue("name", employee.name);
+      setValue("phone", employee.phoneNumber);
+      setValue("role", employee.role);
+      setValue("designation", employee.designation);
+      setValue("employeeCode", employee.empCode);
+      setValue("joiningDate", employee.joiningDate);
+      setValue("leaveBalance", employee.leave_balance.toString());
+      setValue("unpaidLeaveBalance", employee.unpaid_leave_balance.toString());
+      setValue("avatar", employee.image);
+      setValue("photoId", employee.imageId ? employee.imageId.toString() : "");
+      setValue("status", employee.status);
     }
   }, [employee, setValue]);
 
@@ -124,28 +125,27 @@ const EditEmployee = () => {
         data: employeePayload,
       }).unwrap();
       await updateUserLeaveBalance(leaveBalancePayload).unwrap();
-      toast.success('Employee updated successfully');
-      navigate('/employees');
+      toast.success("Employee updated successfully");
+      navigate("/employees");
     } catch (error: any) {
-      toast.error(error?.message ?? 'Something went wrong');
+      toast.error(error?.message ?? "Something went wrong");
     }
   };
 
   return (
     <>
-      <DashboardNavbar />
-      <div className="flex flex-col w-full justify-center items-center">
+      <CustomBox customClasses="flex flex-col w-full justify-center items-center">
         {/* Avatar Upload */}
         <Controller
           control={control}
           name="avatar"
-          rules={{ required: 'Avatar is required' }}
+          rules={{ required: "Avatar is required" }}
           render={({ field }) => (
             <PhotoUpload
               initialValue={employee.image}
               getUploadedImageId={(id) => {
                 field.onChange(id);
-                setValue('photoId', String(id));
+                setValue("photoId", String(id));
               }}
             />
           )}
@@ -161,7 +161,7 @@ const EditEmployee = () => {
             <Controller
               control={control}
               name="name"
-              rules={{ required: 'Name is required' }}
+              rules={{ required: "Name is required" }}
               render={({ field }) => (
                 <FormTextInput
                   errorMessage={getError(errors.name)}
@@ -176,10 +176,10 @@ const EditEmployee = () => {
               control={control}
               name="phone"
               rules={{
-                required: 'Phone number is required',
+                required: "Phone number is required",
                 pattern: {
                   value: /^[0-9]{10}$/,
-                  message: 'Invalid phone number',
+                  message: "Invalid phone number",
                 },
               }}
               render={({ field }) => (
@@ -196,14 +196,14 @@ const EditEmployee = () => {
             <Controller
               control={control}
               name="role"
-              rules={{ required: 'Role is required' }}
+              rules={{ required: "Role is required" }}
               render={({ field }) => (
                 <Autocomplete
                   disablePortal
                   options={Object.values(EmployeeRole)}
                   disableClearable
                   freeSolo={false}
-                  value={field.value || ''}
+                  value={field.value || ""}
                   onChange={(_, value) => field.onChange(value)}
                   renderInput={(params) => (
                     <TextField
@@ -239,7 +239,7 @@ const EditEmployee = () => {
             <Controller
               control={control}
               name="designation"
-              rules={{ required: 'Designation is required' }}
+              rules={{ required: "Designation is required" }}
               render={({ field }) => (
                 <FormTextInput
                   errorMessage={getError(errors.designation)}
@@ -253,7 +253,7 @@ const EditEmployee = () => {
             <Controller
               control={control}
               name="employeeCode"
-              rules={{ required: 'Employee Code is required' }}
+              rules={{ required: "Employee Code is required" }}
               render={({ field }) => (
                 <FormTextInput
                   errorMessage={getError(errors.employeeCode)}
@@ -267,7 +267,7 @@ const EditEmployee = () => {
             <Controller
               control={control}
               name="joiningDate"
-              rules={{ required: 'Joining Date is required' }}
+              rules={{ required: "Joining Date is required" }}
               render={({ field }) => (
                 <PickerInput
                   label="Joining Date"
@@ -280,7 +280,7 @@ const EditEmployee = () => {
             <Controller
               control={control}
               name="leaveBalance"
-              rules={{ required: 'Leave Balance is required' }}
+              rules={{ required: "Leave Balance is required" }}
               render={({ field }) => (
                 <FormTextInput
                   errorMessage={getError(errors.leaveBalance)}
@@ -294,7 +294,7 @@ const EditEmployee = () => {
             <Controller
               control={control}
               name="unpaidLeaveBalance"
-              rules={{ required: 'Unpaid Leave Balance is required' }}
+              rules={{ required: "Unpaid Leave Balance is required" }}
               render={({ field }) => (
                 <FormTextInput
                   errorMessage={getError(errors.unpaidLeaveBalance)}
@@ -314,10 +314,10 @@ const EditEmployee = () => {
             onClick={handleSubmit(onSubmit)}
             disabled={isLoading || isLoadingLeaveBalance}
           >
-            {isLoading || isLoadingLeaveBalance ? 'Updating...' : 'Update'}
+            {isLoading || isLoadingLeaveBalance ? "Updating..." : "Update"}
           </button>
         </div>
-      </div>
+      </CustomBox>
     </>
   );
 };

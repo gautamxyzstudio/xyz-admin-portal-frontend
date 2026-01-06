@@ -1,36 +1,35 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from "react";
 import {
   useLazyGetAllAttendanceQuery,
   useUpdateAttendanceMutation,
-} from '../../dashboard/dashboardApi';
-import type { IUserAttendance } from '../../dashboard/types';
-import type { GridColDef } from '@mui/x-data-grid';
-import EmployeeTableRow from '../../employee/components/employeeTableRow/EmployeeTableRow';
-import { getImageUrl } from '../../../utils/utils';
+} from "../../dashboard/dashboardApi";
+import type { IUserAttendance } from "../../dashboard/types";
+import type { GridColDef } from "@mui/x-data-grid";
+import EmployeeTableRow from "../../employee/components/employeeTableRow/EmployeeTableRow";
+import { getImageUrl } from "../../../utils/utils";
 import {
   formatTimeForInput,
   formatTimeForAPI,
   convertTo12HourFormat,
-} from '../../../utils/timeUtils';
-import { useApiOperations } from '../../../hooks/useApiOperations';
-import { useFilterState } from '../../../hooks/useFilterState';
+} from "../../../utils/timeUtils";
+import { useApiOperations } from "../../../hooks/useApiOperations";
+import { useFilterState } from "../../../hooks/useFilterState";
 import {
-  Box,
-  Icon,
-  Modal,
   Pagination,
-  Typography,
   TextField,
-  Stack,
   Alert,
-  InputAdornment,
   Button,
-} from '@mui/material';
-import { useLoadingWrapper } from '../../../wrappers/loadingWrapper/LoadingWrapper.context.js';
-import CustomDataTable from '../../../shared/components/customDataTable/CustomDataTable.js';
+  Dialog,
+} from "@mui/material";
+import { useLoadingWrapper } from "../../../wrappers/loadingWrapper/LoadingWrapper.context.js";
+import CustomDataTable from "../../../shared/components/customDataTable/CustomDataTable.js";
+import CustomBox from "../../../components/CustomBox/CustomBox.js";
+import { Icons } from "../../../assets/myAssets/exporter.js";
+import LinearGradient from "../../../components/LinearGradient/LinearGradient.js";
+import CustomButton from "../../../components/CustomButton/CustomButton.js";
 
-// Custom hook for attendance data management
+/* ===================== Attendance Data Hook ===================== */
 const useAttendanceData = () => {
   const [getAllAttendance] = useLazyGetAllAttendanceQuery();
   const [attendanceData, setAttendanceData] = useState<IUserAttendance[]>([]);
@@ -49,9 +48,7 @@ const useAttendanceData = () => {
       },
       showLoading: boolean = true
     ) => {
-      if (showLoading) {
-        setIsLoading(true);
-      }
+      if (showLoading) setIsLoading(true);
 
       try {
         const response = await getAllAttendance({
@@ -65,14 +62,11 @@ const useAttendanceData = () => {
         setAttendanceData(response.data || []);
         setTotalPages(response.meta.pagination.pageCount);
         setPage(params.page);
-        return response;
       } catch (error) {
         setAttendanceData([]);
         throw error;
       } finally {
-        if (showLoading) {
-          setIsLoading(false);
-        }
+        if (showLoading) setIsLoading(false);
         setIsInitialLoading(false);
       }
     },
@@ -88,29 +82,29 @@ const useAttendanceData = () => {
   };
 };
 
-// Custom hook for modal state management
+/* ===================== Modal Hook ===================== */
 const useModalState = () => {
   const [open, setOpen] = useState(false);
   const [selectedAttendance, setSelectedAttendance] =
     useState<IUserAttendance | null>(null);
-  const [editCheckIn, setEditCheckIn] = useState('');
-  const [editCheckOut, setEditCheckOut] = useState('');
-  const [updateError, setUpdateError] = useState('');
+  const [editCheckIn, setEditCheckIn] = useState("");
+  const [editCheckOut, setEditCheckOut] = useState("");
+  const [updateError, setUpdateError] = useState("");
 
   const openModal = useCallback((attendance: IUserAttendance) => {
     setSelectedAttendance(attendance);
-    setEditCheckIn(formatTimeForInput(attendance.in || ''));
-    setEditCheckOut(formatTimeForInput(attendance.out || ''));
-    setUpdateError('');
+    setEditCheckIn(formatTimeForInput(attendance.in || ""));
+    setEditCheckOut(formatTimeForInput(attendance.out || ""));
+    setUpdateError("");
     setOpen(true);
   }, []);
 
   const closeModal = useCallback(() => {
     setOpen(false);
     setSelectedAttendance(null);
-    setEditCheckIn('');
-    setEditCheckOut('');
-    setUpdateError('');
+    setEditCheckIn("");
+    setEditCheckOut("");
+    setUpdateError("");
   }, []);
 
   return {
@@ -127,6 +121,7 @@ const useModalState = () => {
   };
 };
 
+/* ===================== Main Component ===================== */
 const AttendanceAdmin = () => {
   const [updateAttendance] = useUpdateAttendanceMutation();
   const { isLoading, setIsLoading } = useLoadingWrapper();
@@ -148,12 +143,8 @@ const AttendanceAdmin = () => {
     searchQuery,
     setSearchQuery,
     dateError,
-    setDateError,
     minDate,
     maxDate,
-    validateDates,
-    clearFilters,
-    clearDateError,
   } = useFilterState();
 
   const {
@@ -169,81 +160,9 @@ const AttendanceAdmin = () => {
     closeModal,
   } = useModalState();
 
-  // Load current week on mount
   useEffect(() => {
-    fetchAttendance(
-      {
-        page: 1,
-        startDate: '',
-        endDate: '',
-        search: searchQuery,
-      },
-      true
-    ); // Show loading on initial load
+    fetchAttendance({ page: 1, startDate: "", endDate: "", search: "" }, true);
   }, []);
-
-  // Event handlers
-  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newStartDate = e.target.value;
-    setStartDate(newStartDate);
-
-    // Clear any existing date error first
-    clearDateError();
-
-    // If end date is already set, validate it against the new start date
-    if (endDate && newStartDate && endDate < newStartDate) {
-      setDateError('End date cannot be before start date');
-    }
-  };
-
-  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newEndDate = e.target.value;
-    setEndDate(newEndDate);
-
-    // Real-time validation for end date
-    if (startDate && newEndDate && newEndDate < startDate) {
-      setDateError('End date cannot be before start date');
-    } else {
-      clearDateError();
-    }
-  };
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
-
-  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && searchQuery.trim()) {
-      handleSearch();
-    }
-  };
-
-  const handleFilter = async () => {
-    if (!validateDates()) return;
-
-    await fetchAttendance(
-      {
-        page: 1,
-        startDate,
-        endDate,
-        search: searchQuery,
-      },
-      true
-    ); // Show loading for filter operations
-  };
-
-  const handleClearFilter = async () => {
-    clearFilters();
-    await fetchAttendance(
-      {
-        page: 1,
-        startDate: '',
-        endDate: '',
-        search: '',
-      },
-      true
-    ); // Show loading for clear filter
-  };
 
   const handleSearch = async () => {
     await fetchAttendance(
@@ -257,326 +176,269 @@ const AttendanceAdmin = () => {
     ); // Show loading for search
   };
 
-  const handlePageChange = async (newPage: number) => {
-    await fetchAttendance(
-      {
-        page: newPage,
-        startDate,
-        endDate,
-        search: searchQuery,
-      },
-      true
-    ); // Show loading for pagination
-  };
+  /* ===================== Handlers ===================== */
+  // const handleFilter = async () => {
+  //   if (!validateDates()) return;
+  //   await fetchAttendance(
+  //     { page: 1, startDate, endDate, search: searchQuery },
+  //     true
+  //   );
+  // };
+
+  // const handleClearFilter = async () => {
+  //   clearFilters();
+  //   await fetchAttendance(
+  //     { page: 1, startDate: "", endDate: "", search: "" },
+  //     true
+  //   );
+  // };
 
   const handleUpdateAttendance = async () => {
     if (!editCheckIn || !editCheckOut) {
-      setUpdateError('Both check-in and check-out times are required.');
+      setUpdateError("Both check-in and check-out times are required.");
       return;
     }
 
     closeModal();
 
-    await executeWithLoading(
-      async () => {
-        if (!selectedAttendance?.id) {
-          setUpdateError('Attendance ID is missing.');
-          return;
-        }
-        await updateAttendance({
-          data: {
-            id: selectedAttendance?.id,
-            in: formatTimeForAPI(editCheckIn),
-            out: formatTimeForAPI(editCheckOut),
-          },
-        }).unwrap();
+    await executeWithLoading(async () => {
+      if (!selectedAttendance?.id) return;
 
-        // Refresh the data
-        await fetchAttendance(
-          {
-            page,
-            startDate,
-            endDate,
-            search: searchQuery,
-          },
-          false
-        ); // Don't show loading for refresh after update
-      },
-      setIsLoading,
-      'Attendance updated successfully'
-    );
+      await updateAttendance({
+        data: {
+          id: selectedAttendance.id,
+          in: formatTimeForAPI(editCheckIn),
+          out: formatTimeForAPI(editCheckOut),
+        },
+      }).unwrap();
+
+      await fetchAttendance(
+        { page, startDate, endDate, search: searchQuery },
+        false
+      );
+    }, setIsLoading);
   };
 
+  /* ===================== Table Columns ===================== */
   const columns: GridColDef[] = [
     {
-      field: 'id',
-      headerName: 'empCode',
-      width: 80,
+      field: "id",
+      headerName: "Employee Code",
+      width: 130,
       renderCell: (params) => (
-        <Typography variant="caption" color="text" fontWeight="medium">
+        <span className="text-sm font-medium">
           {params?.row?.user?.user_detial?.empCode}
-        </Typography>
+        </span>
       ),
     },
     {
-      field: 'employee',
-      headerName: 'Employee',
-      width: 200,
-      renderCell: (params) => (
+      field: "employee",
+      headerName: "Employee",
+      width: 290,
+      renderCell: ({ row }) => (
         <EmployeeTableRow
-          image={getImageUrl(params?.row?.user?.user_detial?.Photo[0]?.url)}
-          name={params?.row?.user?.user_detial?.name}
-          email={params?.row?.user?.email}
+          image={getImageUrl(row?.user?.user_detial?.Photo?.[0]?.url)}
+          name={row?.user?.user_detial?.name}
+          email={row?.user?.email}
         />
       ),
     },
+
     {
-      field: 'date',
-      headerName: 'Date',
+      field: "date",
+      headerName: "Date",
       width: 150,
       renderCell: (params) => (
-        <Typography variant="caption" color="text" fontWeight="medium">
-          {params?.row?.Date}
-        </Typography>
+        <span className="text-xs font-medium">{params?.row?.Date}</span>
       ),
     },
     {
-      field: 'checkIn',
-      headerName: 'Check In',
-      width: 150,
-      renderCell: (params) => (
-        <Typography variant="caption" color="text" fontWeight="medium">
-          {convertTo12HourFormat(params?.row?.in) ?? 'In Time Missing'}
-        </Typography>
-      ),
-    },
-    {
-      field: 'checkOut',
-      headerName: 'Check Out',
-      width: 150,
-      renderCell: (params) => (
-        <Typography variant="caption" color="text" fontWeight="medium">
-          {convertTo12HourFormat(params?.row?.out) ?? 'Out Time Missing'}
-        </Typography>
-      ),
-    },
-    {
-      field: 'action',
-      headerName: 'Action',
-      flex: 0.8,
+      field: "checkIn",
+      headerName: "Check In",
       width: 100,
       renderCell: (params) => (
-        <div className="flex flex-row gap-x-3">
-          <Button
-            variant="text"
-            onClick={() => openModal(params.row)}
-          >
-            <Icon>update</Icon>&nbsp;Update
-          </Button>
-        </div>
+        <span className="text-xs font-medium">
+          {convertTo12HourFormat(params?.row?.in) ?? "In Time Missing"}
+        </span>
+      ),
+    },
+    {
+      field: "checkOut",
+      headerName: "Check Out",
+      width: 100,
+      renderCell: (params) => (
+        <span className="text-xs font-medium">
+          {convertTo12HourFormat(params?.row?.out) ?? "Out Time Missing"}
+        </span>
+      ),
+    },
+    {
+      field: "action",
+      headerName: "Action",
+      width: 100,
+      renderCell: (params) => (
+        <Button variant="text" onClick={() => openModal(params.row)}>
+          {/* <Icon>update</Icon>&nbsp;Update */}
+          <img src={Icons.EDIT} alt="" />
+        </Button>
       ),
     },
   ];
 
   return (
     <>
-      <div className="h-[66vh]">
-        <>
-          <Typography variant="h4" fontWeight="bold" gutterBottom>
-            Attendance Logs
-          </Typography>
+      <div className="h-[80vh]">
+        <CustomBox customClasses="p-3 mb-4">
+          <h2 className="text-2xl leading-8 font-semibold mb-4">Search</h2>
+          {dateError && <Alert severity="error">{dateError}</Alert>}
 
-          {/* Date Filter Section */}
-          <Box
-            sx={{ mb: 3, p: 2, backgroundColor: '#f8f9fa', borderRadius: 2 }}
-          >
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              Search & Filter
-            </Typography>
+          {/* <Stack direction="row" spacing={9} flexWrap="wrap"> */}
+          <div className="flex  justify-between w-full gap-4 items-center">
+            <TextField
+              label="Search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by emplyee"
+              className="w-full"
+              // InputProps={{
+              //   startAdornment: (
+              //     <InputAdornment position="start">
+              //       <Icon>Serach employee id</Icon>
+              //     </InputAdornment>
+              //   ),
+              // }}
+            />
 
-            {dateError && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {dateError}
-              </Alert>
-            )}
+            <TextField
+              className="w-full"
+              label="Start Date"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              inputProps={{ min: minDate, max: maxDate }}
+            />
 
-            <Stack
-              direction="row"
-              spacing={2}
-              alignItems="center"
-              flexWrap="wrap"
-              gap={2}
+            <TextField
+              className="w-full"
+              label="End Date"
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              inputProps={{ min: startDate || minDate, max: maxDate }}
+            />
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleSearch}
+              disabled={!searchQuery.trim() || isInitialLoading || isLoading}
             >
-              <TextField
-                label="Search"
-                value={searchQuery}
-                onChange={handleSearchChange}
-                onKeyPress={handleSearchKeyPress}
-                placeholder="Search by employee code, name, or email..."
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Icon>search</Icon>
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{ minWidth: 250 }}
-                disabled={isInitialLoading || isLoading}
-              />
-              <TextField
-                label="Start Date"
-                type="date"
-                value={startDate}
-                onChange={handleStartDateChange}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                inputProps={{
-                  min: minDate,
-                  max: maxDate,
-                }}
-                sx={{ minWidth: 200 }}
-                error={!!dateError}
-                disabled={isInitialLoading || isLoading}
-              />
-              <TextField
-                label="End Date"
-                type="date"
-                value={endDate}
-                onChange={handleEndDateChange}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                inputProps={{
-                  min: startDate || minDate,
-                  max: maxDate,
-                }}
-                sx={{ minWidth: 200 }}
-                error={!!dateError}
-                disabled={isInitialLoading || isLoading}
-              />
-              <Button
-                variant="contained"
-                
-                onClick={handleFilter}
-                disabled={
-                  !startDate ||
-                  !endDate ||
-                  isInitialLoading ||
-                  isLoading ||
-                  !!dateError
-                }
-              >
-                Apply Filter
-              </Button>
-              <Button
-                variant="contained"
-                color="info"
-                onClick={handleSearch}
-                disabled={!searchQuery.trim() || isInitialLoading || isLoading}
-              >
-                Search
-              </Button>
-              <Button
-                variant="outlined"
-                color="warning"
-                onClick={handleClearFilter}
-                disabled={isInitialLoading || isLoading}
-              >
-                Clear All
-              </Button>
-            </Stack>
-          </Box>
+              <img className="w-15 h-11  " src={Icons.SERACH_ICON} alt="" />
+            </Button>
 
-          <CustomDataTable
-            columns={columns}
-            rows={attendanceData}
-            isDataEmpty={attendanceData.length === 0}
-            emptyViewTitle="No attendance data found"
-            emptyViewSubTitle="Please check back later"
-            isLoading={isInitialLoading || isLoading}
-            withPagination={true}
-            totalCount={100}
-            page={page}
-            onPressPageChange={(_event, page) => {
-              handlePageChange(page);
-            }}
-          />
-          <div className="flex mt-4 justify-center">
+            {/* <Button variant="contained" onClick={handleFilter}>
+              Apply Filter
+              </Button>
+              <Button variant="outlined" onClick={handleClearFilter}>
+              Clear All
+              </Button> */}
+            {/* </Stack> */}
+          </div>
+        </CustomBox>
+
+        <CustomBox customClasses="w-full h-full p-5">
+          <div className="flex justify-between items-center pb-5 ">
+            <h3 className="text-2xl font-semibold leading-8">Attendance</h3>
+            {/* <CustomButton
+              customStyles="text-sm"
+              label="Add Attendance"
+              icon={<TbPlus size={22} />}
+              buttonStyle="primary"
+            /> */}
+          </div>
+          <div className="w-full h-full pb-10">
+            <CustomDataTable
+              columns={columns}
+              rows={attendanceData}
+              isLoading={isInitialLoading || isLoading}
+              withPagination={false}
+            />
+
             <Pagination
+              className="mt-4 flex justify-center"
               count={totalPages}
               page={page}
-              onChange={(_event, page) => {
-                handlePageChange(page);
+              onChange={(_, p) =>
+                fetchAttendance({
+                  page: p,
+                  startDate,
+                  endDate,
+                  search: searchQuery,
+                })
+              }
+              sx={{
+                "& .MuiPaginationItem-root": {
+                  fontWeight: 500,
+                },
+                "& .MuiPaginationItem-root.Mui-selected": {
+                  backgroundColor: "#FF7300",
+                  color: "#fff",
+                },
+            
               }}
-              disabled={isInitialLoading || isLoading}
             />
           </div>
-          <Modal
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-            open={open}
-            onClose={closeModal}
-          >
-            <Box
-              sx={{
-                width: 350,
-                backgroundColor: '#fff',
-                borderRadius: 2,
-                padding: 3,
-              }}
-            >
-              <Typography variant="h6" mb={2}>
-                Update Attendance
-              </Typography>
-              {updateError && (
-                <Alert severity="error" sx={{ mb: 2 }}>
-                  {updateError}
-                </Alert>
-              )}
-              <Stack spacing={2}>
+          <Dialog open={open} onClose={closeModal}>
+            <CustomBox customClasses="w-95 p-3 flex flex-col gap-3">
+              <h3 className="text-lg font-semibold ">Update Attendance</h3>
+              <LinearGradient />
+
+              {updateError && <Alert severity="error">{updateError}</Alert>}
+
+              <div className="flex  flex-col gap-4 ">
+                <TextField
+                  className="w-full mb-4"
+                  label="Employee Name"
+                  disabled
+                  value={selectedAttendance?.user?.user_detial?.name || ""}
+                  InputProps={{
+                    readOnly: true,
+                  }}
+                />
                 <TextField
                   label="Check In"
                   type="time"
                   value={editCheckIn}
                   onChange={(e) => setEditCheckIn(e.target.value)}
                   InputLabelProps={{ shrink: true }}
-                  fullWidth
-                  disabled={isLoading}
                 />
+
                 <TextField
                   label="Check Out"
                   type="time"
                   value={editCheckOut}
                   onChange={(e) => setEditCheckOut(e.target.value)}
                   InputLabelProps={{ shrink: true }}
-                  fullWidth
-                  disabled={isLoading}
                 />
-                <Stack direction="row" spacing={2} justifyContent="flex-end">
-                  <Button
-                    variant="contained"
+                <LinearGradient customClasses="" />
+
+                <div className="flex gap-2 justify-end">
+                  <CustomButton
+                    label={"Update"}
+                    buttonStyle="primary"
                     onClick={handleUpdateAttendance}
-                    disabled={isLoading}
-                  >
-                    Update
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    color="secondary"
+                  />
+                  <CustomButton
+                    buttonStyle="secondary"
+                    label={"Cancel"}
                     onClick={closeModal}
-                    disabled={isLoading}
-                  >
-                    Cancel
-                  </Button>
-                </Stack>
-              </Stack>
-            </Box>
-          </Modal>
-        </>
+                  />
+                </div>
+              </div>
+            </CustomBox>
+          </Dialog>
+        </CustomBox>
       </div>
     </>
   );

@@ -1,41 +1,47 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import MDBox from "../../../../components/MDBox/MDBox";
-import Grid from "@mui/material/Grid";
-import MDTypography from "../../../../components/MDTypography";
-import MDButton from "../../../../components/MDButton/MDButton";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import type { GridColDef } from "@mui/x-data-grid";
+
 import EmployeeTableRow from "../../components/employeeTableRow/EmployeeTableRow";
-import EmployeeDesignationRow from "../../components/employeeDesignationRow/EmployeeDesignationRow";
-import EmployeeStatusRow from "../../components/employeestatusRow/EmployeeStatusRow";
-import { Icon } from "@mui/material";
+
 import {
   useDeleteEmployeeMutation,
   useDeleteUserMutation,
   useGetEmployeeListQuery,
 } from "../../employeeApis";
+
 import { userInState } from "../../../auth/authSlice";
-import { useSelector } from "react-redux";
 import { employeeListInState } from "../../employeeSlice";
 import { useLoadingWrapper } from "../../../../wrappers/loadingWrapper/LoadingWrapper.context.js";
-import { toast } from "react-toastify";
-import type { GridColDef } from "@mui/x-data-grid";
-import { useNavigate } from "react-router-dom";
+
 import CustomDataTable from "../../../../shared/components/customDataTable/CustomDataTable.js";
+import EmployeeDesignationRow from "../../components/employeeDesignationRow/EmployeeDesignationRow.js";
+import EmployeeStatusRow from "../../components/employeestatusRow/EmployeeStatusRow.js";
+import CustomBox from "../../../../components/CustomBox/CustomBox.js";
+import { Icons } from "../../../../assets/myAssets/exporter.js";
+import CustomButton from "../../../../components/CustomButton/CustomButton.js";
+import { TbPlus } from "react-icons/tb";
 
 const EmployeeList = () => {
   const user = useSelector(userInState);
+  const employeeList = useSelector(employeeListInState);
+
   const navigate = useNavigate();
   const { setIsLoading } = useLoadingWrapper();
+
   const { isLoading } = useGetEmployeeListQuery({
     user_type: user ? user.user_type : "",
   });
+
   const [deleteUser] = useDeleteUserMutation();
   const [deleteEmployee] = useDeleteEmployeeMutation();
-  const employeeList = useSelector(employeeListInState);
 
-  if (!user) return null; // or handle as appropriate
-  // Filter out the current user from the employee list
+  if (!user) return null;
+
   const filteredEmployeeList = employeeList?.filter(
-    (employee) => employee.id !== user?.id
+    (employee) => employee.id !== user.id
   );
 
   const deleteUserHandler = async (id: string, detailsId: string) => {
@@ -48,32 +54,27 @@ const EmployeeList = () => {
       toast.success("Employee deleted successfully");
     } catch (error) {
       toast.error((error as any)?.message ?? "Something went wrong");
-      throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
+  /* ===================== Columns ===================== */
   const columns: GridColDef[] = [
     {
       field: "employeeCode",
       headerName: "Employee Code",
       width: 160,
       renderCell: (params) => (
-        <MDTypography
-          display="block"
-          variant="caption"
-          color="text"
-          fontWeight="medium"
-        >
+        <span className="text-xs font-medium text-gray-700">
           {params.row.empCode}
-        </MDTypography>
+        </span>
       ),
     },
     {
       field: "employeeName",
       headerName: "Employee Name",
-      width: 260,
+      width: 280,
       renderCell: (params) => (
         <EmployeeTableRow
           image={params.row.image}
@@ -85,65 +86,55 @@ const EmployeeList = () => {
     {
       field: "designation",
       headerName: "Designation",
-      width: 150,
+      width: 190,
       renderCell: (params) => (
         <EmployeeDesignationRow title={params.row.designation} />
       ),
     },
     {
-      field: "status",
-      headerName: "Status",
-      width: 160,
-      renderCell: (params) => <EmployeeStatusRow status={params.row.status} />,
-    },
-    {
       field: "joiningDate",
       headerName: "Joining Date",
-      width: 200,
+      width: 160,
       renderCell: (params) => (
-        <MDTypography
-          display="block"
-          variant="caption"
-          color="text"
-          fontWeight="medium"
-        >
+        <span className="text-xs font-medium text-gray-700">
           {params.row.joiningDate}
-        </MDTypography>
+        </span>
       ),
+    },
+    {
+      field: "status",
+      headerName: "Status",
+      width: 90,
+      renderCell: (params) => <EmployeeStatusRow status={params.row.status} />,
     },
     {
       field: "action",
       headerName: "Action",
-      flex: 0.8,
-      minWidth: 120,
+      minWidth: 100,
       renderCell: (params) => (
-        <div className="flex flex-row gap-x-3">
+        <div className="flex gap-3">
           {(user.user_type === "Admin" || user.user_type === "Hr") && (
-            <MDButton
-              variant="text"
-              color="info"
-              onClick={() => {
+            <button
+              className="text-blue-600 text-sm font-medium hover:underline"
+              onClick={() =>
                 navigate(`/employees/${params.row.name}`, {
-                  state: {
-                    employee: params.row,
-                  },
-                });
-              }}
+                  state: { employee: params.row },
+                })
+              }
             >
-              <Icon>edit</Icon>&nbsp;edit
-            </MDButton>
+              <img src={Icons.EDIT} alt="" />
+            </button>
           )}
 
           {user.user_type === "Admin" && (
-            <MDButton
-              variant="text"
-              color="dark"
-              onClick={() => {
-                deleteUserHandler(params?.row?.id, params?.row?.details_id);
-              }}
+            <button
+              className="text-red-600 text-sm font-medium hover:underline"
+              onClick={() =>
+                deleteUserHandler(params.row.id, params.row.details_id)
+              }
             >
-              <Icon>delete</Icon>&nbsp;delete
-            </MDButton>
+              🗑 Delete
+            </button>
           )}
         </div>
       ),
@@ -151,55 +142,50 @@ const EmployeeList = () => {
   ];
 
   return (
-    <>
-      <MDBox pt={3} pb={3}>
-        <Grid container spacing={6}>
-          <div className="w-full">
-            <div>
-              <MDBox
-                mx={2}
-                mt={-3}
-                py={3}
-                px={2}
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                }}
-                variant="gradient"
-                bgColor="warning"
-                borderRadius="lg"
-                coloredShadow="dark"
-              >
-                <MDTypography variant="h6" color="white">
-                  Employee List
-                </MDTypography>
-                {(user.user_type === "Admin" || user.user_type === "Hr") && (
-                  <MDButton
-                    variant="contained"
-                    color="orange"
-                    onClick={() => navigate("/employees/register")}
-                  >
-                    Add Employee
-                  </MDButton>
-                )}
-              </MDBox>
+    <CustomBox customClasses="p-3">
+      {/* ===== Header ===== */}
+      <div className="mx-4 flex justify-between items-center ">
+        <h2 className="text-black text-lg font-semibold">Employee </h2>
 
-              <div className="h-[70vh]  mt-4  w-full">
-                <CustomDataTable
-                  columns={columns}
-                  rows={filteredEmployeeList}
-                  isDataEmpty={filteredEmployeeList.length === 0}
-                  emptyViewTitle="No Employee Found"
-                  emptyViewSubTitle="Please add an employee to the system"
-                  isLoading={isLoading}
-                  withPagination={false}
-                />
-              </div>
-            </div>
-          </div>
-        </Grid>
-      </MDBox>
-    </>
+        {(user.user_type === "Admin" || user.user_type === "Hr") && (
+          // <button
+          //   onClick={() => navigate("/employees/register")}
+          //   className="bg-white text-orange-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-orange-50"
+          // >
+          //   Add Employee
+          // </button>
+          <CustomButton
+            onClick={() => navigate("/employees/register")}
+            customStyles="text-sm"
+            label="Add New Employee"
+            icon={<TbPlus size={22} />}
+            buttonStyle="primary"
+          />
+        )}
+      </div>
+
+      {/* ===== Table ===== */}
+      <div className="h-[70vh] mt-6 px-4">
+        {/* <CustomDataTable
+          columns={columns}
+          rows={filteredEmployeeList}
+          isLoading={isLoading}
+          isDataEmpty={filteredEmployeeList.length === 0}
+          emptyViewTitle="No Employee Found"
+          emptyViewSubTitle="Please add an employee to the system"
+          withPagination={false}
+        /> */}
+        <CustomDataTable
+          columns={columns}
+          rows={filteredEmployeeList}
+          isLoading={isLoading}
+          withPagination={false}
+          isDataEmpty={filteredEmployeeList.length === 0}
+          emptyViewTitle="No Employee Found"
+          emptyViewSubTitle="Please add an employee to the system"
+        />
+      </div>
+    </CustomBox>
   );
 };
 

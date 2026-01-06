@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { toast } from 'react-toastify';
-import DashboardLayout from '../../../../examples/LayoutContainers/DashboardLayout/index.jsx';
-import DashboardNavbar from '../../../../examples/Navbars/DashboardNavbar/index.jsx';
+
 import { useLoadingWrapper } from '../../../../wrappers/loadingWrapper/LoadingWrapper.context.js';
 import AddHolidayForm from '../../components/addHolidayForm/AddHolidayForm';
 import type { IAddHolidayFormData } from '../../holydayList.types';
@@ -38,8 +37,7 @@ const AddHoliday = () => {
 
   return (
     <>
-      <DashboardNavbar />
-      <AddHolidayForm onPressSubmit={createHolidayHandler} />
+       <AddHolidayForm onPressSubmit={createHolidayHandler} />
     </>
   );
 };

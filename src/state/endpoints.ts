@@ -34,7 +34,7 @@ export const endpoints = {
     endDate?: string,
     search?: string
   ) => {
-    let url = `${baseUrl}/api/daily-attendance/all?page=${page}&pageSize=${pageSize}&sort=createdAt:desc`;
+    let url = `${baseUrl}/api/daily-attendance/all?page=${page}&pageSize=${pageSize}&sort=id:DESC`;
 
     if (startDate && endDate) {
       url += `&startDate=${startDate}&endDate=${endDate}`;
