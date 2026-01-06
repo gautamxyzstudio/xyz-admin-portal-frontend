@@ -122,7 +122,7 @@ export const getError = (error: { message?: string } | undefined) =>
 // };
 
 export const getLeaveStatusColor = (
-  status: "pending" | "approved" | "rejected"
+  status: "pending" | "approved" | "rejected" | "declined"
 ) => {
   switch (status) {
     case "approved":
@@ -130,6 +130,8 @@ export const getLeaveStatusColor = (
     case "pending":
       return `text-[#7F41DF] bg-[#7F41DF29] capitalize`;
     case "rejected":
+      return `text-red bg-lightRed capitalize`;
+    case "declined":
       return `text-red bg-lightRed capitalize`;
     default:
       return `text-black-50 bg-background capitalize`;

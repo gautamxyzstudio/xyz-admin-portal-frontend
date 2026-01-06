@@ -29,6 +29,7 @@ import { useGeLeaveBalanceQuery } from "../../employee/employeeApis";
 import type { ILeaveBalance } from "../../employee/types";
 import StatCardSkeleton from "../../../shared/components/StatCard/StatCardSkeleton";
 import { useGetHolidaysQuery } from "../../holydayList/holydayListApi";
+import AnnouncementsList from "../components/announcementsList/AnnouncementsList";
 
 export interface ProcessedHoliday {
   id: number | string;
@@ -83,32 +84,34 @@ const EmployeeDashboard = () => {
 
   // upComing Holiday
   const processedHolidays = useMemo<ProcessedHoliday[]>(() => {
-  if (!holidays?.data) return [];
+    if (!holidays?.data) return [];
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // normalize
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // normalize
 
-  return holidays.data
-    .map((holiday: any) => {
-      const data = holiday.attributes ?? holiday;
-      const date = new Date(data.date);
+    return (
+      holidays.data
+        .map((holiday: any) => {
+          const data = holiday.attributes ?? holiday;
+          const date = new Date(data.date);
 
-      return {
-        id: holiday.id,
-        name: data.Name,
-        date,
-        formattedDate: date.toLocaleDateString("en-US", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        }),
-      };
-    })
-    // ✅ keep only today & future holidays
-    .filter((holiday:ProcessedHoliday) => holiday.date >= today)
-    // ✅ nearest first
-    .sort((a:any, b:any) => a.date.getTime() - b.date.getTime());
-}, [holidays]);
+          return {
+            id: holiday.id,
+            name: data.Name,
+            date,
+            formattedDate: date.toLocaleDateString("en-US", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            }),
+          };
+        })
+        // ✅ keep only today & future holidays
+        .filter((holiday: ProcessedHoliday) => holiday.date >= today)
+        // ✅ nearest first
+        .sort((a: any, b: any) => a.date.getTime() - b.date.getTime())
+    );
+  }, [holidays]);
 
   if (!user || user.name === undefined) return null;
   if (!userBasic || userBasic.id === undefined) return null;
@@ -155,23 +158,16 @@ const EmployeeDashboard = () => {
     }
   };
 
- const recentHoliday = processedHolidays[0] ?? null;
-
+  const recentHoliday = processedHolidays[0] ?? null;
 
   const totalLeaveBalance =
     leaveBalance?.el_balance +
     leaveBalance?.cl_balance +
     leaveBalance?.sl_balance;
 
-  const recentLeave = leaves?.data
-    ?.slice()
-    ?.sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    )[0];
-
+  const recentLeave = leaves?.data?.[0];
   return (
-    <div className="w-full flex flex-col gap-y-5">
+    <div className="w-full h-full flex flex-col gap-y-5">
       <div className="w-full h-auto flex flex-row gap-x-5 items-start justify-between">
         <div className="w-[71%] flex flex-col gap-y-5">
           <div className="w-full relative overflow-clip rounded-2xl bg-primary flex items-center justify-between py-4.5 pr-5">
@@ -215,8 +211,9 @@ const EmployeeDashboard = () => {
           handleCheckOut={onCheckOut}
         />
       </div>
-      <div className="w-full h-auto flex flex-row gap-x-5 items-start">
-        <LeaveAnalytics leaves={leaves} />
+      <div className="w-full h-full flex flex-row gap-x-5 items-start">
+        <LeaveAnalytics leaves={leaves} isLoading={loading} />
+        <AnnouncementsList />
       </div>
     </div>
   );

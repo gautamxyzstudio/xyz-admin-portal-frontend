@@ -1,255 +1,103 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
-import { Card, Typography } from '@mui/material';
-import { CheckCircle, HourglassEmpty, Cancel } from '@mui/icons-material';
-import { green, orange, red } from '@mui/material/colors';
-import MDBox from '../../../../components/MDBox/MDBox';
-import MDButton from '../../../../components/MDButton/MDButton';
-import { useNavigate } from 'react-router-dom';
 import {
-  formatDateToReadable,
+  getLeaveStatusColor,
   getLeaveTypeTitle,
-} from '../../../../utils/utils';
+} from "../../../../utils/utils";
+import CustomBox from "../../../../components/CustomBox/CustomBox";
+import CustomDataTable from "../../../../shared/components/customDataTable/CustomDataTable";
+import EmptyScreenView from "../../../../shared/components/EmptyScreenView/EmptyScreenView";
+import type { GridColDef } from "@mui/x-data-grid";
+import dayjs from "dayjs";
+import { Link } from "react-router";
 
-const LeaveAnalytics = ({ leaves }: { leaves: any }) => {
-  const navigate = useNavigate();
+const LeaveAnalytics = ({
+  leaves,
+  isLoading,
+}: {
+  leaves: any;
+  isLoading: boolean;
+}) => {
+  // Get recent leaves (last 5)
+  const recentLeaves = leaves?.data?.slice(0, 5) || [];
 
-  // Get recent leaves (last 3)
-  const recentLeaves = leaves?.data?.slice(0, 3) || [];
-
-  const getStatusIcon = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case 'approved':
-        return <CheckCircle style={{ color: green[500] }} />;
-      case 'pending':
-        return <HourglassEmpty style={{ color: orange[500] }} />;
-      case 'rejected':
-        return <Cancel style={{ color: red[500] }} />;
-      default:
-        return <Cancel style={{ color: red[500] }} />;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case 'approved':
-        return green[500];
-      case 'pending':
-        return orange[500];
-      case 'rejected':
-        return red[500];
-      default:
-        return red[500];
-    }
-  };
+  const columns: GridColDef[] = [
+    {
+      field: "title",
+      headerName: "Title",
+      width: 200,
+      renderCell: (params) => params?.row?.title || "N/A",
+    },
+    {
+      field: "leaveType",
+      headerName: "Leave Type",
+      width: 120,
+      renderCell: (params) =>
+        params?.row?.leave_duration
+          ? getLeaveTypeTitle(params.row.leave_duration)
+          : "N/A",
+    },
+    {
+      field: "startDate",
+      headerName: "Start Date",
+      width: 160,
+      renderCell: (params) =>
+        params?.row?.start_date
+          ? dayjs(params.row.start_date).format("DD/MM/YYYY")
+          : "N/A",
+    },
+    {
+      field: "status",
+      headerName: "Status",
+      width: 100,
+      renderCell: (params) => {
+        return (
+          <span
+            className={`${getLeaveStatusColor(
+              params.row.status
+            )} py-1.25 px-3.75 rounded-3xl text-xs`}
+          >
+            {params.row.status}
+          </span>
+        );
+      },
+    },
+  ];
 
   return (
-    <Card sx={{ width: '100%', p: 3 }}>
-      {/* <MDBox mb={3}> */}
-        {/* <div className="flex flex-row justify-between items-center">
-          <Typography variant="h5" fontWeight="bold" gutterBottom>
-            Leaves
-          </Typography>
-          <MDButton
-            sx={{ height: '40px' }}
-            variant="gradient"
-            color="success"
-            onClick={() => navigate('/leaves/create')}
-          >
-            Apply Leave
-          </MDButton>
-        </div> */}
-
-        {/* Leave Balance Circles */}
-        {/* <div className="flex flex-row justify-start items-start mt-4 space-x-8">
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-            }}
-          >
-            <Box sx={{ position: 'relative', display: 'inline-flex' }}>
-              <CircularProgress
-                size={120}
-                variant="determinate"
-                value={100}
-                sx={{ color: green[200] }}
-              />
-              <Box
-                sx={{
-                  top: 0,
-                  left: 0,
-                  bottom: 0,
-                  right: 0,
-                  position: 'absolute',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexDirection: 'column',
-                }}
-              >
-                <Typography
-                  variant="h3"
-                  component="div"
-                  sx={{ color: 'text.primary', fontWeight: 'bold' }}
-                >
-                  {userDetails?.leave_balance ?? 0}
-                </Typography>
-              </Box>
-            </Box>
-            <Typography
-              variant="h6"
-              sx={{
-                mt: 2,
-                color: 'text.primary',
-                fontWeight: 'medium',
-                textAlign: 'center',
-              }}
-            >
-              Leave Balance
-            </Typography>
-            <Typography
-              variant="body2"
-              sx={{
-                color: 'text.secondary',
-                textAlign: 'center',
-              }}
-            >
-              Available days
-            </Typography>
-          </Box> */}
-
-          {/* <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-            }}
-          >
-            <Box sx={{ position: 'relative', display: 'inline-flex' }}>
-              <CircularProgress
-                size={120}
-                variant="determinate"
-                value={100}
-                sx={{ color: red[200] }}
-              />
-              <Box
-                sx={{
-                  top: 0,
-                  left: 0,
-                  bottom: 0,
-                  right: 0,
-                  position: 'absolute',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexDirection: 'column',
-                }}
-              >
-                <Typography
-                  variant="h3"
-                  component="div"
-                  sx={{ color: 'text.primary', fontWeight: 'bold' }}
-                > */}
-                  {/* {userDetails?.unpaid_leave_balance ?? 0} */}
-                {/* </Typography>
-              </Box>
-            </Box>
-            <Typography
-              variant="h6"
-              sx={{
-                mt: 2,
-                color: 'text.primary',
-                fontWeight: 'medium',
-                textAlign: 'center',
-              }}
-            >
-              Unpaid Leave Balance
-            </Typography>
-            <Typography
-              variant="body2"
-              sx={{
-                color: 'text.secondary',
-                textAlign: 'center',
-              }}
-            >
-              Unpaid days
-            </Typography>
-          </Box>
-        </div> */}
-      {/* // </MDBox> */}
-
-      <MDBox>
-        <div className="flex flex-row justify-between items-center mb-3">
-          <Typography variant="h6" fontWeight="bold">
+      <CustomBox customClasses="h-full w-[58%] p-5 flex flex-col space-y-4">
+        <div className="w-full h-auto flex flex-row flex-nowrap justify-between items-center-safe">
+          <span className="text-black font-semibold text-2xl">
             Recent Leaves
-          </Typography>
-          <MDButton
-            variant="text"
-            className="cursor-pointer z-30"
-            color="info"
-            size="medium"
-            onClick={() => navigate('/leaves')}
+          </span>
+          <Link
+            to={"/leaves"}
+            title="View All"
+            className="hover:bg-primary/90 bg-primary-20 text-primary px-5 py-1.5 text-sm font-medium hover:text-white rounded-full transition duration-300 ease-in-out"
           >
             View All
-          </MDButton>
+          </Link>
         </div>
 
-        {recentLeaves.length > 0 ? (
-          <div className="space-y-3">
-            {recentLeaves.map((leave: any, index: number) => (
-              <div
-                key={index}
-                className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 bg-gray-50 rounded-lg"
-              >
-                <div className="flex items-center space-x-2 mb-2 sm:mb-0">
-                  {getStatusIcon(leave.status)}
-                  <div>
-                    <Typography variant="subtitle1" fontWeight="medium">
-                      {leave.title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {getLeaveTypeTitle(leave.leave_duration)}
-                    </Typography>
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-1 sm:space-y-0 sm:space-x-4">
-                  <Typography variant="body2" color="text.secondary">
-                    {formatDateToReadable(leave.start_date)} -{' '}
-                    {formatDateToReadable(leave.end_date)}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: getStatusColor(leave.status),
-                      fontWeight: 'medium',
-                    }}
-                  >
-                    {leave.status}
-                  </Typography>
-                </div>
-              </div>
-            ))}
-          </div>
+        {!isLoading && (!leaves?.data || leaves?.data.length === 0) ? (
+          <EmptyScreenView
+            isDataEmpty={true}
+            emptyViewTitle="No Leave Found"
+            emptyViewSubTitle="Please request a leave"
+          />
         ) : (
-          <div className="text-center py-8">
-            <Typography variant="body1" color="text.secondary">
-              No recent leaves found
-            </Typography>
-            <MDButton
-              variant="text"
-              color="primary"
-              onClick={() => navigate('/leaves/create')}
-              sx={{ mt: 1 }}
-            >
-              Request your first leave
-            </MDButton>
+          <div className="w-full h-full">
+            <CustomDataTable
+              columns={columns}
+              rows={recentLeaves}
+              isDataEmpty={leaves?.data.length === 0}
+              emptyViewTitle="No Leave Found"
+              emptyViewSubTitle="Please request a leave"
+              isLoading={isLoading}
+              withPagination={false}
+            />
           </div>
         )}
-      </MDBox>
-    </Card>
+      </CustomBox>
   );
 };
 

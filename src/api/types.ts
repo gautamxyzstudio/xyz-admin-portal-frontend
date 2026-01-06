@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface IUserMutationArgs {
   type: 'post' | 'put' | 'delete' | 'get' | 'patch';
   url: string;

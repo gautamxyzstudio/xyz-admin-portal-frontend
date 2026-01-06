@@ -1,9 +1,7 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 import { userInState } from "../../auth/authSlice.js";
 import { useSelector } from "react-redux";
-import type { IAttendance } from "../../dashboard/types.js";
 import { convertTo12HourFormat } from "../../../utils/utils.js";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useGetAttendanceListQuery } from "../attendanceApi.js";
 import CustomDataTable from "../../../shared/components/customDataTable/CustomDataTable.js";
@@ -17,23 +15,29 @@ const AttendanceEmployee = () => {
   const user = useSelector(userInState);
   const [startDate, setStartDate] = useState<Dayjs | null>(null);
   const [endDate, setEndDate] = useState<Dayjs | null>(dayjs());
-  const [attendanceList, setAttendanceList] = useState<IAttendance[]>([]);
-  const { data, isLoading } = useGetAttendanceListQuery({
-    id: user?.id ?? 0,
-    startDate: startDate?.format("YYYY-MM-DD"),
-    endDate: endDate?.format("YYYY-MM-DD"),
+
+  const queryArgs = useMemo(
+    () => ({
+      id: user?.id ?? 0,
+      startDate: startDate?.format("YYYY-MM-DD"),
+      endDate: endDate?.format("YYYY-MM-DD"),
+    }),
+    [user?.id, startDate, endDate]
+  );
+  const {
+    data = [],
+    isLoading,
+    isFetching,
+  } = useGetAttendanceListQuery(queryArgs, {
+    skip: !user?.id,
+    refetchOnMountOrArgChange: true,
   });
-  useEffect(() => {
-    if (data) {
-      setAttendanceList(data);
-    }
-  }, [data]);
 
   const sortedAttendance = useMemo(() => {
-    return [...attendanceList].sort(
+    return [...data].sort(
       (a, b) => new Date(b.Date).getTime() - new Date(a.Date).getTime()
     );
-  }, [attendanceList]);
+  }, [data]);
 
   if (!user || user.id === undefined) return null;
 
@@ -118,10 +122,10 @@ const AttendanceEmployee = () => {
         <CustomDataTable
           columns={columns}
           rows={sortedAttendance}
-          isDataEmpty={attendanceList.length === 0}
+          isDataEmpty={sortedAttendance.length === 0}
           emptyViewTitle="No Attendance Found"
           emptyViewSubTitle="Please check in and check out to see your attendance"
-          isLoading={isLoading}
+          isLoading={isLoading || isFetching}
           withPagination={false}
         />
       </div>

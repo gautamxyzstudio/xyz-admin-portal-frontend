@@ -5,9 +5,9 @@ import { userDetailsInState } from "../../features/auth/authSlice";
 import { useNavigate } from "react-router";
 
 const TopBar = () => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
   const user = useSelector(userDetailsInState);
-  console.log(user?.photo);
+
   return (
     <CustomBox customClasses="w-full rounded-xl p-3.5 flex items-center justify-between sticky top-0 shadow z-99">
       {/* Left */}

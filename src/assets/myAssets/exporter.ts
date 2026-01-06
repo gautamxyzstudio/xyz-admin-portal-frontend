@@ -20,11 +20,11 @@ import TOTAL_EMP from "./icons/total-Employee.svg";
 import TOTAL_LEAVE from "./icons/totalLeave.svg";
 import UPCOMING_HOLIDAY from "./icons/upComingHoliday.svg";
 import CALL_ICON from "./icons/call-icon.svg";
-import  OUTLOOK_PRIMARY from "./icons/outlook-primary.svg";
+import OUTLOOK_PRIMARY from "./icons/outlook-primary.svg";
 import PROFILE from "./icons/profile.svg";
 import EMPLOYED_CODE from "./icons/employed-code.svg";
 import DESIGNATION from "./icons/designation.svg";
-import JOINING_DATE from "./icons/joining-date.svg"
+import JOINING_DATE from "./icons/joining-date.svg";
 import ALL_EMP_DOC from "./icons/allEmpDoc.svg";
 import ATTENDANCE from "./icons/attendance.svg";
 import BLOG from "./icons/blog.svg";
@@ -44,6 +44,12 @@ import LEAVES_FILL from "./icons/leavesFill.svg";
 import UPDATE_IMG from "./icons/update-img.svg";
 import PLUS_ICON from "./icons/plus-icon.svg";
 import TODAYABSENT from "./icons/today-Absents.svg"
+import ANNOUNCE from "./icons/announcement.svg";
+import ANNIVERSARY from "./icons/anniversary.svg";
+import BIRTHDAY from "./icons/birthday.svg";
+import EDIT from "./icons/edit.svg";
+import DELETE from "./icons/delete.svg";
+
 export const Icons = {
   CROSS_ICON,
   PROFILE_PICTURE,
@@ -90,12 +96,18 @@ export const Icons = {
   UPDATE_IMG,
   PLUS_ICON,
   TODAYABSENT,
+  ANNIVERSARY,
+  ANNOUNCE,
+  BIRTHDAY,
+  EDIT,
+  DELETE,
 };
 
 // Images
 import BRAND_LOGO from "../images/logo-ct.webp";
-import BANNER from "../images/banner.webp"
+import BANNER from "../images/banner.webp";
 
 export const Images = {
-  BRAND_LOGO, BANNER
+  BRAND_LOGO,
+  BANNER,
 };
