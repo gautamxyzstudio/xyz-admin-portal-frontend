@@ -6,6 +6,7 @@ import type {
   IApplyLeaveArgs,
   IApproveLeaveResponse,
   ILeave,
+  ILeaveDetailsResponse,
   IUpdateLeaveArgs,
 } from "./leaves.types";
 
@@ -143,6 +144,31 @@ export const leavesApi = enhancedLeavesApi.injectEndpoints({
         };
       },
     }),
+    getLeavesDetials: builder.query({
+      query: (id: number) => ({
+        url: endpoints.updateLeave(id),
+        method: ApiMethodType.get,
+      }),
+      transformResponse: (response: any): ILeaveDetailsResponse => {
+        const attributes = response.data.attributes;
+        return {
+          id: response.data.id,
+          start_date: attributes.start_date,
+          end_date: attributes.end_date,
+          status: attributes.status,
+          createdAt: attributes.createdAt,
+          description: attributes.description,
+          decline_reason: attributes.decline_reason,
+          title: attributes.title,
+          leave_duration: attributes.leave_duration,
+          half_day_type: attributes.half_day_type,
+          is_first_half: attributes.is_first_half,
+          start_time: attributes.start_time,
+          days: attributes.days,
+          leave_type: attributes.leave_type,
+        };
+      },
+    }),
   }),
 });
 
@@ -155,4 +181,5 @@ export const {
   useDeleteLeaveMutation,
   useLazyGetAllLeavesQuery,
   useGetLeaveRequestsQuery,
+  useGetLeavesDetialsQuery,
 } = leavesApi;

@@ -1,16 +1,16 @@
-import { Card, Grid, Box, Typography, Button } from "@mui/material";
-import { useGetUserLeavesQuery } from "../../leavesApi";
+import {
+  useGetLeavesDetialsQuery,
+  useGetUserLeavesQuery,
+} from "../../leavesApi";
 import { useSelector } from "react-redux";
 import { userInState } from "../../../auth/authSlice";
 import { toast } from "react-toastify";
-// import { useLoadingWrapper } from "../../../../wrappers/loadingWrapper/LoadingWrapper.context.js";
 import {
-  convertTo12HourFormat,
-  formatDateToReadable,
+  getLeaveStatusColor,
   getLeaveTypeTitle,
 } from "../../../../utils/utils";
 import EmptyScreenView from "../../../../shared/components/EmptyScreenView/EmptyScreenView";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import type { GridColDef } from "@mui/x-data-grid";
 import CustomBox from "../../../../components/CustomBox/CustomBox.js";
 import StatCard from "../../../../shared/components/StatCard/StatCard.tsx";
@@ -22,16 +22,21 @@ import CustomDataTable from "../../../../shared/components/customDataTable/Custo
 import CustomButton from "../../../../components/CustomButton/CustomButton.tsx";
 import { TbPlus } from "react-icons/tb";
 import { useNavigate } from "react-router";
+import dayjs from "dayjs";
+import { Dialog } from "@mui/material";
+import LinearGradient from "../../../../components/LinearGradient/LinearGradient.tsx";
+import { convertTo12HourFormat } from "../../../../utils/timeUtils.ts";
 
 const LeaveList = () => {
   const navigate = useNavigate();
-  // const { setIsLoading } = useLoadingWrapper();
   const user = useSelector(userInState);
-  // const [deleteLeave] = useDeleteLeaveMutation();
   const { data: leaveBalance } = useGeLeaveBalanceQuery<ILeaveBalance>();
+  const [openModal, setOpenModal] = useState<boolean>(false);
+  const [leaveId, setLeaveId] = useState<string | null>("");
 
   // Only make the query if user exists and has an id
   const { data: leaves, isLoading, error, refetch } = useGetUserLeavesQuery();
+  const { data, isFetching } = useGetLeavesDetialsQuery(Number(leaveId));
 
   // Handle query errors
   useEffect(() => {
@@ -41,68 +46,24 @@ const LeaveList = () => {
     }
   }, [error]);
 
-  // const handleDeleteLeave = async (id: number) => {
-  //   if (!id) {
-  //     toast.error("Invalid leave ID");
-  //     return;
-  //   }
-
-  //   try {
-  //     setIsLoading(true);
-  //     const response = await deleteLeave({ id: id }).unwrap();
-  //     if (response) {
-  //       toast.success("Leave deleted successfully");
-  //       // Refetch the leaves data to update the list
-  //       refetch();
-  //     }
-  //   } catch (error: any) {
-  //     console.error("Error deleting leave:", error);
-
-  //     // Provide more specific error messages based on the error
-  //     let errorMessage = "Failed to delete leave";
-  //     if (error?.status === 404) {
-  //       errorMessage = "Leave not found";
-  //     } else if (error?.status === 403) {
-  //       errorMessage = "You are not authorized to delete this leave";
-  //     } else if (error?.status === 400) {
-  //       errorMessage =
-  //         "Cannot delete leave. It may have already been processed";
-  //     } else if (error?.data?.message) {
-  //       errorMessage = error.data.message;
-  //     }
-
-  //     toast.error(errorMessage);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
   // Show loading state if user is not available yet
   if (!user?.id) {
     return (
-      <>
-        <Box pt={3} pb={3}>
-          <Card>
-            <CustomBox customClasses="p-6">
-              <Typography variant="h6" color="white">
-                Leaves
-              </Typography>
-            </CustomBox>
-            <div className="h-full mt-4 w-full flex items-center justify-center">
-              <Typography variant="h6" color="text">
-                Loading user information...
-              </Typography>
-            </div>
-          </Card>
-        </Box>
-      </>
+      <CustomBox customClasses="p-6 w-full h-full flex flex-col space-y-4">
+        <h2 className="text-2xl font-semibold text-black">Leaves</h2>
+        <div className="h-full w-full flex items-center justify-center">
+          <p className="text-xl text-center text-black-50">
+            Loading user information...
+          </p>
+        </div>
+      </CustomBox>
     );
   }
 
   // Show error state if there's a query error
   if (error) {
     return (
-      <div className="w-full flex flex-col gap-y-5">
+      <div className="w-full h-full flex flex-col gap-y-5">
         <div className="w-full flex flex-row flex-nowrap items-start gap-x-5">
           {isLoading
             ? [1, 2, 3, 4].map((_, idx) => <StatCardSkeleton key={idx} />)
@@ -135,208 +96,80 @@ const LeaveList = () => {
                 </React.Fragment>
               )}
         </div>
-        <Box pt={3} pb={3}>
-          <Grid container spacing={6}></Grid>
-          <Card>
-            <CustomBox>
-              <Typography variant="h6" color="white">
-                Leaves
-              </Typography>
-            </CustomBox>
-            <div className="h-full mt-4 w-full flex items-center justify-center">
-              <Box textAlign="center">
-                <Typography variant="h6" color="error" mb={2}>
-                  Failed to load leaves
-                </Typography>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={() => refetch()}
-                >
-                  Try Again
-                </Button>
-              </Box>
-            </div>
-          </Card>
-        </Box>
+        <CustomBox customClasses="p-5 w-full h-full flex flex-col space-y-4">
+          <h2 className="text-2xl font-semibold text-black">Leaves</h2>
+          <div className="h-full w-full flex flex-col space-y-4 items-center justify-center">
+            <p className="text-xl text-center text-red">
+              Failed to load leaves
+            </p>
+            <CustomButton
+              onClick={() => refetch()}
+              label="Try Again"
+              buttonStyle="primary"
+            />
+          </div>
+        </CustomBox>
       </div>
     );
   }
 
   const columns: GridColDef[] = [
     {
-      field: "date",
-      headerName: "Date",
-      width: 160,
-      renderCell: (params) => {
-        return (
-          <Typography
-            display="block"
-            variant="h6"
-            color="text"
-            fontWeight="medium"
-          >
-            {params?.row?.createdAt
-              ? formatDateToReadable(params.row.createdAt)
-              : "N/A"}
-          </Typography>
-        );
-      },
-    },
-    {
       field: "title",
       headerName: "Title",
       width: 160,
-      renderCell: (params) => {
-        return (
-          <Typography
-            display="block"
-            variant="h6"
-            color="text"
-            fontWeight="medium"
-          >
-            {params?.row?.title || "N/A"}
-          </Typography>
-        );
-      },
+      renderCell: (params) => params?.row?.title || "N/A",
     },
     {
       field: "leaveType",
       headerName: "Leave Type",
-      width: 160,
-      renderCell: (params) => {
-        return (
-          <Typography
-            display="block"
-            variant="h6"
-            color="text"
-            fontWeight="medium"
-          >
-            {params?.row?.leave_duration
-              ? getLeaveTypeTitle(params.row.leave_duration)
-              : "N/A"}
-          </Typography>
-        );
-      },
+      width: 120,
+      renderCell: (params) =>
+        params?.row?.leave_duration
+          ? getLeaveTypeTitle(params.row.leave_duration)
+          : "N/A",
     },
+
     {
-      field: "description",
-      headerName: "Description",
-      width: 250,
-      renderCell: (params) => {
-        return (
-          <Typography
-            display="block"
-            variant="caption"
-            color="text"
-            fontWeight="medium"
-          >
-            {params?.row?.description || "N/A"}
-          </Typography>
-        );
-      },
-    },
-    {
-      field: "status",
-      headerName: "Status",
-      width: 160,
-      renderCell: (params) => {
-        const color =
-          params.row?.status === "pending"
-            ? "warning"
-            : params?.row?.status === "approved"
-            ? "success"
-            : "error";
-        return (
-          <Typography
-            display="block"
-            variant="h6"
-            sx={{
-              textTransform: "capitalize",
-            }}
-            fontWeight="medium"
-            color={color}
-          >
-            {params?.row?.status || "N/A"}
-          </Typography>
-        );
-      },
+      field: "date",
+      headerName: "Applied Date",
+      width: 120,
+      renderCell: (params) =>
+        params?.row?.createdAt
+          ? dayjs(params.row.createdAt).format("DD/MM/YYYY")
+          : "N/A",
     },
     {
       field: "startDate",
       headerName: "Start Date",
-      width: 160,
-      renderCell: (params) => {
-        return (
-          <Typography
-            display="block"
-            variant="h6"
-            color="text"
-            fontWeight="medium"
-          >
-            {params?.row?.start_date
-              ? formatDateToReadable(params.row.start_date)
-              : "N/A"}
-          </Typography>
-        );
-      },
+      width: 120,
+      renderCell: (params) =>
+        params?.row?.start_date
+          ? dayjs(params.row.start_date).format("DD/MM/YYYY")
+          : "N/A",
     },
     {
       field: "endDate",
       headerName: "End Date",
-      width: 160,
-      renderCell: (params) => {
-        return (
-          <Typography
-            display="block"
-            variant="h6"
-            color="text"
-            fontWeight="medium"
-          >
-            {params?.row?.end_date
-              ? formatDateToReadable(params.row.end_date)
-              : "N/A"}
-          </Typography>
-        );
-      },
+      width: 120,
+      renderCell: (params) =>
+        params?.row?.end_date
+          ? dayjs(params.row.end_date).format("DD/MM/YYYY")
+          : "N/A",
     },
     {
-      field: "startTime",
-      headerName: "Start Time",
-      width: 160,
+      field: "status",
+      headerName: "Status",
+      width: 100,
       renderCell: (params) => {
         return (
-          <Typography
-            display="block"
-            variant="h6"
-            color="text"
-            fontWeight="medium"
+          <span
+            className={`${getLeaveStatusColor(
+              params.row.status
+            )} py-1.25 px-3.75 rounded-3xl text-xs`}
           >
-            {params?.row?.start_time
-              ? convertTo12HourFormat(params.row.start_time)
-              : "N/A"}
-          </Typography>
-        );
-      },
-    },
-    {
-      field: "is_first_half",
-      headerName: "Half",
-      width: 160,
-      renderCell: (params) => {
-        return (
-          <Typography
-            display="block"
-            variant="h6"
-            color="text"
-            fontWeight="medium"
-          >
-            {params?.row?.leave_duration === "half_day"
-              ? params?.row?.is_first_half
-                ? "First"
-                : "Second"
-              : "N/A"}
-          </Typography>
+            {params.row.status}
+          </span>
         );
       },
     },
@@ -376,18 +209,18 @@ const LeaveList = () => {
               </React.Fragment>
             )}
       </div>
-      <CustomBox customClasses="w-full p-5 h-full">
+      <CustomBox customClasses="w-full p-5 h-full flex flex-col space-y-5">
         <div className="w-full flex flex-nowrap justify-between items-center">
           <span className="text-2xl font-semibold">Leaves</span>
           <CustomButton
             label="Apply Leave"
             buttonStyle="primary"
             icon={<TbPlus size={24} />}
-             onClick={() => navigate("/leaves/create")}
+            onClick={() => navigate("/leaves/create")}
           />
         </div>
 
-        <div className="mt-5 w-full h-full">
+        <div className=" w-full h-full">
           {!isLoading && (!leaves?.data || leaves.data.length === 0) ? (
             <EmptyScreenView
               isDataEmpty={true}
@@ -403,11 +236,126 @@ const LeaveList = () => {
               emptyViewSubTitle="Please request a leave"
               isLoading={isLoading}
               withPagination={false}
-              tableHeight={300}
+              onRowClick={(item) => {
+                setLeaveId(item.id.toString());
+                setOpenModal(true);
+              }}
             />
           )}
         </div>
       </CustomBox>
+      <Dialog
+        open={openModal}
+        onClose={() => setOpenModal(false)}
+        maxWidth="lg"
+        sx={{
+          "& .MuiDialog-paper": {
+            borderRadius: "16px",
+          },
+        }}
+      >
+        {isFetching ? (
+          <CustomBox customClasses="p-5 w-[550px] h-full flex flex-col gap-y-3">
+            <div className="flex flex-row items-center justify-between">
+              <div className="w-40 h-6 animate-pulse bg-black-20/60 rounded" />
+              <div className="w-10 h-6 animate-pulse bg-black-20/60 rounded-xl" />
+            </div>
+            <div className="w-full h-1 animate-pulse bg-black-20/60 rounded" />
+            <div className="flex flex-col gap-y-1.5">
+              <div className="w-[30%] h-4 animate-pulse bg-black-20/60 rounded" />
+              <div className="w-full h-6 animate-pulse bg-black-20/60 rounded" />
+            </div>
+            <div className="flex flex-col gap-y-1.5">
+              <div className="w-[30%] h-4 animate-pulse bg-black-20/60 rounded" />
+              <div className="w-full h-6 animate-pulse bg-black-20/60 rounded" />
+              <div className="w-[70%] h-6 animate-pulse bg-black-20/60 rounded" />
+            </div>
+            <div className="w-[50%] h-4 animate-pulse bg-black-20/60 rounded" />
+            <div className="w-full h-6 animate-pulse bg-black-20/60 rounded" />
+            <div className="w-full h-6 animate-pulse bg-black-20/60" />
+          </CustomBox>
+        ) : (
+          <CustomBox customClasses="p-5 w-[550px] h-full flex flex-col gap-y-3">
+            <div className="w-full flex flex-row items-center-safe justify-between">
+              <h6 className="font-semibold text-xl">Leave Details</h6>
+              <span
+                className={`${getLeaveStatusColor(
+                  data?.status ?? "pending"
+                )} text-xs py-1.5 px-3 rounded-full`}
+              >
+                {data?.status}
+              </span>
+            </div>
+            <LinearGradient />
+            <div className="flex flex-col gap-y-0.5">
+              <span className="text-black-50 text-sm font-medium">Title</span>
+              <p className="text-base">{data?.title}</p>
+            </div>
+            <div className="flex flex-col gap-y-0.5">
+              <span className="text-black-50 text-sm font-medium">
+                Description
+              </span>
+              <p className="text-base">{data?.description}</p>
+            </div>
+            <LinearGradient />
+            <div className="w-full flex flex-row flex-wrap items-start gap-y-3">
+              <div className="w-[60%] flex flex-col gap-y-0.5">
+                <span className="text-black-50 text-sm font-medium">
+                  Leave Type
+                </span>
+                <p className="text-base capitalize">{data?.leave_type}</p>
+              </div>
+              <div className="w-[40%] flex flex-col gap-y-0.5">
+                <span className="text-black-50 text-sm font-medium">
+                  Leave Duration
+                </span>
+                <p className="text-base capitalize">
+                  {getLeaveTypeTitle(data?.leave_duration ?? "")}
+                </p>
+              </div>
+              {data?.leave_duration === "short_leave" && (
+                <div className="w-[50%] flex flex-col gap-y-0.5">
+                  <span className="text-black-50 text-sm font-medium">
+                    Start Time
+                  </span>
+                  <p className="text-base capitalize">
+                    {convertTo12HourFormat(data.start_time ?? "")}
+                  </p>
+                </div>
+              )}
+              {data?.leave_duration === "half_day" && (
+                <div className="flex flex-col gap-y-0.5">
+                  <span className="text-black-50 text-sm font-medium">
+                    Which Half?
+                  </span>
+                  <p className="text-base capitalize">
+                    {data.is_first_half ? "First Half" : "Second Half"}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="w-full flex flex-row items-start">
+              <div className="w-[60%] flex flex-col gap-y-0.5">
+                <span className="text-black-50 text-sm font-medium">
+                  Start Date & End Date
+                </span>
+                <p className="text-base">
+                  {dayjs(data?.start_date).format("DD MMM, YYYY")} &nbsp; &
+                  &nbsp;
+                  {dayjs(data?.start_date).format("DD MMM, YYYY")}
+                </p>
+              </div>
+              <div className="flex flex-col gap-y-0.5">
+                <span className="text-black-50 text-sm font-medium">
+                  Leave Days
+                </span>
+                <p className="text-base">{data?.days ?? 1}</p>
+              </div>
+            </div>
+          </CustomBox>
+        )}
+      </Dialog>
     </div>
   );
 };

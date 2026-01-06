@@ -135,8 +135,8 @@ const HolydayList = () => {
   }
 
   return (
-    <CustomBox customClasses="p-5 h-full">
-      <p className="text-black mb-7 text-2xl font-semibold leading-8">
+    <CustomBox customClasses="p-5 h-full w-full flex flex-col space-y-7">
+      <p className="text-black text-2xl font-semibold">
         Holiday List
       </p>
       <CustomDataTable
