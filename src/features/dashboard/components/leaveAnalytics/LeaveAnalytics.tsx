@@ -24,7 +24,7 @@ const LeaveAnalytics = ({
     {
       field: "title",
       headerName: "Title",
-      width: 200,
+      width: 180,
       renderCell: (params) => params?.row?.title || "N/A",
     },
     {
@@ -39,7 +39,7 @@ const LeaveAnalytics = ({
     {
       field: "startDate",
       headerName: "Start Date",
-      width: 160,
+      width: 120,
       renderCell: (params) =>
         params?.row?.start_date
           ? dayjs(params.row.start_date).format("DD/MM/YYYY")

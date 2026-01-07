@@ -77,11 +77,11 @@ export const formatDateToReadable = (dateString: string): string => {
 export const getLeaveTypeTitle = (type: string) => {
   switch (type) {
     case "short_leave":
-      return "Short Leave";
+      return "Short Day Leave";
     case "full_day":
-      return "Full Day";
+      return "Full Day Leave";
     case "half_day":
-      return "Half Day";
+      return "Half Day Leave";
   }
 };
 
@@ -122,7 +122,7 @@ export const getError = (error: { message?: string } | undefined) =>
 // };
 
 export const getLeaveStatusColor = (
-  status: "pending" | "approved" | "rejected" | "declined"
+  status: "pending" | "approved" | "rejected" | "declined",
 ) => {
   switch (status) {
     case "approved":

@@ -33,12 +33,6 @@ const AttendanceEmployee = () => {
     refetchOnMountOrArgChange: true,
   });
 
-  const sortedAttendance = useMemo(() => {
-    return [...data].sort(
-      (a, b) => new Date(b.Date).getTime() - new Date(a.Date).getTime()
-    );
-  }, [data]);
-
   if (!user || user.id === undefined) return null;
 
   const columns: GridColDef[] = [
@@ -121,8 +115,8 @@ const AttendanceEmployee = () => {
       <div className="h-full w-full">
         <CustomDataTable
           columns={columns}
-          rows={sortedAttendance}
-          isDataEmpty={sortedAttendance.length === 0}
+          rows={data}
+          isDataEmpty={data.length === 0}
           emptyViewTitle="No Attendance Found"
           emptyViewSubTitle="Please check in and check out to see your attendance"
           isLoading={isLoading || isFetching}
