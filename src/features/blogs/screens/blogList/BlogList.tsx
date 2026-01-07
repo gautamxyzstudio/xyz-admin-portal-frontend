@@ -1,21 +1,78 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Link, useNavigate } from "react-router";
 import CustomBox from "../../../../components/CustomBox/CustomBox";
-import { Skeleton } from "@mui/material";
+import { Pagination, Skeleton } from "@mui/material";
 import CustomButton from "../../../../components/CustomButton/CustomButton";
 import { TbPlus } from "react-icons/tb";
 import dayjs from "dayjs";
 import { Icons } from "../../../../assets/myAssets/exporter";
-import { useDeleteBlogMutation, useGetBlogListQuery } from "../../blogListApi";
+import {
+  useDeleteBlogMutation,
+  useLazyGetBlogListQuery,
+} from "../../blogListApi";
 import type { IBlogResponse } from "../../types";
 import { useLoadingWrapper } from "../../../../wrappers/loadingWrapper/LoadingWrapper.context";
 import { toast } from "react-toastify";
+import { useCallback, useEffect, useState } from "react";
+
+const useBlogListData = () => {
+  const [getAllBlog] = useLazyGetBlogListQuery();
+  const [blogList, setBlogList] = useState<IBlogResponse[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const { setIsLoading } = useLoadingWrapper();
+
+  const fetchBlogList = useCallback(
+    async (pageNumber: number, showLoading: boolean = true) => {
+      if (showLoading) {
+        setIsLoading(true);
+      }
+      try {
+        const response = await getAllBlog(pageNumber).unwrap();
+        setBlogList(response.data || []);
+        setTotalPages(response.meta.pagination.pageCount);
+        setPage(pageNumber);
+        return response;
+      } catch (error) {
+        setBlogList([]);
+        throw error;
+      } finally {
+        if (showLoading) {
+          setIsLoading(false);
+        }
+        setIsInitialLoading(false);
+      }
+    },
+    [getAllBlog, setIsLoading]
+  );
+  return {
+    blogList,
+    page,
+    totalPages,
+    isInitialLoading,
+    fetchBlogList,
+  };
+};
 
 const BlogList = () => {
   const navigate = useNavigate();
-  const { data, isLoading, isFetching } = useGetBlogListQuery();
+  // const { data, isLoading, isFetching } = useGetBlogListQuery();
   const [deleteBlog] = useDeleteBlogMutation();
-  const { setIsLoading } = useLoadingWrapper();
+  const { isLoading, setIsLoading } = useLoadingWrapper();
+
+  const { blogList, page, totalPages, isInitialLoading, fetchBlogList } =
+    useBlogListData();
+
+  // Load current week on mount
+  useEffect(() => {
+    fetchBlogList(1, true); // Show loading on initial load
+  }, []);
+
+  const handlePageChange = async (newPage: number) => {
+    await fetchBlogList(newPage, true); // Show loading for pagination
+  };
 
   const handleAddPost = () => navigate(`/blog/post_blog`);
 
@@ -26,6 +83,7 @@ const BlogList = () => {
       try {
         setIsLoading(true);
         await deleteBlog(id).unwrap();
+        await fetchBlogList(1, true);
         toast.success("Blog deleted successfully");
       } catch (error) {
         toast.error((error as any)?.message ?? "Something went wrong");
@@ -37,7 +95,7 @@ const BlogList = () => {
   };
 
   return (
-    <CustomBox customClasses="w-full h-full p-5 flex flex-col gap-y-6">
+    <CustomBox customClasses="w-full h-full p-5 pb-0 flex flex-col gap-y-6">
       <div className="w-full h-auto flex flex-row items-center-safe justify-between">
         <h2 className="text-2xl font-semibold text-black">Blog List</h2>
         <CustomButton
@@ -48,8 +106,8 @@ const BlogList = () => {
           customStyles="px-5 py-2.5"
         />
       </div>
-      <div className="scrollbar-hide max-h-[73vh] overflow-y-scroll w-full h-full flex flex-col gap-y-6">
-        {isLoading || isFetching ? (
+      <div className="scrollbar-hide max-h-[73vh] overflow-y-scroll w-full h-full flex flex-col gap-y-6 justify-between items-center">
+        {isInitialLoading ? (
           <div className="w-full border border-black-20 rounded-2xl p-6 flex flex-row items-start gap-x-4">
             <Skeleton
               animation="pulse"
@@ -70,8 +128,7 @@ const BlogList = () => {
             </div>
           </div>
         ) : (
-          data.data.map((item: IBlogResponse) => {
-            console.log(item, "Data");
+          blogList.map((item: IBlogResponse) => {
             const blogData = item?.attributes;
             const imageUrl = blogData?.banner?.data?.attributes?.url.startsWith(
               "https"
@@ -145,6 +202,28 @@ const BlogList = () => {
             );
           })
         )}
+        <div className="w-full flex justify-center sticky bottom-0 bg-white pb-4 pt-4 shadow">
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={(_event, page) => {
+              handlePageChange(page);
+            }}
+            disabled={isInitialLoading || isLoading}
+            sx={{
+              "& .MuiPaginationItem-root": {
+                fontWeight: 500,
+              },
+              "& .MuiPaginationItem-root.Mui-selected": {
+                backgroundColor: "#FF7300",
+                color: "#fff",
+              },
+              "& .MuiPaginationItem-previousNext": {
+                backgroundColor: "#f7f7f7",
+              },
+            }}
+          />
+        </div>
       </div>
     </CustomBox>
   );

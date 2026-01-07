@@ -27,6 +27,7 @@ import theme from "./theme/theme.js";
 import { LoadingWrapperProvider } from "./wrappers/loadingWrapper/LoadingWrapper.context.js";
 import DashboardLayout from "./examples/LayoutContainers/DashboardLayout/DashboardLayout.js";
 import BlogList from "./features/blogs/screens/blogList/BlogList.js";
+import BlogEditor from "./features/blogs/screens/blogEditor/index.jsx"
 
 const App: React.FC = () => {
   return (
@@ -167,11 +168,22 @@ const App: React.FC = () => {
                         </DashboardLayout>
                       }
                     />
-                    {/* <Route path="blog/post_blog" element={<Editor />} />
+                    <Route
+                      path="blog/post_blog"
+                      element={
+                        <DashboardLayout>
+                          <BlogEditor />
+                        </DashboardLayout>
+                      }
+                    />
                     <Route
                       path="blog/edit_blog/:id" // Route for editing a blog post
-                      element={<Editor />}
-                    /> */}
+                      element={
+                        <DashboardLayout>
+                          <BlogEditor />
+                        </DashboardLayout>
+                      }
+                    />
                   </Route>
                   <Route path="/login" element={<LoginPage />} />
                 </Routes>

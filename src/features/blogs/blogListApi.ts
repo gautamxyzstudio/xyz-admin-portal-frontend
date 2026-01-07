@@ -9,9 +9,9 @@ export const enhancedBlogsListApi = baseApi.enhanceEndpoints({
 
 export const blogsListApi = enhancedBlogsListApi.injectEndpoints({
   endpoints: (builder) => ({
-    getBlogList: builder.query<any, void>({
-      query: () => ({
-        url: apiendpoint.getBlogsList,
+    getBlogList: builder.query<any, number>({
+      query: (pageNumber: number) => ({
+        url: apiendpoint.getBlogsList(pageNumber),
         method: ApiMethodType.get,
       }),
       providesTags: ["Blogs"],
@@ -25,4 +25,8 @@ export const blogsListApi = enhancedBlogsListApi.injectEndpoints({
     }),
   }),
 });
-export const { useGetBlogListQuery, useDeleteBlogMutation } = blogsListApi;
+export const {
+  useGetBlogListQuery,
+  useDeleteBlogMutation,
+  useLazyGetBlogListQuery,
+} = blogsListApi;
