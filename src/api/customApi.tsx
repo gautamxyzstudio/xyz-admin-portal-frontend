@@ -32,7 +32,6 @@ export const useMutation = () => {
       ]);
 
       if (result.data) {
-        console.log(result.data, "Respoe")
         updateState({ data: result.data, isSuccess: true });
         return result.data;
       } else {

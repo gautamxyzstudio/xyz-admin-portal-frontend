@@ -24,7 +24,7 @@ export const attendanceApi = enhancedAttendanceApi.injectEndpoints({
         endDate: string;
         search?: string;
       }
-    >({
+    >({ 
       query: ({ page, pageSize, startDate, endDate, search }) => ({
         url: endpoints.getAllAttendance(
           page,
