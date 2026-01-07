@@ -1,100 +1,111 @@
-import { Controller, useForm } from 'react-hook-form';
-import FormTextInput from '../../../../shared/components/formInput/FormInput';
-import MDButton from '../../../../components/MDButton/MDButton';
-import type { IAddHolidayFormData } from '../../holydayList.types';
-import dayjs from 'dayjs';
-import PickerInput from '../../../../shared/components/pickerInput/PickerInput';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Controller, useForm } from "react-hook-form";
+import { toast } from "react-toastify";
+import dayjs from "dayjs";
 
-const AddHolidayForm = ({
-  onPressSubmit,
-}: {
-  onPressSubmit: (data: IAddHolidayFormData) => void;
-}) => {
-  const defaultValues: IAddHolidayFormData = {
-    name: '',
-    date: '',
-  };
+import { useLoadingWrapper } from "../../../../wrappers/loadingWrapper/LoadingWrapper.context";
+import { usePostHolidayMutation } from "../../holydayListApi";
+import type { IAddHolidayFormData } from "../../holydayList.types";
+import CustomButton from "../../../../components/CustomButton/CustomButton";
+
+const AddHolidayForm = ({ onClose }: { onClose: () => void }) => {
+  const { setIsLoading } = useLoadingWrapper();
+  const [postHoliday] = usePostHolidayMutation();
 
   const {
     control,
     handleSubmit,
-    formState: { errors },
-  } = useForm({
-    defaultValues,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<IAddHolidayFormData>({
+    defaultValues: {
+      name: "",
+      date: "",
+    },
   });
 
-  const onSubmit = (data: IAddHolidayFormData) => {
-    onPressSubmit(data);
+  const onSubmit = async (data: IAddHolidayFormData) => {
+    try {
+      setIsLoading(true);
+
+      await postHoliday({
+        data: {
+          Name: data.name,
+          date: dayjs(data.date).format("YYYY-MM-DD"),
+        },
+      }).unwrap();
+
+      toast.success("Holiday created successfully");
+      reset();
+      onClose();
+    } catch (error: any) {
+      toast.error(error?.message ?? "Something went wrong");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="flex flex-col w-full">
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="flex flex-row w-full justify-around items-start">
-          <div className="flex flex-col mt-10 gap-6 w-[40%]">
-            <Controller
-              control={control}
-              name="name"
-              rules={{ required: 'Holiday name is required' }}
-              render={({ field }) => (
-                <FormTextInput
-                  errorMessage={(errors as any).name?.message}
-                  label={'Holiday Name'}
-                  value={field.value}
-                  placeholder="Enter holiday name"
-                  onChange={field.onChange}
-                  sx={{
-                    '& .MuiInputBase-input': {
-                      fontSize: '16px',
-                    },
-                    '& .MuiInputLabel-root': {
-                      fontSize: '16px',
-                    },
-                  }}
-                />
-              )}
-            />
-          </div>
-          <div className="flex flex-col mt-10 gap-6 w-[40%]">
-            <Controller
-              control={control}
-              name="date"
-              rules={{ required: 'Date is required' }}
-              render={({ field }) => (
-                <PickerInput
-                  label="Holiday Date"
-                  value={field.value ? dayjs(field.value) : null}
-                  setValue={field.onChange}
-                  errorMessage={errors.date?.message}
-                  slotProps={{
-                    textField: {
-                      sx: {
-                        '& .MuiInputBase-input': {
-                          fontSize: '16px',
-                        },
-                        '& .MuiInputLabel-root': {
-                          fontSize: '16px',
-                        },
-                      },
-                    },
-                  }}
-                />
-              )}
-            />
-          </div>
+    <>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* Name */}
+        <div>
+          <label className="text-sm font-medium">Holiday Name</label>
+          <Controller
+            name="name"
+            control={control}
+            rules={{ required: "Holiday name is required" }}
+            render={({ field }) => (
+              <input
+                {...field}
+                className="border border-gray-300 rounded px-3 py-2 w-full outline-none  "
+                placeholder="Enter holiday name"
+              />
+            )}
+          />
+          {errors.name && (
+            <p className="text-red-500 text-sm">{errors.name.message}</p>
+          )}
         </div>
-        <div className="flex flex-row mt-12 w-full justify-center items-center">
-          <MDButton
-            onClick={handleSubmit(onSubmit)}
-            variant="contained"
-            size="medium"
-            color="orange"
-          >
-            Create Holiday
-          </MDButton>
+
+        {/* Date */}
+        <div>
+          <label className="text-sm font-medium">Holiday Date</label>
+          <Controller
+            name="date"
+            control={control}
+            rules={{ required: "Date is required" }}
+            render={({ field }) => (
+              <input
+                type="date"
+                {...field}
+                className="border border-gray-300 rounded px-3 py-2 w-full outline-none  "
+              />
+            )}
+          />
+          {errors.date && (
+            <p className="text-red-500 text-sm">{errors.date.message}</p>
+          )}
+        </div>
+
+        {/* Buttons */}
+        <div className="flex justify-end gap-3">
+          <CustomButton
+            label={"Cancel"}
+            onClick={onClose}
+            buttonStyle="secondary"
+          />
+
+          <CustomButton
+            type="submit"
+            label={isSubmitting ? "Creating..." : "Create Holiday"}
+            disabled={isSubmitting}
+            buttonStyle="primary"
+          />
         </div>
       </form>
-    </div>
+    </>
   );
 };
 

@@ -70,6 +70,14 @@ const OwnDocs: React.FC<OwnDocsProps> = ({ userId, employeeName }) => {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
+  const handleDownload = (url: string) => {
+    const fileUrl = url.startsWith("http")
+      ? url
+      : `${import.meta.env.VITE_API_BASE_URL}${url}`;
+
+    window.open(fileUrl, "_blank");
+  };
+
   return (
     <div className="p-6 bg-white rounded-xl">
       {/* ---------------- Upload Box  ---------------- */}
@@ -138,13 +146,8 @@ const OwnDocs: React.FC<OwnDocsProps> = ({ userId, employeeName }) => {
                 <div className="flex items-center gap-4 text-orange-500">
                   <img
                     className="cursor-pointer"
-                    onClick={() =>
-                      window.open(
-                        `${import.meta.env.VITE_API_BASE_URL}${file.url}`,
-                        "_blank"
-                      )
-                    }
                     src={Icons.DOWNLOAD}
+                    onClick={() => handleDownload(file.url)}
                   />
 
                   <img

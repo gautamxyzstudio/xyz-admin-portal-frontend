@@ -4,7 +4,7 @@ import { Routes, Route } from "react-router-dom";
 import PrivateRoute from "./PrivateRoutes";
 import HolidayList from "./features/holydayList/screens/holydayList/HolydayList";
 import AddHoliday from "./features/holydayList/screens/addHoliday/AddHoliday";
-import EditHoliday from "./features/holydayList/screens/editHoliday/EditHoliday";
+import EditHoliday from "./features/holydayList/screens/editHoliday/EditHolidayDialog.js";
 import LoginPage from "./features/auth/screens/login/Login";
 import { Provider } from "react-redux";
 import store, { persistor } from "./state/store";
