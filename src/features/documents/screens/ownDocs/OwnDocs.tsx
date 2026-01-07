@@ -18,7 +18,7 @@ interface OwnDocsProps {
   userId?: number;
   canDelete?: boolean;
   employeeName?: string;
-  CustomClass?:string
+  CustomClass?: string;
 }
 
 const OwnDocs: React.FC<OwnDocsProps> = ({ userId, employeeName }) => {

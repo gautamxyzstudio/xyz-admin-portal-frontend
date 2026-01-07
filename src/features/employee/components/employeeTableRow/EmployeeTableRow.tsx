@@ -21,6 +21,7 @@ const EmployeeTableRow = ({
           alt={name}
           className="w-13 h-13 rounded-xl shadow object-cover"
         />
+        
       )}
 
       <div className="leading-tight">

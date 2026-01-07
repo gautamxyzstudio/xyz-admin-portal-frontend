@@ -23,6 +23,7 @@ import CustomBox from "../../../../components/CustomBox/CustomBox.js";
 import { Icons } from "../../../../assets/myAssets/exporter.js";
 import CustomButton from "../../../../components/CustomButton/CustomButton.js";
 import { TbPlus } from "react-icons/tb";
+import dayjs from "dayjs";
 
 const EmployeeList = () => {
   const user = useSelector(userInState);
@@ -95,9 +96,9 @@ const EmployeeList = () => {
       field: "joiningDate",
       headerName: "Joining Date",
       width: 160,
-      renderCell: (params) => (
+      renderCell: (params :any) => (
         <span className="text-xs font-medium text-gray-700">
-          {params.row.joiningDate}
+          {params.row.joiningDate ? dayjs(params.row.Date).format("DD/MM/YYYY"):"-"}
         </span>
       ),
     },
@@ -106,6 +107,7 @@ const EmployeeList = () => {
       headerName: "Status",
       width: 90,
       renderCell: (params) => <EmployeeStatusRow status={params.row.status} />,
+      
     },
     {
       field: "action",
@@ -148,12 +150,6 @@ const EmployeeList = () => {
         <h2 className="text-black text-lg font-semibold">Employee </h2>
 
         {(user.user_type === "Admin" || user.user_type === "Hr") && (
-          // <button
-          //   onClick={() => navigate("/employees/register")}
-          //   className="bg-white text-orange-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-orange-50"
-          // >
-          //   Add Employee
-          // </button>
           <CustomButton
             onClick={() => navigate("/employees/register")}
             customStyles="text-sm"
@@ -166,15 +162,6 @@ const EmployeeList = () => {
 
       {/* ===== Table ===== */}
       <div className="h-[70vh] mt-6 px-4">
-        {/* <CustomDataTable
-          columns={columns}
-          rows={filteredEmployeeList}
-          isLoading={isLoading}
-          isDataEmpty={filteredEmployeeList.length === 0}
-          emptyViewTitle="No Employee Found"
-          emptyViewSubTitle="Please add an employee to the system"
-          withPagination={false}
-        /> */}
         <CustomDataTable
           columns={columns}
           rows={filteredEmployeeList}

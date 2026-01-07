@@ -3,10 +3,13 @@ import { Icons } from "../../assets/myAssets/exporter";
 import CustomBox from "../../components/CustomBox/CustomBox";
 import { userDetailsInState } from "../../features/auth/authSlice";
 import { useNavigate } from "react-router";
+import { useState } from "react";
+import DrawerNotification from "../../components/DrawerNotification/DrawerNotification";
 
 const TopBar = () => {
   const navigate = useNavigate();
   const user = useSelector(userDetailsInState);
+  const [openDrawer, setOpenDrawer] = useState(false);
 
   return (
     <CustomBox customClasses="w-full rounded-xl p-3.5 flex items-center justify-between sticky top-0 shadow z-99">
@@ -21,18 +24,30 @@ const TopBar = () => {
         </div>
 
         {/* Notification icon */}
-        <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-100 cursor-pointer relative">
+        <div
+          onClick={() => setOpenDrawer(true)}
+          className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-100 cursor-pointer relative"
+        >
           <img src={Icons.NOTIFICATION} alt="" />
         </div>
 
         {/* Profile image */}
         <img
-          src={user?.photo ? user?.photo : "https://i.pravatar.cc/40"}
+          src={
+            user?.photo?.startsWith("http")
+              ? user?.photo
+              : `${import.meta.env.VITE_API_BASE_URL}${user?.photo}`
+          }
           onClick={() => navigate("/profile")}
           alt="profile"
           className="w-10 h-10 rounded-xl object-cover cursor-pointer"
         />
       </div>
+      <DrawerNotification
+        open={openDrawer}
+        onClose={() => setOpenDrawer(false)}
+        // onOpen={() => setOpenDrawer(true)}
+      />
     </CustomBox>
   );
 };

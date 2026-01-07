@@ -178,7 +178,7 @@ const AttendanceTable = () => {
 
   /* ================= UI ================= */
   return (
-    <div className="mt-6 w-full h-[50vh] bg-white rounded-xl flex flex-col">
+    <div className="mt-6 w-full h-[70vh] bg-white rounded-xl flex flex-col">
       {/* ===== Sticky Header ===== */}
       <div className="sticky top-0 z-10 bg-white px-4 py-3 flex justify-between rounded-2xl ">
         <h3 className="text-[24px] font-semibold text-black">

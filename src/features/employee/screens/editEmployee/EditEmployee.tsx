@@ -19,6 +19,7 @@ import { toast } from "react-toastify";
 import { useLoadingWrapper } from "../../../../wrappers/loadingWrapper/LoadingWrapper.context.js";
 import { getError, getString } from "../../../../utils/utils.js";
 import CustomBox from "../../../../components/CustomBox/CustomBox.js";
+import CustomButton from "../../../../components/CustomButton/CustomButton.js";
 
 type EditEmployeeForm = {
   name: string;
@@ -307,15 +308,26 @@ const EditEmployee = () => {
             />
           </div>
         </div>
-        <div className="flex flex-row mt-12 w-full justify-center items-center">
-          <button
+        <div className="flex flex-row mt-12 w-full justify-center items-center mb-5">
+          {/* <button
             className="bg-orange hover:bg-darkOrange text-white font-bold py-2 px-4 rounded"
             color="orange"
             onClick={handleSubmit(onSubmit)}
             disabled={isLoading || isLoadingLeaveBalance}
           >
             {isLoading || isLoadingLeaveBalance ? "Updating..." : "Update"}
-          </button>
+          </button> */}
+          <CustomButton
+            label={
+              isLoading || isLoadingLeaveBalance ? "Updating..." : "Update"
+            }
+            onClick={handleSubmit(onSubmit)}
+            disabled={isLoading || isLoadingLeaveBalance}
+            buttonStyle={
+              isLoading || isLoadingLeaveBalance ? "disabled" : "primary"
+            }
+            customStyles="bg-orange hover:bg-darkOrange"
+          />
         </div>
       </CustomBox>
     </>

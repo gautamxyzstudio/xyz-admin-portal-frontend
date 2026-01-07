@@ -15,19 +15,14 @@ import {
 } from "../../../utils/timeUtils";
 import { useApiOperations } from "../../../hooks/useApiOperations";
 import { useFilterState } from "../../../hooks/useFilterState";
-import {
-  Pagination,
-  TextField,
-  Alert,
-  Button,
-  Dialog,
-} from "@mui/material";
+import { Pagination, TextField, Alert, Button, Dialog } from "@mui/material";
 import { useLoadingWrapper } from "../../../wrappers/loadingWrapper/LoadingWrapper.context.js";
 import CustomDataTable from "../../../shared/components/customDataTable/CustomDataTable.js";
 import CustomBox from "../../../components/CustomBox/CustomBox.js";
 import { Icons } from "../../../assets/myAssets/exporter.js";
 import LinearGradient from "../../../components/LinearGradient/LinearGradient.js";
 import CustomButton from "../../../components/CustomButton/CustomButton.js";
+import dayjs from "dayjs";
 
 /* ===================== Attendance Data Hook ===================== */
 const useAttendanceData = () => {
@@ -249,9 +244,14 @@ const AttendanceAdmin = () => {
       headerName: "Date",
       width: 150,
       renderCell: (params) => (
-        <span className="text-xs font-medium">{params?.row?.Date}</span>
+        <span className="text-xs font-medium">
+          {params?.row?.Date
+            ? dayjs(params.row.Date).format("DD/MM/YYYY")
+            : "-"}
+        </span>
       ),
     },
+
     {
       field: "checkIn",
       headerName: "Check In",
@@ -334,7 +334,7 @@ const AttendanceAdmin = () => {
               onClick={handleSearch}
               disabled={!searchQuery.trim() || isInitialLoading || isLoading}
             >
-              <img className="w-15 h-11  " src={Icons.SERACH_ICON} alt="" />
+              <img className="w-15 h-11  " src={Icons.SEARCH_ICON} alt="" />
             </Button>
 
             {/* <Button variant="contained" onClick={handleFilter}>
@@ -385,7 +385,6 @@ const AttendanceAdmin = () => {
                   backgroundColor: "#FF7300",
                   color: "#fff",
                 },
-            
               }}
             />
           </div>

@@ -12,13 +12,13 @@ const ProfileHeader: React.FC = () => {
     status === "active" ? "Active" : "Inactive";
 
   const getStatusClasses = (status: string) =>
-    status === "active"
-      ? "bg-lightGreen text-green"
-      : "bg-lightRed text-red";
+    status === "active" ? "bg-lightGreen text-green" : "bg-lightRed text-red";
 
   const avatarSrc =
     !avatarError && userDetails?.photo
-      ? userDetails.photo
+      ? userDetails.photo.startsWith("http")
+        ? userDetails.photo
+        : `${import.meta.env.VITE_API_BASE_URL}${userDetails.photo}`
       : "/static/images/avatar/default.jpg";
 
   return (
@@ -32,7 +32,7 @@ const ProfileHeader: React.FC = () => {
         />
         {/* Edit icon on banner */}
         <button className="absolute right-4 bottom-2 bg-white p-2 rounded-lg cursor-pointer">
-        <img src={Icons.UPDATE_IMG} alt="" />
+          <img src={Icons.UPDATE_IMG} alt="" />
         </button>
       </div>
 

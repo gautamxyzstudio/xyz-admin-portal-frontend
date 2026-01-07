@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export const getImageUrl = (url: string) => {
-  return `${import.meta.env.VITE_API_BASE_URL}${url}`;
+  return url.startsWith("https")
+    ? url
+    : `${import.meta.env.VITE_API_BASE_URL}${url}`;
 };
 
 export const timeStringToDate = (timeString: string) => {
@@ -122,7 +124,7 @@ export const getError = (error: { message?: string } | undefined) =>
 // };
 
 export const getLeaveStatusColor = (
-  status: "pending" | "approved" | "rejected" | "declined",
+  status: "pending" | "approved" | "rejected" | "declined"
 ) => {
   switch (status) {
     case "approved":

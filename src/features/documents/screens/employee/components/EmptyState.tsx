@@ -1,8 +1,4 @@
-
-import { CloudUpload } from '@mui/icons-material';
-import MDBox from '../../../../../components/MDBox/MDBox';
-import MDTypography from '../../../../../components/MDTypography/index';
-import MDButton from '../../../../../components/MDButton/MDButton';
+import { Icons } from "../../../../../assets/myAssets/exporter";
 
 interface EmptyStateProps {
   onUploadClick: () => void;
@@ -13,30 +9,48 @@ interface EmptyStateProps {
 const EmptyState: React.FC<EmptyStateProps> = ({
   onUploadClick,
   showUploadButton = true,
-  subtitle,
+  subtitle, 
 }) => {
   return (
-    <MDBox
-      display="flex"
-      flexDirection="column"
-      alignItems="center"
-      justifyContent="center"
-      minHeight="300px"
-      textAlign="center"
+    <div
+      style={{
+        minHeight: "300px",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        textAlign: "center",
+      }}
     >
-      <CloudUpload sx={{ fontSize: 64, color: 'grey.400', mb: 2 }} />
-      <MDTypography variant="h6" color="text" mb={1}>
-        No documents uploaded yet
-      </MDTypography>
-      <MDTypography variant="body2" color="text" mb={3}>
-        {subtitle || 'Upload your first document to get started'}
-      </MDTypography>
+      {/* Icon */}
+      <img className="h-70 " src={Icons.NO_DATA} alt="" />
+
+      {/* Title */}
+      <h3 style={{ marginBottom: "8px" }}>No documents uploaded yet</h3>
+
+      {/* Subtitle */}
+      <p style={{ marginBottom: "24px", color: "#666" }}>
+        {subtitle || "Upload your first document to get started"}
+      </p>
+
+      {/* Button */}
       {showUploadButton && (
-        <MDButton variant="gradient" color="info" onClick={onUploadClick}>
+        <button
+          onClick={onUploadClick}
+          style={{
+            padding: "10px 20px",
+            backgroundColor: "#1976d2",
+            color: "#fff",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+            fontSize: "14px",
+          }}
+        >
           Upload Document
-        </MDButton>
+        </button>
       )}
-    </MDBox>
+    </div>
   );
 };
 

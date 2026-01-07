@@ -92,6 +92,7 @@ const LeaveList = () => {
                     value={leaveBalance?.unpaid_balance.toLocaleString()}
                     iconSrc={Icons.UNPAID_LEAVE}
                     iconBgColor="bg-[#FF00001A]"
+                    
                   />
                 </React.Fragment>
               )}
