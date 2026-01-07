@@ -30,9 +30,9 @@ const authSlice = createSlice({
       .addMatcher(
         authApi.endpoints.userDetails.matchFulfilled,
         (state, action: PayloadAction<IUserDetailsResponse>) => {
-          console.log("-=-=-=-=-=-=-executed-=-=-=-=-=-=-=-=-=-=-=-");
-          console.log(action?.payload, "action?.payload");
-          console.log("-=-=-=-=-=-=-executed-=-=-=-=-=-=-=-=-=-=-=-");
+          // console.log("-=-=-=-=-=-=-executed-=-=-=-=-=-=-=-=-=-=-=-");
+          // console.log(action?.payload, "action?.payload");
+          // console.log("-=-=-=-=-=-=-executed-=-=-=-=-=-=-=-=-=-=-=-");
           state.userDetails = {
             details_id: action?.payload?.user_detial?.id,
             email: action?.payload?.email,

@@ -37,7 +37,7 @@ export const leavesApi = enhancedLeavesApi.injectEndpoints({
       providesTags: ["Leaves"],
       transformResponse: (response: any) => {
         const data = response.data.map((item: ILeave) => ({ ...item }));
-        console.log(data, "leave");
+        // console.log(data, "leave");
         return {
           data,
         };

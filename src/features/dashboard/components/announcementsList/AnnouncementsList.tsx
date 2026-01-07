@@ -1,50 +1,208 @@
-import { useEffect, useRef } from "react";
+// /* eslint-disable react-hooks/exhaustive-deps */
+// import { useEffect, useRef, useState } from "react";
+// import { gsap } from "gsap";
+// import CustomBox from "../../../../components/CustomBox/CustomBox";
+// import AnnouncementCard, {
+//   type IAnnouncementResponse,
+// } from "./AnnouncementCard";
+// import { apiendpoint } from "../../../../api/endpoint";
+// import { useSelector } from "react-redux";
+// import { userInState } from "../../../auth/authSlice";
+// import axios from "axios";
+
+// const AnnouncementsList = () => {
+//   const containerRef = useRef<HTMLDivElement | null>(null);
+//   const contentRef = useRef<HTMLDivElement | null>(null);
+//   const [isLoading, setIsLoading] = useState(false);
+//   const [announcementsList, setAnnouncementsList] = useState([]);
+//   const user = useSelector(userInState);
+
+//   const fetchAnnouncement = async () => {
+//     try {
+//       setIsLoading(true);
+//       const response = await axios.get(apiendpoint.getAnnouncements, {
+//         headers: {
+//           Authorization: `Bearer ${user?.token}`,
+//         },
+//       });
+//       setAnnouncementsList(response.data.data);
+//     } catch (error) {
+//       console.log("Error fetching announcements list", error);
+//       throw error;
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+
+//   useEffect(() => {
+//     fetchAnnouncement();
+//   }, []);
+
+//   useEffect(() => {
+//     const container = containerRef.current;
+//     const content = contentRef.current;
+
+//     if (!container || !content) return;
+
+//     // Clone content for seamless loop
+//     const clone = content.cloneNode(true) as HTMLDivElement;
+//     container.appendChild(clone);
+
+//     const contentHeight = content.scrollHeight;
+
+//     const tween = gsap.to(container, {
+//       scrollTop: contentHeight,
+//       duration: 2,
+//       ease: "none",
+//       repeat: -1,
+//       modifiers: {
+//         scrollTop: (value) => `${parseFloat(value) % contentHeight}`,
+//       },
+//     });
+
+//     // Pause on user interaction
+//     const stop = () => tween.pause();
+//     const play = () => tween.play();
+
+//     container.addEventListener("mouseenter", stop);
+//     container.addEventListener("mouseleave", play);
+//     container.addEventListener("wheel", stop);
+
+//     return () => {
+//       tween.kill();
+//       clone.remove();
+//       container.removeEventListener("mouseenter", stop);
+//       container.removeEventListener("mouseleave", play);
+//       container.removeEventListener("wheel", stop);
+//     };
+//   }, []);
+
+//   return (
+//     <CustomBox
+//       compRef={containerRef}
+//       customClasses="p-5 pt-0 w-[39%] h-full max-h-98.75 overflow-y-hidden scrollbar-hide"
+//     >
+//       <h4 className="text-black font-semibold text-2xl sticky top-0 bg-white z-10 w-full pt-4 pb-2">
+//         Announcements
+//       </h4>
+
+//       <div ref={contentRef} className="flex flex-col gap-y-3 mt-4">
+//         {isLoading
+//           ? Array.from({ length: 4 }).map((_, idx) => (
+//               <div
+//                 key={idx}
+//                 className="bg-background animate-pulse w-full h-30 rounded-2xl"
+//               />
+//             ))
+//           : announcementsList.map((announce: IAnnouncementResponse) => (
+//               <AnnouncementCard
+//                 key={announce?.id}
+//                 id={announce?.id}
+//                 title={announce.attributes.Title}
+//                 description={announce.attributes.Description}
+//                 date={announce.attributes.Date}
+//               />
+//             ))}
+//       </div>
+//     </CustomBox>
+//   );
+// };
+
+// export default AnnouncementsList;
+
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import CustomBox from "../../../../components/CustomBox/CustomBox";
-import AnnouncementCard, { type AnnouncementItem } from "./AnnouncementCard";
+import AnnouncementCard, {
+  type IAnnouncementResponse,
+} from "./AnnouncementCard";
+import { apiendpoint } from "../../../../api/endpoint";
+import { useSelector } from "react-redux";
+import { userInState } from "../../../auth/authSlice";
+import axios from "axios";
 
 const AnnouncementsList = () => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
 
+  const tweenRef = useRef<gsap.core.Tween | null>(null);
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [announcementsList, setAnnouncementsList] = useState<IAnnouncementResponse[]>([]);
+
+  const user = useSelector(userInState);
+
+  const fetchAnnouncement = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get(apiendpoint.getAnnouncements, {
+        headers: {
+          Authorization: `Bearer ${user?.token}`,
+        },
+      });
+      setAnnouncementsList(response.data.data);
+    } catch (error) {
+      console.error("Error fetching announcements list", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
+    fetchAnnouncement();
+  }, []);
+
+  /**
+   * GSAP AUTO SCROLL (RUN AFTER DATA LOAD)
+   */
+  useEffect(() => {
+    if (!containerRef.current || !contentRef.current) return;
+    if (announcementsList.length === 0) return;
+
     const container = containerRef.current;
     const content = contentRef.current;
 
-    if (!container || !content) return;
+    // Clear old clones
+    container.querySelectorAll(".clone").forEach((n) => n.remove());
 
-    // Clone content for seamless loop
+    // Clone content
     const clone = content.cloneNode(true) as HTMLDivElement;
+    clone.classList.add("clone");
     container.appendChild(clone);
 
     const contentHeight = content.scrollHeight;
 
-    const tween = gsap.to(container, {
+    if (contentHeight === 0) return;
+
+    tweenRef.current?.kill();
+
+    tweenRef.current = gsap.to(container, {
       scrollTop: contentHeight,
-      duration: 25,
+      duration: announcementsList.length * 3, // speed scales with data
       ease: "none",
       repeat: -1,
       modifiers: {
-        scrollTop: (value) => `${parseFloat(value) % contentHeight}`,
+        scrollTop: (value) =>
+          `${parseFloat(value) % contentHeight}`,
       },
     });
 
-    // Pause on user interaction
-    const stop = () => tween.pause();
-    const play = () => tween.play();
+    const pause = () => tweenRef.current?.pause();
+    const play = () => tweenRef.current?.play();
 
-    container.addEventListener("mouseenter", stop);
+    container.addEventListener("mouseenter", pause);
     container.addEventListener("mouseleave", play);
-    container.addEventListener("wheel", stop);
+    container.addEventListener("wheel", pause);
 
     return () => {
-      tween.kill();
+      tweenRef.current?.kill();
       clone.remove();
-      container.removeEventListener("mouseenter", stop);
+      container.removeEventListener("mouseenter", pause);
       container.removeEventListener("mouseleave", play);
-      container.removeEventListener("wheel", stop);
+      container.removeEventListener("wheel", pause);
     };
-  }, []);
+  }, [announcementsList.length]);
 
   return (
     <CustomBox
@@ -56,85 +214,25 @@ const AnnouncementsList = () => {
       </h4>
 
       <div ref={contentRef} className="flex flex-col gap-y-3 mt-4">
-        {announcementDummyData.map((announce) => (
-          <AnnouncementCard
-            key={announce.id}
-            id={announce.id}
-            title={announce.title}
-            description={announce.description}
-            date={announce.date}
-          />
-        ))}
+        {isLoading
+          ? Array.from({ length: 4 }).map((_, idx) => (
+              <div
+                key={idx}
+                className="bg-background animate-pulse w-full h-30 rounded-2xl"
+              />
+            ))
+          : announcementsList.map((announce) => (
+              <AnnouncementCard
+                key={announce.id}
+                id={announce.id}
+                title={announce.attributes.Title}
+                description={announce.attributes.Description}
+                date={announce.attributes.Date}
+              />
+            ))}
       </div>
     </CustomBox>
   );
 };
 
 export default AnnouncementsList;
-
-const announcementDummyData: AnnouncementItem[] = [
-  {
-    id: 1,
-    title: "Happy Birthday",
-    description: "Wishing John Doe a very happy birthday today 🎉",
-    date: "2025-01-10",
-  },
-  {
-    id: 2,
-    title: "Work Anniversary",
-    description:
-      "Congratulations to Sarah Smith on completing 5 years with us 🎊",
-    date: "2025-01-12",
-  },
-  {
-    id: 3,
-    title: "New Employee Joined",
-    description: "Please welcome Alex Johnson to the Engineering team 👋",
-    date: "2025-01-14",
-  },
-  {
-    id: 4,
-    title: "Company Announcement",
-    description:
-      "Office will remain closed this Friday due to maintenance work.",
-    date: "2025-01-15",
-  },
-  {
-    id: 5,
-    title: "Happy Birthday",
-    description:
-      "Happy Birthday to Emily Clark! Have a wonderful year ahead 🎂",
-    date: "2025-01-18",
-  },
-  {
-    id: 6,
-    title: "Work Anniversary",
-    description:
-      "Cheers to Michael Brown on his 3rd work anniversary with us 🎉",
-    date: "2025-01-20",
-  },
-  {
-    id: 7,
-    title: "New Employee Joined",
-    description: "Join us in welcoming Sophia Wilson to the Marketing team 👏",
-    date: "2025-01-22",
-  },
-  {
-    id: 8,
-    title: "Company Announcement",
-    description: "Annual town hall meeting scheduled for next Monday.",
-    date: "2025-01-24",
-  },
-  {
-    id: 9,
-    title: "Happy Birthday",
-    description: "Happy Birthday to Daniel Martinez! Wishing you success 🎈",
-    date: "2025-01-26",
-  },
-  {
-    id: 10,
-    title: "Work Anniversary",
-    description: "Celebrating 10 years of dedication from Laura Anderson 🎖️",
-    date: "2025-01-28",
-  },
-];
