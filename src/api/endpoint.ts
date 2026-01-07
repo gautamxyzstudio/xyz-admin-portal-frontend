@@ -47,5 +47,10 @@ export const apiendpoint = {
   deleteDocuments: (id: number) => `${baseUrl}/api/documents/${id}`,
   getDocumentsByUser: (id: number) =>
     `${baseUrl}/api/documents?populate=*&sort=id&filters[user][id][$eq]=${id}`,
+
+  // Upload file
   UPLOAD_IMAGE: `${baseUrl}/api/upload`,
+
+  // /api/announcements
+  getAnnouncements: `${baseUrl}/api/announcements`,
 };

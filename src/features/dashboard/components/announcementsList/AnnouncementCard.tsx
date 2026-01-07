@@ -7,6 +7,14 @@ export type AnnouncementItem = {
   description: string;
   date: string;
 };
+export type IAnnouncementResponse = {
+  id: number;
+  attributes: {
+    Title: string;
+    Description: string;
+    Date: string;
+  };
+};
 
 const AnnouncementCard: React.FC<AnnouncementItem> = ({
   id,
@@ -16,7 +24,7 @@ const AnnouncementCard: React.FC<AnnouncementItem> = ({
 }) => {
   const getIcon = (title: string) => {
     switch (title) {
-      case "Happy Birthday":
+      case "Happy Birthday!":
         return Icons.BIRTHDAY;
       case "Work Anniversary":
         return Icons.ANNIVERSARY;
@@ -26,6 +34,7 @@ const AnnouncementCard: React.FC<AnnouncementItem> = ({
         return Icons.ANNOUNCE;
     }
   };
+  const containsHtml = description && /<[^>]*>/g.test(description);
   return (
     <div
       key={id}
@@ -44,7 +53,14 @@ const AnnouncementCard: React.FC<AnnouncementItem> = ({
           {dayjs(date).format("DD MMM YYYY")}
         </span>
       </div>
-      <p className="text-base font-medium text-black-80">{description}</p>
+      {containsHtml ? (
+        <p
+          className="text-base font-medium text-black-80"
+          dangerouslySetInnerHTML={{ __html: description }}
+        />
+      ) : (
+        <p className="text-base font-medium text-black-80">{description}</p>
+      )}
     </div>
   );
 };
