@@ -58,7 +58,7 @@ const routes = [
     icon: Icons.BLOG,
     iconFill: Icons.BLOG_FILL,
     route: "/blog",
-    permissions: ["Admin", "Seo"], // Admin, HR, and SEO can manage blog
+    permissions: ["Admin", "Employee"], // Admin, HR, and SEO can manage blog
   },
   {
     name: "Documents",

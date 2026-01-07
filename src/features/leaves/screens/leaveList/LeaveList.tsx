@@ -21,17 +21,20 @@ import StatCardSkeleton from "../../../../shared/components/StatCard/StatCardSke
 import CustomDataTable from "../../../../shared/components/customDataTable/CustomDataTable.tsx";
 import CustomButton from "../../../../components/CustomButton/CustomButton.tsx";
 import { TbPlus } from "react-icons/tb";
-import { useNavigate } from "react-router";
+// import { useNavigate } from "react-router";
 import dayjs from "dayjs";
 import { Dialog } from "@mui/material";
 import LinearGradient from "../../../../components/LinearGradient/LinearGradient.tsx";
 import { convertTo12HourFormat } from "../../../../utils/timeUtils.ts";
+import CreateLeaveDialog from "../createLeaveDialog/CreateLeaveDialog.tsx";
 
 const LeaveList = () => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const user = useSelector(userInState);
   const { data: leaveBalance } = useGeLeaveBalanceQuery<ILeaveBalance>();
   const [openModal, setOpenModal] = useState<boolean>(false);
+  const [openApplyLeaveModal, setOpenApplyLeaveModal] =
+    useState<boolean>(false);
   const [leaveId, setLeaveId] = useState<string | null>("");
 
   // Only make the query if user exists and has an id
@@ -92,7 +95,6 @@ const LeaveList = () => {
                     value={leaveBalance?.unpaid_balance.toLocaleString()}
                     iconSrc={Icons.UNPAID_LEAVE}
                     iconBgColor="bg-[#FF00001A]"
-                    
                   />
                 </React.Fragment>
               )}
@@ -126,8 +128,8 @@ const LeaveList = () => {
       headerName: "Leave Type",
       width: 120,
       renderCell: (params) =>
-        params?.row?.leave_duration
-          ? getLeaveTypeTitle(params.row.leave_duration)
+        params?.row?.leave_category
+          ? getLeaveTypeTitle(params.row.leave_category)
           : "N/A",
     },
 
@@ -217,7 +219,7 @@ const LeaveList = () => {
             label="Apply Leave"
             buttonStyle="primary"
             icon={<TbPlus size={24} />}
-            onClick={() => navigate("/leaves/create")}
+            onClick={() => setOpenApplyLeaveModal(true)}
           />
         </div>
 
@@ -311,10 +313,10 @@ const LeaveList = () => {
                   Leave Duration
                 </span>
                 <p className="text-base capitalize">
-                  {getLeaveTypeTitle(data?.leave_duration ?? "")}
+                  {getLeaveTypeTitle(data?.leave_category ?? "")}
                 </p>
               </div>
-              {data?.leave_duration === "short_leave" && (
+              {data?.leave_category === "short_leave" && (
                 <div className="w-[50%] flex flex-col gap-y-0.5">
                   <span className="text-black-50 text-sm font-medium">
                     Start Time
@@ -324,13 +326,13 @@ const LeaveList = () => {
                   </p>
                 </div>
               )}
-              {data?.leave_duration === "half_day" && (
+              {data?.leave_category === "half_day" && (
                 <div className="flex flex-col gap-y-0.5">
                   <span className="text-black-50 text-sm font-medium">
                     Which Half?
                   </span>
                   <p className="text-base capitalize">
-                    {data.is_first_half ? "First Half" : "Second Half"}
+                    {data.half_day_type ? "First Half" : "Second Half"}
                   </p>
                 </div>
               )}
@@ -357,6 +359,12 @@ const LeaveList = () => {
           </CustomBox>
         )}
       </Dialog>
+
+      {/* Apply Leave Dialog */}
+      <CreateLeaveDialog
+        open={openApplyLeaveModal}
+        onClose={() => setOpenApplyLeaveModal(false)}
+      />
     </div>
   );
 };

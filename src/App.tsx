@@ -14,7 +14,7 @@ import SnackBarProvider from "./wrappers/snackbarContext/SnackbarProvider.js";
 import { ToastContainer } from "react-toastify";
 import { PersistGate } from "redux-persist/integration/react";
 import LeaveList from "./features/leaves/screens/leaveList/LeaveList";
-import CreateLeave from "./features/leaves/screens/createLeave/CreateLeave";
+// import CreateLeave from "./features/leaves/screens/createLeaveDialog/CreateLeaveDialog.js";
 import AttendanceList from "./features/AttendanceList/screens/AttendanceList";
 import Dashboard from "./features/dashboard/screens/Dashboard";
 import EditEmployee from "./features/employee/screens/editEmployee/EditEmployee";
@@ -79,22 +79,22 @@ const App: React.FC = () => {
                         </DashboardLayout>
                       }
                     />
-                    <Route
+                    {/* <Route
                       path="leaves/create"
                       element={
                         <DashboardLayout>
                           <CreateLeave />
                         </DashboardLayout>
                       }
-                    />
-                    <Route
+                    /> */}
+                    {/* <Route
                       path="leaves/update"
                       element={
                         <DashboardLayout>
                           <CreateLeave />
                         </DashboardLayout>
                       }
-                    />
+                    /> */}
                     <Route
                       path="documents"
                       element={
