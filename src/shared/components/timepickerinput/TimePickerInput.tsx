@@ -18,6 +18,7 @@ const TimePickerInput = ({
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <MobileTimePicker
+        sx={{ width: "100%" }}
         label={label}
         value={value}
         minTime={minTime}
@@ -31,9 +32,6 @@ const TimePickerInput = ({
           if (newValue) setValue(newValue);
         }}
       />
-      {errorMessage && (
-        <p className="text-xs mt-1 text-red-700">{errorMessage}</p>
-      )}
     </LocalizationProvider>
   );
 };

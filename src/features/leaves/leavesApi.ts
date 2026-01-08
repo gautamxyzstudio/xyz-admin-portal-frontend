@@ -145,8 +145,8 @@ export const leavesApi = enhancedLeavesApi.injectEndpoints({
       },
     }),
     getLeavesDetials: builder.query({
-      query: (id: number) => ({
-        url: endpoints.updateLeave(id),
+      query: (id: string) => ({
+        url: endpoints.updateLeave(Number(id)),
         method: ApiMethodType.get,
       }),
       transformResponse: (response: any): ILeaveDetailsResponse => {
@@ -160,9 +160,8 @@ export const leavesApi = enhancedLeavesApi.injectEndpoints({
           description: attributes.description,
           decline_reason: attributes.decline_reason,
           title: attributes.title,
-          leave_duration: attributes.leave_duration,
+          leave_category: attributes.leave_category,
           half_day_type: attributes.half_day_type,
-          is_first_half: attributes.is_first_half,
           start_time: attributes.start_time,
           days: attributes.days,
           leave_type: attributes.leave_type,

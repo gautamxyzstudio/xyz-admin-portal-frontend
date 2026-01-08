@@ -1,25 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect } from "react";
 import FormTextInput from "../../../../shared/components/formInput/FormInput.js";
 import PickerInput from "../../../../shared/components/pickerInput/PickerInput.js";
-import {
-  Autocomplete,
-  TextField,
-  Card,
-  Grid,
-  Box,
-  Typography,
-  Button,
-  Dialog,
-} from "@mui/material";
+import { Autocomplete, TextField, Dialog } from "@mui/material";
 import TimePickerInput from "../../../../shared/components/timepickerinput/TimePickerInput.js";
 import { Controller, useForm } from "react-hook-form";
 import dayjs from "dayjs";
-import {
-  useApplyLeaveMutation,
-  useUpdateLeaveMutation,
-} from "../../leavesApi.js";
+import { useApplyLeaveMutation } from "../../leavesApi.js";
 import { userInState } from "../../../auth/authSlice.js";
 import { useSelector } from "react-redux";
 import {
@@ -30,20 +16,17 @@ import {
 } from "../../../../utils/utils.js";
 import { useLoadingWrapper } from "../../../../wrappers/loadingWrapper/LoadingWrapper.context.js";
 import { toast } from "react-toastify";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useGeLeaveBalanceQuery } from "../../../employee/employeeApis.js";
-import type { ILeaveBalance } from "../../../employee/types.js";
 import CustomBox from "../../../../components/CustomBox/CustomBox.js";
 import LinearGradient from "../../../../components/LinearGradient/LinearGradient.js";
-import { LeaveType } from "../../../../shared/enums.js";
-import { getLeaveCategory } from "../../utils.js";
+import { getLeaveCategory, getLeaveType } from "../../utils.js";
+import CustomButton from "../../../../components/CustomButton/CustomButton.js";
 
 type LeaveForm = {
   title: string;
   description: string;
-  leaveDuration: "short_leave" | "half_day" | "full_day";
+  leaveCategory: "Full Day" | "Half Day" | "Short Leave";
   leaveType: "Causal Leave" | "Earn Leave" | "Sick Leave" | "Unpaid Leave";
-  half: string;
+  half: "First Half" | "Second Half";
   date: dayjs.Dayjs;
   startTime: dayjs.Dayjs | null;
   startDate: dayjs.Dayjs;
@@ -53,37 +36,18 @@ type LeaveForm = {
 const CreateLeaveDialog = ({
   open,
   onClose,
+  onSuccess,
 }: {
   open: boolean;
+  onSuccess: () => void;
   onClose: () => void;
 }) => {
-  const location = useLocation();
   const user = useSelector(userInState);
   const { setIsLoading } = useLoadingWrapper();
-  const leave = location.state?.leave;
-  // const { data: leaveBalance, isFetching } = useGetEmployeeLeaveBalanceQuery(
-  //   { id: user?.id?.toString() ?? "" },
-  //   {
-  //     skip: !user,
-  //     refetchOnMountOrArgChange: true,
-  //     refetchOnFocus: true,
-  //   }
-  // );
-
-  const { data: leaveBalance } = useGeLeaveBalanceQuery<ILeaveBalance>();
-
-  // useEffect(() => {
-  //   setIsLoading(isFetching);
-  // }, [isFetching, setIsLoading]);
-
-  console.log(leaveBalance, "Balance");
-
   const [applyLeave] = useApplyLeaveMutation();
-  const [updateLeave] = useUpdateLeaveMutation();
-  const navigate = useNavigate();
 
-  const leaveDurations = ["full_day", "half_day", "short_leave"] as const;
-  const HalfDay = ["First Half", "Second Half"] as const;
+  const leaveCategories = ["Full Day", "Half Day", "Short Leave"] as const;
+  const halfDay = ["First Half", "Second Half"] as const;
   const leaveTypes = [
     "Causal Leave",
     "Earn Leave",
@@ -96,13 +60,14 @@ const CreateLeaveDialog = ({
     handleSubmit,
     formState: { errors },
     watch,
+    reset,
   } = useForm<LeaveForm>({
     defaultValues: {
       title: "",
       description: "",
-      leaveDuration: leaveDurations[0],
+      leaveCategory: "Full Day",
       leaveType: "Causal Leave",
-      half: HalfDay[0],
+      half: halfDay[0],
       date: dayjs(),
       startTime: null,
       startDate: dayjs(),
@@ -110,93 +75,8 @@ const CreateLeaveDialog = ({
     },
   });
 
-  // Populate form if editing a leave
-  // useEffect(() => {
-  //   if (leave) {
-  //     setValue("title", leave.title);
-  //     setValue("description", leave.description);
-  //     setValue("leaveDuration", leave.leave_category);
-  //     setValue(
-  //       "leaveType",
-  //       leave. ? LeaveType.Casual : LeaveType.UnPaid
-  //     );
-  //     setValue("date", dayjs(leave.start_date));
-  //     setValue(
-  //       "startTime",
-  //       leave.start_time ? dayjs(leave.start_time, "HH:mm:ss") : null
-  //     );
-  //     setValue("startDate", dayjs(leave.start_date));
-  //     setValue("endDate", dayjs(leave.end_date));
-  //     setValue("half", leave.is_first_half ? "First" : "Second");
-  //   }
-  // }, [leave, setValue]);
-
   // Calculate number of days for full day leaves
-  const leaveDuration = watch("leaveDuration");
-  const leaveType = watch("leaveType");
-  // const startDate = watch("startDate");
-  // const endDate = watch("endDate");
-
-  // const calculateDays = () => {
-  //   if (leaveDuration === "full_day" && startDate && endDate) {
-  //     return endDate.diff(startDate, "day") + 1;
-  //   }
-  //   return 1;
-  // };
-
-  // Check if user can select Casual leave type
-  // const canSelectCasual = () => {
-  //   const days = calculateDays();
-  //   return (leaveBalance?.cl_balance || 0) >= days;
-  // };
-
-  // Auto-switch to Unpaid if insufficient balance for Casual
-  // useEffect(() => {
-  //   if (leaveType === LeaveType. && !canSelectCasual()) {
-  //     setValue("leaveType", LeaveType.UnPaid);
-  //   }
-  // }, [leaveType, leaveDuration, startDate, endDate, leaveBalance, setValue]);
-
-  // Auto-set leave type to Casual for short leave
-  // useEffect(() => {
-  //   if (leaveDuration === "short_leave") {
-  //     setValue("leaveType", LeaveType.CL;
-  //   }
-  // }, [leaveDuration, setValue]);
-
-  // Handle leave update
-  const handleUpdateLeave = async (data: LeaveForm) => {
-    if (!user) return;
-    try {
-      setIsLoading(true);
-      const response = await updateLeave({
-        id: leave.id,
-        data: {
-          title: data.title,
-          description: data.description,
-          leave_category: data.leaveDuration,
-          start_date: formatDateToMMDDYYYY(data.date.toDate()),
-          end_date: formatDateToMMDDYYYY(data.endDate.toDate()),
-          status: leave.status,
-          user: user.id,
-          decline_reason: "",
-          start_time: data.startTime
-            ? formatTimeToHHMMSS(data.startTime)
-            : undefined,
-          is_paid: data.leaveType === LeaveType.CL,
-          is_first_half: data.half === "First",
-        },
-      }).unwrap();
-      if (response) {
-        toast.success("Leave updated successfully");
-        navigate("/leaves");
-      }
-    } catch (error: any) {
-      toast.error(error?.message ?? "Failed to update leave");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const leaveCategory = watch("leaveCategory");
 
   // Handle leave apply
   const handleApplyLeave = async (data: LeaveForm) => {
@@ -214,23 +94,36 @@ const CreateLeaveDialog = ({
           decline_reason: "",
           description: data.description,
           title: data.title,
-          leave_type: getLeaveCategory(data.leaveType) as
-            | "CL"
-            | "EL"
-            | "SL"
-            | "un_paid",
-          leave_category: data.leaveDuration,
+          leave_type:
+            data.leaveCategory === "Short Leave"
+              ? null
+              : (getLeaveType(data.leaveType) as
+                  | "CL"
+                  | "EL"
+                  | "SL"
+                  | "un_paid"),
+          leave_category: getLeaveCategory(data.leaveCategory) as
+            | "short_leave"
+            | "half_day"
+            | "full_day",
           start_time: data.startTime
             ? formatTimeToHHMMSS(data.startTime)
-            : undefined,
-            half_day_type: 'first_half',
+            : null,
+          half_day_type:
+            data.leaveCategory === "Half Day"
+              ? data.half === "First Half"
+                ? "first_half"
+                : "second_half"
+              : null,
           user: user.id.toString(),
         },
       }).unwrap();
 
+      console.log("Response", response);
+
       if (response) {
         toast.success("Leave applied successfully");
-        navigate("/leaves");
+        onSuccess();
       }
     } catch (error: any) {
       toast.error(error?.message ?? "Failed to apply leave");
@@ -238,12 +131,6 @@ const CreateLeaveDialog = ({
       setIsLoading(false);
     }
   };
-
-  const totalLeaveBalance =
-    leaveBalance?.el_balance +
-    leaveBalance?.cl_balance +
-    leaveBalance?.sl_balance;
-  console.log(totalLeaveBalance);
 
   return (
     <Dialog
@@ -277,148 +164,141 @@ const CreateLeaveDialog = ({
               />
             )}
           />
-          {/* Leave Duration */}
-          <div className="flex flex-row ite"></div>
-          <Controller
-            control={control}
-            name="leaveDuration"
-            render={({ field }) => (
-              <Autocomplete
-                disablePortal
-                options={leaveDurations}
-                disableClearable
-                freeSolo={false}
-                value={field.value}
-                onChange={(_, value) => field.onChange(value)}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Leave Category"
-                    variant="outlined"
-                    inputProps={{
-                      ...params.inputProps,
-                      readOnly: true,
-                    }}
+          {/* Leave Category */}
+          <div className="flex flex-row items-start gap-x-5 w-full">
+            <Controller
+              control={control}
+              name="leaveCategory"
+              render={({ field }) => (
+                <Autocomplete
+                  fullWidth
+                  disablePortal
+                  options={leaveCategories}
+                  disableClearable
+                  freeSolo={false}
+                  value={field.value}
+                  onChange={(_, value) => field.onChange(value)}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Leave Category"
+                      variant="outlined"
+                      inputProps={{
+                        ...params.inputProps,
+                        readOnly: true,
+                      }}
+                    />
+                  )}
+                />
+              )}
+            />
+            {/* Leave Type */}
+            {leaveCategory !== "Short Leave" && (
+              <Controller
+                control={control}
+                name="leaveType"
+                rules={{
+                  required: "Leave type is required",
+                }}
+                render={({ field, fieldState }) => (
+                  <Autocomplete
+                    fullWidth
+                    disablePortal
+                    options={leaveTypes}
+                    disableClearable
+                    freeSolo={false}
+                    value={field.value}
+                    onChange={(_, value) => field.onChange(value)}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Leave Type"
+                        variant="outlined"
+                        fullWidth
+                        inputProps={{
+                          ...params.inputProps,
+                          readOnly: true,
+                        }}
+                        helperText={fieldState.error?.message}
+                      />
+                    )}
                   />
                 )}
               />
             )}
-          />
-          {/* Leave Type */}
-          {leaveDuration !== "short_leave" && (
-            <Controller
-              control={control}
-              name="leaveType"
-              rules={{
-                required: "Leave type is required",
-                validate: (value) => {
-                  if (value === "Causal Leave" && !canSelectCasual()) {
-                    return "Insufficient leave balance for casual leave";
-                  }
-                  return true;
-                },
-              }}
-              render={({ field }) => (
-                <Autocomplete
-                  disablePortal
-                  options={leaveTypes}
-                  disableClearable
-                  freeSolo={false}
-                  value={field.value}
-                  onChange={(_, value) => field.onChange(value)}
-                  getOptionDisabled={(option) => {
-                    if (option === "Causal Leave") {
-                      return !canSelectCasual();
-                    }
-                    return false;
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Leave Type"
-                      variant="outlined"
-                      fullWidth
-                      inputProps={{
-                        ...params.inputProps,
-                        readOnly: true,
-                      }}
-                      helperText={
-                        !canSelectCasual() && leaveType === 'Causal Leave'
-                          ? "Insufficient leave balance for casual leave"
-                          : ""
-                      }
-                      error={!canSelectCasual() && leaveType === 'Causal Leave'}
-                    />
-                  )}
-                />
-              )}
-            />
-          )}
+          </div>
           {/* Date Pickers */}
-          {(leaveDuration === "half_day" ||
-            leaveDuration === "short_leave") && (
-            <Controller
-              control={control}
-              name="date"
-              render={({ field }) => (
-                <PickerInput
-                  label="Start Date"
-                  value={field.value}
-                  setValue={field.onChange}
-                  errorMessage={getError(errors.date)}
-                />
-              )}
-            />
-          )}
-          {/* Half Day */}
-          {leaveDuration === "half_day" && (
-            <Controller
-              control={control}
-              name="half"
-              render={({ field }) => (
-                <Autocomplete
-                  disablePortal
-                  options={HalfDay}
-                  disableClearable
-                  freeSolo={false}
-                  value={field.value}
-                  onChange={(_, value) => field.onChange(value)}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Half"
-                      variant="outlined"
-                      inputProps={{
-                        ...params.inputProps,
-                        readOnly: true,
-                      }}
+          {(leaveCategory === "Half Day" ||
+            leaveCategory === "Short Leave") && (
+            <div className="flex flex-row items-start gap-x-5 w-full">
+              {(leaveCategory === "Half Day" ||
+                leaveCategory === "Short Leave") && (
+                <Controller
+                  control={control}
+                  name="date"
+                  render={({ field }) => (
+                    <PickerInput
+                      label="Start Date"
+                      value={field.value}
+                      disablePast
+                      setValue={field.onChange}
+                      errorMessage={getError(errors.date)}
                     />
                   )}
                 />
               )}
-            />
-          )}
-          {/* Short Leave Time Picker */}
-          {leaveDuration === "short_leave" && (
-            <Controller
-              control={control}
-              name="startTime"
-              rules={{
-                required: "Start time is required for short leave",
-              }}
-              render={({ field }) => (
-                <TimePickerInput
-                  label="Start Time"
-                  value={field.value ?? dayjs()}
-                  setValue={field.onChange}
-                  errorMessage={getError(errors.startTime)}
+              {/* Half Day */}
+              {leaveCategory === "Half Day" && (
+                <Controller
+                  control={control}
+                  name="half"
+                  render={({ field }) => (
+                    <Autocomplete
+                      fullWidth
+                      disablePortal
+                      options={halfDay}
+                      disableClearable
+                      freeSolo={false}
+                      value={field.value}
+                      onChange={(_, value) => field.onChange(value)}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Half"
+                          variant="outlined"
+                          inputProps={{
+                            ...params.inputProps,
+                            readOnly: true,
+                          }}
+                        />
+                      )}
+                    />
+                  )}
                 />
               )}
-            />
+              {/* Short Leave Time Picker */}
+              {leaveCategory === "Short Leave" && (
+                <Controller
+                  control={control}
+                  name="startTime"
+                  rules={{
+                    required: "Start time is required for short leave",
+                  }}
+                  render={({ field }) => (
+                    <TimePickerInput
+                      label="Start Time"
+                      value={field.value ?? dayjs()}
+                      setValue={field.onChange}
+                      errorMessage={getError(errors.startTime)}
+                    />
+                  )}
+                />
+              )}
+            </div>
           )}
           {/* Full Day Date Pickers */}
-          {leaveDuration === "full_day" && (
-            <>
+          {leaveCategory === "Full Day" && (
+            <div className="flex flex-row items-start gap-x-5 w-full">
               <Controller
                 control={control}
                 name="startDate"
@@ -434,6 +314,7 @@ const CreateLeaveDialog = ({
                 }}
                 render={({ field }) => (
                   <PickerInput
+                    disablePast
                     label="Start Date"
                     value={field.value}
                     setValue={field.onChange}
@@ -475,7 +356,7 @@ const CreateLeaveDialog = ({
                   );
                 }}
               />
-            </>
+            </div>
           )}
           {/* Description */}
           <Controller
@@ -494,15 +375,24 @@ const CreateLeaveDialog = ({
               />
             )}
           />
-
-          <Button
-            variant="contained"
-            onClick={handleSubmit(
-              leave?.id ? handleUpdateLeave : handleApplyLeave
-            )}
-          >
-            {leave?.id ? "Update" : "Create Leave"}
-          </Button>
+          <LinearGradient />
+          <div className="flex flex-row items-start justify-end w-full gap-x-3">
+            <CustomButton
+              type="submit"
+              label="Apply Leave"
+              onClick={handleSubmit(handleApplyLeave)}
+              buttonStyle="primary"
+            />
+            <CustomButton
+              label="Cancel Leave"
+              onClick={() => {
+                reset();
+              
+                onSuccess();
+              }}
+              buttonStyle="secondary"
+            />
+          </div>
         </div>
       </CustomBox>
     </Dialog>

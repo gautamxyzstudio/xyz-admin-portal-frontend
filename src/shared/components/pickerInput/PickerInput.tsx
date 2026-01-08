@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import  dayjs from 'dayjs';
+import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs from "dayjs";
 
 const PickerInput = ({
   value,
@@ -35,6 +35,9 @@ const PickerInput = ({
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <DatePicker
+        sx={{
+          width: "100%",
+        }}
         label={label}
         value={value}
         format="DD/MM/YYYY"
