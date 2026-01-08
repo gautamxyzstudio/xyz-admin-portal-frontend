@@ -1,7 +1,7 @@
 import React from "react";
 
 interface CustomButtonProps {
-  label: string;
+  label?: string;
   icon?: React.ReactNode;
   onClick?: () => void;
   disabled?: boolean;
@@ -43,7 +43,7 @@ const CustomButton: React.FC<CustomButtonProps> = ({
       )} ${customStyles} flex items-center justify-center gap-x-1 px-4 py-2 rounded-md font-bold text-base leading-6 transition-opacity duration-200`}
     >
       {icon && <span>{icon}</span>}
-      <span>{label}</span>
+      {label && <span>{label}</span>}
     </button>
   );
 };

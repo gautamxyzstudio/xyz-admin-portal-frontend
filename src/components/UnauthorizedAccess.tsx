@@ -14,7 +14,9 @@ const UnauthorizedAccess: React.FC = () => {
         minHeight: '100vh',
         textAlign: 'center',
         padding: 3,
+        width: '100vw'
       }}
+      
     >
       <Box>
         <Typography variant="h1" color="error" fontWeight="bold" mb={2}>

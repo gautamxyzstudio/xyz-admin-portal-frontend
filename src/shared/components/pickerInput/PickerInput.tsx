@@ -40,6 +40,9 @@ const PickerInput = ({
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <DatePicker
+        sx={{
+          width: "100%",
+        }}
         label={label}
         value={value}
         format="DD/MM/YYYY"

@@ -23,6 +23,8 @@ import { Icons } from "../../../assets/myAssets/exporter.js";
 import LinearGradient from "../../../components/LinearGradient/LinearGradient.js";
 import CustomButton from "../../../components/CustomButton/CustomButton.js";
 import dayjs from "dayjs";
+import PickerInput from "../../../shared/components/pickerInput/PickerInput.js";
+import { CgClose } from "react-icons/cg";
 
 /* ===================== Attendance Data Hook ===================== */
 const useAttendanceData = () => {
@@ -140,6 +142,7 @@ const AttendanceAdmin = () => {
     dateError,
     minDate,
     maxDate,
+    clearFilters,
   } = useFilterState();
 
   const {
@@ -163,8 +166,8 @@ const AttendanceAdmin = () => {
     await fetchAttendance(
       {
         page: 1,
-        startDate,
-        endDate,
+        startDate: startDate?.format("YYYY-MM-DD") || "",
+        endDate: endDate?.format("YYYY-MM-DD") || "",
         search: searchQuery,
       },
       true
@@ -180,13 +183,13 @@ const AttendanceAdmin = () => {
   //   );
   // };
 
-  // const handleClearFilter = async () => {
-  //   clearFilters();
-  //   await fetchAttendance(
-  //     { page: 1, startDate: "", endDate: "", search: "" },
-  //     true
-  //   );
-  // };
+  const handleClearFilter = async () => {
+    clearFilters();
+    await fetchAttendance(
+      { page: 1, startDate: "", endDate: "", search: "" },
+      true
+    );
+  };
 
   const handleUpdateAttendance = async () => {
     if (!editCheckIn || !editCheckOut) {
@@ -208,7 +211,12 @@ const AttendanceAdmin = () => {
       }).unwrap();
 
       await fetchAttendance(
-        { page, startDate, endDate, search: searchQuery },
+        {
+          page,
+          startDate: startDate?.format("YYYY-MM-DD") || "",
+          endDate: endDate?.format("YYYY-MM-DD") || "",
+          search: searchQuery,
+        },
         false
       );
     }, setIsLoading);
@@ -287,93 +295,85 @@ const AttendanceAdmin = () => {
 
   return (
     <>
-      <div className="h-[80vh]">
-        <CustomBox customClasses="p-3 mb-4">
-          <h2 className="text-2xl leading-8 font-semibold mb-4">Search</h2>
-          {dateError && <Alert severity="error">{dateError}</Alert>}
+      <CustomBox customClasses="p-3 mb-4 w-full h-fit">
+        <h2 className="text-2xl leading-8 font-semibold mb-4">Search</h2>
+        {dateError && <Alert severity="error">{dateError}</Alert>}
 
-          {/* <Stack direction="row" spacing={9} flexWrap="wrap"> */}
-          <div className="flex  justify-between w-full gap-4 items-center">
-            <TextField
-              label="Search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by emplyee"
-              className="w-full"
-              // InputProps={{
-              //   startAdornment: (
-              //     <InputAdornment position="start">
-              //       <Icon>Serach employee id</Icon>
-              //     </InputAdornment>
-              //   ),
-              // }}
-            />
+        {/* <Stack direction="row" spacing={9} flexWrap="wrap"> */}
+        <div className="flex  justify-between w-full gap-x-4 items-center">
+          <TextField
+            label="Search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by employee"
+            className="w-full"
+          />
+          <PickerInput
+            label="Start Date"
+            value={startDate}
+            setValue={(date) => {
+              setStartDate(date);
 
-            <TextField
-              className="w-full"
-              label="Start Date"
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              inputProps={{ min: minDate, max: maxDate }}
-            />
+              // Reset end date if it becomes invalid
+              if (endDate && date.isAfter(endDate)) {
+                setEndDate(null);
+              }
+            }}
+            shouldDisableDate={(date) =>
+              date.isBefore(minDate) || date.isAfter(maxDate)
+            }
+          />
 
-            <TextField
-              className="w-full"
-              label="End Date"
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              inputProps={{ min: startDate || minDate, max: maxDate }}
-            />
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleSearch}
-              disabled={!searchQuery.trim() || isInitialLoading || isLoading}
-            >
-              <img className="w-15 h-11  " src={Icons.SEARCH_ICON} alt="" />
-            </Button>
+          <PickerInput
+            label="End Date"
+            value={endDate}
+            setValue={setEndDate}
+            shouldDisableDate={(date) =>
+              (startDate && date.isBefore(startDate)) || date.isAfter(maxDate)
+            }
+          />
+          <CustomButton
+            onClick={handleSearch}
+            disabled={!searchQuery.trim() || isInitialLoading || isLoading}
+            buttonStyle={!searchQuery.trim() ? "disabled" : "primary"}
+            customStyles="h-13 w-30 p-2!"
+            icon={
+              <img className="w-full h-full" src={Icons.SEARCH_ICON} alt="" />
+            }
+          />
+          <CustomButton
+            onClick={handleClearFilter}
+            customStyles="h-13 w-30 p-2!"
+            disabled={!searchQuery.trim() || isInitialLoading || isLoading}
+            buttonStyle={!searchQuery.trim() ? "disabled" : "primaryOutline"}
+            icon={<CgClose size={24} />}
+          />
+        </div>
+      </CustomBox>
 
-            {/* <Button variant="contained" onClick={handleFilter}>
-              Apply Filter
-              </Button>
-              <Button variant="outlined" onClick={handleClearFilter}>
-              Clear All
-              </Button> */}
-            {/* </Stack> */}
-          </div>
-        </CustomBox>
-
-        <CustomBox customClasses="w-full h-full p-5">
-          <div className="flex justify-between items-center pb-5 ">
-            <h3 className="text-2xl font-semibold leading-8">Attendance</h3>
-            {/* <CustomButton
-              customStyles="text-sm"
-              label="Add Attendance"
-              icon={<TbPlus size={22} />}
-              buttonStyle="primary"
-            /> */}
-          </div>
-          <div className="w-full h-full pb-10">
-            <CustomDataTable
-              columns={columns}
-              rows={attendanceData}
-              isLoading={isInitialLoading || isLoading}
-              withPagination={false}
-            />
-
+      <CustomBox customClasses="w-full h-[70vh] p-5 pb-0 flex flex-col ">
+        <h3 className="text-2xl font-semibold leading-8">Attendance</h3>
+        <div className="w-full h-full">
+          <CustomDataTable
+            columns={columns}
+            rows={attendanceData}
+            isDataEmpty={attendanceData.length === 0}
+            emptyViewTitle="No Attendance Found"
+            emptyViewSubTitle=""
+            isLoading={isInitialLoading || isLoading}
+            withPagination={false}
+          />
+        </div>
+        {attendanceData.length !== 0 && (
+          <div className="w-full h-fit flex justify-center sticky bottom-0 bg-white pb-4 pt-4">
             <Pagination
-              className="mt-4 flex justify-center"
               count={totalPages}
               page={page}
               onChange={(_, p) =>
                 fetchAttendance({
                   page: p,
-                  startDate,
-                  endDate,
+                  startDate: startDate?.format("YYYY-MM-DD") || "",
+                  endDate: endDate?.format("YYYY-MM-DD") || "",
                   search: searchQuery,
                 })
               }
@@ -388,57 +388,57 @@ const AttendanceAdmin = () => {
               }}
             />
           </div>
-          <Dialog open={open} onClose={closeModal}>
-            <CustomBox customClasses="w-95 p-3 flex flex-col gap-3">
-              <h3 className="text-lg font-semibold ">Update Attendance</h3>
-              <LinearGradient />
+        )}
+      </CustomBox>
+      <Dialog open={open} onClose={closeModal}>
+        <CustomBox customClasses="w-95 p-3 flex flex-col gap-3">
+          <h3 className="text-lg font-semibold ">Update Attendance</h3>
+          <LinearGradient />
 
-              {updateError && <Alert severity="error">{updateError}</Alert>}
+          {updateError && <Alert severity="error">{updateError}</Alert>}
 
-              <div className="flex  flex-col gap-4 ">
-                <TextField
-                  className="w-full mb-4"
-                  label="Employee Name"
-                  disabled
-                  value={selectedAttendance?.user?.user_detial?.name || ""}
-                  InputProps={{
-                    readOnly: true,
-                  }}
-                />
-                <TextField
-                  label="Check In"
-                  type="time"
-                  value={editCheckIn}
-                  onChange={(e) => setEditCheckIn(e.target.value)}
-                  InputLabelProps={{ shrink: true }}
-                />
+          <div className="flex  flex-col gap-4 ">
+            <TextField
+              className="w-full mb-4"
+              label="Employee Name"
+              disabled
+              value={selectedAttendance?.user?.user_detial?.name || ""}
+              InputProps={{
+                readOnly: true,
+              }}
+            />
+            <TextField
+              label="Check In"
+              type="time"
+              value={editCheckIn}
+              onChange={(e) => setEditCheckIn(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+            />
 
-                <TextField
-                  label="Check Out"
-                  type="time"
-                  value={editCheckOut}
-                  onChange={(e) => setEditCheckOut(e.target.value)}
-                  InputLabelProps={{ shrink: true }}
-                />
-                <LinearGradient customClasses="" />
+            <TextField
+              label="Check Out"
+              type="time"
+              value={editCheckOut}
+              onChange={(e) => setEditCheckOut(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+            />
+            <LinearGradient customClasses="" />
 
-                <div className="flex gap-2 justify-end">
-                  <CustomButton
-                    label={"Update"}
-                    buttonStyle="primary"
-                    onClick={handleUpdateAttendance}
-                  />
-                  <CustomButton
-                    buttonStyle="secondary"
-                    label={"Cancel"}
-                    onClick={closeModal}
-                  />
-                </div>
-              </div>
-            </CustomBox>
-          </Dialog>
+            <div className="flex gap-2 justify-end">
+              <CustomButton
+                label={"Update"}
+                buttonStyle="primary"
+                onClick={handleUpdateAttendance}
+              />
+              <CustomButton
+                buttonStyle="secondary"
+                label={"Cancel"}
+                onClick={closeModal}
+              />
+            </div>
+          </div>
         </CustomBox>
-      </div>
+      </Dialog>
     </>
   );
 };

@@ -35,11 +35,11 @@ const LeaveList = () => {
   const [openModal, setOpenModal] = useState<boolean>(false);
   const [openApplyLeaveModal, setOpenApplyLeaveModal] =
     useState<boolean>(false);
-  const [leaveId, setLeaveId] = useState<string | null>("");
+  const [leaveId, setLeaveId] = useState("");
 
   // Only make the query if user exists and has an id
   const { data: leaves, isLoading, error, refetch } = useGetUserLeavesQuery();
-  const { data, isFetching } = useGetLeavesDetialsQuery(Number(leaveId));
+  const { data, isFetching } = useGetLeavesDetialsQuery(leaveId);
 
   // Handle query errors
   useEffect(() => {
@@ -48,6 +48,11 @@ const LeaveList = () => {
       toast.error("Failed to load leaves. Please try again.");
     }
   }, [error]);
+
+  const handleSuccess = () => {
+  refetch();
+  setOpenApplyLeaveModal(false);
+};
 
   // Show loading state if user is not available yet
   if (!user?.id) {
@@ -346,7 +351,7 @@ const LeaveList = () => {
                 <p className="text-base">
                   {dayjs(data?.start_date).format("DD MMM, YYYY")} &nbsp; &
                   &nbsp;
-                  {dayjs(data?.start_date).format("DD MMM, YYYY")}
+                  {dayjs(data?.end_date).format("DD MMM, YYYY")}
                 </p>
               </div>
               <div className="flex flex-col gap-y-0.5">
@@ -363,7 +368,10 @@ const LeaveList = () => {
       {/* Apply Leave Dialog */}
       <CreateLeaveDialog
         open={openApplyLeaveModal}
-        onClose={() => setOpenApplyLeaveModal(false)}
+         onSuccess={handleSuccess}
+        onClose={() => {
+          setOpenApplyLeaveModal(false);
+        }}
       />
     </div>
   );

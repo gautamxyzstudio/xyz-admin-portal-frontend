@@ -48,23 +48,13 @@ export const endpoints = {
   },
   getLeavesList: (
     page?: number,
-    pageSize?: number,
-    startDate?: string,
-    endDate?: string,
     search?: string,
-    leaveType?: string
   ) => {
     console.log("=-=-=-=-=-=-=-");
 
-    console.log("leaveType", leaveType);
-    let url = `${baseUrl}/api/leave-status/all?page=${page}&pageSize=${pageSize}&sort=createdAt:desc`;
-
-    if (startDate && endDate) {
-      url += `&startDate=${startDate}&endDate=${endDate}`;
-    }
-    if (leaveType) {
-      url += `&leave_duration=${leaveType}`;
-    }
+    let url = `${baseUrl}/api/leave-statuses?pagination[page]=${
+      page ?? 1
+    }&pagination[pageSize]=10`;
     if (search) {
       url += `&search=${encodeURIComponent(search)}`;
     }

@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState, useCallback } from "react";
-import MDTypography from "../../../../components/MDTypography";
 import type { ILeave } from "../../leaves.types";
 import type { GridColDef } from "@mui/x-data-grid";
 import EmployeeTableRow from "../../../employee/components/employeeTableRow/EmployeeTableRow";
@@ -30,6 +29,7 @@ import {
   InputLabel,
   Select,
   MenuItem as MuiMenuItem,
+  Button,
 } from "@mui/material";
 import { toast } from "react-toastify";
 import { useLoadingWrapper } from "../../../../wrappers/loadingWrapper/LoadingWrapper.context.js";
@@ -40,9 +40,9 @@ import {
   useApproveLeaveMutation,
   useRejectLeaveMutation,
 } from "../../leavesApi";
-import MDButton from "../../../../components/MDButton/MDButton";
 import { useGetEmployeeLeaveBalanceQuery } from "../../../employee/employeeApis";
 import CustomDataTable from "../../../../shared/components/customDataTable/CustomDataTable.js";
+import CustomBox from "../../../../components/CustomBox/CustomBox.js";
 
 // Custom hook for leaves data management
 const useLeavesData = () => {
@@ -57,10 +57,7 @@ const useLeavesData = () => {
     async (
       params: {
         page: number;
-        startDate: string;
-        endDate: string;
         search: string;
-        leaveType?: string;
       },
       showLoading: boolean = true
     ) => {
@@ -72,11 +69,7 @@ const useLeavesData = () => {
         setFetchError(""); // Clear previous errors
         const response = await getAllLeaves({
           page: params.page,
-          pageSize: 10,
-          startDate: params.startDate,
-          endDate: params.endDate,
           search: params.search,
-          ...(params.leaveType && { leaveType: params.leaveType }),
         }).unwrap();
 
         setLeavesData(response.data || []);
@@ -281,10 +274,7 @@ const AllLeaves = () => {
     fetchLeaves(
       {
         page: 1,
-        startDate: "",
-        endDate: "",
         search: searchQuery,
-        leaveType,
       },
       false
     ).catch(() => {
@@ -341,10 +331,8 @@ const AllLeaves = () => {
     await fetchLeaves(
       {
         page: 1,
-        startDate,
-        endDate,
+
         search: searchQuery,
-        leaveType,
       },
       true
     ).catch(() => {
@@ -368,8 +356,6 @@ const AllLeaves = () => {
     await fetchLeaves(
       {
         page: 1,
-        startDate: "",
-        endDate: "",
         search: "",
       },
       true
@@ -382,10 +368,8 @@ const AllLeaves = () => {
     await fetchLeaves(
       {
         page: 1,
-        startDate,
-        endDate,
+
         search: searchQuery,
-        leaveType,
       },
       true
     ).catch(() => {
@@ -398,10 +382,7 @@ const AllLeaves = () => {
       await fetchLeaves(
         {
           page: newPage,
-          startDate,
-          endDate,
           search: searchQuery,
-          leaveType,
         },
         true
       ).catch(() => {
@@ -424,10 +405,8 @@ const AllLeaves = () => {
             await fetchLeaves(
               {
                 page,
-                startDate,
-                endDate,
+
                 search: searchQuery,
-                leaveType,
               },
               false
             ); // Don't show loading for refresh after update
@@ -471,10 +450,7 @@ const AllLeaves = () => {
             await fetchLeaves(
               {
                 page,
-                startDate,
-                endDate,
                 search: searchQuery,
-                leaveType,
               },
               false
             ); // Don't show loading for refresh after update
@@ -512,14 +488,14 @@ const AllLeaves = () => {
       width: 170,
       renderCell: (params) => {
         return (
-          <MDTypography
+          <Typography
             display="block"
             variant="h6"
             color="text"
             fontWeight="medium"
           >
             {formatDateToReadable(params?.row?.createdAt)}
-          </MDTypography>
+          </Typography>
         );
       },
     },
@@ -547,7 +523,7 @@ const AllLeaves = () => {
       width: 160,
       renderCell: (params) => {
         return (
-          <MDTypography
+          <Typography
             display="-webkit-box"
             variant="h6"
             color="text"
@@ -559,7 +535,7 @@ const AllLeaves = () => {
             }}
           >
             {params?.row?.title}
-          </MDTypography>
+          </Typography>
         );
       },
     },
@@ -569,14 +545,14 @@ const AllLeaves = () => {
       width: 160,
       renderCell: (params) => {
         return (
-          <MDTypography
+          <Typography
             display="block"
             variant="h6"
             color="text"
             fontWeight="medium"
           >
             {getLeaveTypeTitle(params?.row?.leave_duration)}
-          </MDTypography>
+          </Typography>
         );
       },
     },
@@ -606,14 +582,14 @@ const AllLeaves = () => {
       width: 160,
       renderCell: (params) => {
         return (
-          <MDTypography
+          <Typography
             display="block"
             variant="h6"
             color="text"
             fontWeight="medium"
           >
             {formatDateToReadable(params?.row?.start_date)}
-          </MDTypography>
+          </Typography>
         );
       },
     },
@@ -623,14 +599,14 @@ const AllLeaves = () => {
       width: 160,
       renderCell: (params) => {
         return (
-          <MDTypography
+          <Typography
             display="block"
             variant="h6"
             color="text"
             fontWeight="medium"
           >
             {formatDateToReadable(params?.row?.end_date)}
-          </MDTypography>
+          </Typography>
         );
       },
     },
@@ -640,14 +616,13 @@ const AllLeaves = () => {
       width: 120,
       renderCell: (params) => {
         return (
-          <div className="flex w-full h-full justify-center items-center">
-            <MDButton
+          <div className="flex w-full h-full justify-center s-center">
+            <Button
               variant="text"
-              color="orange"
               onClick={() => openModalWithBalance(params?.row as ILeave)}
             >
               View Details
-            </MDButton>
+            </Button>
           </div>
         );
       },
@@ -664,8 +639,16 @@ const AllLeaves = () => {
     !isFetching && leavesData && leavesData.length === 0;
 
   return (
-    <>
-      <div className="h-[66vh]">
+    <div className="w-full h-full flex flex-col gap-y-6.5">
+      <CustomBox customClasses="w-full h-[30vh] flex flex-col gap-y-5 px-5 pt-6">
+        <div className="w-full flex flex-row s-center-safe gap-x-2.5">
+          <span className="text-2xl font-semibold">Leaves Request</span>{" "}
+          <span className="text-sm px-3 py-2 bg-background rounded-full">
+            04 New Requests
+          </span>
+        </div>
+      </CustomBox>
+      <div className="">
         <>
           <Typography variant="h4" fontWeight="bold" gutterBottom>
             All Leaves
@@ -763,31 +746,30 @@ const AllLeaves = () => {
                   ))}
                 </Select>
               </FormControl>
-              <MDButton
+              <Button
                 variant="contained"
-                color="orange"
                 onClick={handleFilter}
                 disabled={
                   !startDate && !endDate && !leaveType && !searchQuery.trim()
                 }
               >
                 Apply Filter
-              </MDButton>
-              <MDButton
+              </Button>
+              <Button
                 variant="contained"
                 color="info"
                 onClick={handleSearch}
                 disabled={!searchQuery.trim()}
               >
                 Search
-              </MDButton>
-              <MDButton
+              </Button>
+              <Button
                 variant="outlined"
                 color="warning"
                 onClick={handleClearFilter}
               >
                 Clear All
-              </MDButton>
+              </Button>
             </Stack>
           </Box>
 
@@ -810,18 +792,13 @@ const AllLeaves = () => {
                 : "Please wait while we fetch the data"
             }
             withPagination={leavesData && leavesData.length > 0}
-            totalCount={100}
-            page={page}
             isDataEmpty={leavesData.length === 0}
-            onPressPageChange={(event, page) => {
-              handlePageChange(page);
-            }}
           />
 
           {/* Retry button for fetch errors */}
           {fetchError && (
             <Box sx={{ mt: 2, textAlign: "center" }}>
-              <MDButton
+              <Button
                 variant="contained"
                 color="primary"
                 onClick={() => {
@@ -829,10 +806,7 @@ const AllLeaves = () => {
                   fetchLeaves(
                     {
                       page: 1,
-                      startDate,
-                      endDate,
                       search: searchQuery,
-                      leaveType,
                     },
                     true
                   ).catch(() => {
@@ -842,10 +816,10 @@ const AllLeaves = () => {
                 disabled={isFetching}
               >
                 Retry
-              </MDButton>
+              </Button>
             </Box>
           )}
-          <div className="flex justify-center mt-4 items-center">
+          <div className="flex justify-center mt-4 s-center">
             <Pagination
               count={totalPages}
               page={page}
@@ -885,7 +859,7 @@ const AllLeaves = () => {
               {/* User Details Section */}
               <Box sx={{ mb: 3, p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
                 <Grid container spacing={2} alignItems="center">
-                  <Grid item>
+                  <Grid >
                     <Avatar
                       src={getImageUrl(
                         selectedLeave?.user?.user_detial?.Photo?.url ?? ""
@@ -894,7 +868,7 @@ const AllLeaves = () => {
                       sx={{ width: 60, height: 60 }}
                     />
                   </Grid>
-                  <Grid item xs>
+                  <Grid container>
                     <Typography variant="h6" gutterBottom>
                       {selectedLeave?.user?.username}
                     </Typography>
@@ -905,7 +879,7 @@ const AllLeaves = () => {
                 </Grid>
                 <Divider sx={{ my: 2 }} />
                 <Grid container spacing={2}>
-                  <Grid item xs={6}>
+                  <Grid container>
                     <Typography variant="subtitle2" color="text.secondary">
                       Leave Balance
                     </Typography>
@@ -916,7 +890,7 @@ const AllLeaves = () => {
                       days
                     </Typography>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid container>
                     <Typography variant="subtitle2" color="text.secondary">
                       Unpaid Leave Balance
                     </Typography>
@@ -937,7 +911,7 @@ const AllLeaves = () => {
               <Divider sx={{ mb: 2 }} />
 
               <Grid container spacing={2}>
-                <Grid item xs={12}>
+                <Grid >
                   <Typography variant="subtitle2" color="text.secondary">
                     Title
                   </Typography>
@@ -946,7 +920,7 @@ const AllLeaves = () => {
                   </Typography>
                 </Grid>
 
-                <Grid item xs={12}>
+                <Grid >
                   <Typography variant="subtitle2" color="text.secondary">
                     Description
                   </Typography>
@@ -955,7 +929,7 @@ const AllLeaves = () => {
                   </Typography>
                 </Grid>
 
-                <Grid item xs={6}>
+                <Grid >
                   <Typography variant="subtitle2" color="text.secondary">
                     Leave Type
                   </Typography>
@@ -975,7 +949,7 @@ const AllLeaves = () => {
                   />
                 </Grid>
 
-                <Grid item xs={6}>
+                <Grid container>
                   <Typography variant="subtitle2" color="text.secondary">
                     Status
                   </Typography>
@@ -993,7 +967,7 @@ const AllLeaves = () => {
                   />
                 </Grid>
 
-                <Grid item xs={6}>
+                <Grid container>
                   <Typography variant="subtitle2" color="text.secondary">
                     Start Date
                   </Typography>
@@ -1002,7 +976,7 @@ const AllLeaves = () => {
                   </Typography>
                 </Grid>
 
-                <Grid item xs={6}>
+                <Grid >
                   <Typography variant="subtitle2" color="text.secondary">
                     End Date
                   </Typography>
@@ -1012,7 +986,7 @@ const AllLeaves = () => {
                 </Grid>
 
                 {selectedLeave?.start_time && (
-                  <Grid item xs={6}>
+                  <Grid >
                     <Typography variant="subtitle2" color="text.secondary">
                       Start Time
                     </Typography>
@@ -1023,7 +997,7 @@ const AllLeaves = () => {
                 )}
 
                 {selectedLeave?.leave_duration === "half_day" && (
-                  <Grid item xs={6}>
+                  <Grid >
                     <Typography variant="subtitle2" color="text.secondary">
                       Half Day
                     </Typography>
@@ -1036,7 +1010,7 @@ const AllLeaves = () => {
                 )}
 
                 {selectedLeave?.decline_reason && (
-                  <Grid item xs={12}>
+                  <Grid >
                     <Typography variant="subtitle2" color="text.secondary">
                       Decline Reason
                     </Typography>
@@ -1047,27 +1021,25 @@ const AllLeaves = () => {
                 )}
 
                 {selectedLeave?.status === "pending" && (
-                  <Grid item xs={12}>
+                  <Grid >
                     <Divider sx={{ my: 2 }} />
                     <Stack
                       direction="row"
                       spacing={2}
                       justifyContent="flex-end"
                     >
-                      <MDButton
+                      <Button
                         variant="contained"
-                        color="orange"
                         onClick={() => handleReject(selectedLeave)}
                       >
                         Reject
-                      </MDButton>
-                      <MDButton
+                      </Button>
+                      <Button
                         variant="outlined"
-                        color="orange"
                         onClick={() => handleApprove(selectedLeave)}
                       >
                         Approve
-                      </MDButton>
+                      </Button>
                     </Stack>
                   </Grid>
                 )}
@@ -1076,7 +1048,7 @@ const AllLeaves = () => {
           </Modal>
         </>
       </div>
-    </>
+    </div>
   );
 };
 
