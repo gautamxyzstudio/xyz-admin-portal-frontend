@@ -115,21 +115,13 @@ export const leavesApi = enhancedLeavesApi.injectEndpoints({
       },
       {
         page: number;
-        pageSize: number;
-        startDate: string;
-        endDate: string;
         search?: string;
-        leaveType?: string;
       }
     >({
-      query: ({ page, pageSize, startDate, endDate, search, leaveType }) => ({
+      query: ({ page, search }) => ({
         url: endpoints.getLeavesList(
           page,
-          pageSize,
-          startDate,
-          endDate,
           search,
-          leaveType
         ),
         providesTags: ["Leaves"],
         method: "GET",

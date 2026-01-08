@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import dayjs, { Dayjs } from "dayjs";
+import { useState, useCallback } from "react";
 
 interface FilterConfig {
   minDate?: string;
@@ -10,50 +11,59 @@ interface FilterConfig {
  * Custom hook for managing filter state
  */
 export const useFilterState = (config?: FilterConfig) => {
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [dateError, setDateError] = useState('');
+  const [startDate, setStartDate] = useState<Dayjs | null>(null);
+  const [endDate, setEndDate] = useState<Dayjs | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [dateError, setDateError] = useState("");
 
-  // Get current year's January 1st and today's date
-  const currentYear = config?.currentYear || new Date().getFullYear();
-  const minDate = config?.minDate || `${currentYear}-01-01`;
-  const maxDate = config?.maxDate || new Date().toISOString().split('T')[0];
+// Get current year's January 1st and today's date
+const currentYear = config?.currentYear ?? dayjs().year();
 
-  const validateDates = useCallback(() => {
-    if (!startDate || !endDate) {
-      setDateError('Please select both start and end dates');
-      return false;
-    }
+const minDate =
+  config?.minDate
+    ? dayjs(config.minDate)
+    : dayjs(`${currentYear}-01-01`);
 
-    if (startDate < minDate) {
-      setDateError(`Start date cannot be before January 1st, ${currentYear}`);
-      return false;
-    }
+const maxDate =
+  config?.maxDate
+    ? dayjs(config.maxDate)
+    : dayjs(); // today
 
-    if (endDate > maxDate) {
-      setDateError('End date cannot be after today');
-      return false;
-    }
+const validateDates = useCallback(() => {
+  if (!startDate || !endDate) {
+    setDateError("Please select both start and end dates");
+    return false;
+  }
 
-    if (startDate > endDate) {
-      setDateError('Start date cannot be after end date');
-      return false;
-    }
+  if (startDate.isBefore(minDate)) {
+    setDateError(`Start date cannot be before January 1st, ${currentYear}`);
+    return false;
+  }
 
-    setDateError('');
-    return true;
-  }, [startDate, endDate, minDate, maxDate, currentYear]);
+  if (endDate.isAfter(maxDate)) {
+    setDateError("End date cannot be after today");
+    return false;
+  }
+
+  if (startDate.isAfter(endDate)) {
+    setDateError("Start date cannot be after end date");
+    return false;
+  }
+
+  setDateError("");
+  return true;
+}, [startDate, endDate, minDate, maxDate, currentYear]);
+
 
   const clearFilters = useCallback(() => {
-    setStartDate('');
-    setEndDate('');
-    setSearchQuery('');
-    setDateError('');
+    setStartDate(null);
+    setEndDate(null);
+    setSearchQuery("");
+    setDateError("");
   }, []);
 
   const clearDateError = useCallback(() => {
-    setDateError('');
+    setDateError("");
   }, []);
 
   const getFilterParams = useCallback(
