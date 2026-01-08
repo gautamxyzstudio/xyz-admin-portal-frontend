@@ -28,10 +28,12 @@ const AddEmployeeForm = ({
     joiningDate: "",
     avatar: "",
     status: "active",
+    activeBlog: false,
     leaveBalance: "",
     designation: "",
     employeeCode: "",
     role: "",
+    dob: "",
   };
 
   const {
@@ -229,6 +231,19 @@ const AddEmployeeForm = ({
                 />
               )}
             />
+            <Controller
+              control={control}
+              name="dob"
+              rules={{ required: "Date of birth is required" }}
+              render={({ field }) => (
+                <PickerInput
+                  label="Date of Birth"
+                  value={field.value ? dayjs(field.value) : null}
+                  setValue={field.onChange}
+                  errorMessage={errors.dob?.message}
+                />
+              )}
+            />
 
             <Controller
               control={control}
@@ -245,13 +260,13 @@ const AddEmployeeForm = ({
               )}
             />
             <div className="flex flex-row items-center gap-2">
-              <p className="text-sm font-medium">Blogs</p>
+              <p className="text-sm font-medium"> Active Blogs</p>
               <Controller
                 control={control}
                 name="status"
                 render={({ field }) => (
                   <Switch
-                    defaultChecked={field.value === "active"}
+                    defaultChecked={field.value === "deactive"}
                     color="warning"
                     onChange={field.onChange}
                   />

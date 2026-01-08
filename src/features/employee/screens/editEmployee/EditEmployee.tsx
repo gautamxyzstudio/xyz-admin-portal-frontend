@@ -33,6 +33,7 @@ type EditEmployeeForm = {
   designation: string;
   employeeCode: string;
   role: string;
+  dateOfBirth: string;
 };
 
 const EditEmployee = () => {
@@ -66,6 +67,7 @@ const EditEmployee = () => {
       designation: "",
       employeeCode: "",
       role: "",
+      dateOfBirth: "",
     },
   });
 
@@ -257,6 +259,7 @@ const EditEmployee = () => {
               rules={{ required: "Employee Code is required" }}
               render={({ field }) => (
                 <FormTextInput
+                  disabled
                   errorMessage={getError(errors.employeeCode)}
                   label="Employee Code"
                   value={getString(field.value)}
@@ -274,16 +277,33 @@ const EditEmployee = () => {
                   label="Joining Date"
                   value={field.value ? dayjs(field.value) : dayjs()}
                   setValue={field.onChange}
+                  disableFuture={dayjs()}
                   errorMessage={getError(errors.joiningDate)}
                 />
               )}
             />
             <Controller
               control={control}
+              name="dateOfBirth"
+              rules={{ required: "Date of birth is required" }}
+              render={({ field }) => (
+                <PickerInput
+                  label="Date of Birth"
+                  value={field.value ? dayjs(field.value) : null}
+                  disableFuture={dayjs()}
+                  setValue={field.onChange}
+                  errorMessage={getError(errors.dateOfBirth)}
+                />
+              )}
+            />
+
+            {/* <Controller
+              control={control}
               name="leaveBalance"
               rules={{ required: "Leave Balance is required" }}
               render={({ field }) => (
                 <FormTextInput
+                disabled
                   errorMessage={getError(errors.leaveBalance)}
                   label="Leave Balance"
                   value={getString(field.value)}
@@ -291,13 +311,14 @@ const EditEmployee = () => {
                   onChange={field.onChange}
                 />
               )}
-            />
-            <Controller
+            /> */}
+            {/* <Controller
               control={control}
               name="unpaidLeaveBalance"
               rules={{ required: "Unpaid Leave Balance is required" }}
               render={({ field }) => (
                 <FormTextInput
+                disabled
                   errorMessage={getError(errors.unpaidLeaveBalance)}
                   label="Unpaid Leave Balance"
                   value={getString(field.value)}
@@ -305,7 +326,7 @@ const EditEmployee = () => {
                   onChange={field.onChange}
                 />
               )}
-            />
+            /> */}
           </div>
         </div>
         <div className="flex flex-row mt-12 w-full justify-center items-center mb-5">

@@ -1,4 +1,4 @@
-import { useSelector } from "react-redux";
+
 import { userDetailsInState } from "../../auth/authSlice";
 
 import { Icons } from "../../../assets/myAssets/exporter";
@@ -7,13 +7,39 @@ import StatCard from "../../../shared/components/StatCard/StatCard";
 import LeaveRequest from "../components/leaveRequests/LeaveRequest";
 import AttendanceTable from "../components/AttendanceTable/AttendanceTable";
 import { Dialog, TextField } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Close } from "@mui/icons-material";
 import LinearGradient from "../../../components/LinearGradient/LinearGradient";
+import axios from "axios";
+import { apiendpoint } from "../../../api/endpoint";
+import { useAppSelector } from "../../../state/store";
+
+interface DashboardStats {
+  totalEmployees: number;
+  presentEmployees: number;
+  employeesOnLeave: number;
+  absentEmployees: number;
+}
 
 const HrDashboard = () => {
-  const user = useSelector(userDetailsInState);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const user = useAppSelector(userDetailsInState);
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await axios.get(apiendpoint.getDashboardStats);
+        setStats(res.data);
+      } catch (error) {
+        console.error("Stats API error", error);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  if (!stats) return null;
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -50,25 +76,25 @@ const HrDashboard = () => {
         <div className="flex gap-5 mt-5">
           <StatCard
             title="Total Employee"
-            value="4"
+            value={stats.totalEmployees.toString()}
             iconSrc={Icons.TOTAL_EMP}
             iconBgColor="bg-[#49B6791A]"
           />
           <StatCard
             title="Today Presents"
-            value="4"
+            value={stats.presentEmployees.toString()}
             iconSrc={Icons.PRESENTS_EMP}
             iconBgColor="bg-[#2F4CBA1A]"
           />
           <StatCard
             title="Today Leaves"
-            value="4"
+            value={stats.employeesOnLeave.toString()}
             iconSrc={Icons.TOTAL_LEAVE}
             iconBgColor="bg-[#6CADDD1A]"
           />
           <StatCard
             title="Today Absent"
-            value="4"
+            value={stats.absentEmployees.toString()}
             iconSrc={Icons.TODAYABSENT}
             iconBgColor="bg-[#FF00001A]"
           />
@@ -87,6 +113,7 @@ const HrDashboard = () => {
           "& .MuiDialog-paper": {
             padding: "12px",
             display: "flex",
+            borderRadius:"12px",
             gap: "10px",
           },
         }}
@@ -130,7 +157,7 @@ const HrDashboard = () => {
           />
         </div>
         <LinearGradient />
-        
+
         <div className="flex gap-3 mt-3 ">
           <CustomButton
             customStyles="w-30"

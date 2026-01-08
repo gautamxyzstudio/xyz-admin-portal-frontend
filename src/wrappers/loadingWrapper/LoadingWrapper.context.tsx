@@ -22,7 +22,7 @@ export const LoadingWrapperProvider = ({
       {isLoading && (
         <div className={styles.loadingWrapper}>
           <video
-            className="w-60 h-60 object-contain"
+            className="w-60 h-60 object-contain rounded-2xl"
             src={loadingVideo}
             autoPlay
             loop

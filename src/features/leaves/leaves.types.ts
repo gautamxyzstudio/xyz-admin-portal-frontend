@@ -16,6 +16,7 @@ export type IApplyLeaveArgs = {
 };
 
 export interface ILeave {
+  [x: string]: string;
   start_date: string;
   id?: number;
   end_date: string;

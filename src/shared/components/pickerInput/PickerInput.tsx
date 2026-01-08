@@ -1,7 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import  dayjs from 'dayjs';
+import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import type { Dayjs } from "dayjs";
+
+interface PickerInputProps {
+  value: Dayjs | null;
+  setValue: (value: Dayjs) => void;
+  label: string;
+  errorMessage?: string;
+  slotProps?: any;
+  shouldDisableDate?: (date: Dayjs) => boolean;
+  disablePast?: boolean;
+  disableFuture?: Dayjs;
+}
 
 const PickerInput = ({
   value,
@@ -11,27 +22,21 @@ const PickerInput = ({
   slotProps,
   shouldDisableDate,
   disablePast = false,
-}: {
-  value: dayjs.Dayjs | null;
-  setValue: (value: dayjs.Dayjs) => void;
-  label: string;
-  errorMessage?: string;
-  slotProps?: any;
-  shouldDisableDate?: (date: dayjs.Dayjs) => boolean;
-  disablePast?: boolean;
-}) => {
-  const isWeekend = (date: dayjs.Dayjs) => {
+}: PickerInputProps) => {
+  const isWeekend = (date: Dayjs) => {
     const day = date.day();
     return day === 0 || day === 6;
   };
 
-  const customShouldDisableDate = (date: dayjs.Dayjs) => {
+  const customShouldDisableDate = (date: Dayjs) => {
     const isWeekendDate = isWeekend(date);
     const isCustomDisabled = shouldDisableDate
       ? shouldDisableDate(date)
       : false;
+
     return isWeekendDate || isCustomDisabled;
   };
+
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <DatePicker
@@ -39,6 +44,7 @@ const PickerInput = ({
         value={value}
         format="DD/MM/YYYY"
         disablePast={disablePast}
+        disableFuture
         shouldDisableDate={customShouldDisableDate}
         slotProps={{
           textField: {
@@ -51,6 +57,7 @@ const PickerInput = ({
           if (newValue) setValue(newValue);
         }}
       />
+
       {errorMessage && (
         <p className="text-xs mt-1 text-red-700">{errorMessage}</p>
       )}

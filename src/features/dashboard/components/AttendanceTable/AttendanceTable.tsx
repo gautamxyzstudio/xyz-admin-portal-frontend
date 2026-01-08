@@ -8,17 +8,14 @@ import {
 } from "../../dashboardApi";
 import type { IUserAttendance } from "../../types";
 import EmployeeTableRow from "../../../employee/components/employeeTableRow/EmployeeTableRow";
-import {
-  convertTo12HourFormat,
-  getWeekDates,
-} from "../../../../utils/utils";
+import { convertTo12HourFormat, getWeekDates } from "../../../../utils/utils";
 import CustomDataTable from "../../../../shared/components/customDataTable/CustomDataTable";
 import EmptyScreenView from "../../../../shared/components/EmptyScreenView/EmptyScreenView";
 import { toast } from "react-toastify";
 import { useLoadingWrapper } from "../../../../wrappers/loadingWrapper/LoadingWrapper.context";
 import { useAppSelector } from "../../../../state/store";
 import { selectLeaveRequests } from "../../screens/dashboardHrSlice";
-import { useNavigate } from "react-router";
+
 import dayjs from "dayjs";
 
 const AttendanceTable = () => {
@@ -26,7 +23,6 @@ const AttendanceTable = () => {
     useLazyGetAllAttendanceQuery();
   const [updateAttendance] = useUpdateAttendanceMutation();
   const { setIsLoading } = useLoadingWrapper();
-  const navigate = useNavigate();
 
   const [attendanceData, setAttendanceData] = useState<IUserAttendance[]>([]);
   const [page, setPage] = useState(1);
@@ -137,8 +133,8 @@ const AttendanceTable = () => {
     {
       field: "employee",
       headerName: "Employee",
-      width: 220,
-      renderCell: (params:any) => (
+      width: 200,
+      renderCell: (params: any) => (
         <EmployeeTableRow
           name={params?.row?.user?.user_detial?.name}
           showImage={false}
@@ -169,7 +165,7 @@ const AttendanceTable = () => {
     {
       field: "checkOut",
       headerName: "Check Out",
-      width: 140,
+      width: 70,
       renderCell: ({ row }: any) => (
         <span>{convertTo12HourFormat(row.out) ?? "Missing"}</span>
       ),
@@ -186,12 +182,12 @@ const AttendanceTable = () => {
         </h3>
 
         {leaveRequestsFromStore?.length > 0 && (
-          <button
-            onClick={() => navigate("/attendance")}
+          <a
             className="px-4 py-2  text-primary rounded-lg text-base font-bold cursor-pointer"
+            href="/attendance"
           >
             View All
-          </button>
+          </a>
         )}
       </div>
 

@@ -37,11 +37,11 @@ const EmployeeDirectory: React.FC<EmployeeDirectoryProps> = ({
           Loading employees...
         </div>
       ) : (
-        <div className="max-h-150 overflow-y-auto scrollbar-hide flex gap-2 flex-col bg-white">
+        <div className="max-h-150 overflow-y-auto scrollbar-hide flex gap-4 flex-col bg-white">
           {filteredEmployeeList?.map((employee: IEmployee) => (
             <div
               key={employee.id}
-              className="flex flex-row gap-4 p-4 items-center bg-[#F7F7F7]   rounded-2xl"
+              className="flex flex-row gap-4 p-3 items-center bg-[#F7F7F7] rounded-2xl"
             >
               {/* Avatar */}
               <img

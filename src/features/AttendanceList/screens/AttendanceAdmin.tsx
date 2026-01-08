@@ -275,7 +275,7 @@ const AttendanceAdmin = () => {
     {
       field: "action",
       headerName: "Action",
-      width: 100,
+      width: 70,
       renderCell: (params) => (
         <Button variant="text" onClick={() => openModal(params.row)}>
           {/* <Icon>update</Icon>&nbsp;Update */}

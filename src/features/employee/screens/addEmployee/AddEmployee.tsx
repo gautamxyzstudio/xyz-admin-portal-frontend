@@ -26,6 +26,8 @@ const AddEmployee = () => {
         user_type: data.role,
         password: data.password,
         leave_balance: Number(data.leaveBalance),
+        date_of_birth: data.dob,
+        joining_date: data.joiningDate,
         daily_attendances: [],
         unpaid_leave_balance: 0,
         role: data.role,
@@ -76,7 +78,6 @@ const AddEmployee = () => {
 
   return (
     <>
-      
       <AddEmployeeForm onPressSubmit={createUserHandler} />
     </>
   );

@@ -47,7 +47,7 @@ const EditHolidayForm = ({
   };
 
   return (
-    <div className="flex flex-col w-full p-3">
+    <div className="flex flex-col w-full p-4">
       <div className="flex justify-between mb-2">
         <h3 className="text-xl font-semibold "> Edit Holiday</h3>
         <button type="button" onClick={onClose} className="ml-auto">
@@ -81,7 +81,7 @@ const EditHolidayForm = ({
               )}
             />
           </div>
-          <div className="flex flex-col mt-10 gap-6 w-full">
+          <div className="flex flex-col mt-5 gap-6 w-full">
             <Controller
               control={control}
               name="date"
@@ -109,7 +109,7 @@ const EditHolidayForm = ({
             />
           </div>
         </div>
-        <div className="flex flex-row mt-12 w-full justify-end items-center">
+        <div className="flex flex-row mt-5 w-full justify-end items-center">
           <CustomButton
             label={"Update Holiday"}
             onClick={handleSubmit(onSubmit)}

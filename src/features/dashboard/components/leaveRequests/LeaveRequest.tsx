@@ -3,7 +3,6 @@
 
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 import {
@@ -35,7 +34,6 @@ import dayjs from "dayjs";
 
 const LeaveRequest = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
   const { setIsLoading } = useLoadingWrapper();
 
   const [open, setOpen] = useState(false);
@@ -167,7 +165,7 @@ const LeaveRequest = () => {
     {
       field: "endDate",
       headerName: "End Date",
-      width: 140,
+      width: 110,
       renderCell: (params: any) => (
         <span>
           {params.row.end_date
@@ -186,12 +184,12 @@ const LeaveRequest = () => {
         <h3 className="text-[24px] font-semibold text-black">Leave Requests</h3>
 
         {leaveRequestsFromStore?.length > 0 && (
-          <button
-            onClick={() => navigate("/all-leaves")}
+          <a
             className="px-4 py-2  text-primary rounded-lg text-base font-bold cursor-pointer"
+            href="/all-leaves"
           >
             View All
-          </button>
+          </a>
         )}
       </div>
 

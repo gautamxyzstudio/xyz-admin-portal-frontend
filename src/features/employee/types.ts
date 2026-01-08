@@ -11,6 +11,8 @@ export type IRegisterUserArgs = {
   leave_balance: number;
   daily_attendances: string[];
   unpaid_leave_balance: number;
+  date_of_birth: string;
+  joining_date: string;
 };
 
 export type IRegisterUserResponse = {
@@ -25,6 +27,8 @@ export type IRegisterUserResponse = {
     user_type: "Admin" | "Employee" | "Hr" | "Seo";
     createdAt: string;
     updatedAt: string;
+    date_of_birth: string;
+    joining_date: string;
   };
 };
 

@@ -39,7 +39,7 @@ const StatCard: React.FC<StatCardProps> = ({
       </div>
       <p
         className={`${
-          dashboard ? "text-2xl font-semibold mt-6" : "text-4xl font-bold mt-5"
+          dashboard ? "text-2xl font-semibold mt-6" : "text-2xl font-bold mt-5"
         }`}
       >
         {value}

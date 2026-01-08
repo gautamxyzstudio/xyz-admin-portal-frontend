@@ -92,22 +92,28 @@ const EmployeeList = () => {
         <EmployeeDesignationRow title={params.row.designation} />
       ),
     },
-    {
-      field: "joiningDate",
-      headerName: "Joining Date",
-      width: 160,
-      renderCell: (params :any) => (
-        <span className="text-xs font-medium text-gray-700">
-          {params.row.joiningDate ? dayjs(params.row.Date).format("DD/MM/YYYY"):"-"}
-        </span>
-      ),
-    },
+   {
+  field: "joiningDate",
+  headerName: "Joining Date",
+  width: 160,
+  renderCell: (params: any) => {
+    console.log("ROW DATA ", params.row); 
+
+    return (
+      <span className="text-xs font-medium text-gray-700">
+        {params.row.joining_date
+          ? dayjs(params.row.joining_date).format("DD/MM/YYYY")
+          : "-"}
+      </span>
+    );
+  },
+},
+
     {
       field: "status",
       headerName: "Status",
       width: 90,
       renderCell: (params) => <EmployeeStatusRow status={params.row.status} />,
-      
     },
     {
       field: "action",

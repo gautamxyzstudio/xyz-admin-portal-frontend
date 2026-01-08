@@ -13,18 +13,14 @@ import CustomButton from "../../../../components/CustomButton/CustomButton";
 import { Icons } from "../../../../assets/myAssets/exporter";
 import { TbPlus } from "react-icons/tb";
 
-import AddHolidayForm from "../../components/addHolidayForm/AddHolidayForm";
- 
 import type { IHoliday } from "../../holydayList.types";
 
-import { Dialog, DialogTitle, DialogContent, IconButton } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
 import EditHolidayDialog from "../editHoliday/EditHolidayDialog.js";
-import LinearGradient from "../../../../components/LinearGradient/LinearGradient.js";
+
+import AddHolidayDialog from "../addHoliday/AddHolidayDialog.js";
 
 const HolidayList = () => {
   const user = useSelector(userInState);
-
 
   const { data, isFetching } = useGetHolidaysQuery();
   const holidays = data?.data || [];
@@ -52,18 +48,18 @@ const HolidayList = () => {
       TABLE COLUMNS
   ====================== */
   const columns = useMemo(() => {
-     const cols: any[] = [
+    const cols: any[] = [
       {
         field: "name",
         headerName: "Holiday Name",
         width: 220,
-         renderCell: ({ row }: any) => row?.attributes?.Name || row?.Name || "-",
+        renderCell: ({ row }: any) => row?.attributes?.Name || row?.Name || "-",
       },
       {
         field: "date",
         headerName: "Date",
         width: 180,
-        
+
         renderCell: ({ row }: any) =>
           dayjs(row?.attributes?.date || row?.date).format("DD/MM/YYYY"),
       },
@@ -71,7 +67,7 @@ const HolidayList = () => {
         field: "day",
         headerName: "Day",
         width: 180,
-        renderCell: ({ row }:any) =>
+        renderCell: ({ row }: any) =>
           dayjs(row?.attributes?.date || row?.date).format("dddd"),
       },
     ];
@@ -81,7 +77,7 @@ const HolidayList = () => {
         field: "action",
         headerName: "Action",
         width: 100,
-       
+
         renderCell: ({ row }: any) => (
           <button onClick={() => handleOpenEdit(row)}>
             <img src={Icons.EDIT} alt="edit" />
@@ -94,7 +90,7 @@ const HolidayList = () => {
   }, [user]);
 
   return (
-    <CustomBox customClasses="p-5 h-full space-y-6">
+    <CustomBox customClasses="p-5 h-full space-y-6 flex flex-col">
       {/* Header */}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-semibold">Holiday List</h2>
@@ -114,11 +110,11 @@ const HolidayList = () => {
         columns={columns}
         isLoading={isFetching}
         withPagination={false}
-        className=""
+        className="bg-red"
       />
 
       {/* Add Holiday Dialog */}
-      {openAddDialog && (
+      {/* {openAddDialog && (
         <Dialog
           open={openAddDialog}
           onClose={handleCloseAdd}
@@ -136,8 +132,9 @@ const HolidayList = () => {
             <AddHolidayForm onClose={handleCloseAdd} />
           </DialogContent>
         </Dialog>
-      )}
-      {}
+      )} */}
+
+      <AddHolidayDialog open={openAddDialog} onClose={handleCloseAdd} />
 
       {/* Edit Holiday Dialog */}
       {selectedHoliday && (

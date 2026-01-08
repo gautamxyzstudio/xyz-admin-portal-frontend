@@ -50,7 +50,14 @@ const EditHolidayDialog: React.FC<EditHolidayDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth >
+    <Dialog maxWidth="xs"
+      sx={{
+        "& .MuiDialog-paper": {
+          borderRadius: "16px",
+          padding: 0,
+        },
+      }}
+      fullWidth open={open} onClose={onClose}>
       <EditHolidayForm
         onClose={onClose}
         holiday={holiday}

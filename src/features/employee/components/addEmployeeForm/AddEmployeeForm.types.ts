@@ -7,7 +7,8 @@ export type AddEmployeeFormData = {
   avatar: string;
   status: 'active' | 'deactive';
   leaveBalance: string;
-
+  dob:string;
+  activeBlog:boolean;
   designation: string;
   employeeCode: string;
   role: string;
