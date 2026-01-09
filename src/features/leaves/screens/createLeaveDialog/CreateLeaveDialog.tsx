@@ -101,7 +101,7 @@ const CreateLeaveDialog = ({
                   | "CL"
                   | "EL"
                   | "SL"
-                  | "un_paid"),
+                  | "un-paid"),
           leave_category: getLeaveCategory(data.leaveCategory) as
             | "short_leave"
             | "half_day"
