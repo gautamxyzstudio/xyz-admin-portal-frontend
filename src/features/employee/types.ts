@@ -70,6 +70,7 @@ export interface IEmployee {
   unpaid_leave_balance: number;
   image: string;
   imageId: number;
+  dateOfBirth:string
 }
 
 export interface IEmployeeFromResponse {
@@ -96,6 +97,7 @@ export interface IEmployeeFromResponse {
     updatedAt: string;
   };
   user_detial: {
+    [x: string]: string;
     id: number;
     name: string;
     designation: string;

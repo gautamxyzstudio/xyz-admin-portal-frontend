@@ -1,6 +1,4 @@
-
-import { userDetailsInState } from "../../auth/authSlice";
-
+import { userDetailsInState, userInState } from "../../auth/authSlice";
 import { Icons } from "../../../assets/myAssets/exporter";
 import CustomButton from "../../../components/CustomButton/CustomButton";
 import StatCard from "../../../shared/components/StatCard/StatCard";
@@ -14,6 +12,8 @@ import axios from "axios";
 import { apiendpoint } from "../../../api/endpoint";
 import { useAppSelector } from "../../../state/store";
 
+import { useForm, Controller } from "react-hook-form";
+
 interface DashboardStats {
   totalEmployees: number;
   presentEmployees: number;
@@ -21,11 +21,30 @@ interface DashboardStats {
   absentEmployees: number;
 }
 
+type AnnouncementPayload = {
+  title: string;
+  description: string;
+  date: string;
+};
+
 const HrDashboard = () => {
+  const user = useAppSelector(userInState);
+  const userDetail = useAppSelector(userDetailsInState);
+
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const user = useAppSelector(userDetailsInState);
   const [open, setOpen] = useState(false);
 
+  //  useForm
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<AnnouncementPayload>({
+    defaultValues: { title: "", description: "", date: "" },
+  });
+
+  // Fetch dashboard stats
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -35,34 +54,54 @@ const HrDashboard = () => {
         console.error("Stats API error", error);
       }
     };
-
     fetchStats();
   }, []);
 
   if (!stats) return null;
 
   const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
+  const handleClose = () => {
+    setOpen(false);
+    reset();
+  };
+
+  // Handle announcement creation
+  const handleCreateAnnouncement = async (data: AnnouncementPayload) => {
+    try {
+      await axios.post(
+        apiendpoint.getAnnouncements,
+        {
+          data: {
+            Title: data.title,
+            Description: data.description,
+            Date: data.date,
+          },
+        },
+        { headers: { Authorization: `Bearer ${user?.token}` } }
+      );
+      handleClose();
+    } catch (error) {
+      console.error("Announcement POST error", error);
+    }
+  };
+
   return (
     <>
       <div className="h-[70vh]">
-        {/* ================= HEADER ================= */}
+        {/* HEADER */}
         <div className="w-full relative overflow-clip rounded-2xl bg-primary flex items-center justify-between py-11 px-8">
           <div className="w-65.75 h-65.75 bg-white rounded-full absolute -left-36.25 -top-39 opacity-20" />
           <div className="w-65.75 h-65.75 bg-white rounded-full absolute -left-32.25 -top-35 opacity-10" />
-
           <div className="flex flex-col gap-y-2 text-background z-10">
             <h2 className="text-[32px] leading-10 font-semibold">
-              Hey! {user?.name}
+              Hey! {userDetail?.name}
             </h2>
             <p className="text-white text-base opacity-80">
               Check your Attendance
             </p>
           </div>
-
           <div className="w-65.75 h-65.75 bg-white rounded-full absolute -right-36.25 -top-39 opacity-20" />
           <div className="w-65.75 h-65.75 bg-white rounded-full absolute -right-32.25 -top-35 opacity-10" />
-
           <CustomButton
             label="Add Announcements"
             icon={<img src={Icons.PLUS_ICON} alt="plus icon" />}
@@ -72,7 +111,7 @@ const HrDashboard = () => {
           />
         </div>
 
-        {/* ================= STATS ================= */}
+        {/* STATS */}
         <div className="flex gap-5 mt-5">
           <StatCard
             title="Total Employee"
@@ -99,80 +138,96 @@ const HrDashboard = () => {
             iconBgColor="bg-[#FF00001A]"
           />
         </div>
-        <div className="flex gap-5 flex-col">
+
+        <div className="flex  flex-col">
           <AttendanceTable />
           <LeaveRequest />
         </div>
       </div>
+
+      {/* ANNOUNCEMENT DIALOG */}
       <Dialog
         open={open}
         onClose={handleClose}
-        maxWidth="sm"
+        maxWidth="xs"
         fullWidth
         sx={{
           "& .MuiDialog-paper": {
             padding: "12px",
             display: "flex",
-            borderRadius:"12px",
+            borderRadius: "12px",
             gap: "10px",
           },
         }}
       >
-        <div className="flex justify-between mb-2">
-          <h3 className="text-xl font-semibold leading-7">
-            Add Announcements{" "}
-          </h3>
-          <Close
-            className="cursor-pointer"
-            onClick={() => {
-              handleClose();
-            }}
-          />
+        <div className="flex justify-between mb-1">
+          <h3 className="text-xl font-semibold leading-7">Add Announcements</h3>
+          <Close className="cursor-pointer" onClick={handleClose} />
         </div>
-        <LinearGradient />
-        <div className="flex flex-col gap-5 mt-3 mb-3">
-          <TextField
-            label="Title"
-            // value={sea}
-            // onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="title"
-            className="w-full"
-          />
-          <TextField
-            label="Description"
-            // value={sea}
-            // onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Description"
-            className="w-full"
-          />
 
-          <TextField
-            className="w-full "
-            label="Date"
-            type="date"
-            // value={}
-            // onChange={(e) => setStartDate(e.target.value)}
-            InputLabelProps={{ shrink: true }}
-            // inputProps={{ min: minDate, max: maxDate }}
-          />
-        </div>
         <LinearGradient />
 
-        <div className="flex gap-3 mt-3 ">
-          <CustomButton
-            customStyles="w-30"
-            label="Create"
-            onClick={() => {
-              handleClose();
-            }}
+        <form
+          onSubmit={handleSubmit(handleCreateAnnouncement)}
+          className="flex flex-col gap-5"
+        >
+          <Controller
+            name="title"
+            control={control}
+            rules={{ required: "Title is required" }}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="Title"
+                error={!!errors.title}
+                helperText={errors.title?.message}
+                fullWidth
+              />
+            )}
           />
-          <CustomButton
-            label="Cancel"
-            customStyles="w-30"
-            buttonStyle="secondary"
-            onClick={handleClose}
+          <Controller
+            name="description"
+            control={control}
+            rules={{ required: "Description is required" }}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="Description"
+                error={!!errors.description}
+                helperText={errors.description?.message}
+                fullWidth
+              />
+            )}
           />
-        </div>
+          <Controller
+            name="date"
+            control={control}
+            rules={{ required: "Date is required" }}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="Date"
+                type="date"
+                InputLabelProps={{ shrink: true }}
+                error={!!errors.date}
+                helperText={errors.date?.message}
+                fullWidth
+              />
+            )}
+          />
+
+          <LinearGradient />
+
+          <div className="flex gap-3">
+            <CustomButton customStyles="w-30" label="Create" type="submit" />
+            <CustomButton
+              label="Cancel"
+              customStyles="w-30"
+              buttonStyle="secondary"
+              onClick={handleClose}
+            />
+          </div>
+        </form>
       </Dialog>
     </>
   );

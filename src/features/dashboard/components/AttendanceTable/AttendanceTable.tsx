@@ -46,11 +46,15 @@ const AttendanceTable = () => {
         endDate: dates.endDate,
       }).unwrap();
 
+      const filteredData = res.data.filter((item: any) =>
+        isTodayOrYesterday(item.Date)
+      );
+
       if (isFirst) {
-        setAttendanceData(res.data);
+        setAttendanceData(filteredData);
         setPage(1);
       } else {
-        setAttendanceData((prev) => [...prev, ...res.data]);
+        setAttendanceData((prev) => [...prev, ...filteredData]);
         setPage(pageNumber);
       }
     } catch {
@@ -67,6 +71,16 @@ const AttendanceTable = () => {
       toast.error("Failed to load attendance data");
     }
   }, [error]);
+
+  const isTodayOrYesterday = (date?: string) => {
+    if (!date) return false;
+
+    const recordDate = dayjs(date).startOf("day");
+    const today = dayjs().startOf("day");
+    const yesterday = dayjs().subtract(1, "day").startOf("day");
+
+    return recordDate.isSame(today) || recordDate.isSame(yesterday);
+  };
 
   const leaveRequestsFromStore = useAppSelector(selectLeaveRequests);
 
@@ -174,7 +188,7 @@ const AttendanceTable = () => {
 
   /* ================= UI ================= */
   return (
-    <div className="mt-6 w-full h-[70vh] bg-white rounded-xl flex flex-col">
+    <div className="mt-6 w-full h-100 bg-white rounded-xl flex flex-col">
       {/* ===== Sticky Header ===== */}
       <div className="sticky top-0 z-10 bg-white px-4 py-3 flex justify-between rounded-2xl ">
         <h3 className="text-[24px] font-semibold text-black">

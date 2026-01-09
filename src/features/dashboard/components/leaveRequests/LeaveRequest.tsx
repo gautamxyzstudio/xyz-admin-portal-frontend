@@ -178,7 +178,7 @@ const LeaveRequest = () => {
 
   /* ===================== UI ===================== */
   return (
-    <div className="mt-6 w-full h-[70vh] bg-white rounded-xl p-4 flex flex-col">
+    <div className="mt-6 w-full h-100 bg-white rounded-xl p-4 flex flex-col">
       {/* // <div className="w-full h-full mt-8   p-3 bg-white rounded-2xl  "> */}
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-[24px] font-semibold text-black">Leave Requests</h3>

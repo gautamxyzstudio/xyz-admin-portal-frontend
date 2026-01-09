@@ -44,6 +44,7 @@ const EmployeeList = () => {
   const filteredEmployeeList = employeeList.filter(
     (employee) => employee.id !== user?.id
   );
+  console.log("Employee List Data:", filteredEmployeeList);
 
   const deleteUserHandler = async (id: string, detailsId: string) => {
     try {
@@ -65,7 +66,7 @@ const EmployeeList = () => {
     {
       field: "employeeCode",
       headerName: "Employee Code",
-      width: 160,
+      width: 130,
       renderCell: (params) => (
         <span className="text-xs font-medium text-gray-700">
           {params.row.empCode}
@@ -75,7 +76,7 @@ const EmployeeList = () => {
     {
       field: "employeeName",
       headerName: "Employee Name",
-      width: 280,
+      width: 290,
       renderCell: (params) => (
         <EmployeeTableRow
           image={params.row.image}
@@ -95,32 +96,28 @@ const EmployeeList = () => {
     {
       field: "joiningDate",
       headerName: "Joining Date",
-      width: 160,
-      renderCell: (params: any) => {
-        console.log("ROW DATA ", params.row);
-
-        return (
-          <span className="text-xs font-medium text-gray-700">
-            {params.row.joining_date
-              ? dayjs(params.row.joining_date).format("DD/MM/YYYY")
-              : "-"}
-          </span>
-        );
-      },
+      width: 120,
+      renderCell: (params: any) => (
+        <span className="text-xs font-medium text-gray-700">
+          {params.row.joiningDate
+            ? dayjs(params.row.joiningDate).format("DD/MM/YYYY")
+            : "___"}
+        </span>
+      ),
     },
 
     {
       field: "status",
       headerName: "Status",
-      width: 90,
+      width: 120,
       renderCell: (params) => <EmployeeStatusRow status={params.row.status} />,
     },
     {
       field: "action",
       headerName: "Action",
-      minWidth: 100,
+      width:100,
       renderCell: (params) => (
-        <div className="flex gap-3">
+        <div className="flex w-full justify-center gap-3">
           {(user.user_type === "Admin" || user.user_type === "Hr") && (
             <button
               className="text-blue-600 text-sm font-medium hover:underline"

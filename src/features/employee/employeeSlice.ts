@@ -60,8 +60,10 @@ const employeeSlice = createSlice({
             imageId: photo?.id ?? 0,
             email: employee?.email ?? "",
             details_id: employee?.user_detial?.id ?? 0,
+            dateOfBirth: employee?.user_detial?.dateOfBirth ?? "0",
           };
         });
+    
       }
     );
   },
