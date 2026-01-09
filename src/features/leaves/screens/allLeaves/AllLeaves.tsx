@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState, useCallback } from "react";
 import type { GridColDef } from "@mui/x-data-grid";
@@ -6,11 +5,12 @@ import { TextField, InputAdornment, Pagination } from "@mui/material";
 import CustomDataTable from "../../../../shared/components/customDataTable/CustomDataTable.js";
 import CustomBox from "../../../../components/CustomBox/CustomBox.js";
 import { useLeavesData } from "../../hooks/useLeavesData.js";
-import LeaveRequestsHr from "./leaveRequestsHr/LeaveRequestsHr.js";
+import LeaveRequestsHr from "../leaveRequestsHr/LeaveRequestsHr.js";
 import { ImSearch } from "react-icons/im";
 import CustomButton from "../../../../components/CustomButton/CustomButton.js";
 import dayjs from "dayjs";
 import { getLeaveCategoryTitle } from "../../utils.js";
+import { getLeaveStatusColor } from "../../../../utils/utils.js";
 
 const AllLeaves = () => {
   const {
@@ -82,46 +82,48 @@ const AllLeaves = () => {
     {
       field: "startDate",
       headerName: "Start Date",
-      width: 170,
+      width: 100,
       renderCell: (params) =>
-        dayjs(params.row.attributes.start_date).format("DD/MM/YYYY"),
+        dayjs(params.row.start_date).format("DD/MM/YYYY"),
     },
     {
       field: "user",
       headerName: "Employee Name",
-      width: 250,
+      width: 160,
       renderCell: (params) =>
-        params.row.attributes.user.data.attributes.username,
+        params.row.user.username,
     },
     {
       field: "title",
       headerName: "Title",
-      width: 160,
-      renderCell: (params) => params.row.attributes.title,
+      width: 200,
+      renderCell: (params) => params.row.title,
     },
     {
       field: "leaveType",
       headerName: "Leave Type",
-      width: 160,
+      width: 130,
       renderCell: (params) =>
-        getLeaveCategoryTitle(params.row.attributes.leave_category),
+        getLeaveCategoryTitle(params.row.leave_category),
     },
     {
       field: "status",
       headerName: "Status",
       width: 80,
       renderCell: (params) => {
-        return <span>{params.row.attributes.status}</span>;
+        return (
+          <span
+            className={`${getLeaveStatusColor(params.row.status)} py-1.25 px-3.75 rounded-3xl text-xs`}
+          >
+            {params.row.status}
+          </span>
+        );
       },
     },
   ];
 
   // Check if data has been loaded but is empty
-  const sortLeavesList = leavesData.filter(
-    (leave: any) => leave.attributes.status !== "pending" && leave.attributes.status !== "declined" 
-  );
 
-  console.log(sortLeavesList, "Sort");
   const hasLoadedEmptyData =
     !isFetching && leavesData && leavesData.length === 0;
 
@@ -147,10 +149,10 @@ const AllLeaves = () => {
             sx={{ minWidth: 350 }}
           />
         </div>
-        <div className="w-full h-full flex flex-col">
+        <div className="w-full h-100 flex flex-col gap-y-3">
           <CustomDataTable
             columns={columns}
-            rows={sortLeavesList}
+            rows={leavesData}
             isLoading={isLoading || isFetching}
             isDataEmpty={leavesData.length === 0}
             emptyViewTitle={

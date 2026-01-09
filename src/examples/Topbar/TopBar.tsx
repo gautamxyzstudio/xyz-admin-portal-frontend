@@ -29,12 +29,11 @@ const TopBar = () => {
       {/* Right */}
       <div className="flex items-center gap-2.5">
         {/* Message icon */}
-      
         <div
+          className="w-10 h-10 p-2 flex items-center justify-center rounded-xl bg-gray-100 cursor-pointer "
           onClick={openOutlook}
-          className="w-10 h-10 p-2 flex items-center justify-center rounded-xl bg-gray-100 cursor-pointer"
         >
-          <img src={Icons.OUTLOOK} alt="Outlook" />
+          <img src={Icons.OUTLOOK} alt="" />
         </div>
 
         {/* Notification icon */}

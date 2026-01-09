@@ -62,13 +62,24 @@ export const endpoints = {
   },
   updateAttendance: `${baseUrl}/api/daily-attendance/update-attendance`,
   applyLeave: `${baseUrl}/api/leave-statuses`,
-  // getUserLeaves: (id: number) =>
-  //   `${baseUrl}/api/leave-statuses?filters[user][id][$eq]=${id}&sort=id:desc`,
   getUserLeaves: `${baseUrl}/api/leave-statuses/my-leaves`,
+  getUserALlLeaves: (
+    page: number,
+    search?: string
+  ) => {
+    let url = `${baseUrl}/api/leave-statuses/my-leaves?page=${page}&pageSize=10`;
+
+    if (search) {
+      url += `&search=${encodeURIComponent(search)}`;
+    }
+
+    return url;
+  },
   getLeaves: `${baseUrl}/api/leave-statuses`,
   deleteLeave: (id: number) => `${baseUrl}/api/leave-statuses/${id}`,
   updateLeave: (id: number) => `${baseUrl}/api/leave-statuses/${id}`,
   getLeaveRequests: `${baseUrl}/api/leave-statuses?filters[status][$eq]=pending&populate[user][populate][user_detial][populate]=Photo&sort=id:desc`,
   approveLeave: (id: number) => `${baseUrl}/api/leave-status/${id}/approve`,
   rejectLeave: (id: number) => `${baseUrl}/api/leave-status/${id}/reject`,
+  hrApproveleave:(id:number) =>`${baseUrl}/api/leave-statuses/${id}/hr-update-and-approve-leave`
 };

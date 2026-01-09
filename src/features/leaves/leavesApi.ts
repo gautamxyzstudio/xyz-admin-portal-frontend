@@ -158,6 +158,36 @@ export const leavesApi = enhancedLeavesApi.injectEndpoints({
         };
       },
     }),
+    getAllUserLeaves: builder.query<
+      {
+        data: ILeave[];
+        pagination: {
+          page: number;
+          pageSize: number;
+          pageCount: number;
+          total: number;
+        };
+      },
+      {
+        page: number;
+        search?: string;
+      }
+    >({
+      query: ({ page, search }) => ({
+        url: endpoints.getUserALlLeaves(page, search || ""),
+        providesTags: ["Leaves"],
+        method: "GET",
+      }),
+      transformResponse: (response: ILeaveResponse) => {
+        const data = response.data.map((item: any) => ({
+          ...item,
+        }));
+        return {
+          data,
+          pagination: response.meta.pagination,
+        };
+      },
+    }),
   }),
 });
 
@@ -171,4 +201,5 @@ export const {
   useLazyGetAllLeavesQuery,
   useGetLeaveRequestsQuery,
   useGetLeavesDetialsQuery,
+  useLazyGetAllUserLeavesQuery
 } = leavesApi;

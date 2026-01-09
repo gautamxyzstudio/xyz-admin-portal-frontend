@@ -18,7 +18,7 @@ export interface ILeave {
   start_date: string;
   id?: number;
   end_date: string;
-  status: "pending" | "approved" | "rejected" | "declined";
+  status: "pending" | "approved" | "declined";
   createdAt: string;
   description: string;
   decline_reason: string;
@@ -57,7 +57,7 @@ export interface ILeaveDetailsResponse {
   start_date: string;
   id?: number;
   end_date: string;
-  status: "pending" | "approved" | "rejected" | "declined";
+  status: "pending" | "approved" | "declined";
   createdAt: string;
   description: string;
   decline_reason: string;
@@ -117,7 +117,7 @@ export interface IUpdateLeaveArgs {
   start_date?: string;
   end_date?: string;
   description?: string;
-  status?: "pending" | "approved" | "rejected" | "declined";
+  status?: "pending" | "approved" | "declined";
   decline_reason?: string;
   title: string;
   user: string | number;
@@ -133,7 +133,7 @@ export interface IApproveLeaveResponse {
     id: number;
     start_date: string;
     end_date: string;
-    status: "pending" | "approved" | "rejected" | "declined";
+    status: "pending" | "approved" | "declined";
     createdAt: string;
     updatedAt: string;
     publishedAt: string;
@@ -147,3 +147,112 @@ export interface IApproveLeaveResponse {
   };
   leaveDaysDeducted: number;
 }
+
+// eaveRequest
+export interface ILeaveRequest {
+  id: number;
+  title: string;
+  description: string;
+  status: "pending" | "approved" | "declined";
+  leave_type: "CL" | "EL" | "SL" | "un-paid";
+  leave_category: "full_day" | "half_day" | "short_leave";
+  days: number;
+  start_date: string; // YYYY-MM-DD
+  end_date: string; // YYYY-MM-DD
+  start_time: string | null;
+  half_day_type: string | null;
+  decline_reason: string | null;
+  leave_days: ILeaveDay[];
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+  user: IUserRelation;
+}
+export interface ILeaveDay {
+  day: string; // "Tue"
+  date: string; // "2026-01-13"
+  duration: number; // 1
+  editable: boolean;
+  leave_type: string; // "CL"
+}
+export interface IUserRelation {
+  data: IUserData;
+}
+
+export interface IUserData {
+  id: number;
+  attributes: IUserAttributes;
+}
+export interface IUserAttributes {
+  username: string;
+  email: string;
+  provider: string;
+  confirmed: boolean;
+  blocked: boolean;
+  user_type: string;
+  createdAt: string;
+  updatedAt: string;
+  user_detial: IUserDetailRelation;
+}
+export interface IUserDetailRelation {
+  data: IUserDetailData;
+}
+
+export interface IUserDetailData {
+  id: number;
+  attributes: IUserDetailAttributes;
+}
+export interface IUserDetailAttributes {
+  name: string;
+  designation: string;
+  empCode: string;
+  phoneNumber: string;
+  date_of_birth: string;
+  joinig_date: string;
+  joining_announced: boolean;
+  status: boolean;
+  active_blogs: boolean | null;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+  Photo: IPhotoRelation;
+}
+export interface IPhotoRelation {
+  data: IPhotoData[];
+}
+export interface IPhotoData {
+  id: number;
+  attributes: IPhotoAttributes;
+}
+export interface IPhotoAttributes {
+  name: string;
+  url: string;
+  mime: string;
+  ext: string;
+  size: number;
+  width: number;
+  height: number;
+  alternativeText: string | null;
+  caption: string | null;
+  previewUrl: string | null;
+  provider: string;
+  provider_metadata: {
+    path: string;
+    bucket: string;
+  };
+  formats: {
+    thumbnail?: {
+      url: string;
+      width: number;
+      height: number;
+      ext: string;
+      mime: string;
+      size: number;
+    };
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const statusList = ["Pending", "Approved", "Declined"] as const;
+export type UIStatus = (typeof statusList)[number];
