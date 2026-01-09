@@ -11,7 +11,14 @@ interface PickerInputProps {
   slotProps?: any;
   shouldDisableDate?: (date: Dayjs) => boolean;
   disablePast?: boolean;
-  disableFuture?: Dayjs;
+  disableFuture?: boolean;
+  popperPlacement?:
+    | "top"
+    | "top-start"
+    | "top-end"
+    | "bottom"
+    | "bottom-start"
+    | "bottom-end";
 }
 
 const PickerInput = ({
@@ -21,7 +28,9 @@ const PickerInput = ({
   errorMessage,
   slotProps,
   shouldDisableDate,
+  disableFuture = false,
   disablePast = false,
+  popperPlacement = "bottom-start",
 }: PickerInputProps) => {
   const isWeekend = (date: Dayjs) => {
     const day = date.day();
@@ -40,20 +49,28 @@ const PickerInput = ({
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <DatePicker
-        sx={{
-          width: "100%",
-        }}
+        sx={{ width: "100%" }}
         label={label}
         value={value}
         format="DD/MM/YYYY"
         disablePast={disablePast}
-        disableFuture
+        disableFuture={disableFuture}
         shouldDisableDate={customShouldDisableDate}
         slotProps={{
           textField: {
             error: !!errorMessage,
             helperText: errorMessage,
             ...slotProps?.textField,
+          },
+
+          popper: {
+            placement: popperPlacement,
+            modifiers: [
+              {
+                name: "flip",
+                enabled: false, 
+              },
+            ],
           },
         }}
         onChange={(newValue) => {

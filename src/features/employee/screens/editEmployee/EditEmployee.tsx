@@ -18,6 +18,7 @@ import { useLoadingWrapper } from "../../../../wrappers/loadingWrapper/LoadingWr
 import { getError, getString } from "../../../../utils/utils.js";
 import CustomBox from "../../../../components/CustomBox/CustomBox.js";
 import CustomButton from "../../../../components/CustomButton/CustomButton.js";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 type EditEmployeeForm = {
   name: string;
@@ -108,180 +109,195 @@ const EditEmployee = () => {
       toast.error(error?.message ?? "Something went wrong");
     }
   };
+ 
 
   return (
-    <CustomBox customClasses="flex flex-col w-full justify-center items-center">
-      {/* Avatar Upload */}
-      <Controller
-        control={control}
-        name="avatar"
-        rules={{ required: "Avatar is required" }}
-        render={({ field }) => (
-          <PhotoUpload
-            initialValue={employee.image}
-            getUploadedImageId={(id) => {
-              field.onChange(id);
-              setValue("photoId", String(id));
-            }}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="photoId"
-        render={({ field }) => <input type="hidden" {...field} />}
-      />
-
-      <div className="flex flex-row w-full justify-around items-start">
-        {/* Left Column */}
-        <div className="flex flex-col mt-10 gap-6 w-[40%]">
-          <Controller
-            control={control}
-            name="name"
-            rules={{ required: "Name is required" }}
-            render={({ field }) => (
-              <FormTextInput
-                errorMessage={getError(errors.name)}
-                label="Name"
-                value={getString(field.value)}
-                placeholder="Name"
-                onChange={field.onChange}
-              />
-            )}
-          />
-          <Controller
-            control={control}
-            name="phone"
-            rules={{
-              required: "Phone number is required",
-              pattern: {
-                value: /^[0-9]{10}$/,
-                message: "Invalid phone number",
-              },
-            }}
-            render={({ field }) => (
-              <FormTextInput
-                errorMessage={getError(errors.phone)}
-                label="Phone number"
-                value={getString(field.value)}
-                maxLength={10}
-                placeholder="Phone"
-                onChange={field.onChange}
-              />
-            )}
-          />
-          <Controller
-            control={control}
-            name="role"
-            rules={{ required: "Role is required" }}
-            render={({ field }) => (
-              <Autocomplete
-                disablePortal
-                options={Object.values(EmployeeRole)}
-                disableClearable
-                freeSolo={false}
-                value={field.value || ""}
-                onChange={(_, value) => field.onChange(value)}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Role"
-                    variant="outlined"
-                    inputProps={{ ...params.inputProps, readOnly: true }}
-                  />
-                )}
-              />
-            )}
-          />
-          <div className="flex flex-row items-center gap-2">
-            <p className="text-sm font-medium">Status:</p>
+    <>
+      <CustomBox customClasses="flex flex-col w-full  p-6 ">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-1 text-sm font-bold text-primary cursor-pointer "
+        >
+          <ArrowBackIcon fontSize="small" />
+          Back
+        </button>
+        <div className="flex flex-col justify-center w-full items-start p-4">
+          {/* Avatar Upload */}
+          <div className="flex justify-center items-center  w-full">
             <Controller
               control={control}
-              name="status"
+              name="avatar"
+              rules={{ required: "Avatar is required" }}
               render={({ field }) => (
-                <Switch
-                  checked={!!field.value}
-                  color="warning"
-                  onChange={(_, checked) => field.onChange(checked)}
+                <PhotoUpload
+                  initialValue={employee.image}
+                  getUploadedImageId={(id) => {
+                    field.onChange(id);
+                    setValue("photoId", String(id));
+                  }}
                 />
               )}
             />
           </div>
-        </div>
+          <Controller
+            control={control}
+            name="photoId"
+            render={({ field }) => <input type="hidden" {...field} />}
+          />
 
-        {/* Right Column */}
-        <div className="flex flex-col mt-10 gap-6 w-[40%]">
-          <Controller
-            control={control}
-            name="designation"
-            rules={{ required: "Designation is required" }}
-            render={({ field }) => (
-              <FormTextInput
-                errorMessage={getError(errors.designation)}
-                label="Designation"
-                value={getString(field.value)}
-                placeholder="Designation"
-                onChange={field.onChange}
+          <div className="flex  w-full justify-center gap-4">
+            {/* Left Column */}
+            <div className="flex flex-col mt-10 gap-6 w-[40%]">
+              <Controller
+                control={control}
+                name="name"
+                rules={{ required: "Name is required" }}
+                render={({ field }) => (
+                  <FormTextInput
+                    errorMessage={getError(errors.name)}
+                    label="Name"
+                    value={getString(field.value)}
+                    placeholder="Name"
+                    onChange={field.onChange}
+                  />
+                )}
               />
-            )}
-          />
-          <Controller
-            control={control}
-            name="employeeCode"
-            rules={{ required: "Employee Code is required" }}
-            render={({ field }) => (
-              <FormTextInput
-                disabled
-                errorMessage={getError(errors.employeeCode)}
-                label="Employee Code"
-                value={getString(field.value)}
-                placeholder="Employee Code"
-                onChange={field.onChange}
+              <Controller
+                control={control}
+                name="phone"
+                rules={{
+                  required: "Phone number is required",
+                  pattern: {
+                    value: /^[0-9]{10}$/,
+                    message: "Invalid phone number",
+                  },
+                }}
+                render={({ field }) => (
+                  <FormTextInput
+                    errorMessage={getError(errors.phone)}
+                    label="Phone number"
+                    value={getString(field.value)}
+                    maxLength={10}
+                    placeholder="Phone"
+                    onChange={field.onChange}
+                  />
+                )}
               />
-            )}
-          />
-          <Controller
-            control={control}
-            name="joiningDate"
-            rules={{ required: "Joining Date is required" }}
-            render={({ field }) => (
-              <PickerInput
-                label="Joining Date"
-                value={field.value ? dayjs(field.value) : dayjs()}
-                setValue={field.onChange}
-                disableFuture={dayjs()}
-                errorMessage={getError(errors.joiningDate)}
+              <Controller
+                control={control}
+                name="role"
+                rules={{ required: "Role is required" }}
+                render={({ field }) => (
+                  <Autocomplete
+                    disablePortal
+                    options={Object.values(EmployeeRole)}
+                    disableClearable
+                    freeSolo={false}
+                    value={field.value || ""}
+                    onChange={(_, value) => field.onChange(value)}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Role"
+                        variant="outlined"
+                        inputProps={{ ...params.inputProps, readOnly: true }}
+                      />
+                    )}
+                  />
+                )}
               />
-            )}
-          />
-          <Controller
-            control={control}
-            name="dateOfBirth"
-            rules={{ required: "Date of birth is required" }}
-            render={({ field }) => (
-              <PickerInput
-                label="Date of Birth"
-                value={field.value ? dayjs(field.value) : null}
-                disableFuture={dayjs()}
-                setValue={field.onChange}
-                errorMessage={getError(errors.dateOfBirth)}
-              />
-            )}
-          />
-        </div>
-      </div>
+              <div className="flex flex-row items-center gap-2">
+                <p className="text-sm font-medium">Status:</p>
+                <Controller
+                  control={control}
+                  name="status"
+                  render={({ field }) => (
+                    <Switch
+                      checked={!!field.value}
+                      color="warning"
+                      onChange={(_, checked) => field.onChange(checked)}
+                    />
+                  )}
+                />
+              </div>
+            </div>
 
-      {/* Submit */}
-      <div className="flex flex-row mt-12 w-full justify-center items-center mb-5">
-        <CustomButton
-          label={isLoading || isFetching ? "Updating..." : "Update"}
-          onClick={handleSubmit(onSubmit)}
-          disabled={isLoading || isFetching}
-          buttonStyle={isLoading || isFetching ? "disabled" : "primary"}
-          customStyles="bg-orange hover:bg-darkOrange"
-        />
-      </div>
-    </CustomBox>
+            {/* Right Column */}
+            <div className="flex flex-col mt-10 gap-6 w-[40%]">
+              <Controller
+                control={control}
+                name="designation"
+                rules={{ required: "Designation is required" }}
+                render={({ field }) => (
+                  <FormTextInput
+                    errorMessage={getError(errors.designation)}
+                    label="Designation"
+                    value={getString(field.value)}
+                    placeholder="Designation"
+                    onChange={field.onChange}
+                  />
+                )}
+              />
+              <Controller
+                control={control}
+                name="employeeCode"
+                rules={{ required: "Employee Code is required" }}
+                render={({ field }) => (
+                  <FormTextInput
+                    disabled
+                    errorMessage={getError(errors.employeeCode)}
+                    label="Employee Code"
+                    value={getString(field.value)}
+                    placeholder="Employee Code"
+                    onChange={field.onChange}
+                  />
+                )}
+              />
+              <Controller
+                control={control}
+                name="joiningDate"
+                rules={{ required: "Joining Date is required" }}
+                render={({ field }) => (
+                  <PickerInput
+                    label="Joining Date"
+                    value={field.value ? dayjs(field.value) : dayjs()}
+                    setValue={field.onChange}
+                    disableFuture
+                    errorMessage={getError(errors.joiningDate)}
+                  />
+                )}
+              />
+              <Controller
+                control={control}
+                name="dateOfBirth"
+                rules={{ required: "Date of birth is required" }}
+                render={({ field }) => (
+                  <PickerInput
+                    label="Date of Birth"
+                    value={field.value ? dayjs(field.value) : null}
+                    disableFuture
+                    setValue={field.onChange}
+                    errorMessage={getError(errors.dateOfBirth)}
+                  />
+                )}
+              />
+            </div>
+          </div>
+
+          {/* Submit */}
+          <div className="flex flex-row mt-12 w-full justify-center items-center mb-5">
+            <CustomButton
+              label={isLoading || isFetching ? "Updating..." : "Update"}
+              onClick={handleSubmit(onSubmit)}
+              disabled={isLoading || isFetching}
+              buttonStyle={isLoading || isFetching ? "disabled" : "primary"}
+              customStyles="bg-orange hover:bg-darkOrange"
+            />
+          </div>
+        </div>
+      </CustomBox>
+    </>
   );
 };
 

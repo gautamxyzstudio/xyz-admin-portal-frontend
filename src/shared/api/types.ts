@@ -1,1 +1,3 @@
-export type IImageUploadResponse = { id: number }[];
+export type IImageUploadResponse = {
+  [x: string]: number; id: number 
+}[];

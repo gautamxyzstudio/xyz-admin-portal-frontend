@@ -85,7 +85,7 @@ const CreateLeaveDialog = ({
       setIsLoading(true);
       const response = await applyLeave({
         data: {
-          start_date: formatDateToMMDDYYYY(data.date.toDate()),
+          start_date: formatDateToMMDDYYYY(data.startDate.toDate()),
           end_date:
             data?.endDate && data?.endDate?.isValid()
               ? formatDateToMMDDYYYY(data.endDate.toDate())
@@ -101,7 +101,7 @@ const CreateLeaveDialog = ({
                   | "CL"
                   | "EL"
                   | "SL"
-                  | "un_paid"),
+                  | "un-paid"),
           leave_category: getLeaveCategory(data.leaveCategory) as
             | "short_leave"
             | "half_day"
@@ -124,7 +124,9 @@ const CreateLeaveDialog = ({
       if (response) {
         toast.success("Leave applied successfully");
         onSuccess();
+        reset() 
       }
+
     } catch (error: any) {
       toast.error(error?.message ?? "Failed to apply leave");
     } finally {
@@ -141,11 +143,17 @@ const CreateLeaveDialog = ({
         "& .MuiDialog-paper": {
           borderRadius: "16px",
           padding: 0,
+          overflow: "scroll",
+          msOverflowStyle: "none", 
+          scrollbarWidth: "none",
+        },
+        "& .MuiDialog-paper::-webkit-scrollbar": {
+          display: "none", 
         },
       }}
-      fullWidth
+      
     >
-      <CustomBox customClasses="p-6 flex flex-col gap-y-3">
+      <CustomBox customClasses="p-6 flex   flex-col gap-y-3">
         <h4 className="text-xl font-semibold">Apply Leave</h4>
         <LinearGradient customClasses=" " />
         <div className="flex w-full max-w-2xl flex-col gap-6 mt-2">
@@ -387,7 +395,7 @@ const CreateLeaveDialog = ({
               label="Cancel Leave"
               onClick={() => {
                 reset();
-              
+
                 onSuccess();
               }}
               buttonStyle="secondary"

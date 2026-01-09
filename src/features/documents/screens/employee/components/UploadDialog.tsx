@@ -78,7 +78,7 @@ const UploadDialog = ({ open, onClose }: Props) => {
 
   return (
     <div className="fixed  inset-0 z-999 bg-black/40 flex items-center justify-center">
-      <div className="bg-white w-full max-w-md rounded-xl p-6">
+      <div className="bg-white w-full max-w-md rounded-xl p-4">
         <h2 className="text-lg font-semibold mb-1">Upload New Document</h2>
         <LinearGradient customClasses="mb-3" />
         <label className="text-[#797571] text-base font-normal leading-6.5">
@@ -112,7 +112,7 @@ const UploadDialog = ({ open, onClose }: Props) => {
               hidden
               onChange={handleFileSelect}
             />
- 
+
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
@@ -135,7 +135,7 @@ const UploadDialog = ({ open, onClose }: Props) => {
           <button
             onClick={handleUpload}
             disabled={isUploading || isAdding}
-            className="px-4 py-2 border bg-[#FF7300] rounded-lg text-white w-37.5"
+            className="px-4 py-2 border bg-primary rounded-lg text-white w-37.5"
           >
             {isUploading || isAdding ? (
               <ActivityIndicator size={18} />

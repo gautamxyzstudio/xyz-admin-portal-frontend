@@ -14,7 +14,7 @@ const ProfileHeader: React.FC = () => {
   const getStatusClasses = (status: string) =>
     status === "active" ? "bg-lightGreen text-green" : "bg-lightRed text-red";
 
-  const avatarSrc =
+  const avatarSrc = 
     !avatarError && userDetails?.photo
       ? userDetails.photo.startsWith("http")
         ? userDetails.photo

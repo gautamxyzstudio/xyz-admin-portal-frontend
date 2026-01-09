@@ -115,7 +115,7 @@ const EmployeeList = () => {
     {
       field: "action",
       headerName: "Action",
-      width:100,
+      width: 100,
       renderCell: (params) => (
         <div className="flex w-full justify-center gap-3">
           {(user.user_type === "Admin" || user.user_type === "Hr") && (

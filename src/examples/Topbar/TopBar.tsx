@@ -11,6 +11,16 @@ const TopBar = () => {
   const user = useSelector(userDetailsInState);
   const [openDrawer, setOpenDrawer] = useState(false);
 
+  const openOutlook = () => {
+    // Try to open Outlook desktop app
+    window.location.href = "ms-outlook://";
+
+    // Fallback to Outlook Web after 1 second
+    setTimeout(() => {
+      window.open("https://outlook.office.com/mail/", "_blank");
+    }, 1000);
+  };
+
   return (
     <CustomBox customClasses="w-full rounded-xl p-3.5 flex items-center justify-between sticky top-0 shadow z-99">
       {/* Left */}
@@ -19,8 +29,12 @@ const TopBar = () => {
       {/* Right */}
       <div className="flex items-center gap-2.5">
         {/* Message icon */}
-        <div className="w-10 h-10 p-2 flex items-center justify-center rounded-xl bg-gray-100 cursor-pointer sti">
-          <img src={Icons.OUTLOOK} alt="" />
+      
+        <div
+          onClick={openOutlook}
+          className="w-10 h-10 p-2 flex items-center justify-center rounded-xl bg-gray-100 cursor-pointer"
+        >
+          <img src={Icons.OUTLOOK} alt="Outlook" />
         </div>
 
         {/* Notification icon */}

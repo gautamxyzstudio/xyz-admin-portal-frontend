@@ -7,7 +7,7 @@ export type IApplyLeaveArgs = {
     decline_reason: string;
     title: string;
     leave_category: "short_leave" | "half_day" | "full_day";
-    leave_type: "CL" | "EL" | "SL" | "un_paid" | null;
+    leave_type: "CL" | "EL" | "SL" | "un-paid" | null;
     half_day_type: "first_half" | "second_half" | null;
     start_time?: string | null;
     user: string | number;
@@ -27,7 +27,7 @@ export interface ILeave {
   days?: string;
   leave_category: "short_leave" | "half_day" | "full_day";
   half_day_type: "first_half" | "second_half";
-  leave_type?: "CL" | "EL" | "SL" | "un_paid";
+  leave_type?: "CL" | "EL" | "SL" | "un-paid";
   user: {
     data: {
       id: number;
@@ -66,7 +66,7 @@ export interface ILeaveDetailsResponse {
   days?: string;
   leave_category: "short_leave" | "half_day" | "full_day";
   half_day_type: "first_half" | "second_half" | null;
-  leave_type: "CL" | "EL" | "SL" | "un_paid" | null;
+  leave_type: "CL" | "EL" | "SL" | "un-paid" | null;
 }
 
 export interface ILeaveResponse {
@@ -83,7 +83,7 @@ export interface ILeaveResponse {
       title: string;
       leave_category: "short_leave" | "half_day" | "full_day";
       half_day_type: "first_half" | "second_half";
-      leave_type: "CL" | "EL" | "SL" | "un_paid";
+      leave_type: "CL" | "EL" | "SL" | "un-paid";
       user: {
         data: {
           id: number;
@@ -124,7 +124,7 @@ export interface IUpdateLeaveArgs {
   leave_category?: "short_leave" | "half_day" | "full_day";
   start_time?: string | null;
   half_day_type: "first_half" | "second_half";
-  leave_type: "CL" | "EL" | "SL" | "un_paid";
+  leave_type: "CL" | "EL" | "SL" | "un-paid";
 }
 
 export interface IApproveLeaveResponse {
@@ -142,7 +142,7 @@ export interface IApproveLeaveResponse {
     title: string;
     leave_category: "short_leave" | "half_day" | "full_day";
     half_day_type: "first_half" | "second_half" | null;
-    leave_type: "CL" | "EL" | "SL" | "un_paid" | null;
+    leave_type: "CL" | "EL" | "SL" | "un-paid" | null;
     start_time: string | null;
   };
   leaveDaysDeducted: number;

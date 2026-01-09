@@ -12,6 +12,8 @@ import PickerInput from "../../../../shared/components/pickerInput/PickerInput";
 import { toast } from "react-toastify";
 import CustomBox from "../../../../components/CustomBox/CustomBox";
 import CustomButton from "../../../../components/CustomButton/CustomButton";
+import { useNavigate } from "react-router";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 const AddEmployeeForm = ({
   onPressSubmit,
@@ -19,6 +21,7 @@ const AddEmployeeForm = ({
   onPressSubmit: (data: AddEmployeeFormData) => void;
 }) => {
   const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
 
   const defaultValues: AddEmployeeFormData = {
     name: "",
@@ -59,6 +62,15 @@ const AddEmployeeForm = ({
   return (
     <CustomBox customClasses="w-full  p-3">
       <form onSubmit={handleSubmit(onSubmit)}>
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-1 text-sm font-bold text-primary cursor-pointer"
+        >
+          <ArrowBackIcon fontSize="small" />
+          Back
+        </button>
+
         <div className="flex flex-row w-full justify-center items-center">
           <Controller
             control={control}
@@ -276,14 +288,6 @@ const AddEmployeeForm = ({
           </div>
         </div>
         <div className="flex flex-row mt-12 w-full justify-center items-center">
-          {/* <MDButton
-            onClick={handleSubmit(onSubmit)}
-            variant="contained"
-            size="medium"
-            color="orange"
-          >
-            Create
-          </MDButton> */}
           <div onSubmit={handleSubmit(onSubmit)}>
             <CustomButton customStyles="w-1/1" label="Create" type="submit" />
           </div>

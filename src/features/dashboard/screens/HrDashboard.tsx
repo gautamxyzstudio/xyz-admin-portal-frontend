@@ -13,6 +13,8 @@ import { apiendpoint } from "../../../api/endpoint";
 import { useAppSelector } from "../../../state/store";
 
 import { useForm, Controller } from "react-hook-form";
+import PickerInput from "../../../shared/components/pickerInput/PickerInput";
+import dayjs from "dayjs";
 
 interface DashboardStats {
   totalEmployees: number;
@@ -33,6 +35,7 @@ const HrDashboard = () => {
 
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   //  useForm
   const {
@@ -68,6 +71,8 @@ const HrDashboard = () => {
   // Handle announcement creation
   const handleCreateAnnouncement = async (data: AnnouncementPayload) => {
     try {
+      setLoading(true);
+
       await axios.post(
         apiendpoint.getAnnouncements,
         {
@@ -79,9 +84,12 @@ const HrDashboard = () => {
         },
         { headers: { Authorization: `Bearer ${user?.token}` } }
       );
+
       handleClose();
     } catch (error) {
       console.error("Announcement POST error", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -204,14 +212,15 @@ const HrDashboard = () => {
             control={control}
             rules={{ required: "Date is required" }}
             render={({ field }) => (
-              <TextField
-                {...field}
+              <PickerInput
                 label="Date"
-                type="date"
-                InputLabelProps={{ shrink: true }}
-                error={!!errors.date}
-                helperText={errors.date?.message}
-                fullWidth
+                value={field.value ? dayjs(field.value) : null}
+                setValue={(date) =>
+                  field.onChange(date ? date.toISOString() : "")
+                }
+                disablePast
+                popperPlacement="top-end"
+                errorMessage={errors.date?.message ?? ""}
               />
             )}
           />
@@ -219,7 +228,13 @@ const HrDashboard = () => {
           <LinearGradient />
 
           <div className="flex gap-3">
-            <CustomButton customStyles="w-30" label="Create" type="submit" />
+            <CustomButton
+              customStyles="w-30"
+              label={loading ? "Creating...." : "Create"}
+              type="submit"
+              disabled={loading}
+            />
+
             <CustomButton
               label="Cancel"
               customStyles="w-30"

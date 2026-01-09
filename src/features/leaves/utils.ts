@@ -7,7 +7,7 @@ export const getLeaveType = (type: "Causal Leave" | "Earn Leave" | "Sick Leave" 
     case "Sick Leave":
       return "SL";
     case "Unpaid Leave":
-      return "un_paid";
+      return "un-paid";
     default:
       return "";
   }

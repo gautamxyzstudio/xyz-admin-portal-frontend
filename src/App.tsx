@@ -3,8 +3,6 @@ import "react-toastify/dist/ReactToastify.css";
 import { Routes, Route } from "react-router-dom";
 import PrivateRoute from "./PrivateRoutes";
 import HolidayList from "./features/holydayList/screens/holydayList/HolydayList";
-import AddHoliday from "./features/holydayList/screens/addHoliday/AddHolidayDialog.js";
-import EditHoliday from "./features/holydayList/screens/editHoliday/EditHolidayDialog.js";
 import LoginPage from "./features/auth/screens/login/Login";
 import { Provider } from "react-redux";
 import store, { persistor } from "./state/store";
@@ -144,22 +142,22 @@ const App: React.FC = () => {
                         </DashboardLayout>
                       }
                     />
-                    <Route
+                    {/* <Route
                       path="holidays/add"
                       element={
                         <DashboardLayout>
                           <AddHoliday />
                         </DashboardLayout>
                       }
-                    />
-                    <Route
+                    /> */}
+                    {/* <Route
                       path="holidays/edit/:id"
                       element={
                         <DashboardLayout>
                           <EditHoliday />
                         </DashboardLayout>
                       }
-                    />
+                    /> */}
                     <Route
                       path="blog"
                       element={

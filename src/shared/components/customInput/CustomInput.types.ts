@@ -1,4 +1,5 @@
-import { TextFieldProps } from '@mui/material';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { TextFieldProps } from '@mui/material';
 export interface ICustomInputProps extends Omit<TextFieldProps, 'InputProps'> {
   label?: string | undefined;
   value: string | number | null | undefined;
