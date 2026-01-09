@@ -7,7 +7,6 @@ import { userInState } from "../../../auth/authSlice";
 import { toast } from "react-toastify";
 import {
   getLeaveStatusColor,
-  getLeaveTypeTitle,
 } from "../../../../utils/utils";
 import EmptyScreenView from "../../../../shared/components/EmptyScreenView/EmptyScreenView";
 import React, { useEffect, useState } from "react";
@@ -27,6 +26,7 @@ import { Dialog } from "@mui/material";
 import LinearGradient from "../../../../components/LinearGradient/LinearGradient.tsx";
 import { convertTo12HourFormat } from "../../../../utils/timeUtils.ts";
 import CreateLeaveDialog from "../createLeaveDialog/CreateLeaveDialog.tsx";
+import { getLeaveCategoryTitle } from "../../utils.ts";
 
 const LeaveList = () => {
   // const navigate = useNavigate();
@@ -134,7 +134,7 @@ const LeaveList = () => {
       width: 120,
       renderCell: (params) =>
         params?.row?.leave_category
-          ? getLeaveTypeTitle(params.row.leave_category)
+          ? getLeaveCategoryTitle(params.row.leave_category)
           : "N/A",
     },
 
@@ -318,7 +318,7 @@ const LeaveList = () => {
                   Leave Duration
                 </span>
                 <p className="text-base capitalize">
-                  {getLeaveTypeTitle(data?.leave_category ?? "")}
+                  {getLeaveCategoryTitle(data?.leave_category ?? "")}
                 </p>
               </div>
               {data?.leave_category === "short_leave" && (

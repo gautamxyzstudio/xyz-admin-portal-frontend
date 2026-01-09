@@ -27,3 +27,13 @@ export const getLeaveCategory = (category: "Full Day" | "Half Day" | "Short Leav
   }
 };
 
+export const getLeaveCategoryTitle = (type: string) => {
+  switch (type) {
+    case "short_leave":
+      return "Short Day Leave";
+    case "full_day":
+      return "Full Day Leave";
+    case "half_day":
+      return "Half Day Leave";
+  }
+};

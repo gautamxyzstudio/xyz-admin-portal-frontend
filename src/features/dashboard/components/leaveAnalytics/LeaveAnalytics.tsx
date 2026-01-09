@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   getLeaveStatusColor,
-  getLeaveTypeTitle,
 } from "../../../../utils/utils";
 import CustomBox from "../../../../components/CustomBox/CustomBox";
 import CustomDataTable from "../../../../shared/components/customDataTable/CustomDataTable";
@@ -9,6 +8,7 @@ import EmptyScreenView from "../../../../shared/components/EmptyScreenView/Empty
 import type { GridColDef } from "@mui/x-data-grid";
 import dayjs from "dayjs";
 import { Link } from "react-router";
+import { getLeaveCategoryTitle } from "../../../leaves/utils";
 
 const LeaveAnalytics = ({
   leaves,
@@ -33,7 +33,7 @@ const LeaveAnalytics = ({
       width: 120,
       renderCell: (params) =>
         params?.row?.leave_duration
-          ? getLeaveTypeTitle(params.row.leave_duration)
+          ? getLeaveCategoryTitle(params.row.leave_category)
           : "N/A",
     },
     {

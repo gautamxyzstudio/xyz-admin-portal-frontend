@@ -1,0 +1,73 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useCallback, useState } from "react";
+import { useLazyGetAllLeavesQuery } from "../leavesApi";
+import type { ILeave } from "../leaves.types";
+import { useLoadingWrapper } from "../../../wrappers/loadingWrapper/LoadingWrapper.context";
+import { toast } from "react-toastify";
+
+// Custom hook for leaves data management
+export const useLeavesData = () => {
+  const [getAllLeaves, { isFetching, isLoading }] = useLazyGetAllLeavesQuery();
+  const [leavesData, setLeavesData] = useState<ILeave[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [fetchError, setFetchError] = useState<string>("");
+  const { setIsLoading } = useLoadingWrapper();
+
+  const fetchLeaves = useCallback(
+    async (
+      params: {
+        page: number;
+        search: string;
+      },
+      showLoading: boolean = true
+    ) => {
+      if (showLoading) {
+        setIsLoading(true);
+      }
+
+      try {
+        setFetchError(""); // Clear previous errors
+        const response = await getAllLeaves({
+          page: params.page,
+          search: params.search,
+        }).unwrap();
+
+        setLeavesData(response.data);
+        setTotalPages(response.pagination?.pageCount || 0);
+        setPage(response.pagination?.page || params.page);
+
+        return response;
+      } catch (error: any) {
+        setLeavesData([]);
+        const errorMessage =
+          error?.data?.message ||
+          error?.error ||
+          "Failed to fetch leaves. Please try again.";
+        setFetchError(errorMessage);
+        toast.error(errorMessage);
+        throw error;
+      } finally {
+        if (showLoading) {
+          setIsLoading(false);
+        }
+      }
+    },
+    [getAllLeaves, setIsLoading]
+  );
+
+  const clearFetchError = useCallback(() => {
+    setFetchError("");
+  }, []);
+
+  return {
+    leavesData,
+    page,
+    totalPages,
+    isFetching,
+    isLoading,
+    fetchError,
+    fetchLeaves,
+    clearFetchError,
+  };
+};

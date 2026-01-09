@@ -52,7 +52,7 @@ export const endpoints = {
   ) => {
     console.log("=-=-=-=-=-=-=-");
 
-    let url = `${baseUrl}/api/leave-statuses?pagination[page]=${
+    let url = `${baseUrl}/api/leave-statuses?populate=*&pagination[page]=${
       page ?? 1
     }&pagination[pageSize]=10`;
     if (search) {
