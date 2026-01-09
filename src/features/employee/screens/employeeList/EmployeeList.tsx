@@ -41,8 +41,8 @@ const EmployeeList = () => {
 
   if (!user) return null;
 
-  const filteredEmployeeList = employeeList?.filter(
-    (employee) => employee.id !== user.id
+  const filteredEmployeeList = employeeList.filter(
+    (employee) => employee.id !== user?.id
   );
 
   const deleteUserHandler = async (id: string, detailsId: string) => {
@@ -92,22 +92,22 @@ const EmployeeList = () => {
         <EmployeeDesignationRow title={params.row.designation} />
       ),
     },
-   {
-  field: "joiningDate",
-  headerName: "Joining Date",
-  width: 160,
-  renderCell: (params: any) => {
-    console.log("ROW DATA ", params.row); 
+    {
+      field: "joiningDate",
+      headerName: "Joining Date",
+      width: 160,
+      renderCell: (params: any) => {
+        console.log("ROW DATA ", params.row);
 
-    return (
-      <span className="text-xs font-medium text-gray-700">
-        {params.row.joining_date
-          ? dayjs(params.row.joining_date).format("DD/MM/YYYY")
-          : "-"}
-      </span>
-    );
-  },
-},
+        return (
+          <span className="text-xs font-medium text-gray-700">
+            {params.row.joining_date
+              ? dayjs(params.row.joining_date).format("DD/MM/YYYY")
+              : "-"}
+          </span>
+        );
+      },
+    },
 
     {
       field: "status",
