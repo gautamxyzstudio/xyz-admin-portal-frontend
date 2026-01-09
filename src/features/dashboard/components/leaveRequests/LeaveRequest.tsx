@@ -26,11 +26,11 @@ import EmployeeTableRow from "../../../employee/components/employeeTableRow/Empl
 import {
   convertTo12HourFormat,
   formatDateToReadable,
-  getLeaveTypeTitle,
 } from "../../../../utils/utils";
 
 import { useLoadingWrapper } from "../../../../wrappers/loadingWrapper/LoadingWrapper.context";
 import dayjs from "dayjs";
+import { getLeaveCategoryTitle } from "../../../leaves/utils";
 
 const LeaveRequest = () => {
   const dispatch = useDispatch();
@@ -146,7 +146,7 @@ const LeaveRequest = () => {
       width: 160,
       renderCell: ({ row }: any) => (
         <span className="text-sm font-medium">
-          {getLeaveTypeTitle(row.leave_duration)}
+          {getLeaveCategoryTitle(row.leave_category)}
         </span>
       ),
     },
@@ -250,7 +250,7 @@ const LeaveRequest = () => {
               <Detail label="Description" value={selectedLeave.description} />
               <Detail
                 label="Leave Type"
-                value={getLeaveTypeTitle(selectedLeave.leave_duration)}
+                value={getLeaveCategoryTitle(selectedLeave.leave_category)}
               />
               <Detail label="Status" value={selectedLeave.status} />
               <Detail

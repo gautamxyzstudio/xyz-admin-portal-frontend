@@ -7,6 +7,7 @@ import type {
   IApproveLeaveResponse,
   ILeave,
   ILeaveDetailsResponse,
+  ILeaveResponse,
   IUpdateLeaveArgs,
 } from "./leaves.types";
 
@@ -119,14 +120,11 @@ export const leavesApi = enhancedLeavesApi.injectEndpoints({
       }
     >({
       query: ({ page, search }) => ({
-        url: endpoints.getLeavesList(
-          page,
-          search,
-        ),
+        url: endpoints.getLeavesList(page, search),
         providesTags: ["Leaves"],
         method: "GET",
       }),
-      transformResponse: (response: any) => {
+      transformResponse: (response: ILeaveResponse) => {
         const data = response.data.map((item: any) => ({
           ...item,
         }));

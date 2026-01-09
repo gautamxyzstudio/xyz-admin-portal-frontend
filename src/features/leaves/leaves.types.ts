@@ -15,7 +15,6 @@ export type IApplyLeaveArgs = {
 };
 
 export interface ILeave {
-  [x: string]: string;
   start_date: string;
   id?: number;
   end_date: string;
@@ -24,7 +23,7 @@ export interface ILeave {
   description: string;
   decline_reason: string;
   title: string;
-   start_time?: string | null;
+  start_time?: string | null;
   days?: string;
   leave_category: "short_leave" | "half_day" | "full_day";
   half_day_type: "first_half" | "second_half";
@@ -63,7 +62,7 @@ export interface ILeaveDetailsResponse {
   description: string;
   decline_reason: string;
   title: string;
-   start_time?: string | null;
+  start_time?: string | null;
   days?: string;
   leave_category: "short_leave" | "half_day" | "full_day";
   half_day_type: "first_half" | "second_half" | null;
@@ -80,7 +79,7 @@ export interface ILeaveResponse {
       createdAt: string;
       description: string;
       decline_reason: string;
-       start_time?: string | null;
+      start_time?: string | null;
       title: string;
       leave_category: "short_leave" | "half_day" | "full_day";
       half_day_type: "first_half" | "second_half";
@@ -123,7 +122,7 @@ export interface IUpdateLeaveArgs {
   title: string;
   user: string | number;
   leave_category?: "short_leave" | "half_day" | "full_day";
-   start_time?: string | null;
+  start_time?: string | null;
   half_day_type: "first_half" | "second_half";
   leave_type: "CL" | "EL" | "SL" | "un_paid";
 }
@@ -143,7 +142,7 @@ export interface IApproveLeaveResponse {
     title: string;
     leave_category: "short_leave" | "half_day" | "full_day";
     half_day_type: "first_half" | "second_half" | null;
-    leave_type: "CL" | "EL" | "SL" | "un_paid"| null;
+    leave_type: "CL" | "EL" | "SL" | "un_paid" | null;
     start_time: string | null;
   };
   leaveDaysDeducted: number;

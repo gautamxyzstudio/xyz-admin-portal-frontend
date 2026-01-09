@@ -76,16 +76,6 @@ export const formatDateToReadable = (dateString: string): string => {
   });
 };
 
-export const getLeaveTypeTitle = (type: string) => {
-  switch (type) {
-    case "short_leave":
-      return "Short Day Leave";
-    case "full_day":
-      return "Full Day Leave";
-    case "half_day":
-      return "Half Day Leave";
-  }
-};
 
 export const getWeekDates = (): {
   startDate: string;
