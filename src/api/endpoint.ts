@@ -21,10 +21,6 @@ export const apiendpoint = {
   filterDateRange: (startDate: string, endDate: string) =>
     `${baseUrl}/api/daily-attendances/?populate=*&sort=id&filters[Date][$gte]=${startDate}&filters[Date][$lte]=${endDate}`,
 
-  //Endpoint for Holidays
-  getHolidaysList: `${baseUrl}/api/holiday-lists?sort=id`,
-  postHolidays: `${baseUrl}/api/holiday-lists`,
-
   // Blogs Endpoint
   getBlogsList: (page?: number) =>
     `${baseUrl}/api/add-blogs?populate=*&sort=id:desc&pagination[page]=${
@@ -38,6 +34,7 @@ export const apiendpoint = {
   updateLeave: (id: number) => `${baseUrl}/api/leave-statuses/${id}`,
   getUserLeaves: (id: number) => `${baseUrl}/api/users/${id}/?populate=*`,
   getHolidays: `${baseUrl}/api/holiday-lists`,
+  getHolidayById: (id: number) => `${baseUrl}/api/holiday-lists/${id}`,
   deleteHoliday: (id: number) => `${baseUrl}/api/holiday-lists/${id}`,
   postHoliday: `${baseUrl}/api/holiday-lists`,
   patchHoliday: (id: number) => `${baseUrl}/api/holiday-lists/${id}`,
@@ -53,5 +50,4 @@ export const apiendpoint = {
   getAnnouncements: `${baseUrl}/api/announcements`,
   // STATS API
   getDashboardStats: `${baseUrl}/api/dashboard/stats`,
-
 };

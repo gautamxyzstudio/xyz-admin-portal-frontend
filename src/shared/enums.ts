@@ -5,7 +5,7 @@
 export const EmployeeRole = {
   HR: "Hr",
   EMPLOYEE: "Employee",
-  SEO: "Seo",
+  // SEO: "Seo",
 } as const;
 
 export type EmployeeRole = (typeof EmployeeRole)[keyof typeof EmployeeRole];
@@ -14,7 +14,7 @@ export const UserType = {
   ADMIN: "Admin",
   EMPLOYEE: EmployeeRole.EMPLOYEE,
   HR: EmployeeRole.HR,
-  SEO: EmployeeRole.SEO,
+  // SEO: EmployeeRole.SEO,
 } as const;
 
 export type UserType = (typeof UserType)[keyof typeof UserType];
@@ -29,20 +29,15 @@ export const ROUTE_PERMISSIONS: Record<UserType, readonly string[]> = {
     "/employees",
     "/attendance",
     "/leaves",
-    "/leaves/create",
-    "/leaves/update",
     "/employees/register",
     "/employees/:name",
     "/profile",
     "/holidays",
-    "/holidays/add",
-    "/holidays/edit/:id",
     "/all-leaves",
     "/blog",
     "/blog/post_blog",
     "/all-employee-docs",
     "/blog/edit_blog/:id",
-    "/billing",
     "/notifications",
   ],
   [UserType.HR]: [
@@ -50,8 +45,6 @@ export const ROUTE_PERMISSIONS: Record<UserType, readonly string[]> = {
     "/employees",
     "/attendance",
     "/leaves",
-    "/leaves/create",
-    "/leaves/update",
     "/documents",
     "/employees/register",
     "/employees/:name",
@@ -59,8 +52,6 @@ export const ROUTE_PERMISSIONS: Record<UserType, readonly string[]> = {
     "/all-leaves",
     "/all-employee-docs",
     "/holidays",
-    "/holidays/add",
-    "/holidays/edit/:id",
     "/blog",
     "/blog/post_blog",
     "/blog/edit_blog/:id",
@@ -70,24 +61,25 @@ export const ROUTE_PERMISSIONS: Record<UserType, readonly string[]> = {
     "/attendance",
     "/leaves",
     "/documents",
-    "/leaves/create",
-    "/leaves/update",
     "/profile",
     "/holidays",
-  ],
-  [UserType.SEO]: [
-    "/",
-    "/profile",
-    "/documents",
-    "/leaves",
-    "/attendance",
     "/blog",
-    "/holidays",
     "/blog/post_blog",
-    "/leaves/create",
-    "/leaves/update",
     "/blog/edit_blog/:id",
   ],
+  // [UserType.SEO]: [
+  //   "/",
+  //   "/profile",
+  //   "/documents",
+  //   "/leaves",
+  //   "/attendance",
+  //   "/blog",
+  //   "/holidays",
+  //   "/blog/post_blog",
+  //   "/leaves/create",
+  //   "/leaves/update",
+  //   "/blog/edit_blog/:id",
+  // ],
 } as const;
 
 /* =========================

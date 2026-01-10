@@ -3,19 +3,15 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import type { GridColDef } from "@mui/x-data-grid";
-
 import EmployeeTableRow from "../../components/employeeTableRow/EmployeeTableRow";
-
 import {
   useDeleteEmployeeMutation,
   useDeleteUserMutation,
   useGetEmployeeListQuery,
 } from "../../employeeApis";
-
 import { userInState } from "../../../auth/authSlice";
 import { employeeListInState } from "../../employeeSlice";
 import { useLoadingWrapper } from "../../../../wrappers/loadingWrapper/LoadingWrapper.context.js";
-
 import CustomDataTable from "../../../../shared/components/customDataTable/CustomDataTable.js";
 import EmployeeDesignationRow from "../../components/employeeDesignationRow/EmployeeDesignationRow.js";
 import EmployeeStatusRow from "../../components/employeestatusRow/EmployeeStatusRow.js";
@@ -44,7 +40,7 @@ const EmployeeList = () => {
   const filteredEmployeeList = employeeList.filter(
     (employee) => employee.id !== user?.id
   );
-  console.log("Employee List Data:", filteredEmployeeList);
+  // console.log("Employee List Data:", filteredEmployeeList);
 
   const deleteUserHandler = async (id: string, detailsId: string) => {
     try {
@@ -147,9 +143,9 @@ const EmployeeList = () => {
   ];
 
   return (
-    <CustomBox customClasses="p-3">
+    <CustomBox customClasses="p-6 w-full h-full overflow-scroll scroll-hide">
       {/* ===== Header ===== */}
-      <div className="mx-4 flex justify-between items-center ">
+      <div className="flex justify-between items-center ">
         <h2 className="text-black text-lg font-semibold">Employee </h2>
 
         {(user.user_type === "Admin" || user.user_type === "Hr") && (
@@ -164,7 +160,7 @@ const EmployeeList = () => {
       </div>
 
       {/* ===== Table ===== */}
-      <div className="h-[70vh] mt-6 px-4">
+      <div className="h-full mt-6 ">
         <CustomDataTable
           columns={columns}
           rows={filteredEmployeeList}

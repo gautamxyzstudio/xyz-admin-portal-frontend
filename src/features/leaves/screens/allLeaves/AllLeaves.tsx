@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState, useCallback } from "react";
 import type { GridColDef } from "@mui/x-data-grid";
 import { TextField, InputAdornment, Pagination } from "@mui/material";
@@ -11,6 +10,7 @@ import CustomButton from "../../../../components/CustomButton/CustomButton.js";
 import dayjs from "dayjs";
 import { getLeaveCategoryTitle } from "../../utils.js";
 import { getLeaveStatusColor } from "../../../../utils/utils.js";
+import { useDebounce } from "../../../../hooks/useDebounce.js";
 
 const AllLeaves = () => {
   const {
@@ -24,58 +24,25 @@ const AllLeaves = () => {
     clearFetchError,
   } = useLeavesData();
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const debouncedSearch = useDebounce(searchQuery, 300);
 
   // Load current data on mount
   useEffect(() => {
-    fetchLeaves(
-      {
-        page: 1,
-        search: searchQuery,
-      },
-      false
-    ).catch(() => {
-      // Error is already handled in fetchLeaves
-    }); // Don't show loading on initial load
-  }, []);
+    fetchLeaves({
+      page: 1,
+      username: debouncedSearch.trim() || undefined,
+    }).catch(() => {});
+  }, [debouncedSearch, fetchLeaves]);
 
-  const handleSearchChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setSearchQuery(e.target.value);
-    },
-    [setSearchQuery]
-  );
-
-  const handleSearchKeyPress = useCallback(
-    async (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Enter" && searchQuery.trim()) {
-        await fetchLeaves(
-          {
-            page: 1,
-
-            search: searchQuery,
-          },
-          true
-        ).catch(() => {
-          // Error is already handled in fetchLeaves
-        });
-      }
-    },
-    [searchQuery]
-  );
-
+  // Pagination
   const handlePageChange = useCallback(
     async (newPage: number) => {
-      await fetchLeaves(
-        {
-          page: newPage,
-          search: searchQuery,
-        },
-        true
-      ).catch(() => {
-        // Error is already handled in fetchLeaves
-      }); // Show loading for pagination
+      await fetchLeaves({
+        page: newPage,
+        username: debouncedSearch.trim() || undefined,
+      }).catch(() => {});
     },
-    [fetchLeaves, searchQuery]
+    [fetchLeaves, debouncedSearch]
   );
 
   const columns: GridColDef[] = [
@@ -83,15 +50,13 @@ const AllLeaves = () => {
       field: "startDate",
       headerName: "Start Date",
       width: 100,
-      renderCell: (params) =>
-        dayjs(params.row.start_date).format("DD/MM/YYYY"),
+      renderCell: (params) => dayjs(params.row.start_date).format("DD/MM/YYYY"),
     },
     {
       field: "user",
       headerName: "Employee Name",
       width: 160,
-      renderCell: (params) =>
-        params.row.user.username,
+      renderCell: (params) => params.row.user.username,
     },
     {
       field: "title",
@@ -103,8 +68,7 @@ const AllLeaves = () => {
       field: "leaveType",
       headerName: "Leave Type",
       width: 130,
-      renderCell: (params) =>
-        getLeaveCategoryTitle(params.row.leave_category),
+      renderCell: (params) => getLeaveCategoryTitle(params.row.leave_category),
     },
     {
       field: "status",
@@ -113,7 +77,9 @@ const AllLeaves = () => {
       renderCell: (params) => {
         return (
           <span
-            className={`${getLeaveStatusColor(params.row.status)} py-1.25 px-3.75 rounded-3xl text-xs`}
+            className={`${getLeaveStatusColor(
+              params.row.status
+            )} py-1.25 px-3.75 rounded-3xl text-xs`}
           >
             {params.row.status}
           </span>
@@ -136,8 +102,7 @@ const AllLeaves = () => {
           <TextField
             label="Search"
             value={searchQuery}
-            onChange={handleSearchChange}
-            onKeyPress={handleSearchKeyPress}
+            onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by employee name, email, or leave title..."
             InputProps={{
               startAdornment: (
@@ -178,13 +143,10 @@ const AllLeaves = () => {
                 disabled={isFetching}
                 onClick={() => {
                   clearFetchError();
-                  fetchLeaves(
-                    {
-                      page: 1,
-                      search: searchQuery,
-                    },
-                    true
-                  ).catch(() => {
+                  fetchLeaves({
+                    page: 1,
+                    username: debouncedSearch.trim() || undefined,
+                  }).catch(() => {
                     // Error is already handled in fetchLeaves
                   });
                 }}

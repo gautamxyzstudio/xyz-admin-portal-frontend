@@ -60,7 +60,7 @@ const ProfileInformation: React.FC = () => {
                 <InfoItem
                   icon={Icons.JOINING_DATE}
                   label={"Joining Date"}
-                  value={userDetails?.joining_date}
+                  value={userDetails?.joinig_date}
                 />
               </div>
             </div>

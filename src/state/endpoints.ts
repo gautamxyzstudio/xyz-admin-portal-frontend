@@ -65,12 +65,12 @@ export const endpoints = {
   getUserLeaves: `${baseUrl}/api/leave-statuses/my-leaves`,
   getUserALlLeaves: (
     page: number,
-    search?: string
+    username?: string
   ) => {
     let url = `${baseUrl}/api/leave-statuses/my-leaves?page=${page}&pageSize=10`;
 
-    if (search) {
-      url += `&search=${encodeURIComponent(search)}`;
+    if (username) {
+      url += `&username=${encodeURIComponent(username)}`;
     }
 
     return url;

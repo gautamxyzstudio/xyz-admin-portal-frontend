@@ -84,13 +84,13 @@ const EmployeeDashboard = () => {
 
   // upComing Holiday
   const processedHolidays = useMemo<ProcessedHoliday[]>(() => {
-    if (!holidays?.data) return [];
+    if (!holidays) return [];
 
     const today = new Date();
     today.setHours(0, 0, 0, 0); // normalize
 
     return (
-      holidays.data
+      holidays
         .map((holiday: any) => {
           const data = holiday.attributes ?? holiday;
           const date = new Date(data.date);

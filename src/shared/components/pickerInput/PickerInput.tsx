@@ -59,7 +59,7 @@ const PickerInput = ({
         slotProps={{
           textField: {
             error: !!errorMessage,
-            helperText: errorMessage,
+            helperText: !!errorMessage,
             ...slotProps?.textField,
           },
 

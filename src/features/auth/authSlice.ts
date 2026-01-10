@@ -38,15 +38,18 @@ const authSlice = createSlice({
             email: action?.payload?.email,
             role: action?.payload?.role?.name,
             name: action?.payload?.user_detial?.name,
-            leave_balance: action?.payload?.leave_balance,
-            unpaid_leave_balance: action?.payload?.unpaid_leave_balance,
             designation: action?.payload?.user_detial?.designation,
-            joining_date: action?.payload?.user_detial?.joiningDate,
+            joinig_date: action?.payload?.user_detial?.joinig_date,
+            date_of_birth: action?.payload?.user_detial?.date_of_birth,
             status: action?.payload?.user_detial?.status,
+            active_blogs: action?.payload?.user_detial?.active_blogs,
             phoneNumber: action?.payload?.user_detial?.phoneNumber,
             empCode: action?.payload?.user_detial?.empCode,
             photo: action?.payload?.user_detial?.Photo
               ? action?.payload?.user_detial?.Photo[0]?.url
+              : null,
+            coverImage: action?.payload?.user_detial?.coverImage
+              ? action?.payload?.user_detial?.coverImage.url
               : null,
           };
         }

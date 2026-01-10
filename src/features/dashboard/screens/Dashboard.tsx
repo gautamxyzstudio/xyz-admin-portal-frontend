@@ -8,8 +8,7 @@ const Dashboard = () => {
   return (
     <>
       {user?.user_type === "Employee" ||
-      user?.user_type === "Manager" ||
-      user?.user_type === "Seo" ? (
+      user?.user_type === "Manager"  ? (
         <EmployeeDashboard />
       ) : (
         <HrDashboard />

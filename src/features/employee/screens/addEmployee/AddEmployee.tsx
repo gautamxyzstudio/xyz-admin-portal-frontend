@@ -12,7 +12,6 @@ import type { IAddEmployeeArgs, IRegisterUserArgs } from "../../types";
 import { useNavigate } from "react-router-dom";
 const AddEmployee = () => {
   const { setIsLoading } = useLoadingWrapper();
-
   const [registerUser] = useRegisterEmployeeMutation();
   const navigation = useNavigate();
   const [addEmployeeDetails] = useAddEmployeeDetailsMutation();
@@ -25,24 +24,21 @@ const AddEmployee = () => {
         email: data.email,
         user_type: data.role,
         password: data.password,
-        leave_balance: Number(data.leaveBalance),
-        date_of_birth: data.dob,
-        joining_date: data.joiningDate,
-        daily_attendances: [],
-        unpaid_leave_balance: 0,
         role: data.role,
       });
       if (registerResponse) {
         const addEmployeeDetailsResponse = await addEmployeeDetailsHandler({
           name: data.name,
           designation: data.designation,
-          empCode: data.employeeCode,
+          empCode: `XYZ-${data.employeeCode}`,
           phoneNumber: data.phone,
           email: data.email,
-          joiningDate: data.joiningDate,
+          joinig_date: data.joiningDate,
           Photo: [data.avatar],
-          status: data.status === "active" ? true : false,
+          status: data.status,
           user_detail: registerResponse.toString(),
+          date_of_birth: data.dob,
+          active_blogs: data.activeBlog,
         });
         if (addEmployeeDetailsResponse) {
           navigation("/employees");
@@ -76,11 +72,7 @@ const AddEmployee = () => {
     }
   };
 
-  return (
-    <>
-      <AddEmployeeForm onPressSubmit={createUserHandler} />
-    </>
-  );
+  return <AddEmployeeForm onPressSubmit={createUserHandler} />;
 };
 
 export default AddEmployee;

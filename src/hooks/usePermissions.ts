@@ -37,9 +37,9 @@ export const usePermissions = () => {
     return user?.user_type === UserType.EMPLOYEE;
   };
 
-  const isSEO = (): boolean => {
-    return user?.user_type === UserType.SEO;
-  };
+  // const isSEO = (): boolean => {
+  //   return user?.user_type === UserType.SEO;
+  // };
 
   return {
     user,
@@ -50,6 +50,6 @@ export const usePermissions = () => {
     isAdmin,
     isHR,
     isEmployee,
-    isSEO,
+    // isSEO,
   };
 };

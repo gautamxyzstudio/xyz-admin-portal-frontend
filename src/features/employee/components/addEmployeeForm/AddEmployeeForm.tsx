@@ -30,9 +30,8 @@ const AddEmployeeForm = ({
     password: "",
     joiningDate: "",
     avatar: "",
-    status: "active",
+    status: true,
     activeBlog: false,
-    leaveBalance: "",
     designation: "",
     employeeCode: "",
     role: "",
@@ -43,15 +42,15 @@ const AddEmployeeForm = ({
     control,
     handleSubmit,
     formState: { errors },
+    reset,
   } = useForm({
     defaultValues,
   });
 
   const onSubmit = (data: AddEmployeeFormData) => {
     onPressSubmit(data);
+    reset();
   };
-
-  console.log(errors);
 
   useEffect(() => {
     if (errors.avatar) {
@@ -60,225 +59,215 @@ const AddEmployeeForm = ({
   }, [errors.avatar]);
 
   return (
-    <CustomBox customClasses="w-full  p-3">
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-1 text-sm font-bold text-primary cursor-pointer"
-        >
-          <ArrowBackIcon fontSize="small" />
-          Back
-        </button>
+    <CustomBox customClasses="w-full h-full flex flex-col p-6 gap-y-10 overflow-scroll scrollbar-hide">
+      <button
+        type="button"
+        onClick={() => {
+          reset();
+          navigate(-1);
+        }}
+        className="flex items-center gap-1 text-sm font-bold text-primary cursor-pointer"
+      >
+        <ArrowBackIcon fontSize="small" />
+        Back
+      </button>
 
-        <div className="flex flex-row w-full justify-center items-center">
+      <div className="flex flex-row w-full justify-center items-center">
+        <Controller
+          control={control}
+          name="avatar"
+          rules={{ required: "Avatar is required" }}
+          render={({ field }) => (
+            <PhotoUpload getUploadedImageId={(id) => field.onChange(id)} />
+          )}
+        />
+      </div>
+      <div className="flex flex-row w-full h-full justify-around items-start">
+        <div className="flex flex-col gap-6 w-[40%] h-full ">
           <Controller
             control={control}
-            name="avatar"
-            rules={{ required: "Avatar is required" }}
+            name="name"
+            rules={{ required: "Name is required" }}
             render={({ field }) => (
-              <PhotoUpload getUploadedImageId={(id) => field.onChange(id)} />
+              <FormTextInput
+                errorMessage={(errors as any).name?.message}
+                label={"Name"}
+                value={field.value}
+                placeholder="Name"
+                onChange={field.onChange}
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            rules={{
+              required: "Email is required",
+              pattern: {
+                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                message: "Invalid email address",
+              },
+            }}
+            name="email"
+            render={({ field }) => (
+              <FormTextInput
+                errorMessage={(errors as any).email?.message}
+                label={"Email"}
+                value={field.value}
+                placeholder="Email"
+                onChange={field.onChange}
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="password"
+            rules={{
+              required: "Password is required",
+              minLength: {
+                value: 8,
+                message: "Password must be at least 8 characters long",
+              },
+            }}
+            render={({ field }) => (
+              <PasswordInput
+                errorMessage={errors.password?.message}
+                label={"Password"}
+                value={field.value}
+                placeholder="Password"
+                onChange={field.onChange}
+                showPassword={showPassword}
+                handleClickShowPassword={() => setShowPassword(!showPassword)}
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="phone"
+            rules={{
+              required: "Phone number is required",
+              pattern: {
+                value: /^[0-9]{10}$/,
+                message: "Invalid phone number",
+              },
+            }}
+            render={({ field }) => (
+              <FormTextInput
+                errorMessage={(errors as any).phone?.message}
+                label={"Phone number"}
+                value={field.value}
+                maxLength={10}
+                placeholder="Phone"
+                onChange={field.onChange}
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="role"
+            rules={{ required: "Role is required" }}
+            render={({ field }) => (
+              <Autocomplete
+                disablePortal
+                options={Object.values(EmployeeRole)}
+                disableClearable
+                freeSolo={false}
+                value={field.value || ""}
+                onChange={(_, value) => field.onChange(value)}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Role"
+                    variant="outlined"
+                    inputProps={{
+                      ...params.inputProps,
+                      readOnly: true,
+                    }}
+                  />
+                )}
+              />
             )}
           />
         </div>
-        <div className="flex flex-row w-full justify-around items-start">
-          <div className="flex flex-col mt-10 gap-6 w-[40%]">
-            <Controller
-              control={control}
-              name="name"
-              rules={{ required: "Name is required" }}
-              render={({ field }) => (
-                <FormTextInput
-                  errorMessage={(errors as any).name?.message}
-                  label={"Name"}
-                  value={field.value}
-                  placeholder="Name"
-                  onChange={field.onChange}
-                />
-              )}
-            />
-            <Controller
-              control={control}
-              rules={{
-                required: "Email is required",
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: "Invalid email address",
-                },
-              }}
-              name="email"
-              render={({ field }) => (
-                <FormTextInput
-                  errorMessage={(errors as any).email?.message}
-                  label={"Email"}
-                  value={field.value}
-                  placeholder="Email"
-                  onChange={field.onChange}
-                />
-              )}
-            />
-            <Controller
-              control={control}
-              name="password"
-              rules={{
-                required: "Password is required",
-                minLength: {
-                  value: 8,
-                  message: "Password must be at least 8 characters long",
-                },
-              }}
-              render={({ field }) => (
-                <PasswordInput
-                  errorMessage={errors.password?.message}
-                  label={"Password"}
-                  value={field.value}
-                  placeholder="Password"
-                  onChange={field.onChange}
-                  showPassword={showPassword}
-                  handleClickShowPassword={() => setShowPassword(!showPassword)}
-                />
-              )}
-            />
-            <Controller
-              control={control}
-              name="phone"
-              rules={{
-                required: "Phone number is required",
-                pattern: {
-                  value: /^[0-9]{10}$/,
-                  message: "Invalid phone number",
-                },
-              }}
-              render={({ field }) => (
-                <FormTextInput
-                  errorMessage={(errors as any).phone?.message}
-                  label={"Phone number"}
-                  value={field.value}
-                  maxLength={10}
-                  placeholder="Phone"
-                  onChange={field.onChange}
-                />
-              )}
-            />
-            <Controller
-              control={control}
-              name="role"
-              rules={{ required: "Role is required" }}
-              render={({ field }) => (
-                <Autocomplete
-                  disablePortal
-                  options={Object.values(EmployeeRole)}
-                  disableClearable
-                  freeSolo={false}
-                  value={field.value || ""}
-                  onChange={(_, value) => field.onChange(value)}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Role"
-                      variant="outlined"
-                      inputProps={{
-                        ...params.inputProps,
-                        readOnly: true,
-                      }}
-                    />
-                  )}
-                />
-              )}
-            />
+        <div className="flex flex-col gap-6 w-[40%] h-full">
+          <Controller
+            control={control}
+            name="designation"
+            rules={{ required: "Designation is required" }}
+            render={({ field }) => (
+              <FormTextInput
+                errorMessage={(errors as any).designation?.message}
+                label={"Designation"}
+                value={field.value}
+                placeholder="Designation"
+                onChange={field.onChange}
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="employeeCode"
+            rules={{ required: "Employee Code is required" }}
+            render={({ field }) => (
+              <FormTextInput
+                errorMessage={(errors as any).employeeCode?.message}
+                label={"Employee Code"}
+                value={field.value}
+                placeholder="Employee Code"
+                onChange={field.onChange}
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="joiningDate"
+            rules={{ required: "Joining Date is required" }}
+            render={({ field }) => (
+              <PickerInput
+                label="Joining Date"
+                value={field.value ? dayjs(field.value) : null}
+                setValue={field.onChange}
+                errorMessage={errors.joiningDate?.message}
+                popperPlacement="top-end"
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="dob"
+            rules={{ required: "Date of birth is required" }}
+            render={({ field }) => (
+              <PickerInput
+                label="Date of Birth"
+                value={field.value ? dayjs(field.value) : null}
+                setValue={field.onChange}
+                errorMessage={errors.dob?.message}
+                popperPlacement="top-end"
+              />
+            )}
+          />
+          <div className="flex flex-row items-center justify-between">
             <div className="flex flex-row items-center gap-2">
-              <p className="text-sm font-medium">Status:</p>
+              <p className="text-base font-semibold">Status:</p>
               <Controller
                 control={control}
                 name="status"
                 render={({ field }) => (
                   <Switch
-                    defaultChecked={field.value === "active"}
+                    defaultChecked={field.value}
                     color="warning"
                     onChange={field.onChange}
                   />
                 )}
               />
             </div>
-          </div>
-          <div className="flex flex-col mt-10 gap-6 w-[40%]">
-            <Controller
-              control={control}
-              name="designation"
-              rules={{ required: "Designation is required" }}
-              render={({ field }) => (
-                <FormTextInput
-                  errorMessage={(errors as any).designation?.message}
-                  label={"Designation"}
-                  value={field.value}
-                  placeholder="Designation"
-                  onChange={field.onChange}
-                />
-              )}
-            />
-            <Controller
-              control={control}
-              name="employeeCode"
-              rules={{ required: "Employee Code is required" }}
-              render={({ field }) => (
-                <FormTextInput
-                  errorMessage={(errors as any).employeeCode?.message}
-                  label={"Employee Code"}
-                  value={field.value}
-                  placeholder="Employee Code"
-                  onChange={field.onChange}
-                />
-              )}
-            />
-            <Controller
-              control={control}
-              name="joiningDate"
-              rules={{ required: "Joining Date is required" }}
-              render={({ field }) => (
-                <PickerInput
-                  label="Joining Date"
-                  value={field.value ? dayjs(field.value) : null}
-                  setValue={field.onChange}
-                  errorMessage={errors.joiningDate?.message}
-                />
-              )}
-            />
-            <Controller
-              control={control}
-              name="dob"
-              rules={{ required: "Date of birth is required" }}
-              render={({ field }) => (
-                <PickerInput
-                  label="Date of Birth"
-                  value={field.value ? dayjs(field.value) : null}
-                  setValue={field.onChange}
-                  errorMessage={errors.dob?.message}
-                />
-              )}
-            />
-
-            <Controller
-              control={control}
-              name="leaveBalance"
-              rules={{ required: "Leave Balance is required" }}
-              render={({ field }) => (
-                <FormTextInput
-                  errorMessage={(errors as any).leaveBalance?.message}
-                  label={"Leave Balance"}
-                  value={field.value}
-                  placeholder="Leave Balance"
-                  onChange={field.onChange}
-                />
-              )}
-            />
             <div className="flex flex-row items-center gap-2">
-              <p className="text-sm font-medium"> Active Blogs</p>
+              <p className="text-base font-semibold"> Active Blogs:</p>
               <Controller
                 control={control}
-                name="status"
+                name="activeBlog"
                 render={({ field }) => (
                   <Switch
-                    defaultChecked={field.value === "deactive"}
+                    defaultChecked={field.value}
                     color="warning"
                     onChange={field.onChange}
                   />
@@ -287,12 +276,15 @@ const AddEmployeeForm = ({
             </div>
           </div>
         </div>
-        <div className="flex flex-row mt-12 w-full justify-center items-center">
-          <div onSubmit={handleSubmit(onSubmit)}>
-            <CustomButton customStyles="w-1/1" label="Create" type="submit" />
-          </div>
-        </div>
-      </form>
+      </div>
+      <div className="flex flex-row w-full h-fit justify-center items-center">
+        <CustomButton
+          onClick={handleSubmit(onSubmit)}
+          customStyles=""
+          label="Create"
+          type="submit"
+        />
+      </div>
     </CustomBox>
   );
 };

@@ -16,51 +16,27 @@ const employeeSlice = createSlice({
   initialState,
   reducers: {},
   extraReducers: (builder) => {
-    // builder.addMatcher(
-    //   employeeApis.endpoints.getEmployeeList.matchFulfilled,
-    //   (state, action: PayloadAction<IEmployeeFromResponse[]>) => {
-    //     console.log(action.payload, 'Res')
-    //     state.employeeList = action.payload.map((employee) => ({
-    //       id: employee?.id ?? 0,
-    //       name: employee?.user_detial?.name ?? '',
-    //       designation: employee?.user_detial?.designation ?? '',
-    //       empCode: employee?.user_detial?.empCode ?? '',
-    //       phoneNumber: employee?.user_detial?.phoneNumber ?? '',
-    //       joiningDate: employee?.user_detial?.joiningDate ?? '',
-    //       role: employee?.role?.name ?? '',
-    //       status: employee?.user_detial?.status,
-    //       leave_balance: employee?.user_detial?.leave_balance ?? 0,
-    //       unpaid_leave_balance: employee?.unpaid_leave_balance ?? 0,
-    //       image: getImageUrl(employee?.user_detial?.Photo[0].url) ?? '',
-    //       imageId: employee?.user_detial?.Photo[0].id ?? 0,
-    //       email: employee?.email ?? '',
-    //       details_id: employee?.user_detial?.id ?? 0,
-    //     }));
-    //     console.log(state.employeeList, 'State')
-    //   }
-    // );
-    builder.addMatcher(
+   builder.addMatcher(
       employeeApis.endpoints.getEmployeeList.matchFulfilled,
       (state, action: PayloadAction<IEmployeeFromResponse[]>) => {
         state.employeeList = action.payload.map((employee) => {
           const photo = employee?.user_detial?.Photo?.[0];
-
           return {
             id: employee?.id ?? 0,
             name: employee?.user_detial?.name ?? "",
             designation: employee?.user_detial?.designation ?? "",
             empCode: employee?.user_detial?.empCode ?? "",
             phoneNumber: employee?.user_detial?.phoneNumber ?? "",
-            joiningDate: employee?.user_detial?.joiningDate ?? "",
+            joiningDate: employee?.user_detial?.joinig_date ?? "",
             role: employee?.role?.name ?? "",
             status: employee?.user_detial?.status ?? "",
-            leave_balance: employee?.user_detial?.leave_balance ?? 0,
-            unpaid_leave_balance: employee?.unpaid_leave_balance ?? 0,
             image: photo?.url ? getImageUrl(photo.url) : "",
             imageId: photo?.id ?? 0,
             email: employee?.email ?? "",
             details_id: employee?.user_detial?.id ?? 0,
-            dateOfBirth: employee?.user_detial?.dateOfBirth ?? "0",
+            dateOfBirth: employee?.user_detial?.date_of_birth ?? "0",
+            active_blogs: employee.user_detial.active_blogs ?? false,
+            coverImage: employee.user_detial.coverImage ?? ''
           };
         });
     

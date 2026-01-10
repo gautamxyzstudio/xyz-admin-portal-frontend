@@ -1,44 +1,81 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { baseApi } from '../../state/baseApi';
-import { ApiMethodType } from '../../state/types';
-import  type { IHolidayRequest } from './holydayList.types';
-import { apiendpoint } from '../../api/endpoint';
+import { baseApi } from "../../state/baseApi";
+import { ApiMethodType } from "../../state/types";
+import type {
+  IHolidayResponse,
+  IHoliday,
+  IHolidayFlat,
+  IHolidayApiResponse,
+} from "./holydayList.types";
+import type { IHolidayRequest } from "./holydayList.types";
+import { apiendpoint } from "../../api/endpoint";
 
 export const enhancedHolidayListApi = baseApi.enhanceEndpoints({
-  addTagTypes: ['Holiday'],
+  addTagTypes: ["Holiday"],
 });
 
 export const holidayListApi = enhancedHolidayListApi.injectEndpoints({
   endpoints: (builder) => ({
-    getHolidays: builder.query<any, void>({
+    // ✅ Get all holidays (FLATTENED)
+    getHolidays: builder.query<IHolidayFlat[], void>({
       query: () => ({
         url: apiendpoint.getHolidays,
         method: ApiMethodType.get,
       }),
-      providesTags: ['Holiday'],
+      providesTags: ["Holiday"],
+      transformResponse: (response: IHolidayResponse): IHolidayFlat[] => {
+        return response.data.map((item) => ({
+          id: item.id,
+          name: item.attributes.Name,
+          date: item.attributes.date,
+        }));
+      },
     }),
-    deleteHoliday: builder.mutation<any, number>({
+
+    getHolidayById: builder.query<IHolidayFlat, number>({
+      query: (id: number) => ({
+        url: apiendpoint.getHolidayById(id),
+        method: ApiMethodType.get,
+      }),
+      providesTags: (_result, _error, id) => [{ type: "Holiday", id }],
+      transformResponse: (response: IHolidayApiResponse): IHolidayFlat => {
+        return {
+          id: response.data.id,
+          name: response.data.attributes.Name,
+          date: response.data.attributes.date,
+        };
+      },
+    }),
+
+    // ✅ Delete holiday
+    deleteHoliday: builder.mutation<void, number>({
       query: (id) => ({
         url: apiendpoint.deleteHoliday(id),
         method: ApiMethodType.delete,
       }),
-      invalidatesTags: ['Holiday'],
+      invalidatesTags: ["Holiday"],
     }),
-    postHoliday: builder.mutation<any, IHolidayRequest>({
+
+    // ✅ Create holiday
+    postHoliday: builder.mutation<IHoliday, IHolidayRequest>({
       query: (data) => ({
         url: apiendpoint.postHoliday,
         method: ApiMethodType.post,
         body: data,
       }),
-      invalidatesTags: ['Holiday'],
+      invalidatesTags: ["Holiday"],
     }),
-    patchHoliday: builder.mutation<any, { id: number; data: IHolidayRequest }>({
+
+    // ✅ Update holiday
+    patchHoliday: builder.mutation<
+      IHoliday,
+      { id: number; data: IHolidayRequest }
+    >({
       query: ({ id, data }) => ({
         url: apiendpoint.patchHoliday(id),
         method: ApiMethodType.PUT,
         body: data,
       }),
-      invalidatesTags: ['Holiday'],
+      invalidatesTags: ["Holiday"],
     }),
   }),
 });
@@ -48,4 +85,6 @@ export const {
   useDeleteHolidayMutation,
   usePostHolidayMutation,
   usePatchHolidayMutation,
+  useGetHolidayByIdQuery,
+  useLazyGetHolidayByIdQuery,
 } = holidayListApi;

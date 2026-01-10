@@ -1,4 +1,5 @@
 export interface IPhotoUploadProps {
   getUploadedImageId: (id: number) => void;
-  initialValue?: string;
+  initialValue?: string | null
+   disabled?: boolean;
 }

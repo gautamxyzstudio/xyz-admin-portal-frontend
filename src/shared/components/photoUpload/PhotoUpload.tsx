@@ -1,4 +1,5 @@
-import { useState } from "react";
+/* eslint-disable react-hooks/set-state-in-effect */
+import { useEffect, useRef, useState } from "react";
 import { styled } from "@mui/material/styles";
 import { Button } from "@mui/material";
 import type { IPhotoUploadProps } from "./PhotoUpload.types";
@@ -12,7 +13,6 @@ const VisuallyHiddenInput = styled("input")({
   clip: "rect(0 0 0 0)",
   clipPath: "inset(50%)",
   height: 1,
-  background: "red",
   overflow: "hidden",
   position: "absolute",
   bottom: 0,
@@ -24,85 +24,105 @@ const VisuallyHiddenInput = styled("input")({
 const PhotoUpload: React.FC<IPhotoUploadProps> = ({
   getUploadedImageId,
   initialValue,
+  disabled = false,
 }) => {
+  const { displaySnackbar } = useSnackBarContext();
+  const [upload, { isLoading, error }] = useUploadFileMutation();
+
   const [displayImage, setDisplayImage] = useState<string | null>(
     initialValue ?? null
   );
-  const { displaySnackbar } = useSnackBarContext();
-  const [upload, { isLoading, error }] = useUploadFileMutation();
-  const onSelectFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const dImage = URL.createObjectURL(e.target.files[0]);
-      setDisplayImage(dImage);
-      const form = new FormData();
-      form.append("files", e.target.files[0]);
-      try {
-        const uploadedImage = await upload(form).unwrap();
-        getUploadedImageId(uploadedImage[0].id);
-      } catch (e) {
-        console.log(e, "ERROR");
-        const error = e as ICustomErrorResponse;
-        displaySnackbar("error", error.message);
+
+  const previewUrlRef = useRef<string | null>(null);
+
+  // 🔹 Sync when initialValue changes (important for profile update)
+  useEffect(() => {
+    setDisplayImage(initialValue ?? null);
+  }, [initialValue]);
+
+  // 🔹 Cleanup object URL
+  useEffect(() => {
+    return () => {
+      if (previewUrlRef.current) {
+        URL.revokeObjectURL(previewUrlRef.current);
       }
+    };
+  }, []);
+
+  const onSelectFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.length) return;
+
+    const file = e.target.files[0];
+
+    // Preview
+    const previewUrl = URL.createObjectURL(file);
+    previewUrlRef.current = previewUrl;
+    setDisplayImage(previewUrl);
+
+    const form = new FormData();
+    form.append("files", file);
+
+    try {
+      const uploadedImage = await upload(form).unwrap();
+      getUploadedImageId(uploadedImage[0].id);
+    } catch (err) {
+      const error = err as ICustomErrorResponse;
+      displaySnackbar("error", error?.message || "Upload failed");
+
+      // rollback preview
+      setDisplayImage(initialValue ?? null);
     }
   };
 
   return (
-    <>
-      <Button
-        role={undefined}
-        variant="contained"
-        component="label"
-        sx={{
-          background: "transparent",
-          boxShadow: "none",
-          "&:hover": {
-            boxShadow: "none",
-            backgroundColor: "transparent",
-          },
-          position: "relative",
-        }}
-        tabIndex={-1}
-      >
-        {!displayImage && !error && (
-          <img
-            className=" w-40 h-40  flex justify-center items-center border-2 object-contain border-disable rounded-full"
-            src={Icons.PROFILE_PICTURE}
-            alt="profile"
-          />
-        )}
-        {isLoading && (
-          <div className="w-40 h-40 absolute flex justify-center items-center border-2 object-contain border-disable rounded-full">
-            <ActivityIndicator size={80} />
-          </div>
-        )}
-        {displayImage && (
-          <img
-            className="w-40 h-40  border-2 object-cover border-disable rounded-full"
-            height={160}
-            width={160}
-            src={displayImage}
-            alt="logo"
-          />
-        )}
-        {error && (
-          <div className="w-14 h-14 absolute bg-modal flex justify-center items-center border-2 object-contain border-red rounded-full">
-            <h1 className="text-Red font-bold text-[10px] ">error</h1>
-          </div>
-        )}
-        {error && (
-          <h1 className="absolute text-[10px] capitalize text-red w-125 text-center -bottom-4">
-            Image upload Failed. please try again
-          </h1>
-        )}
-
-        <VisuallyHiddenInput
-          type="file"
-          onChange={onSelectFile}
-          accept="image/*"
+    <Button
+      component="label"
+      disabled={disabled || isLoading}
+      sx={{
+        background: "transparent",
+        boxShadow: "none",
+        "&:hover": { background: "transparent" },
+        position: "relative",
+      }}
+    >
+      {/* Default avatar */}
+      {!displayImage && !error && (
+        <img
+          className="w-40 h-40 border-2 object-contain border-disable rounded-full"
+          src={Icons.PROFILE_PICTURE}
+          alt="profile"
         />
-      </Button>
-    </>
+      )}
+
+      {/* Loading */}
+      {isLoading && (
+        <div className="w-40 h-40 absolute flex justify-center items-center border-2 rounded-full">
+          <ActivityIndicator size={80} />
+        </div>
+      )}
+
+      {/* Image */}
+      {displayImage && (
+        <img
+          className="w-40 h-40 border-2 object-cover border-disable rounded-full"
+          src={displayImage}
+          alt="profile"
+        />
+      )}
+
+      {/* Error */}
+      {error && (
+        <p className="absolute text-xs text-red text-center -bottom-5">
+          Image upload failed
+        </p>
+      )}
+
+      <VisuallyHiddenInput
+        type="file"
+        accept="image/*"
+        onChange={onSelectFile}
+      />
+    </Button>
   );
 };
 

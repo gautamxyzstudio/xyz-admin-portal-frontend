@@ -8,11 +8,6 @@ export type IRegisterUserArgs = {
   password: string;
   role: string;
   user_type: string;
-  leave_balance: number;
-  daily_attendances: string[];
-  unpaid_leave_balance: number;
-  date_of_birth: string;
-  joining_date: string;
 };
 
 export type IRegisterUserResponse = {
@@ -24,11 +19,9 @@ export type IRegisterUserResponse = {
     provider: string;
     confirmed: boolean;
     blocked: boolean;
-    user_type: "Admin" | "Employee" | "Hr" | "Seo";
+    user_type: "Admin" | "Employee" | "Hr";
     createdAt: string;
     updatedAt: string;
-    date_of_birth: string;
-    joining_date: string;
   };
 };
 
@@ -38,21 +31,26 @@ export type IAddEmployeeArgs = {
   empCode: string;
   email: string;
   phoneNumber: string;
-  joiningDate: string;
   Photo: string[];
   status: boolean;
   user_detail: string;
+  date_of_birth: string;
+  active_blogs: boolean;
+  joinig_date: string;
+
 };
 
 export type IEditEmployeeArgs = {
-  name: string;
-  designation: string;
-  empCode: string;
-  joiningDate: string;
-  phoneNumber: string;
-  Photo: string[];
-  leave_balance?: number;
-  status: boolean;
+  name?: string;
+  designation?: string;
+  empCode?: string;
+  phoneNumber?: string;
+  Photo?: string[];
+  status?: boolean;
+  coverImage?: string;
+  date_of_birth?: string;
+  active_blogs?: boolean;
+  joinig_date?: string;
 };
 
 export interface IEmployee {
@@ -66,11 +64,11 @@ export interface IEmployee {
   joiningDate: string;
   role: string;
   status: boolean;
-  leave_balance: number;
-  unpaid_leave_balance: number;
   image: string;
   imageId: number;
-  dateOfBirth:string
+  active_blogs: boolean;
+  dateOfBirth: string;
+  coverImage: string;
 }
 
 export interface IEmployeeFromResponse {
@@ -86,8 +84,6 @@ export interface IEmployeeFromResponse {
   user_type: string;
   createdAt: string;
   updatedAt: string;
-  leave_balance: number;
-  unpaid_leave_balance: number;
   role: {
     id: number;
     name: string;
@@ -97,18 +93,19 @@ export interface IEmployeeFromResponse {
     updatedAt: string;
   };
   user_detial: {
-    [x: string]: string;
     id: number;
     name: string;
     designation: string;
     empCode: string;
     phoneNumber: string;
-    joiningDate: string;
     status: boolean;
-    leave_balance: number;
     createdAt: string;
     updatedAt: string;
     publishedAt: string;
+    coverImage: string;
+    date_of_birth: string;
+    active_blogs: boolean;
+    joinig_date: string;
     Photo: {
       id: number;
       name: string;

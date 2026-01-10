@@ -170,11 +170,11 @@ export const leavesApi = enhancedLeavesApi.injectEndpoints({
       },
       {
         page: number;
-        search?: string;
+        username?: string;
       }
     >({
-      query: ({ page, search }) => ({
-        url: endpoints.getUserALlLeaves(page, search || ""),
+      query: ({ page, username }) => ({
+        url: endpoints.getUserALlLeaves(page, username),
         providesTags: ["Leaves"],
         method: "GET",
       }),

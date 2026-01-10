@@ -3,13 +3,11 @@ import { useSelector } from "react-redux";
 import { userInState } from "../../../auth/authSlice";
 import { useGetDocumentsByUserQuery } from "../../documentsApi";
 import ActivityIndicator from "../../../../shared/components/activityIndicator/ActivityIndicator";
-
 import {
   UploadDialog,
   PreviewDialog,
   EmptyState,
 } from "../employee/components";
-
 import type { IDocumentResponse } from "../../documents.types";
 import { Icons } from "../../../../assets/myAssets/exporter";
 import CustomButton from "../../../../components/CustomButton/CustomButton";
@@ -47,8 +45,8 @@ const OwnDocs: React.FC<OwnDocsProps> = ({ userId, employeeName }) => {
   /* ---------------- Loading ---------------- */
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-75">
-        <ActivityIndicator size={80} />
+      <div className="flex justify-center items-center min-h-75 p-6 bg-white rounded-xl w-full">
+        <ActivityIndicator size={80}  />
       </div>
     );
   }
@@ -56,7 +54,7 @@ const OwnDocs: React.FC<OwnDocsProps> = ({ userId, employeeName }) => {
   /* ---------------- Error ---------------- */
   if (error) {
     return (
-      <div className="flex justify-center items-center min-h-75">
+      <div className="flex justify-center items-center min-h-75 p-6 bg-white rounded-xl w-full">
         <p className="text-red-500 font-medium">
           Failed to load documents. Please try again.
         </p>
@@ -79,7 +77,7 @@ const OwnDocs: React.FC<OwnDocsProps> = ({ userId, employeeName }) => {
   };
 
   return (
-    <div className="p-6 bg-white rounded-xl">
+    <div className="p-6 bg-white rounded-xl w-full h-full overflow-scroll scrollbar-hide">
       {/* ---------------- Upload Box  ---------------- */}
       {!userId && (
         <>

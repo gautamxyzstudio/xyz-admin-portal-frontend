@@ -16,7 +16,7 @@ export interface ILoginResponse {
 export interface IUserBasic {
   id: number;
   email: string;
-  user_type: 'Admin' | 'Employee' | 'Hr' | 'Seo' | 'Manager';
+  user_type: "Admin" | "Employee" | "Hr" | "Manager";
   leave_balance: number;
   unpaid_leave_balance: number;
   token: string;
@@ -28,13 +28,14 @@ export interface IUserAdvance {
   role: string;
   name: string;
   designation: string;
-  joining_date: string;
-  leave_balance: number;
-  unpaid_leave_balance: number;
-  status: string;
+  joinig_date: string | null;
+  date_of_birth: string | null;
+  status: boolean | null;
   phoneNumber: string;
   empCode: string;
   photo: string | null;
+  active_blogs: boolean | null;
+  coverImage: string | null;
 }
 
 export interface IUserDetailsResponse {
@@ -45,24 +46,21 @@ export interface IUserDetailsResponse {
   confirmed: boolean;
   blocked: boolean;
   user_type: string;
-  unpaid_leave_balance: number;
-  leave_balance: number;
   createdAt: string;
   updatedAt: string;
   role: {
     name: string;
   };
-
   user_detial: {
     id: number;
     name: string;
     designation: string;
     empCode: string;
-
     phoneNumber: string;
-    joiningDate: string;
-    status: string;
-
+    joinig_date: string | null;
+    date_of_birth: string | null;
+    status: boolean;
+    active_blogs: boolean | null;
     createdAt: string;
     updatedAt: string;
     publishedAt: string;
@@ -71,5 +69,8 @@ export interface IUserDetailsResponse {
         url: string;
       }
     ];
+    coverImage: {
+      url: string;
+    };
   };
 }
