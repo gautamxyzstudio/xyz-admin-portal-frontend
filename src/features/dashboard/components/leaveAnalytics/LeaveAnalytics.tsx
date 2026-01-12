@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {
-  getLeaveStatusColor,
-} from "../../../../utils/utils";
+import { getLeaveStatusColor } from "../../../../utils/utils";
 import CustomBox from "../../../../components/CustomBox/CustomBox";
 import CustomDataTable from "../../../../shared/components/customDataTable/CustomDataTable";
 import EmptyScreenView from "../../../../shared/components/EmptyScreenView/EmptyScreenView";
@@ -32,7 +30,7 @@ const LeaveAnalytics = ({
       headerName: "Leave Type",
       width: 120,
       renderCell: (params) =>
-        params?.row?.leave_duration
+        params?.row?.leave_category
           ? getLeaveCategoryTitle(params.row.leave_category)
           : "N/A",
     },
@@ -64,40 +62,38 @@ const LeaveAnalytics = ({
   ];
 
   return (
-      <CustomBox customClasses="h-full w-[58%] p-5 flex flex-col space-y-4">
-        <div className="w-full h-auto flex flex-row flex-nowrap justify-between items-center-safe">
-          <span className="text-black font-semibold text-2xl">
-            Recent Leaves
-          </span>
-          <Link
-            to={"/leaves"}
-            title="View All"
-            className="hover:bg-primary/90 bg-primary-20 text-primary px-5 py-1.5 text-sm font-medium hover:text-white rounded-full transition duration-300 ease-in-out"
-          >
-            View All
-          </Link>
-        </div>
+    <CustomBox customClasses="h-full w-[58%] p-5 flex flex-col space-y-4">
+      <div className="w-full h-auto flex flex-row flex-nowrap justify-between items-center-safe">
+        <span className="text-black font-semibold text-2xl">Recent Leaves</span>
+        <Link
+          to={"/leaves"}
+          title="View All"
+          className="hover:bg-primary/90 bg-primary-20 text-primary px-5 py-1.5 text-sm font-medium hover:text-white rounded-full transition duration-300 ease-in-out"
+        >
+          View All
+        </Link>
+      </div>
 
-        {!isLoading && (!leaves?.data || leaves?.data.length === 0) ? (
-          <EmptyScreenView
-            isDataEmpty={true}
+      {!isLoading && (!leaves?.data || leaves?.data.length === 0) ? (
+        <EmptyScreenView
+          isDataEmpty={true}
+          emptyViewTitle="No Leave Found"
+          emptyViewSubTitle="Please request a leave"
+        />
+      ) : (
+        <div className="w-full h-full">
+          <CustomDataTable
+            columns={columns}
+            rows={recentLeaves}
+            isDataEmpty={leaves?.data.length === 0}
             emptyViewTitle="No Leave Found"
             emptyViewSubTitle="Please request a leave"
+            isLoading={isLoading}
+            withPagination={false}
           />
-        ) : (
-          <div className="w-full h-full">
-            <CustomDataTable
-              columns={columns}
-              rows={recentLeaves}
-              isDataEmpty={leaves?.data.length === 0}
-              emptyViewTitle="No Leave Found"
-              emptyViewSubTitle="Please request a leave"
-              isLoading={isLoading}
-              withPagination={false}
-            />
-          </div>
-        )}
-      </CustomBox>
+        </div>
+      )}
+    </CustomBox>
   );
 };
 

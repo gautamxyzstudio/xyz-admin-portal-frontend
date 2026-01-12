@@ -46,7 +46,7 @@ const OwnDocs: React.FC<OwnDocsProps> = ({ userId, employeeName }) => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-75 p-6 bg-white rounded-xl w-full">
-        <ActivityIndicator size={80}  />
+        <ActivityIndicator size={80} />
       </div>
     );
   }
@@ -82,10 +82,14 @@ const OwnDocs: React.FC<OwnDocsProps> = ({ userId, employeeName }) => {
       {!userId && (
         <>
           <h3 className="text-2xl font-semibold leading-8">Documents</h3>
-          <div className="border border-dashed border-[#787571] rounded-xl p-8 mb-6 mt-4">
+          <div className="border border-dashed border-black-50 rounded-xl p-8 mb-6 mt-4">
             <div className="flex items-center gap-8">
               {/* <img src="/upload-docs.svg" alt="upload" className="w-40" /> */}
-              <img src={Icons.UPLOAD_DOCUMENTS} alt="UPLOAD_DOCUMENTS" />
+              <img
+                src={Icons.UPLOAD_DOCUMENTS}
+                alt="UPLOAD_DOCUMENTS"
+                className="h-90"
+              />
 
               <div>
                 <h3 className="text-lg font-semibold">
@@ -161,7 +165,6 @@ const OwnDocs: React.FC<OwnDocsProps> = ({ userId, employeeName }) => {
       ) : (
         <EmptyState
           onUploadClick={() => setOpenUploadDialog(true)}
-          showUploadButton={!userId}
           subtitle={
             userId ? "No documents found for this employee." : undefined
           }

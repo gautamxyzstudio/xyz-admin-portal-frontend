@@ -27,12 +27,14 @@ import { useLoadingWrapper } from "../../../../wrappers/loadingWrapper/LoadingWr
 
 const buildLeaveApprovalPayload = (
   status: UIStatus,
-  leaveDays: ILeaveDay[]
+  leaveDays: ILeaveDay[],
+  decline_reason: string
 ) => {
-  const apiStatus = status === "Approved" ? "approved" : "rejected";
+  const apiStatus = status === "Approved" ? "approved" : "declined";
 
   return {
     status: apiStatus,
+    decline_reason: decline_reason,
     days: leaveDays
       .filter((day) => day.leave_type !== "Holiday")
       .map((day) => ({
@@ -47,7 +49,7 @@ const LeaveRequestDialog = ({
   open,
   onClose,
   leave,
-  onSuccess
+  onSuccess,
 }: {
   open: boolean;
   leave?: ILeaveRequest;
@@ -82,8 +84,8 @@ const LeaveRequestDialog = ({
 
   const handleLeaveAction = async () => {
     if (!leave?.id) return;
-    const { status, leaveDay } = getValues();
-    const payload = buildLeaveApprovalPayload(status, leaveDay);
+    const { status, leaveDay, decline_reason } = getValues();
+    const payload = buildLeaveApprovalPayload(status, leaveDay, decline_reason);
 
     try {
       setIsLoading(true);
@@ -344,6 +346,7 @@ const LeaveRequestDialog = ({
                 <FormTextInput
                   multiline
                   minRows={2}
+                  name="decline_reason"
                   variant="outlined"
                   label="Decline Reason"
                   placeholder="Why decline leave? Please share the reason"
@@ -367,7 +370,7 @@ const LeaveRequestDialog = ({
             label="Cancel"
             buttonStyle="secondary"
             onClick={() => {
-              onSuccess?.()
+              onSuccess?.();
               reset();
               onClose();
             }}

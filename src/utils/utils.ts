@@ -76,7 +76,6 @@ export const formatDateToReadable = (dateString: string): string => {
   });
 };
 
-
 export const getWeekDates = (): {
   startDate: string;
   endDate: string;
@@ -114,18 +113,16 @@ export const getError = (error: { message?: string } | undefined) =>
 // };
 
 export const getLeaveStatusColor = (
-  status: "pending" | "approved" | "rejected" | "declined"
+  status: "pending" | "approved" | "declined" | ""
 ) => {
   switch (status) {
     case "approved":
       return `text-green bg-lightGreen capitalize`;
     case "pending":
       return `text-[#7F41DF] bg-[#7F41DF29] capitalize`;
-    case "rejected":
-      return `text-red bg-lightRed capitalize`;
     case "declined":
       return `text-red bg-lightRed capitalize`;
-    default:
+    case "":
       return `text-black-50 bg-background capitalize`;
   }
 };

@@ -67,6 +67,7 @@ export interface ILeaveDetailsResponse {
   leave_category: "short_leave" | "half_day" | "full_day";
   half_day_type: "first_half" | "second_half" | null;
   leave_type: "CL" | "EL" | "SL" | "un-paid" | null;
+  leave_days: ILeaveDay[]
 }
 
 export interface ILeaveResponse {
@@ -75,7 +76,7 @@ export interface ILeaveResponse {
     attributes: {
       start_date: string;
       end_date: string;
-      status: "pending" | "approved" | "rejected";
+      status: "pending" | "approved" | "declined";
       createdAt: string;
       description: string;
       decline_reason: string;

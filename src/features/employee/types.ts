@@ -37,7 +37,6 @@ export type IAddEmployeeArgs = {
   date_of_birth: string;
   active_blogs: boolean;
   joinig_date: string;
-
 };
 
 export type IEditEmployeeArgs = {
@@ -132,11 +131,9 @@ export type IUpdateLeaveBalanceArgs = {
 };
 
 export type ILeaveBalance = {
-  data: {
-    year: number;
-    el_balance: number;
-    cl_balance: number;
-    sl_balance: number;
-    unpaid_balance: number;
-  };
+  year: number;
+  el_balance: number;
+  cl_balance: number;
+  sl_balance: number;
+  unpaid_balance: number;
 };

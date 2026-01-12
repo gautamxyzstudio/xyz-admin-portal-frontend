@@ -8,7 +8,7 @@ interface EmptyStateProps {
 
 const EmptyState: React.FC<EmptyStateProps> = ({
   onUploadClick,
-  showUploadButton = true,
+  showUploadButton,
   subtitle, 
 }) => {
   return (

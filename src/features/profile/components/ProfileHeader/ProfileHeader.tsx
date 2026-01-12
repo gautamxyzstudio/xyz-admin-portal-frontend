@@ -19,8 +19,8 @@ const getStatusClasses = (status: boolean) =>
 const ProfileHeader: React.FC = () => {
   const userDetails = useSelector(userDetailsInState);
   const user = useSelector(userInState);
-  const [coverPreview, setCoverPreview] = useState<string>(
-    userDetails?.coverImage ?? Images.BANNER
+  const [coverPreview, setCoverPreview] = useState<string | null>(
+    userDetails?.coverImage ?? null
   );
 
   const { displaySnackbar } = useSnackBarContext();

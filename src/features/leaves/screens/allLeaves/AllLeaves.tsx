@@ -11,6 +11,7 @@ import dayjs from "dayjs";
 import { getLeaveCategoryTitle } from "../../utils.js";
 import { getLeaveStatusColor } from "../../../../utils/utils.js";
 import { useDebounce } from "../../../../hooks/useDebounce.js";
+import LeaveDetailsDialog from "../../components/leaveDetailsDialog/leaveDetailsDialog.js";
 
 const AllLeaves = () => {
   const {
@@ -25,6 +26,8 @@ const AllLeaves = () => {
   } = useLeavesData();
   const [searchQuery, setSearchQuery] = useState<string>("");
   const debouncedSearch = useDebounce(searchQuery, 300);
+  const [openModal, setOpenModal] = useState<boolean>(false);
+  const [leaveId, setLeaveId] = useState<string | null>(null);
 
   // Load current data on mount
   useEffect(() => {
@@ -90,12 +93,23 @@ const AllLeaves = () => {
 
   // Check if data has been loaded but is empty
 
+  const refetchLeaves = useCallback(() => {
+    fetchLeaves({
+      page,
+      username: debouncedSearch.trim() || undefined,
+    }).catch(() => {});
+  }, [fetchLeaves, page, debouncedSearch]);
+
+  useEffect(() => {
+    refetchLeaves();
+  }, [debouncedSearch, refetchLeaves]);
+
   const hasLoadedEmptyData =
     !isFetching && leavesData && leavesData.length === 0;
 
   return (
     <div className="w-full h-full flex flex-col gap-y-6.5">
-      <LeaveRequestsHr />
+      <LeaveRequestsHr onLeaveActionSuccess={refetchLeaves} />
       <CustomBox customClasses="w-full h-full flex flex-col gap-y-5 p-5">
         <div className="w-full flex flex-row items-center-safe justify-between">
           <h2 className="text-2xl font-semibold">Leaves History</h2>
@@ -120,6 +134,11 @@ const AllLeaves = () => {
             rows={leavesData}
             isLoading={isLoading || isFetching}
             isDataEmpty={leavesData.length === 0}
+            onRowClick={(item) => {
+              console.log(item)
+              setLeaveId(item.id.toLocaleString());
+              setOpenModal(true);
+            }}
             emptyViewTitle={
               fetchError
                 ? "Error loading data"
@@ -163,6 +182,15 @@ const AllLeaves = () => {
           </div>
         </div>
       </CustomBox>
+
+      {/* Leave Details Dialog */}
+      {leaveId && (
+        <LeaveDetailsDialog
+          open={openModal}
+          onClose={() => setOpenModal(false)}
+          leaveId={leaveId}
+        />
+      )}
     </div>
   );
 };

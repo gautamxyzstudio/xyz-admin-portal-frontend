@@ -44,7 +44,19 @@ const AnnouncementsList = () => {
   // GSAP Auto Scroll
   useEffect(() => {
     if (!containerRef.current || !contentRef.current) return;
-    if (announcementsList.length === 0) return;
+
+    // ❌ Do NOT auto-scroll if announcements <= 3
+    if (announcementsList.length <= 3) {
+      tweenRef.current?.kill();
+      tweenRef.current = null;
+
+      // remove clones if any
+      containerRef.current
+        .querySelectorAll(".clone")
+        .forEach((n) => n.remove());
+
+      return;
+    }
 
     const container = containerRef.current;
     const content = contentRef.current;
@@ -58,13 +70,13 @@ const AnnouncementsList = () => {
     container.appendChild(clone);
 
     const contentHeight = content.scrollHeight;
-    if (contentHeight === 0) return;
+    if (!contentHeight) return;
 
     tweenRef.current?.kill();
 
     tweenRef.current = gsap.to(container, {
       scrollTop: contentHeight,
-      duration: announcementsList.length * 3 || 10,
+      duration: announcementsList.length * 3,
       ease: "none",
       repeat: -1,
       modifiers: {
@@ -91,7 +103,9 @@ const AnnouncementsList = () => {
   return (
     <CustomBox
       compRef={containerRef}
-      customClasses="p-5 pt-0 w-[41%] h-full max-h-98.75 overflow-y-hidden scrollbar-hide"
+      customClasses={`p-5 pt-0 w-[41%] h-full max-h-98.75 ${
+        announcementsList.length > 3 ? "overflow-y-hidden" : "overflow-y-auto"
+      } scrollbar-hide`}
     >
       <h4 className="text-black font-semibold text-2xl sticky top-0 bg-white z-10 w-full pt-4 pb-2">
         Announcements

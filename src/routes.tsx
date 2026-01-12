@@ -20,7 +20,7 @@ export const getRoutes = (user: IUserAdvance | null) => {
       permissions: ["Admin", "Hr"],
     },
     {
-      name: "Leaves History",
+      name: "Leaves",
       key: "all-leaves",
       icon: Icons.LEAVES,
       iconFill: Icons.LEAVES_FILL,
@@ -59,7 +59,7 @@ export const getRoutes = (user: IUserAdvance | null) => {
             icon: Icons.BLOG,
             iconFill: Icons.BLOG_FILL,
             route: "/blog",
-            permissions: ["Admin", "Employee"],
+            permissions: ["Admin", "Employee", 'Hr'],
           },
         ]
       : []),

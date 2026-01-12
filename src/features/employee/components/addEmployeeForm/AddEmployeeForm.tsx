@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Autocomplete, Switch, TextField } from "@mui/material";
+import { Autocomplete, InputAdornment, Switch, TextField } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
 import FormTextInput from "../../../../shared/components/formInput/FormInput";
 import PhotoUpload from "../../../../shared/components/photoUpload/PhotoUpload";
@@ -14,6 +14,7 @@ import CustomBox from "../../../../components/CustomBox/CustomBox";
 import CustomButton from "../../../../components/CustomButton/CustomButton";
 import { useNavigate } from "react-router";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { inputBaseClasses } from "@mui/material/InputBase";
 
 const AddEmployeeForm = ({
   onPressSubmit,
@@ -214,6 +215,25 @@ const AddEmployeeForm = ({
                 value={field.value}
                 placeholder="Employee Code"
                 onChange={field.onChange}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment
+                        position="start"
+                        sx={{
+                          opacity: 0,
+                          pointerEvents: "none",
+                          [`[data-shrink=true] ~ .${inputBaseClasses.root} > &`]:
+                            {
+                              opacity: 1,
+                            },
+                        }}
+                      >
+                        XYZ
+                      </InputAdornment>
+                    ),
+                  },
+                }}
               />
             )}
           />

@@ -78,50 +78,50 @@ const UploadDialog = ({ open, onClose }: Props) => {
 
   return (
     <div className="fixed  inset-0 z-999 bg-black/40 flex items-center justify-center">
-      <div className="bg-white w-full max-w-md rounded-xl p-4">
-        <h2 className="text-lg font-semibold mb-1">Upload New Document</h2>
-        <LinearGradient customClasses="mb-3" />
-        <label className="text-[#797571] text-base font-normal leading-6.5">
-          {" "}
-          Documents Name
-        </label>
-        <input
-          type="text"
-          placeholder=" Name"
-          value={documentName}
-          onChange={(e) => setDocumentName(e.target.value)}
-          className="w-full border border-[#CFCDCC] rounded-lg px-3 py-2 mb-4 text-[#797571] outline-0"
-        />
-        <label className="text-[#797571] text-base font-normal leading-6.5">
-          {" "}
-          Upload File
-        </label>
-        <label className="justify-between border-2 border-dashed border-[#797571] rounded-lg p-1 flex flex-col mt-1">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <MdOutlineFileUpload />
-              <span className="text-sm text-gray-500">
-                {selectedFile ? selectedFile.name : "upload document"}
-              </span>
+      <div className="bg-white w-full max-w-md rounded-xl p-4 flex flex-col gap-y-3">
+        <h2 className="text-lg font-semibold">Upload New Document</h2>
+        <LinearGradient customClasses=" " />
+        <div>
+          <label className="text-black-50 text-base font-normal">
+            Documents Name
+          </label>
+          <input
+            type="text"
+            placeholder="Enter document name"
+            value={documentName}
+            onChange={(e) => setDocumentName(e.target.value)}
+            className="w-full border border-black-20 rounded-lg px-3 py-2 text-black-50 outline-0"
+          />
+        </div>
+        <div>
+          <label className="text-black-50 text-base">Upload File</label>
+          <label className="justify-between border-2 border-dashed border-black-20 rounded-lg p-1 flex flex-col mt-0.5">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <MdOutlineFileUpload />
+                <span className="text-sm text-gray-500">
+                  {selectedFile ? selectedFile.name : "upload document"}
+                </span>
+              </div>
+
+              {/* hidden input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                hidden
+                onChange={handleFileSelect}
+              />
+
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="text-base   p-2 rounded-md bg-[#F7F7F7] text-[#797571] font-bold"
+              >
+                Select File
+              </button>
             </div>
-
-            {/* hidden input */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              hidden
-              onChange={handleFileSelect}
-            />
-
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="text-base   p-2 rounded-md bg-[#F7F7F7] text-[#797571] font-bold"
-            >
-              Select File
-            </button>
-          </div>
-        </label>
+          </label>
+        </div>
 
         {previewUrl && selectedFile?.type.startsWith("image/") && (
           <img
@@ -130,8 +130,7 @@ const UploadDialog = ({ open, onClose }: Props) => {
             className="mt-4 max-h-40 mx-auto rounded"
           />
         )}
-
-        <div className="flex  gap-3 mt-6">
+        <div className="flex gap-3">
           <button
             onClick={handleUpload}
             disabled={isUploading || isAdding}

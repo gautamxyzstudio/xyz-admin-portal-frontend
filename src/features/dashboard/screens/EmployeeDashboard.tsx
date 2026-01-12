@@ -21,15 +21,17 @@ import {
   selectCheckOutTime,
   setAttendanceId,
 } from "../dashboardSlice";
-import { useGetUserLeavesQuery } from "../../leaves/leavesApi";
+import {
+  useGeLeaveBalanceQuery,
+  useGetUserLeavesQuery,
+} from "../../leaves/leavesApi";
 import { useUserDetailsQuery } from "../../auth/authApi";
 import { Icons } from "../../../assets/myAssets/exporter";
 import InformationCards from "../components/informationCards/InformationCards";
-import { useGeLeaveBalanceQuery } from "../../employee/employeeApis";
-import type { ILeaveBalance } from "../../employee/types";
 import StatCardSkeleton from "../../../shared/components/StatCard/StatCardSkeleton";
 import { useGetHolidaysQuery } from "../../holydayList/holydayListApi";
 import AnnouncementsList from "../components/announcementsList/AnnouncementsList";
+import dayjs from "dayjs";
 
 export interface ProcessedHoliday {
   id: number | string;
@@ -45,7 +47,6 @@ const EmployeeDashboard = () => {
   const { data: attendance, isLoading } = useGetTodayAttendanceQuery({
     id: userBasic?.id ?? 0,
   });
-  const userDetails = useSelector(userInState);
   const [checkInRequest] = useCheckInMutation();
   const [checkOutRequest] = useCheckOutMutation();
   const dispatch = useDispatch();
@@ -53,14 +54,14 @@ const EmployeeDashboard = () => {
   const checkOutTime = useSelector(selectCheckOutTime);
   const attendanceId = useSelector(selectAttendanceId);
   const { data: leaves, isLoading: loading } = useGetUserLeavesQuery();
-  const { data: leaveBalance } = useGeLeaveBalanceQuery<ILeaveBalance>();
+  const { data: leaveBalance } = useGeLeaveBalanceQuery();
   const { data: holidays } = useGetHolidaysQuery();
 
   useUserDetailsQuery(
-    { id: userDetails?.id ?? 0 },
+    { id: userBasic?.id ?? 0 },
     {
       refetchOnMountOrArgChange: true,
-      skip: !userDetails?.id,
+      skip: !userBasic?.id,
     }
   );
 
@@ -86,36 +87,36 @@ const EmployeeDashboard = () => {
   const processedHolidays = useMemo<ProcessedHoliday[]>(() => {
     if (!holidays) return [];
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // normalize
+    console.log(holidays, "ho");
+
+    const today = dayjs();
+    console.log(today);
+    today.startOf("day").valueOf(); // normalize
 
     return (
       holidays
-        .map((holiday: any) => {
-          const data = holiday.attributes ?? holiday;
-          const date = new Date(data.date);
-
-          return {
-            id: holiday.id,
-            name: data.Name,
-            date,
-            formattedDate: date.toLocaleDateString("en-US", {
-              day: "numeric",
-              month: "long",
-              year: "numeric",
-            }),
-          };
-        })
+        .map((holiday: any) => ({
+          id: holiday.id,
+          name: holiday.name,
+          date: holiday.date, // string or ISO
+          formattedDate: dayjs(holiday.date).format("MMMM DD, YYYY"),
+        }))
         // ✅ keep only today & future holidays
-        .filter((holiday: ProcessedHoliday) => holiday.date >= today)
-        // ✅ nearest first
-        .sort((a: any, b: any) => a.date.getTime() - b.date.getTime())
+        .filter(
+          (holiday: ProcessedHoliday) =>
+            dayjs(holiday.date).startOf("day").valueOf() >=
+            today.startOf("day").valueOf()
+        )
+        // ✅ nearest first (earliest date first)
+        .sort(
+          (a: ProcessedHoliday, b: ProcessedHoliday) =>
+            dayjs(a.date).valueOf() - dayjs(b.date).valueOf()
+        )
     );
   }, [holidays]);
 
   if (!user || user.name === undefined) return null;
   if (!userBasic || userBasic.id === undefined) return null;
-  if (!userDetails || userDetails.id === undefined) return null;
 
   const onCheckIn = async (time: Date) => {
     setIsLoading(true);
@@ -159,13 +160,14 @@ const EmployeeDashboard = () => {
   };
 
   const recentHoliday = processedHolidays[0] ?? null;
+  console.log(recentHoliday, "R");
 
   const totalLeaveBalance =
     leaveBalance?.el_balance +
     leaveBalance?.cl_balance +
     leaveBalance?.sl_balance;
 
-  const recentLeave = leaves?.data?.[0];
+  const recentLeave = leaves?.data?.[0] ?? null;
   return (
     <div className="w-full h-full flex flex-col gap-y-5">
       <div className="w-full h-auto flex flex-row gap-x-5 items-start justify-between">
@@ -195,13 +197,11 @@ const EmployeeDashboard = () => {
               ))}
             </div>
           ) : (
-            recentLeave && (
-              <InformationCards
-                upComingHolidays={recentHoliday}
-                leaveBalance={totalLeaveBalance.toLocaleString()}
-                recentLeave={recentLeave}
-              />
-            )
+            <InformationCards
+              upComingHolidays={recentHoliday}
+              leaveBalance={totalLeaveBalance.toLocaleString()}
+              recentLeave={recentLeave}
+            />
           )}
         </div>
         <MarkAttendance

@@ -46,18 +46,7 @@ export const employeeApis = enhancedEmployeeApi.injectEndpoints({
         body: data,
       }),
     }),
-    getEmployeeLeaveBalance: builder.query<any, { id: string }>({
-      query: ({ id }) => ({
-        url: endpoints.getEmployeeLeaveBalance(id),
-        method: ApiMethodType.get,
-      }),
-    }),
-    geLeaveBalance: builder.query<any, void>({
-      query: () => ({
-        url: endpoints.getLeaveBalance,
-        method: ApiMethodType.get,
-      }),
-    }),
+   
     updateEmployeeDetails: builder.mutation<
       any,
       { id: string; data: IEditEmployeeArgs }
@@ -101,8 +90,6 @@ export const {
   useUpdateEmployeeDetailsMutation,
   useUpdateUserLeaveBalanceMutation,
   useGetEmployeeListQuery,
-  useGetEmployeeLeaveBalanceQuery,
   useDeleteUserMutation,
   useDeleteEmployeeMutation,
-  useGeLeaveBalanceQuery,
 } = employeeApis;

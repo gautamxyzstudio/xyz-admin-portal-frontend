@@ -35,8 +35,8 @@ const employeeSlice = createSlice({
             email: employee?.email ?? "",
             details_id: employee?.user_detial?.id ?? 0,
             dateOfBirth: employee?.user_detial?.date_of_birth ?? "0",
-            active_blogs: employee.user_detial.active_blogs ?? false,
-            coverImage: employee.user_detial.coverImage ?? ''
+            active_blogs: employee?.user_detial?.active_blogs ?? false,
+            coverImage: employee?.user_detial?.coverImage ?? ''
           };
         });
     

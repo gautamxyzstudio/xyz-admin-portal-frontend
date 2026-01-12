@@ -54,7 +54,7 @@ export const getLeaveTypeTitle = (type?: "CL" | "EL" | "SL" | "un-paid") => {
     case "un-paid":
       return "Unpaid Leave";
     default:
-      return "";
+      return "Leave";
   }
 };
 

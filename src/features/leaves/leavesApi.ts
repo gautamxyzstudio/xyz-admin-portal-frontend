@@ -100,9 +100,9 @@ export const leavesApi = enhancedLeavesApi.injectEndpoints({
       query: ({ id }: { id: number }) => ({
         url: endpoints.rejectLeave(id),
         method: ApiMethodType.post,
-        invalidatesTags: ["Leaves"],
         body: {},
       }),
+      invalidatesTags: ["Leaves"],
     }),
     getAllLeaves: builder.query<
       {
@@ -121,9 +121,9 @@ export const leavesApi = enhancedLeavesApi.injectEndpoints({
     >({
       query: ({ page, search }) => ({
         url: endpoints.getLeavesList(page, search),
-        providesTags: ["Leaves"],
         method: "GET",
       }),
+      providesTags: ["Leaves"],
       transformResponse: (response: ILeaveResponse) => {
         const data = response.data.map((item: any) => ({
           ...item,
@@ -155,6 +155,7 @@ export const leavesApi = enhancedLeavesApi.injectEndpoints({
           start_time: attributes.start_time,
           days: attributes.days,
           leave_type: attributes.leave_type,
+          leave_days: attributes.leave_days,
         };
       },
     }),
@@ -175,9 +176,9 @@ export const leavesApi = enhancedLeavesApi.injectEndpoints({
     >({
       query: ({ page, username }) => ({
         url: endpoints.getUserALlLeaves(page, username),
-        providesTags: ["Leaves"],
         method: "GET",
       }),
+      providesTags: ["Leaves"],
       transformResponse: (response: ILeaveResponse) => {
         const data = response.data.map((item: any) => ({
           ...item,
@@ -187,6 +188,13 @@ export const leavesApi = enhancedLeavesApi.injectEndpoints({
           pagination: response.meta.pagination,
         };
       },
+    }),
+    geLeaveBalance: builder.query<any, void>({
+      query: () => ({
+        url: endpoints.getLeaveBalance,
+        method: ApiMethodType.get,
+      }),
+      providesTags: ["Leaves"],
     }),
   }),
 });
@@ -201,5 +209,6 @@ export const {
   useLazyGetAllLeavesQuery,
   useGetLeaveRequestsQuery,
   useGetLeavesDetialsQuery,
-  useLazyGetAllUserLeavesQuery
+  useLazyGetAllUserLeavesQuery,
+  useGeLeaveBalanceQuery,
 } = leavesApi;

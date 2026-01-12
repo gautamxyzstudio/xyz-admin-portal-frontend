@@ -1,45 +1,40 @@
-import {
-  useGetLeavesDetialsQuery,
-  useGetUserLeavesQuery,
-} from "../../leavesApi";
+import { useGeLeaveBalanceQuery, useGetUserLeavesQuery } from "../../leavesApi";
 import { useSelector } from "react-redux";
 import { userInState } from "../../../auth/authSlice";
 import { toast } from "react-toastify";
-import {
-  getLeaveStatusColor,
-} from "../../../../utils/utils";
+import { getLeaveStatusColor } from "../../../../utils/utils";
 import EmptyScreenView from "../../../../shared/components/EmptyScreenView/EmptyScreenView";
 import React, { useEffect, useState } from "react";
 import type { GridColDef } from "@mui/x-data-grid";
 import CustomBox from "../../../../components/CustomBox/CustomBox.js";
 import StatCard from "../../../../shared/components/StatCard/StatCard.tsx";
 import { Icons } from "../../../../assets/myAssets/exporter.ts";
-import { useGeLeaveBalanceQuery } from "../../../employee/employeeApis.ts";
-import type { ILeaveBalance } from "../../../employee/types.ts";
 import StatCardSkeleton from "../../../../shared/components/StatCard/StatCardSkeleton.tsx";
 import CustomDataTable from "../../../../shared/components/customDataTable/CustomDataTable.tsx";
 import CustomButton from "../../../../components/CustomButton/CustomButton.tsx";
 import { TbPlus } from "react-icons/tb";
-// import { useNavigate } from "react-router";
 import dayjs from "dayjs";
-import { Dialog } from "@mui/material";
-import LinearGradient from "../../../../components/LinearGradient/LinearGradient.tsx";
-import { convertTo12HourFormat } from "../../../../utils/timeUtils.ts";
-import CreateLeaveDialog from "../createLeaveDialog/CreateLeaveDialog.tsx";
+import CreateLeaveDialog from "../../components/createLeaveDialog/CreateLeaveDialog.tsx";
 import { getLeaveCategoryTitle } from "../../utils.ts";
+import LeaveDetailsDialog from "../../components/leaveDetailsDialog/leaveDetailsDialog.tsx";
 
 const LeaveList = () => {
-  // const navigate = useNavigate();
   const user = useSelector(userInState);
-  const { data: leaveBalance } = useGeLeaveBalanceQuery<ILeaveBalance>();
+  const { data: leaveBalance, refetch: refetchBalance } =
+    useGeLeaveBalanceQuery();
   const [openModal, setOpenModal] = useState<boolean>(false);
   const [openApplyLeaveModal, setOpenApplyLeaveModal] =
     useState<boolean>(false);
-  const [leaveId, setLeaveId] = useState("");
+  const [leaveId, setLeaveId] = useState<string | null>(null);
 
   // Only make the query if user exists and has an id
-  const { data: leaves, isLoading, error, refetch } = useGetUserLeavesQuery();
-  const { data, isFetching } = useGetLeavesDetialsQuery(leaveId);
+  const {
+    data: leaves,
+    isLoading,
+    error,
+    refetch,
+    isFetching: listFetch,
+  } = useGetUserLeavesQuery();
 
   // Handle query errors
   useEffect(() => {
@@ -47,12 +42,14 @@ const LeaveList = () => {
       console.error("Error fetching leaves:", error);
       toast.error("Failed to load leaves. Please try again.");
     }
-  }, [error]);
+    refetch();
+    refetchBalance();
+  }, [error, refetch, refetchBalance]);
 
   const handleSuccess = () => {
-  refetch();
-  setOpenApplyLeaveModal(false);
-};
+    refetch();
+    setOpenApplyLeaveModal(false);
+  };
 
   // Show loading state if user is not available yet
   if (!user?.id) {
@@ -186,7 +183,7 @@ const LeaveList = () => {
   return (
     <div className="w-full h-full flex flex-col gap-y-5">
       <div className="w-full flex flex-row flex-nowrap items-start gap-x-5">
-        {isLoading
+        {isLoading || listFetch
           ? [1, 2, 3, 4].map((_, idx) => <StatCardSkeleton key={idx} />)
           : leaveBalance && (
               <React.Fragment>
@@ -229,7 +226,9 @@ const LeaveList = () => {
         </div>
 
         <div className=" w-full h-full">
-          {!isLoading && (!leaves?.data || leaves.data.length === 0) ? (
+          {!isLoading &&
+          !listFetch &&
+          (!leaves?.data || leaves.data.length === 0) ? (
             <EmptyScreenView
               isDataEmpty={true}
               emptyViewTitle="No Leave Found"
@@ -242,7 +241,7 @@ const LeaveList = () => {
               isDataEmpty={!leaves?.data || leaves.data.length === 0}
               emptyViewTitle="No Leave Found"
               emptyViewSubTitle="Please request a leave"
-              isLoading={isLoading}
+              isLoading={isLoading || listFetch}
               withPagination={false}
               onRowClick={(item) => {
                 setLeaveId(item.id.toString());
@@ -252,123 +251,20 @@ const LeaveList = () => {
           )}
         </div>
       </CustomBox>
-      <Dialog
-        open={openModal}
-        onClose={() => setOpenModal(false)}
-        maxWidth="lg"
-        sx={{
-          "& .MuiDialog-paper": {
-            borderRadius: "16px",
-          },
-        }}
-      >
-        {isFetching ? (
-          <CustomBox customClasses="p-5 w-[550px] h-full flex flex-col gap-y-3">
-            <div className="flex flex-row items-center justify-between">
-              <div className="w-40 h-6 animate-pulse bg-black-20/60 rounded" />
-              <div className="w-10 h-6 animate-pulse bg-black-20/60 rounded-xl" />
-            </div>
-            <div className="w-full h-1 animate-pulse bg-black-20/60 rounded" />
-            <div className="flex flex-col gap-y-1.5">
-              <div className="w-[30%] h-4 animate-pulse bg-black-20/60 rounded" />
-              <div className="w-full h-6 animate-pulse bg-black-20/60 rounded" />
-            </div>
-            <div className="flex flex-col gap-y-1.5">
-              <div className="w-[30%] h-4 animate-pulse bg-black-20/60 rounded" />
-              <div className="w-full h-6 animate-pulse bg-black-20/60 rounded" />
-              <div className="w-[70%] h-6 animate-pulse bg-black-20/60 rounded" />
-            </div>
-            <div className="w-[50%] h-4 animate-pulse bg-black-20/60 rounded" />
-            <div className="w-full h-6 animate-pulse bg-black-20/60 rounded" />
-            <div className="w-full h-6 animate-pulse bg-black-20/60" />
-          </CustomBox>
-        ) : (
-          <CustomBox customClasses="p-5 w-[550px] h-full flex flex-col gap-y-3">
-            <div className="w-full flex flex-row items-center-safe justify-between">
-              <h6 className="font-semibold text-xl">Leave Details</h6>
-              <span
-                className={`${getLeaveStatusColor(
-                  data?.status ?? "pending"
-                )} text-xs py-1.5 px-3 rounded-full`}
-              >
-                {data?.status}
-              </span>
-            </div>
-            <LinearGradient />
-            <div className="flex flex-col gap-y-0.5">
-              <span className="text-black-50 text-sm font-medium">Title</span>
-              <p className="text-base">{data?.title}</p>
-            </div>
-            <div className="flex flex-col gap-y-0.5">
-              <span className="text-black-50 text-sm font-medium">
-                Description
-              </span>
-              <p className="text-base">{data?.description}</p>
-            </div>
-            <LinearGradient />
-            <div className="w-full flex flex-row flex-wrap items-start gap-y-3">
-              <div className="w-[60%] flex flex-col gap-y-0.5">
-                <span className="text-black-50 text-sm font-medium">
-                  Leave Type
-                </span>
-                <p className="text-base capitalize">{data?.leave_type}</p>
-              </div>
-              <div className="w-[40%] flex flex-col gap-y-0.5">
-                <span className="text-black-50 text-sm font-medium">
-                  Leave Duration
-                </span>
-                <p className="text-base capitalize">
-                  {getLeaveCategoryTitle(data?.leave_category ?? "")}
-                </p>
-              </div>
-              {data?.leave_category === "short_leave" && (
-                <div className="w-[50%] flex flex-col gap-y-0.5">
-                  <span className="text-black-50 text-sm font-medium">
-                    Start Time
-                  </span>
-                  <p className="text-base capitalize">
-                    {convertTo12HourFormat(data.start_time ?? "")}
-                  </p>
-                </div>
-              )}
-              {data?.leave_category === "half_day" && (
-                <div className="flex flex-col gap-y-0.5">
-                  <span className="text-black-50 text-sm font-medium">
-                    Which Half?
-                  </span>
-                  <p className="text-base capitalize">
-                    {data.half_day_type ? "First Half" : "Second Half"}
-                  </p>
-                </div>
-              )}
-            </div>
 
-            <div className="w-full flex flex-row items-start">
-              <div className="w-[60%] flex flex-col gap-y-0.5">
-                <span className="text-black-50 text-sm font-medium">
-                  Start Date & End Date
-                </span>
-                <p className="text-base">
-                  {dayjs(data?.start_date).format("DD MMM, YYYY")} &nbsp; &
-                  &nbsp;
-                  {dayjs(data?.end_date).format("DD MMM, YYYY")}
-                </p>
-              </div>
-              <div className="flex flex-col gap-y-0.5">
-                <span className="text-black-50 text-sm font-medium">
-                  Leave Days
-                </span>
-                <p className="text-base">{data?.days ?? 1}</p>
-              </div>
-            </div>
-          </CustomBox>
-        )}
-      </Dialog>
-
+      {/* Leave Details Dialog */}
+      {leaveId && (
+        <LeaveDetailsDialog
+          open={openModal}
+          leaveId={leaveId}
+          onClose={() => setOpenModal(false)}
+        />
+      )}
+      
       {/* Apply Leave Dialog */}
       <CreateLeaveDialog
         open={openApplyLeaveModal}
-         onSuccess={handleSuccess}
+        onSuccess={handleSuccess}
         onClose={() => {
           setOpenApplyLeaveModal(false);
         }}

@@ -11,33 +11,39 @@ import {
 import type { GridColDef } from "@mui/x-data-grid";
 import dayjs from "dayjs";
 import { getLeaveCategoryTitle } from "../../utils";
-import LeaveRequestDialog from "../leaveRequestsDialog/LeaveRequestDialog";
 import type { ILeaveRequest } from "../../leaves.types";
+import LeaveRequestDialog from "../../components/leaveRequestsDialog/LeaveRequestDialog";
 
-const LeaveRequestsHr = () => {
+const LeaveRequestsHr = ({
+  onLeaveActionSuccess,
+}: {
+  onLeaveActionSuccess: () => void;
+}) => {
   const dispatch = useDispatch();
   const [openModal, setOpenModal] = useState<boolean>(false);
   const [leaveReqData, setLeaveReqData] = useState<ILeaveRequest | null>();
   /* ===================== API ===================== */
-  const { data: leaveRequests, isLoading } = useGetLeaveRequestsQuery(
-    undefined,
-    {
-      refetchOnFocus: true,
-    }
-  );
+  const {
+    data: leaveRequests,
+    isLoading,
+    refetch,
+    isFetching
+  } = useGetLeaveRequestsQuery(undefined, {
+    refetchOnFocus: true,
+  });
   /* ===================== EFFECTS ===================== */
   useEffect(() => {
     if (leaveRequests?.data) {
       dispatch(setLeaveRequests(leaveRequests.data));
     }
-  }, [leaveRequests?.data]);
+    refetch()
+  }, [leaveRequests?.data, refetch]);
 
   const leaveRequestsFromStore = useSelector(selectLeaveRequests);
 
   const refetchLeaveList = () => {
-    if (leaveRequests?.data) {
-      dispatch(setLeaveRequests(leaveRequests.data));
-    }
+    refetch(); 
+    onLeaveActionSuccess();
   };
 
   /* ===================== TABLE COLUMNS ===================== */
@@ -107,7 +113,7 @@ const LeaveRequestsHr = () => {
           <CustomDataTable
             rows={leaveRequestsFromStore || []}
             columns={columns}
-            isLoading={isLoading}
+            isLoading={isLoading || isFetching}
             isDataEmpty={!leaveRequestsFromStore?.length}
             emptyViewTitle="No leave requests found"
             emptyViewSubTitle="There are no pending leave requests"

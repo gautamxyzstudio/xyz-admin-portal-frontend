@@ -10,7 +10,7 @@ const InformationCards = ({
   leaveBalance,
   upComingHolidays,
 }: {
-  recentLeave: ILeave;
+  recentLeave?: ILeave | null;
   leaveBalance: string;
    upComingHolidays: ProcessedHoliday
 }) => {
@@ -40,12 +40,12 @@ const InformationCards = ({
       />
       <StatCard
         dashboard
-        title={"Apply Leaves"}
-        value={dayjs(recentLeave.start_date).format("DD/MM/YYYY")}
+        title={"Recent Apply Leaves"}
+        value={dayjs(recentLeave?.start_date).format("DD/MM/YYYY")}
         iconSrc={Icons.TOTAL_LEAVE}
         iconBgColor="bg-[#6CADDD1A]"
-        subTitle={recentLeave.status}
-        subTitleColor={getLeaveStatusColor(recentLeave.status)}
+        subTitle={recentLeave?.status ?? 'Not Applied Leave'}
+        subTitleColor={getLeaveStatusColor(recentLeave?.status ?? '')}
       />
     </div>
   );

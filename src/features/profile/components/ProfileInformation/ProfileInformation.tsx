@@ -3,6 +3,7 @@ import type { RootState } from "../../../../state/store";
 
 import LinearGradient from "../../../../components/LinearGradient/LinearGradient";
 import { Icons } from "../../../../assets/myAssets/exporter";
+import dayjs from "dayjs";
 
 type InfoItemProps = {
   icon: string;
@@ -60,7 +61,7 @@ const ProfileInformation: React.FC = () => {
                 <InfoItem
                   icon={Icons.JOINING_DATE}
                   label={"Joining Date"}
-                  value={userDetails?.joinig_date}
+                  value={dayjs(userDetails?.joinig_date).format('DD MMM, YYYY')}
                 />
               </div>
             </div>
