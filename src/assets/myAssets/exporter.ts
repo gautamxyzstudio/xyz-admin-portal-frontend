@@ -43,14 +43,16 @@ import HOLIDAYS_FILL from "./icons/holidaysFill.svg";
 import LEAVES_FILL from "./icons/leavesFill.svg";
 import UPDATE_IMG from "./icons/update-img.svg";
 import PLUS_ICON from "./icons/plus-icon.svg";
-import TODAYABSENT from "./icons/today-Absents.svg"
+import TODAY_ABSENT from "./icons/today-Absents.svg";
 import ANNOUNCE from "./icons/announcement.svg";
 import ANNIVERSARY from "./icons/anniversary.svg";
 import BIRTHDAY from "./icons/birthday.svg";
 import EDIT from "./icons/edit.svg";
 import DELETE from "./icons/delete.svg";
-import SEARCH_ICON from "./icons/search-icon.svg"
-import NO_DATA from "./icons/No-data.svg"
+import SEARCH_ICON from "./icons/search-icon.svg";
+import NO_DATA from "./icons/No-data.svg";
+import ANNOUNCEMENT_MENU from "./icons/announcementMenu.svg";
+import ANNOUNCEMENT_MENU_FILL from "./icons/announcementMenuFill.svg";
 
 export const Icons = {
   CROSS_ICON,
@@ -97,14 +99,15 @@ export const Icons = {
   LEAVES_FILL,
   UPDATE_IMG,
   PLUS_ICON,
-  TODAYABSENT,
+  TODAY_ABSENT,
   ANNIVERSARY,
   ANNOUNCE,
   BIRTHDAY,
   EDIT,
   DELETE,
   SEARCH_ICON,
-  NO_DATA
+  NO_DATA,
+  ANNOUNCEMENT_MENU, ANNOUNCEMENT_MENU_FILL
 };
 
 // Images

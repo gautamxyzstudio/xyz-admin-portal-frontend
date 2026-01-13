@@ -46,10 +46,7 @@ export const endpoints = {
 
     return url;
   },
-  getLeavesList: (
-    page?: number,
-    search?: string,
-  ) => {
+  getLeavesList: (page?: number, search?: string) => {
     console.log("=-=-=-=-=-=-=-");
 
     let url = `${baseUrl}/api/leave-statuses?populate=*&pagination[page]=${
@@ -60,13 +57,11 @@ export const endpoints = {
     }
     return url;
   },
-  updateAttendance: `${baseUrl}/api/daily-attendance/update-attendance`,
+  updateAttendance: (id: number) =>
+    `${baseUrl}/api/daily-attendances/${id}/manual-update`,
   applyLeave: `${baseUrl}/api/leave-statuses`,
   getUserLeaves: `${baseUrl}/api/leave-statuses/my-leaves`,
-  getUserALlLeaves: (
-    page: number,
-    username?: string
-  ) => {
+  getUserALlLeaves: (page: number, username?: string) => {
     let url = `${baseUrl}/api/leave-statuses/my-leaves?page=${page}&pageSize=10`;
 
     if (username) {
@@ -81,5 +76,6 @@ export const endpoints = {
   getLeaveRequests: `${baseUrl}/api/leave-statuses?filters[status][$eq]=pending&populate[user][populate][user_detial][populate]=Photo&sort=id:desc`,
   approveLeave: (id: number) => `${baseUrl}/api/leave-status/${id}/approve`,
   rejectLeave: (id: number) => `${baseUrl}/api/leave-status/${id}/reject`,
-  hrApproveleave:(id:number) =>`${baseUrl}/api/leave-statuses/${id}/hr-update-and-approve-leave`
+  hrApproveleave: (id: number) =>
+    `${baseUrl}/api/leave-statuses/${id}/hr-update-and-approve-leave`,
 };

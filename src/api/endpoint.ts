@@ -47,7 +47,8 @@ export const apiendpoint = {
   // Upload file
   UPLOAD_IMAGE: `${baseUrl}/api/upload`,
   // /api/announcements
-  getAnnouncements: `${baseUrl}/api/announcements`,
+  getAnnouncements: `${baseUrl}/api/announcements?sort=Date:desc`,
+  getAnnouncementById: (id: number) => `${baseUrl}/api/announcements/${id}`,
   // STATS API
   getDashboardStats: `${baseUrl}/api/dashboard/stats`,
 };

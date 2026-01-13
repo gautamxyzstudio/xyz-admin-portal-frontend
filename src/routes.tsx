@@ -44,6 +44,14 @@ export const getRoutes = (user: IUserAdvance | null) => {
       permissions: ["Employee"],
     },
     {
+      name: "Announcement",
+      key: "announcement",
+      icon: Icons.ANNOUNCEMENT_MENU,
+      iconFill: Icons.ANNOUNCEMENT_MENU_FILL,
+      route: "/announcement",
+      permissions: ["Hr", "Admin"],
+    },
+    {
       name: "Holidays",
       key: "holidays",
       icon: Icons.HOLIDAYS,

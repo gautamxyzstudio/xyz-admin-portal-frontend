@@ -93,6 +93,8 @@ const HolidayList = () => {
         isLoading={isLoading}
         withPagination={false}
         isDataEmpty={holidays.length === 0}
+        emptyViewTitle="No holiday found"
+        emptyViewSubTitle="There are not any holiday"
       />
 
       <HolidayForm

@@ -58,7 +58,7 @@ export const formatTimeToHHMMSS = (time: string | any): string => {
 
 export const convertTo12HourFormat = (time: string): string => {
   if (!time) {
-    return "N/A";
+    return "Currently working";
   }
   const [hours, minutes] = time.split(":").map(Number);
   const period = hours >= 12 ? "pm" : "am";

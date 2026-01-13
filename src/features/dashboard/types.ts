@@ -1,4 +1,4 @@
-import type { ILeave } from '../leaves/leaves.types';
+import type { ILeave } from "../leaves/leaves.types";
 
 export interface IAttendance {
   id: number;
@@ -100,9 +100,6 @@ export interface IGetAllAttendanceResponse {
 }
 
 export interface IUpdateAttendanceRequest {
-  data: {
-    in: string;
-    out: string;
-    id: number;
-  };
+  in: string;
+  out: string;
 }

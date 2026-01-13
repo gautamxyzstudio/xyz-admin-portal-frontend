@@ -7,12 +7,8 @@ import {
 import type { IUserAttendance } from "../../dashboard/types";
 import type { GridColDef } from "@mui/x-data-grid";
 import EmployeeTableRow from "../../employee/components/employeeTableRow/EmployeeTableRow";
-import { getImageUrl } from "../../../utils/utils";
-import {
-  formatTimeForInput,
-  formatTimeForAPI,
-  convertTo12HourFormat,
-} from "../../../utils/timeUtils";
+import { convertTo12HourFormat, getImageUrl } from "../../../utils/utils";
+import { formatTimeForInput, formatTimeForAPI } from "../../../utils/timeUtils";
 import { useApiOperations } from "../../../hooks/useApiOperations";
 import { useFilterState } from "../../../hooks/useFilterState";
 import { Pagination, TextField, Alert, Button, Dialog } from "@mui/material";
@@ -174,15 +170,6 @@ const AttendanceAdmin = () => {
     ); // Show loading for search
   };
 
-  /* ===================== Handlers ===================== */
-  // const handleFilter = async () => {
-  //   if (!validateDates()) return;
-  //   await fetchAttendance(
-  //     { page: 1, startDate, endDate, search: searchQuery },
-  //     true
-  //   );
-  // };
-
   const handleClearFilter = async () => {
     clearFilters();
     await fetchAttendance(
@@ -201,10 +188,9 @@ const AttendanceAdmin = () => {
 
     await executeWithLoading(async () => {
       if (!selectedAttendance?.id) return;
-
       await updateAttendance({
+        id: selectedAttendance.id,
         data: {
-          id: selectedAttendance.id,
           in: formatTimeForAPI(editCheckIn),
           out: formatTimeForAPI(editCheckOut),
         },
@@ -246,11 +232,10 @@ const AttendanceAdmin = () => {
         />
       ),
     },
-
     {
       field: "date",
       headerName: "Date",
-      width: 150,
+      width: 100,
       renderCell: (params) => (
         <span className="text-xs font-medium">
           {params?.row?.Date
@@ -259,14 +244,13 @@ const AttendanceAdmin = () => {
         </span>
       ),
     },
-
     {
       field: "checkIn",
       headerName: "Check In",
       width: 100,
       renderCell: (params) => (
         <span className="text-xs font-medium">
-          {convertTo12HourFormat(params?.row?.in) ?? "In Time Missing"}
+          {convertTo12HourFormat(params.row.in)}
         </span>
       ),
     },
@@ -276,7 +260,7 @@ const AttendanceAdmin = () => {
       width: 100,
       renderCell: (params) => (
         <span className="text-xs font-medium">
-          {convertTo12HourFormat(params?.row?.out) ?? "Out Time Missing"}
+          {convertTo12HourFormat(params.row.out)}
         </span>
       ),
     },

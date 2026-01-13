@@ -48,39 +48,41 @@ const PickerInput = ({
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <DatePicker
-        sx={{ width: "100%" }}
-        label={label}
-        value={value}
-        format="DD/MM/YYYY"
-        disablePast={disablePast}
-        disableFuture={disableFuture}
-        shouldDisableDate={customShouldDisableDate}
-        slotProps={{
-          textField: {
-            error: !!errorMessage,
-            helperText: !!errorMessage,
-            ...slotProps?.textField,
-          },
+      <div className="w-full max-w-full flex flex-col">
+        <DatePicker
+          sx={{ width: "100%" }}
+          label={label}
+          value={value}
+          format="DD/MM/YYYY"
+          disablePast={disablePast}
+          disableFuture={disableFuture}
+          shouldDisableDate={customShouldDisableDate}
+          slotProps={{
+            textField: {
+              error: !!errorMessage,
+              helperText: !!errorMessage,
+              ...slotProps?.textField,
+            },
 
-          popper: {
-            placement: popperPlacement,
-            modifiers: [
-              {
-                name: "flip",
-                enabled: false, 
-              },
-            ],
-          },
-        }}
-        onChange={(newValue) => {
-          if (newValue) setValue(newValue);
-        }}
-      />
+            popper: {
+              placement: popperPlacement,
+              modifiers: [
+                {
+                  name: "flip",
+                  enabled: false,
+                },
+              ],
+            },
+          }}
+          onChange={(newValue) => {
+            if (newValue) setValue(newValue);
+          }}
+        />
 
-      {errorMessage && (
-        <p className="text-xs mt-1 text-red-700">{errorMessage}</p>
-      )}
+        {errorMessage && (
+          <p className="text-xs mt-1 text-red-700">{errorMessage}</p>
+        )}
+      </div>
     </LocalizationProvider>
   );
 };

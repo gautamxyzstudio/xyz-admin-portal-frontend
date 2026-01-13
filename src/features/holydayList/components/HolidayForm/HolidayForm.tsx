@@ -45,8 +45,6 @@ const HolidayForm = ({
     },
   });
 
-  // const [holidayData, setHolidayData] = useState<IHolidayFlat>();
-
   const fetchHoliday = async (id: number) => {
     const res = await getHolidayDetail(id).unwrap();
     reset({

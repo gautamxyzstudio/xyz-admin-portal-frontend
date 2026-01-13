@@ -30,8 +30,8 @@ import { Icons } from "../../../assets/myAssets/exporter";
 import InformationCards from "../components/informationCards/InformationCards";
 import StatCardSkeleton from "../../../shared/components/StatCard/StatCardSkeleton";
 import { useGetHolidaysQuery } from "../../holydayList/holydayListApi";
-import AnnouncementsList from "../components/announcementsList/AnnouncementsList";
 import dayjs from "dayjs";
+import AnnouncementList from "../components/announcementList/AnnouncementList";
 
 export interface ProcessedHoliday {
   id: number | string;
@@ -86,11 +86,8 @@ const EmployeeDashboard = () => {
   // upComing Holiday
   const processedHolidays = useMemo<ProcessedHoliday[]>(() => {
     if (!holidays) return [];
-
-    console.log(holidays, "ho");
-
+  
     const today = dayjs();
-    console.log(today);
     today.startOf("day").valueOf(); // normalize
 
     return (
@@ -160,7 +157,6 @@ const EmployeeDashboard = () => {
   };
 
   const recentHoliday = processedHolidays[0] ?? null;
-  console.log(recentHoliday, "R");
 
   const totalLeaveBalance =
     leaveBalance?.el_balance +
@@ -213,7 +209,7 @@ const EmployeeDashboard = () => {
       </div>
       <div className="w-full h-full flex flex-row gap-x-5 items-start">
         <LeaveAnalytics leaves={leaves} isLoading={loading} />
-        <AnnouncementsList />
+        <AnnouncementList customHeight="h-full" />
       </div>
     </div>
   );

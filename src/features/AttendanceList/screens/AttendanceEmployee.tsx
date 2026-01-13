@@ -48,21 +48,13 @@ const AttendanceEmployee = () => {
       field: "in",
       headerName: "Check In",
       width: 160,
-      renderCell: (params) => {
-        return (
-          <>{convertTo12HourFormat(params?.row?.in) ?? "In Time Missing"}</>
-        );
-      },
+      renderCell: (params) => convertTo12HourFormat(params?.row?.in),
     },
     {
       field: "out",
       headerName: "Check Out ",
       width: 160,
-      renderCell: (params) => {
-        return (
-          <>{convertTo12HourFormat(params?.row?.out) ?? "Out Time Missing"}</>
-        );
-      },
+      renderCell: (params) => convertTo12HourFormat(params?.row?.out),
     },
   ];
   const Calendar = () => (

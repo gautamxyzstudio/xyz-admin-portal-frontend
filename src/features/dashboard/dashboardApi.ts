@@ -1,5 +1,5 @@
-import { baseApi } from '../../state/baseApi';
-import { endpoints } from '../../state/endpoints';
+import { baseApi } from "../../state/baseApi";
+import { endpoints } from "../../state/endpoints";
 import type {
   IAttendance,
   ICheckInRequest,
@@ -7,10 +7,10 @@ import type {
   IGetAllAttendanceResponse,
   IGetTodayAttendanceRequest,
   IUpdateAttendanceRequest,
-} from './types';
+} from "./types";
 
 const enhancedAttendanceApi = baseApi.enhanceEndpoints({
-  addTagTypes: ['Attendance'],
+  addTagTypes: ["Attendance"],
 });
 
 export const attendanceApi = enhancedAttendanceApi.injectEndpoints({
@@ -24,7 +24,7 @@ export const attendanceApi = enhancedAttendanceApi.injectEndpoints({
         endDate: string;
         search?: string;
       }
-    >({ 
+    >({
       query: ({ page, pageSize, startDate, endDate, search }) => ({
         url: endpoints.getAllAttendance(
           page,
@@ -33,14 +33,14 @@ export const attendanceApi = enhancedAttendanceApi.injectEndpoints({
           endDate,
           search
         ),
-        method: 'GET',
+        method: "GET",
       }),
     }),
     getTodayAttendance: builder.query<IAttendance, IGetTodayAttendanceRequest>({
       query: ({ id }) => ({
         url: endpoints.getTodayAttendance(id),
       }),
-      providesTags: ['Attendance'],
+      providesTags: ["Attendance"],
       transformResponse: (response: IAttendance[]) => {
         return response[0];
       },
@@ -48,23 +48,26 @@ export const attendanceApi = enhancedAttendanceApi.injectEndpoints({
     checkIn: builder.mutation<IAttendance, ICheckInRequest>({
       query: (data) => ({
         url: endpoints.checkIn,
-        method: 'POST',
-        invalidatesTags: ['Attendance'],
+        method: "POST",
+        invalidatesTags: ["Attendance"],
         body: data,
       }),
     }),
     checkOut: builder.mutation<IAttendance, ICheckOutRequest>({
       query: (data) => ({
         url: endpoints.checkOut,
-        method: 'POST',
+        method: "POST",
         body: data,
-        invalidatesTags: ['Attendance'],
+        invalidatesTags: ["Attendance"],
       }),
     }),
-    updateAttendance: builder.mutation<IAttendance, IUpdateAttendanceRequest>({
-      query: (data) => ({
-        url: endpoints.updateAttendance,
-        method: 'PUT',
+    updateAttendance: builder.mutation<
+      IAttendance,
+      { id: number; data: IUpdateAttendanceRequest }
+    >({
+      query: ({ id, data }) => ({
+        url: endpoints.updateAttendance(id),
+        method: "PUT",
         body: data,
       }),
     }),

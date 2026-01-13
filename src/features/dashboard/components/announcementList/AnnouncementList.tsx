@@ -1,45 +1,18 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import CustomBox from "../../../../components/CustomBox/CustomBox";
-import AnnouncementCard, {
-  type IAnnouncementResponse,
-} from "./AnnouncementCard";
-import { apiendpoint } from "../../../../api/endpoint";
-import { useSelector } from "react-redux";
-import { userInState } from "../../../auth/authSlice";
-import axios from "axios";
+import AnnouncementCard from "../../../announcements/components/AnnouncementCard/AnnouncementCard";
+import { useGetAnnouncementsQuery } from "../../../announcements/announcementsApi";
 
-const AnnouncementsList = () => {
+const AnnouncementList = ({ customHeight }: { customHeight: string }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const tweenRef = useRef<gsap.core.Tween | null>(null);
-
-  const [isLoading, setIsLoading] = useState(false);
-  const [announcementsList, setAnnouncementsList] = useState<
-    IAnnouncementResponse[]
-  >([]);
-
-  const user = useSelector(userInState);
-
-  const fetchAnnouncement = async () => {
-    if (!user?.token) return; // authorization check
-    try {
-      setIsLoading(true);
-      const response = await axios.get(apiendpoint.getAnnouncements, {
-        headers: { Authorization: `Bearer ${user.token}` },
-      });
-      setAnnouncementsList(response.data.data || []);
-    } catch (error) {
-      console.error("Error fetching announcements list", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchAnnouncement();
-  }, [user?.token]);
+  const {
+    data: announcementsList = [],
+    isLoading,
+    isFetching,
+  } = useGetAnnouncementsQuery();
 
   // GSAP Auto Scroll
   useEffect(() => {
@@ -76,7 +49,7 @@ const AnnouncementsList = () => {
 
     tweenRef.current = gsap.to(container, {
       scrollTop: contentHeight,
-      duration: announcementsList.length * 3,
+      duration: announcementsList?.length * 3,
       ease: "none",
       repeat: -1,
       modifiers: {
@@ -103,7 +76,7 @@ const AnnouncementsList = () => {
   return (
     <CustomBox
       compRef={containerRef}
-      customClasses={`p-5 pt-0 w-[41%] h-full max-h-98.75 ${
+      customClasses={`p-5 pt-0 w-[41%] ${customHeight} ${
         announcementsList.length > 3 ? "overflow-y-hidden" : "overflow-y-auto"
       } scrollbar-hide`}
     >
@@ -112,7 +85,7 @@ const AnnouncementsList = () => {
       </h4>
 
       <div ref={contentRef} className="flex flex-col gap-y-3 mt-4">
-        {isLoading ? (
+        {isLoading || isFetching ? (
           Array.from({ length: 4 }).map((_, idx) => (
             <div
               key={idx}
@@ -124,9 +97,9 @@ const AnnouncementsList = () => {
             <AnnouncementCard
               key={announce.id}
               id={announce.id}
-              title={announce.attributes.Title}
-              description={announce.attributes.Description}
-              date={announce.attributes.Date}
+              title={announce.title}
+              description={announce.description}
+              date={announce.date}
             />
           ))
         ) : (
@@ -139,4 +112,4 @@ const AnnouncementsList = () => {
   );
 };
 
-export default AnnouncementsList;
+export default AnnouncementList;

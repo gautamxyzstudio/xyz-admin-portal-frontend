@@ -25,7 +25,8 @@ import theme from "./theme/theme.js";
 import { LoadingWrapperProvider } from "./wrappers/loadingWrapper/LoadingWrapper.context.js";
 import DashboardLayout from "./examples/LayoutContainers/DashboardLayout/DashboardLayout.js";
 import BlogList from "./features/blogs/screens/blogList/BlogList.js";
-import BlogEditor from "./features/blogs/screens/blogEditor/index.jsx"
+import BlogEditor from "./features/blogs/screens/blogEditor/index.jsx";
+import AnnouncementList from "./features/announcements/screens/AnnouncementsList/AnnouncementsList.js";
 
 const App: React.FC = () => {
   return (
@@ -77,22 +78,6 @@ const App: React.FC = () => {
                         </DashboardLayout>
                       }
                     />
-                    {/* <Route
-                      path="leaves/create"
-                      element={
-                        <DashboardLayout>
-                          <CreateLeave />
-                        </DashboardLayout>
-                      }
-                    /> */}
-                    {/* <Route
-                      path="leaves/update"
-                      element={
-                        <DashboardLayout>
-                          <CreateLeave />
-                        </DashboardLayout>
-                      }
-                    /> */}
                     <Route
                       path="documents"
                       element={
@@ -142,22 +127,15 @@ const App: React.FC = () => {
                         </DashboardLayout>
                       }
                     />
-                    {/* <Route
-                      path="holidays/add"
+                    <Route
+                      path="announcement"
                       element={
                         <DashboardLayout>
-                          <AddHoliday />
+                          <AnnouncementList />
                         </DashboardLayout>
                       }
-                    /> */}
-                    {/* <Route
-                      path="holidays/edit/:id"
-                      element={
-                        <DashboardLayout>
-                          <EditHoliday />
-                        </DashboardLayout>
-                      }
-                    /> */}
+                    />
+
                     <Route
                       path="blog"
                       element={
