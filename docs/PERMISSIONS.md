@@ -9,7 +9,6 @@ The system supports four user types:
 - **Admin**: Full access to all features
 - **HR**: Access to employee management, attendance, leaves, holidays, and blog
 - **Employee**: Limited access to dashboard, attendance, leaves, and profile
-- **SEO**: Access to dashboard, profile, and blog management
 
 ## Route Permissions
 
@@ -21,14 +20,10 @@ The system supports four user types:
 - `/employees` (Employee List)
 - `/attendance` (Attendance List)
 - `/leaves` (Leave List)
-- `/leaves/create` (Create Leave)
-- `/leaves/update` (Update Leave)
 - `/employees/register` (Add Employee)
 - `/employees/:name` (Edit Employee)
 - `/profile` (User Profile)
 - `/holidays` (Holiday List)
-- `/holidays/add` (Add Holiday)
-- `/holidays/edit/:id` (Edit Holiday)
 - `/blog` (Blog Posts)
 - `/blog/post_blog` (Create Blog)
 - `/blog/edit_blog/:id` (Edit Blog)
@@ -40,13 +35,6 @@ The system supports four user types:
 - `/leaves/create` (Create Leave)
 - `/profile` (User Profile)
 - `/holidays` (Holiday List)
-
-### SEO Routes
-- `/` (Dashboard)
-- `/profile` (User Profile)
-- `/blog` (Blog Posts)
-- `/blog/post_blog` (Create Blog)
-- `/blog/edit_blog/:id` (Edit Blog)
 
 ## Usage
 

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../../../state/store";
@@ -29,7 +30,7 @@ const ProfileList = () => {
     if (user?.id) {
       getUserDetails({ id: user.id });
     }
-  }, [user?.id, getUserDetails]);
+  }, [user?.id]);
 
   return (
     <div className="pt-6 pb-6 p-6 bg-white rounded-2xl ">

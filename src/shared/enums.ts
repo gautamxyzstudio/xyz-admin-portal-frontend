@@ -5,7 +5,6 @@
 export const EmployeeRole = {
   HR: "Hr",
   EMPLOYEE: "Employee",
-  // SEO: "Seo",
 } as const;
 
 export type EmployeeRole = (typeof EmployeeRole)[keyof typeof EmployeeRole];
@@ -14,7 +13,6 @@ export const UserType = {
   ADMIN: "Admin",
   EMPLOYEE: EmployeeRole.EMPLOYEE,
   HR: EmployeeRole.HR,
-  // SEO: EmployeeRole.SEO,
 } as const;
 
 export type UserType = (typeof UserType)[keyof typeof UserType];
@@ -69,19 +67,6 @@ export const ROUTE_PERMISSIONS: Record<UserType, readonly string[]> = {
     "/blog/post_blog",
     "/blog/edit_blog/:id",
   ],
-  // [UserType.SEO]: [
-  //   "/",
-  //   "/profile",
-  //   "/documents",
-  //   "/leaves",
-  //   "/attendance",
-  //   "/blog",
-  //   "/holidays",
-  //   "/blog/post_blog",
-  //   "/leaves/create",
-  //   "/leaves/update",
-  //   "/blog/edit_blog/:id",
-  // ],
 } as const;
 
 /* =========================

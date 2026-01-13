@@ -56,7 +56,7 @@ const ProfileHeader: React.FC = () => {
       displaySnackbar("success", "Cover image updated");
     } catch (err: any) {
       displaySnackbar("error", err?.message || "Upload failed");
-      setCoverPreview(userDetails?.coverImage ?? Images.BANNER);
+      setCoverPreview(userDetails?.coverImage ?? null);
     }
   };
 
@@ -88,13 +88,7 @@ const ProfileHeader: React.FC = () => {
       {/* Banner Image */}
       <div className="relative w-full h-40">
         <img
-          src={
-            coverPreview
-              ? coverPreview.startsWith("http")
-                ? coverPreview
-                : `${import.meta.env.VITE_API_BASE_URL}${coverPreview}`
-              : Images.BANNER
-          }
+          src={coverPreview ? coverPreview : Images.BANNER}
           alt="Banner"
           className="w-full h-41.75 object-cover rounded-2xl"
         />
