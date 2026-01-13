@@ -11,7 +11,7 @@ import dayjs from "dayjs";
 import { getLeaveCategoryTitle } from "../../utils.js";
 import { getLeaveStatusColor } from "../../../../utils/utils.js";
 import { useDebounce } from "../../../../hooks/useDebounce.js";
-import LeaveDetailsDialog from "../../components/leaveDetailsDialog/leaveDetailsDialog.js";
+import LeaveDetailsDialog from "../../components/leaveDetailsDialog/LeaveDetailsDialog.tsx";
 
 const AllLeaves = () => {
   const {

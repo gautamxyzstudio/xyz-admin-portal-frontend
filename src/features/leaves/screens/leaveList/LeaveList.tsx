@@ -16,7 +16,7 @@ import { TbPlus } from "react-icons/tb";
 import dayjs from "dayjs";
 import CreateLeaveDialog from "../../components/createLeaveDialog/CreateLeaveDialog.tsx";
 import { getLeaveCategoryTitle } from "../../utils.ts";
-import LeaveDetailsDialog from "../../components/leaveDetailsDialog/leaveDetailsDialog.tsx";
+import LeaveDetailsDialog from "../../components/leaveDetailsDialog/LeaveDetailsDialog.tsx";
 
 const LeaveList = () => {
   const user = useSelector(userInState);
