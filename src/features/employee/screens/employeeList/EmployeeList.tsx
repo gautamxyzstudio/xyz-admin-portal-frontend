@@ -27,6 +27,7 @@ const EmployeeList = () => {
 
   const navigate = useNavigate();
   const { setIsLoading } = useLoadingWrapper();
+  
 
   const { isLoading } = useGetEmployeeListQuery({
     user_type: user ? user.user_type : "",
@@ -143,7 +144,7 @@ const EmployeeList = () => {
   ];
 
   return (
-    <CustomBox customClasses="p-6 w-full h-full overflow-scroll scroll-hide">
+    <CustomBox customClasses="p-6 w-full h-full overflow-scroll scrollbar-hide">
       {/* ===== Header ===== */}
       <div className="flex justify-between items-center ">
         <h2 className="text-black text-lg font-semibold">Employee </h2>

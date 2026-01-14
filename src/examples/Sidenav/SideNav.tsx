@@ -28,7 +28,7 @@ const SideNav = () => {
   );
   return (
     <CustomBox customClasses="pl-5 pr-2 py-6 flex w-[18%] h-full flex-col justify-between items-center overflow-clip overflow-y-scroll scrollbar-hide">
-      <div className="w-full h-full flex flex-col gap-y-8">
+      <div className="w-full h-full  flex flex-col gap-y-8">
         <Link to="/">
           <img
             className="w-[90%] h-full"
@@ -36,7 +36,7 @@ const SideNav = () => {
             alt="XYZ Studio"
           />
         </Link>
-        <div className="flex flex-col gap-y-1 h-full">
+        <div className="flex flex-col gap-y-1 h-full overflow-scroll scrollbar-hide">
           {filteredRoutes.map((route) => (
             <Link
               key={route.key}

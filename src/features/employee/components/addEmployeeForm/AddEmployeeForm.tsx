@@ -242,12 +242,20 @@ const AddEmployeeForm = ({
             name="joiningDate"
             rules={{ required: "Joining Date is required" }}
             render={({ field }) => (
+              // <PickerInput
+              //   label="Joining Date"
+              //   value={field.value ? dayjs(field.value) : null}
+              //   setValue={field.onChange}
+              //   errorMessage={errors.joiningDate?.message}
+              //   popperPlacement="top-end"
+              // />
               <PickerInput
                 label="Joining Date"
                 value={field.value ? dayjs(field.value) : null}
-                setValue={field.onChange}
+                setValue={(value) =>
+                  field.onChange(value ? value.format("YYYY-MM-DD") : "")
+                }
                 errorMessage={errors.joiningDate?.message}
-                popperPlacement="top-end"
               />
             )}
           />

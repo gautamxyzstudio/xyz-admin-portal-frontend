@@ -96,7 +96,7 @@ const HrDashboard = () => {
         />
       </div>
       <div className="w-full h-full flex flex-row gap-x-5 items-start">
-        <LeaveRequest />
+        <LeaveRequest  />
         <AnnouncementList customHeight="h-100" />
       </div>
       <AttendanceTable />

@@ -61,11 +61,13 @@ const OwnDocs: React.FC<OwnDocsProps> = ({ userId, employeeName }) => {
       </div>
     );
   }
+
   const formatFileSize = (bytes: number) => {
-    if (bytes < 1024 * 1024) {
-      return `${(bytes / 1024).toFixed(1)} KB`;
-    }
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
   };
 
   const handleDownload = (url: string) => {

@@ -209,7 +209,7 @@ const EmployeeDashboard = () => {
       </div>
       <div className="w-full h-full flex flex-row gap-x-5 items-start">
         <LeaveAnalytics leaves={leaves} isLoading={loading} />
-        <AnnouncementList customHeight="h-full" />
+        <AnnouncementList customHeight="h-100" />
       </div>
     </div>
   );
