@@ -35,6 +35,9 @@ export interface IAttendance {
   in: string | null;
   out: string | null;
   Date: string;
+  is_checked_in: boolean;
+  attendance_seconds: number;
+  checkin_started_at: string | null;
 }
 
 export interface ICheckInRequest {

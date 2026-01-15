@@ -4,7 +4,7 @@ import SideNav from "../../Sidenav/SideNav";
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="p-5 w-full h-full flex flex-row items-start gap-x-5 flex-nowrap">
+    <div className="p-5 w-full h-full flex flex-row items-start gap-x-5 flex-nowrap max-w-screen-2xl mx-auto">
       <SideNav />
       <div className="w-[82.5%] h-full flex flex-col gap-y-5">
         <TopBar />

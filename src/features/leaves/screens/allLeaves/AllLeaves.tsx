@@ -135,7 +135,6 @@ const AllLeaves = () => {
             isLoading={isLoading || isFetching}
             isDataEmpty={leavesData.length === 0}
             onRowClick={(item) => {
-              console.log(item)
               setLeaveId(item.id.toLocaleString());
               setOpenModal(true);
             }}

@@ -1,148 +1,139 @@
 import { useEffect, useState } from "react";
-import { timeStringToDate } from "../../../../utils/utils";
 import CustomBox from "../../../../components/CustomBox/CustomBox";
 import LinearGradient from "../../../../components/LinearGradient/LinearGradient";
 import CustomButton from "../../../../components/CustomButton/CustomButton";
 import { TbLogin, TbLogin2 } from "react-icons/tb";
 import { Icons } from "../../../../assets/myAssets/exporter";
+import dayjs from "dayjs";
+
+interface Props {
+  inTime: string | null;
+  outTime: string | null;
+  isCheckedIn: boolean;
+  attendanceSeconds: number;
+  checkinStartedAt: string | null;
+  handleCheckIn: (time: Date) => void;
+  handleCheckOut: (time: Date) => void;
+}
 
 const MarkAttendance = ({
   inTime,
   outTime,
+  isCheckedIn,
+  attendanceSeconds,
+  checkinStartedAt,
   handleCheckIn,
   handleCheckOut,
-}: {
-  inTime: string | null;
-  outTime: string | null;
-  handleCheckIn: (time: Date) => void;
-  handleCheckOut: (time: Date) => void;
-}) => {
-  // const inTimeDate = inTime ? timeStringToDate(inTime) : null;
-  // const outTimeDate = outTime ? timeStringToDate(outTime) : new Date();
-  // const initialElapsedTime = inTimeDate
-  //   ? Math.floor((outTimeDate.getTime() - inTimeDate.getTime()) / 60000)
-  //   : 0;
+}: Props) => {
+  const [elapsedSeconds, setElapsedSeconds] = useState(attendanceSeconds);
 
-  // const [elapsedMinutes, setElapsedMinutes] = useState(initialElapsedTime);
+  /* 🕒 Time logic */
+  const now = dayjs();
+  const before3PM = now.isBefore(now.hour(16).minute(30));
+  const after3PM = now.isAfter(now.hour(16).minute(30));
+  const after4PM = now.isAfter(now.hour(16).minute(40));
 
-  // useEffect(() => {
-  //   setElapsedMinutes(initialElapsedTime);
-  // }, [initialElapsedTime]);
-
-  // useEffect(() => {
-  //   let timer: NodeJS.Timeout;
-  //   if (inTime && !outTime) {
-  //     timer = setInterval(() => {
-  //       setElapsedMinutes((prev) => prev + 1);
-  //       console.log('Timer updated:', elapsedMinutes + 1);
-  //     }, 60000); // Update every minute
-  //   }
-  //   return () => clearInterval(timer);
-  // }, [inTime, outTime, elapsedMinutes]);
-
-  const inTimeDate = inTime ? timeStringToDate(inTime) : null;
-  const outTimeDate = outTime ? timeStringToDate(outTime) : new Date();
-
-  const initialElapsedSeconds = inTimeDate
-    ? Math.floor((outTimeDate.getTime() - inTimeDate.getTime()) / 1000)
-    : 0;
-
-  const [elapsedSeconds, setElapsedSeconds] = useState(initialElapsedSeconds);
-
+  /* ⏱️ Timer */
   useEffect(() => {
-    setElapsedSeconds(initialElapsedSeconds);
-  }, [initialElapsedSeconds]);
+    if (!isCheckedIn || !checkinStartedAt || outTime) return;
 
-  useEffect(() => {
-    if (!inTime || outTime) return;
+    const startedAt = new Date(checkinStartedAt).getTime();
 
-    const timer = setInterval(() => {
-      setElapsedSeconds((prev) => prev + 1);
-    }, 1000); // ✅ update every second
+    const tick = () => {
+      const diff =
+        attendanceSeconds + Math.floor((Date.now() - startedAt) / 1000);
+      setElapsedSeconds(diff);
+    };
 
+    tick();
+    const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
-  }, [inTime, outTime]);
+  }, [isCheckedIn, checkinStartedAt, attendanceSeconds, outTime]);
 
-  const hours = Math.floor(elapsedSeconds / 3600)
-    .toString()
-    .padStart(2, "0");
+  const handleJoin = () => {
+    handleCheckIn(new Date());
+  };
 
-  const minutes = Math.floor((elapsedSeconds % 3600) / 60)
-    .toString()
-    .padStart(2, "0");
-
-  const seconds = (elapsedSeconds % 60).toString().padStart(2, "0");
+  const hours = String(Math.floor(elapsedSeconds / 3600)).padStart(2, "0");
+  const minutes = String(Math.floor((elapsedSeconds % 3600) / 60)).padStart(2, "0");
+  const seconds = String(elapsedSeconds % 60).padStart(2, "0");
 
   return (
-    <CustomBox customClasses="w-[28%] h-full flex flex-col items-center p-4 text-black">
+    <CustomBox customClasses="w-[28%] h-full flex flex-col items-center p-4 justify-between">
+      {/* Header */}
       <div className="w-full flex flex-col items-center gap-y-2">
         <h3 className="text-xl font-semibold">Daily Attendance</h3>
         <LinearGradient />
-        <p className="text-base">
-          {new Date().toLocaleDateString("en-GB", {
-            weekday: "long",
-            day: "2-digit",
-            month: "long",
-            year: "numeric",
-          })}
-        </p>
+        <p className="text-base">{dayjs().format("dddd DD MMMM, YYYY")}</p>
       </div>
-      {/* Timer Clock */}
-      <div className="mt-4.5 w-full flex flex-col gap-y-2.5 items-center">
-        <div className="w-full flex flex-row flex-nowrap gap-x-4">
-          <div className="w-full flex flex-col items-center">
-            <div className="w-full text-center bg-background p-2.5 rounded-lg font-bold text-4xl leading-11">
-              {hours}
+
+      {/* Timer */}
+      <div className="mt-5 flex gap-x-4 w-full">
+        {[hours, minutes, seconds].map((v, i) => (
+          <div key={i} className="flex-1 text-center">
+            <div className="bg-background p-2 rounded-lg text-4xl font-bold">
+              {v}
             </div>
-            <p className="text-black-50 text-sm">Hours</p>
+            <p className="text-sm text-black-50">
+              {["Hours", "Minutes", "Seconds"][i]}
+            </p>
           </div>
-          <div className="w-full flex flex-col items-center">
-            <div className="w-full text-center bg-background p-2.5 rounded-lg font-bold text-4xl leading-11">
-              {minutes}
-            </div>
-            <p className="text-black-50 text-sm">Minutes</p>
-          </div>
-          <div className="w-full flex flex-col items-center">
-            <div className="w-full text-center bg-background p-2.5 rounded-lg font-bold text-4xl leading-11">
-              {seconds}
-            </div>
-            <p className="text-black-50 text-sm">Seconds</p>
-          </div>
-        </div>
-        <p className="text-base">Clock</p>
+        ))}
       </div>
-      {/* Button */}
-      <div className="mt-4.5 flex flex-col gap-y-3 w-full">
+      <p className="text-base">Clock</p>
+
+      {/* Buttons */}
+      <div className="mt-5 w-full flex flex-col gap-y-3">
+        {/* Initial Check In */}
         {!inTime && !outTime && (
           <CustomButton
             label="Check In"
             onClick={() => handleCheckIn(new Date())}
             icon={<TbLogin2 size={32} />}
-            customStyles="w-full py-3.5!"
           />
         )}
-        {inTime && !outTime && (
+
+        {/* Before 3 PM → Checkout */}
+        {before3PM && isCheckedIn && !outTime && (
           <CustomButton
             label="Check Out"
             onClick={() => handleCheckOut(new Date())}
             icon={<TbLogin size={32} />}
-            customStyles="w-full py-3.5!"
           />
         )}
-        {inTime && outTime && (
+
+        {/* After 3 PM → Join */}
+        {after3PM && !isCheckedIn && !outTime && (
+          <CustomButton
+            label="Join"
+            onClick={handleJoin}
+            icon={<TbLogin2 size={32} />}
+          />
+        )}
+
+        {/* After 4 PM → Checkout again after Join */}
+        {after4PM && isCheckedIn && !outTime && (
+          <CustomButton
+            label="Check Out"
+            onClick={() => handleCheckOut(new Date())}
+            icon={<TbLogin size={32} />}
+          />
+        )}
+
+        {/* Done */}
+        {outTime && (
           <CustomButton
             label="All done for today!"
             disabled
             buttonStyle="disabled"
-            customStyles="w-full py-3.5!"
           />
         )}
-        <div className="bg-background p-2 rounded-md flex flex-row gap-x-1.5 flex-nowrap items-center w-full">
-          <div className="flex flex-row flex-nowrap gap-x-0.5 items-center">
-            <img className="w-6 h-6" alt="office" src={Icons.OFFICE} />
-            <span className="text-primary text-sm">Office</span>
-          </div>
-          <p className="text-black-50 text-sm">09:00AM to 06:00PM</p>
+
+        {/* Office Info */}
+        <div className="bg-background p-2 rounded-md flex items-center gap-x-2">
+          <img src={Icons.OFFICE} alt="office" className="w-6 h-6" />
+          <span className="text-primary text-sm">Office</span>
+          <p className="text-black-50 text-sm">09:00AM – 06:00PM</p>
         </div>
       </div>
     </CustomBox>

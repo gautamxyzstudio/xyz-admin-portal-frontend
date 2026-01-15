@@ -44,9 +44,21 @@ const EmployeeDashboard = () => {
   const user = useSelector(userDetailsInState);
   const { setIsLoading } = useLoadingWrapper();
   const userBasic = useSelector(userInState);
-  const { data: attendance, isLoading } = useGetTodayAttendanceQuery({
-    id: userBasic?.id ?? 0,
-  });
+  const {
+    data: attendance,
+    isLoading,
+    refetch,
+  } = useGetTodayAttendanceQuery(
+    {
+      id: userBasic?.id ?? 0,
+    },
+    {
+      skip: !userBasic?.id,
+      pollingInterval: 180000, // ✅ 3 minutes
+      refetchOnFocus: true, // browser tab focus
+      refetchOnReconnect: true,
+    }
+  );
   const [checkInRequest] = useCheckInMutation();
   const [checkOutRequest] = useCheckOutMutation();
   const dispatch = useDispatch();
@@ -67,6 +79,7 @@ const EmployeeDashboard = () => {
 
   useEffect(() => {
     if (attendance) {
+      console.log(attendance);
       if (attendance.in) {
         dispatch(checkIn(attendance.in));
       }
@@ -80,13 +93,29 @@ const EmployeeDashboard = () => {
   }, [attendance]);
 
   useEffect(() => {
+  if (attendance) {
+    console.log("🔄 Attendance synced from backend:", {
+      id: attendance.id,
+      in: attendance.in,
+      out: attendance.out,
+      isCheckedIn: attendance.is_checked_in,
+      attendanceSeconds: attendance.attendance_seconds,
+      checkinStartedAt: attendance.checkin_started_at,
+      syncedAt: new Date().toLocaleTimeString(),
+    });
+  }
+}, [attendance]);
+
+
+  useEffect(() => {
     setIsLoading(isLoading);
   }, [isLoading]);
+
 
   // upComing Holiday
   const processedHolidays = useMemo<ProcessedHoliday[]>(() => {
     if (!holidays) return [];
-  
+
     const today = dayjs();
     today.startOf("day").valueOf(); // normalize
 
@@ -127,7 +156,7 @@ const EmployeeDashboard = () => {
           user: userBasic.id,
         },
       }).unwrap();
-      // console.log(res, "Ressponse");
+      await refetch(); // ✅ force sync
       dispatch(checkIn(checkInTime));
       dispatch(setAttendanceId(res.id));
     } catch (error) {
@@ -148,6 +177,7 @@ const EmployeeDashboard = () => {
           id: attendanceId,
         },
       }).unwrap();
+      await refetch(); // ✅ force sync
       dispatch(checkOut(checkOutTime));
     } catch (error) {
       toast.error((error as any).message);
@@ -203,6 +233,9 @@ const EmployeeDashboard = () => {
         <MarkAttendance
           inTime={checkInTime ?? null}
           outTime={checkOutTime ?? null}
+          isCheckedIn={attendance?.is_checked_in ?? false}
+          attendanceSeconds={attendance?.attendance_seconds ?? 0}
+          checkinStartedAt={attendance?.checkin_started_at ?? null}
           handleCheckIn={onCheckIn}
           handleCheckOut={onCheckOut}
         />
