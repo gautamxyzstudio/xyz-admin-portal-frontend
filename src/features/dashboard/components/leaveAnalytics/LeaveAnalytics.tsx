@@ -62,7 +62,7 @@ const LeaveAnalytics = ({
   ];
 
   return (
-    <CustomBox customClasses="h-full w-[58%] p-5 flex flex-col space-y-4">
+    <CustomBox customClasses="h-100 w-[58%] p-5 flex flex-col space-y-4">
       <div className="w-full h-auto flex flex-row flex-nowrap justify-between items-center-safe">
         <span className="text-black font-semibold text-2xl">Recent Leaves</span>
         <Link

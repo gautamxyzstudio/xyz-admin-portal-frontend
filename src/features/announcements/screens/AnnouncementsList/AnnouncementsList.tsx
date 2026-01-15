@@ -8,6 +8,7 @@ import CustomDataTable from "../../../../shared/components/customDataTable/Custo
 import type { GridColDef } from "@mui/x-data-grid";
 import { Icons } from "../../../../assets/myAssets/exporter";
 import dayjs from "dayjs";
+import { MdBlock } from "react-icons/md";
 
 const AnnouncementsList = () => {
   const [openDialog, setOpenDialog] = useState<boolean>(false);
@@ -23,6 +24,12 @@ const AnnouncementsList = () => {
     refetch();
     setOpenDialog(false);
   };
+
+  const dangerTitles = [
+    "Happy Birthday!",
+    "Work Anniversary",
+    "New Employee Joined",
+  ];
 
   const columns: GridColDef[] = [
     {
@@ -46,18 +53,33 @@ const AnnouncementsList = () => {
     {
       field: "action",
       headerName: "Action",
-      width: 100,
-      renderCell: (params) => (
-        <button
-          className="rounded p-1 bg-background cursor-pointer"
-          onClick={() => {
-            setAnnouncementId(params.row.id);
-            setOpenDialog(true);
-          }}
-        >
-          <img src={Icons.EDIT} alt="edit" />
-        </button>
-      ),
+      width: 120,
+      renderCell: (params) => {
+        const isDanger = dangerTitles.includes(params.row.title);
+
+        if (isDanger) {
+          return (
+            <button
+              disabled
+              className="px-1 py-1 text-sm rounded p-1 bg-background text-black-50 cursor-not-allowed"
+            >
+              <MdBlock size={20} />
+            </button>
+          );
+        }
+
+        return (
+          <button
+            className="rounded p-1 bg-background cursor-pointer"
+            onClick={() => {
+              setAnnouncementId(params.row.id);
+              setOpenDialog(true);
+            }}
+          >
+            <img src={Icons.EDIT} alt="edit" />
+          </button>
+        );
+      },
     },
   ];
 
@@ -67,7 +89,7 @@ const AnnouncementsList = () => {
         <h2 className="text-2xl font-semibold">Announcement</h2>
 
         <CustomButton
-          label="Add Holiday"
+          label="Add Announcement"
           icon={<TbPlus size={22} />}
           onClick={() => {
             setAnnouncementId(null);

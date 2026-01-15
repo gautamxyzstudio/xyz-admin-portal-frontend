@@ -174,7 +174,7 @@ const BlogEditor = () => {
         };
         const response = id
           ? await axios.put(apiendpoint.editBlogs(Number(id)), body)
-          : await axios.put(apiendpoint.postBlogs, body);
+          : await axios.post(apiendpoint.postBlogs, body);
         if (response) {
           toast.success("Content saved successfully!");
           navigate("/blog", { state: { refreshed: true } });

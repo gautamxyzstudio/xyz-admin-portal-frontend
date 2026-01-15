@@ -119,7 +119,7 @@ const LeaveRequestDialog = ({
           scrollbarWidth: "none",
         },
         "& .MuiDialog-paper::-webkit-scrollbar": {
-          display: "none", // Chrome, Safari
+          display: "none", 
         },
       }}
       fullWidth
@@ -256,7 +256,7 @@ const LeaveRequestDialog = ({
                           fullWidth
                           disablePortal
                           options={leaveOptions}
-                          getOptionLabel={(option) => option.label} // show human-readable title
+                          getOptionLabel={(option) => option.label}
                           disableClearable
                           freeSolo={false}
                           value={
@@ -267,7 +267,7 @@ const LeaveRequestDialog = ({
                           onChange={(_, option) =>
                             field.onChange(option?.value || "")
                           }
-                          disabled={day.leave_type === "Holiday"} // disable if Holiday
+                          disabled={day.leave_type === "Holiday"}  
                           renderInput={(params) => (
                             <TextField
                               {...params}
@@ -362,15 +362,22 @@ const LeaveRequestDialog = ({
         <div className="w-full flex flex-row gap-x-4">
           <CustomButton
             type="submit"
-            label={status === "Approved" ? "Approved" : "Reject"}
-            buttonStyle="primary"
+            label={
+              status === "Pending"
+                ? "Pending"
+                : status === "Approved"
+                ? "Approved"
+                : "Reject"
+            }
+            buttonStyle={status === "Pending" ? "secondary" : "primary"}
+            disabled={status === "Pending"}
             onClick={handleSubmit(handleLeaveAction)}
           />
           <CustomButton
+            type="reset"
             label="Cancel"
             buttonStyle="secondary"
             onClick={() => {
-              onSuccess?.();
               reset();
               onClose();
             }}

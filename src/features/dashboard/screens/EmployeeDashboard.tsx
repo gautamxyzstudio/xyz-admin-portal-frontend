@@ -145,6 +145,7 @@ const EmployeeDashboard = () => {
   if (!userBasic || userBasic.id === undefined) return null;
 
   const onCheckIn = async (time: Date) => {
+    console.log(dayjs().format())
     setIsLoading(true);
     const checkInTime = dateToTimeString(time);
     try {
