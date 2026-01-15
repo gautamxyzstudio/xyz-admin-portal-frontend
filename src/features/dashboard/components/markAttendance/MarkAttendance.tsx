@@ -29,9 +29,9 @@ const MarkAttendance = ({
 
   /* 🕒 Time logic */
   const now = dayjs();
-  const before3PM = now.isBefore(now.hour(16).minute(30));
-  const after3PM = now.isAfter(now.hour(16).minute(30));
-  const after4PM = now.isAfter(now.hour(16).minute(40));
+  const before1PM = now.isBefore(now.hour(13));
+  const after1PM = now.isAfter(now.hour(13));
+  const after2PM = now.isAfter(now.hour(14));
 
   /* ⏱️ Timer */
   useEffect(() => {
@@ -94,7 +94,7 @@ const MarkAttendance = ({
         )}
 
         {/* Before 3 PM → Checkout */}
-        {before3PM && isCheckedIn && !outTime && (
+        {before1PM && isCheckedIn && !outTime && (
           <CustomButton
             label="Check Out"
             onClick={() => handleCheckOut(new Date())}
@@ -103,7 +103,7 @@ const MarkAttendance = ({
         )}
 
         {/* After 3 PM → Join */}
-        {after3PM && !isCheckedIn && !outTime && (
+        {after1PM && !isCheckedIn && !outTime && (
           <CustomButton
             label="Join"
             onClick={handleJoin}
@@ -112,7 +112,7 @@ const MarkAttendance = ({
         )}
 
         {/* After 4 PM → Checkout again after Join */}
-        {after4PM && isCheckedIn && !outTime && (
+        {after2PM && isCheckedIn && !outTime && (
           <CustomButton
             label="Check Out"
             onClick={() => handleCheckOut(new Date())}
