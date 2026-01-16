@@ -46,6 +46,7 @@ export interface ICheckInRequest {
     out: string;
     date: string;
     user: number;
+    checkin_started_at: string
   };
 }
 

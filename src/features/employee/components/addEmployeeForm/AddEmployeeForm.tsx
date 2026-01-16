@@ -36,9 +36,12 @@ const AddEmployeeForm = ({
     designation: "",
     employeeCode: "",
     role: "",
-    dob: "",
+    dob:'',
   };
 
+
+
+  
   const {
     control,
     handleSubmit,
@@ -48,10 +51,14 @@ const AddEmployeeForm = ({
     defaultValues,
   });
 
-  const onSubmit = (data: AddEmployeeFormData) => {
-    onPressSubmit(data);
-    reset();
-  };
+ const onSubmit = (data: AddEmployeeFormData) => {
+  onPressSubmit({
+    ...data,
+    dob: data.dob ? dayjs(data.dob).format("YYYY-MM-DD") : "",
+  });
+  reset();
+};
+
 
   useEffect(() => {
     if (errors.avatar) {
@@ -242,13 +249,6 @@ const AddEmployeeForm = ({
             name="joiningDate"
             rules={{ required: "Joining Date is required" }}
             render={({ field }) => (
-              // <PickerInput
-              //   label="Joining Date"
-              //   value={field.value ? dayjs(field.value) : null}
-              //   setValue={field.onChange}
-              //   errorMessage={errors.joiningDate?.message}
-              //   popperPlacement="top-end"
-              // />
               <PickerInput
                 label="Joining Date"
                 value={field.value ? dayjs(field.value) : null}
@@ -267,12 +267,14 @@ const AddEmployeeForm = ({
               <PickerInput
                 label="Date of Birth"
                 value={field.value ? dayjs(field.value) : null}
-                setValue={field.onChange}
+                setValue={(value) => field.onChange(value)}
                 errorMessage={errors.dob?.message}
                 popperPlacement="top-end"
+                 disableWeekend={false}
               />
             )}
           />
+
           <div className="flex flex-row items-center justify-between">
             <div className="flex flex-row items-center gap-2">
               <p className="text-base font-semibold">Status:</p>

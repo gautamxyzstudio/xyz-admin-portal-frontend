@@ -93,24 +93,22 @@ const EmployeeDashboard = () => {
   }, [attendance]);
 
   useEffect(() => {
-  if (attendance) {
-    console.log("🔄 Attendance synced from backend:", {
-      id: attendance.id,
-      in: attendance.in,
-      out: attendance.out,
-      isCheckedIn: attendance.is_checked_in,
-      attendanceSeconds: attendance.attendance_seconds,
-      checkinStartedAt: attendance.checkin_started_at,
-      syncedAt: new Date().toLocaleTimeString(),
-    });
-  }
-}, [attendance]);
-
+    if (attendance) {
+      console.log("🔄 Attendance synced from backend:", {
+        id: attendance.id,
+        in: attendance.in,
+        out: attendance.out,
+        isCheckedIn: attendance.is_checked_in,
+        attendanceSeconds: attendance.attendance_seconds,
+        checkinStartedAt: attendance.checkin_started_at,
+        syncedAt: new Date().toLocaleTimeString(),
+      });
+    }
+  }, [attendance]);
 
   useEffect(() => {
     setIsLoading(isLoading);
   }, [isLoading]);
-
 
   // upComing Holiday
   const processedHolidays = useMemo<ProcessedHoliday[]>(() => {
@@ -145,7 +143,7 @@ const EmployeeDashboard = () => {
   if (!userBasic || userBasic.id === undefined) return null;
 
   const onCheckIn = async (time: Date) => {
-    console.log(dayjs().format())
+    console.log(dayjs().format());
     setIsLoading(true);
     const checkInTime = dateToTimeString(time);
     try {
@@ -155,6 +153,7 @@ const EmployeeDashboard = () => {
           out: "",
           date: formatDateToMMDDYYYY(new Date()),
           user: userBasic.id,
+          checkin_started_at: dayjs().format(),
         },
       }).unwrap();
       await refetch(); // ✅ force sync

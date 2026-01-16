@@ -1,7 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { useSelector } from "react-redux";
 import { userInState } from "../../../auth/authSlice";
-import { useGetDocumentsByUserQuery } from "../../documentsApi";
+import {
+  useDeleteDocumentMutation,
+  useGetDocumentsByUserQuery,
+} from "../../documentsApi";
 import ActivityIndicator from "../../../../shared/components/activityIndicator/ActivityIndicator";
 import {
   UploadDialog,
@@ -11,6 +15,7 @@ import {
 import type { IDocumentResponse } from "../../documents.types";
 import { Icons } from "../../../../assets/myAssets/exporter";
 import CustomButton from "../../../../components/CustomButton/CustomButton";
+import { toast } from "react-toastify";
 
 interface OwnDocsProps {
   userId?: number;
@@ -40,6 +45,49 @@ const OwnDocs: React.FC<OwnDocsProps> = ({ userId, employeeName }) => {
   const handlePreviewDocument = (document: IDocumentResponse) => {
     setPreviewDocument(document);
     setOpenPreviewDialog(true);
+  };
+  const [deleteDocument, { isLoading: isDeleting }] =
+    useDeleteDocumentMutation();
+
+  // const handleDeleteDocument = async (docId: number) => {
+  //   const result = await Swal.fire({
+  //     title: "Delete document?",
+  //     text: "This action cannot be undone.",
+  //     icon: "warning",
+  //     showCancelButton: true,
+  //     confirmButtonText: "Yes, delete",
+  //     cancelButtonText: "Cancel",
+  //     confirmButtonColor: "#dc2626",
+  //     cancelButtonColor: "#6b7280",
+  //   });
+
+  //   if (!result.isConfirmed) return;
+
+  //   try {
+  //     await deleteDocument(docId).unwrap();
+  //     toast.success("Document deleted successfully");
+  //   } catch {
+  //     toast.error("Failed to delete document");
+  //   }
+  // };
+
+  const handleDelete = async (fileId: number) => {
+    console.log(" Delete clicked, fileId:", fileId);
+
+    try {
+      console.log("Calling deleteDocument API...");
+      const res = await deleteDocument(fileId).unwrap();
+
+      console.log(" Delete API success response:", res);
+      toast.success("Document deleted");
+    } catch (err: any) {
+      console.error(" Delete API failed:", err);
+
+      console.error(" Status:", err?.status);
+      console.error(" Error data:", err?.data);
+
+      toast.error(err?.data?.message || "Delete failed");
+    }
   };
 
   /* ---------------- Loading ---------------- */
@@ -149,15 +197,23 @@ const OwnDocs: React.FC<OwnDocsProps> = ({ userId, employeeName }) => {
                 {/* Right */}
                 <div className="flex items-center gap-4 text-orange-500">
                   <img
-                    className="cursor-pointer"
+                    className="cursor-pointer w-6 h-6"
                     src={Icons.DOWNLOAD}
                     onClick={() => handleDownload(file.url)}
                   />
 
                   <img
-                    className="cursor-pointer"
+                    className="cursor-pointer w-6 h-6"
                     onClick={() => handlePreviewDocument(doc)}
                     src={Icons.VIEW}
+                  />
+                  <img
+                    className={`cursor-pointer w-6 h-6 ${
+                      isDeleting ? "opacity-50 pointer-events-none" : ""
+                    }`}
+                    src={Icons.DELETEICON}
+                    alt="Delete"
+                    onClick={() => handleDelete(doc.id)}
                   />
                 </div>
               </div>

@@ -53,6 +53,7 @@ import SEARCH_ICON from "./icons/search-icon.svg";
 import NO_DATA from "./icons/No-data.svg";
 import ANNOUNCEMENT_MENU from "./icons/announcementMenu.svg";
 import ANNOUNCEMENT_MENU_FILL from "./icons/announcementMenuFill.svg";
+import  DELETEICON from "./icons/deleteIcon.svg"
 
 export const Icons = {
   CROSS_ICON,
@@ -107,7 +108,8 @@ export const Icons = {
   DELETE,
   SEARCH_ICON,
   NO_DATA,
-  ANNOUNCEMENT_MENU, ANNOUNCEMENT_MENU_FILL
+  ANNOUNCEMENT_MENU, ANNOUNCEMENT_MENU_FILL,
+  DELETEICON
 };
 
 // Images

@@ -77,7 +77,7 @@ const AllEmployeeDocs = () => {
                 ))}
             </div>
           ) : (
-            <p className="text-gray-500 text-sm">No employees found.</p>
+            <p className=" text-gray-500 text-sm">Loading......</p>
           )}
         </div>
       ) : (

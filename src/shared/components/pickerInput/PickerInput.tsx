@@ -12,6 +12,7 @@ interface PickerInputProps {
   shouldDisableDate?: (date: Dayjs) => boolean;
   disablePast?: boolean;
   disableFuture?: boolean;
+  disableWeekend?: boolean;
   popperPlacement?:
     | "top"
     | "top-start"
@@ -30,6 +31,7 @@ const PickerInput = ({
   shouldDisableDate,
   disableFuture = false,
   disablePast = false,
+  disableWeekend = true,
   popperPlacement = "bottom-start",
 }: PickerInputProps) => {
   const isWeekend = (date: Dayjs) => {
@@ -38,7 +40,7 @@ const PickerInput = ({
   };
 
   const customShouldDisableDate = (date: Dayjs) => {
-    const isWeekendDate = isWeekend(date);
+    const isWeekendDate = disableWeekend ? isWeekend(date) : false;
     const isCustomDisabled = shouldDisableDate
       ? shouldDisableDate(date)
       : false;

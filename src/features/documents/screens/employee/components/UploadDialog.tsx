@@ -5,7 +5,6 @@ import { userInState } from "../../../../auth/authSlice";
 import { useAddNewDocumentMutation } from "../../../documentsApi";
 import { useUploadFileMutation } from "../../../../../shared/api/sharedApi";
 import { useSnackBarContext } from "../../../../../wrappers/snackbarContext/useSnackBarContext";
-import ActivityIndicator from "../../../../../shared/components/activityIndicator/ActivityIndicator";
 import type { ICustomErrorResponse } from "../../../../../state/types";
 import LinearGradient from "../../../../../components/LinearGradient/LinearGradient";
 import { MdOutlineFileUpload } from "react-icons/md";
@@ -134,10 +133,11 @@ const UploadDialog = ({ open, onClose }: Props) => {
           <button
             onClick={handleUpload}
             disabled={isUploading || isAdding}
-            className="px-4 py-2 border bg-primary rounded-lg text-white w-37.5"
+            className="px-4 py-2  bg-primary rounded-lg text-white w-37.5"
           >
             {isUploading || isAdding ? (
-              <ActivityIndicator size={18} />
+              // <ActivityIndicator   size={18} />
+              <p className="text-white">Loading.....</p>
             ) : (
               "Upload"
             )}
