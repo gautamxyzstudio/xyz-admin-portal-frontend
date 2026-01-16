@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState } from "react";
 import CustomBox from "../../../../components/CustomBox/CustomBox";
 import LinearGradient from "../../../../components/LinearGradient/LinearGradient";
@@ -27,28 +28,33 @@ const MarkAttendance = ({
 }: Props) => {
   const [elapsedSeconds, setElapsedSeconds] = useState(attendanceSeconds);
 
-  /* 🕒 Time logic */
-  const now = dayjs();
-  const before1PM = now.isBefore(now.hour(13));
-  const after1PM = now.isAfter(now.hour(13));
-  const after2PM = now.isAfter(now.hour(14));
-
   /* ⏱️ Timer */
   useEffect(() => {
-    if (!isCheckedIn || !checkinStartedAt || outTime) return;
+  // 🛑 NOT checked in → freeze & trust stored seconds
+  if (!isCheckedIn || !checkinStartedAt) {
+    setElapsedSeconds(attendanceSeconds);
+    return;
+  }
 
-    const startedAt = new Date(checkinStartedAt).getTime();
+  const startedAt = new Date(checkinStartedAt).getTime();
+  if (isNaN(startedAt)) return;
 
-    const tick = () => {
-      const diff =
-        attendanceSeconds + Math.floor((Date.now() - startedAt) / 1000);
-      setElapsedSeconds(diff);
-    };
+  const tick = () => {
+    const liveSeconds = Math.floor((Date.now() - startedAt) / 1000);
+    setElapsedSeconds(
+      attendanceSeconds + Math.max(0, liveSeconds)
+    );
+  };
 
-    tick();
-    const timer = setInterval(tick, 1000);
-    return () => clearInterval(timer);
-  }, [isCheckedIn, checkinStartedAt, attendanceSeconds, outTime]);
+  tick();
+  const timer = setInterval(tick, 1000);
+  return () => clearInterval(timer);
+}, [
+  isCheckedIn,
+  checkinStartedAt,
+  attendanceSeconds,
+]);
+
 
   const handleJoin = () => {
     handleCheckIn(new Date());
@@ -93,17 +99,8 @@ const MarkAttendance = ({
           />
         )}
 
-        {/* Before 3 PM → Checkout */}
-        {before1PM && isCheckedIn && !outTime && (
-          <CustomButton
-            label="Check Out"
-            onClick={() => handleCheckOut(new Date())}
-            icon={<TbLogin size={32} />}
-          />
-        )}
-
-        {/* After 3 PM → Join */}
-        {after1PM && !isCheckedIn && !outTime && (
+        {/* After 1 PM → Join */}
+        {inTime && !isCheckedIn && !outTime && (
           <CustomButton
             label="Join"
             onClick={handleJoin}
@@ -111,8 +108,8 @@ const MarkAttendance = ({
           />
         )}
 
-        {/* After 4 PM → Checkout again after Join */}
-        {after2PM && isCheckedIn && !outTime && (
+        {/* After 2 PM → Checkout again after Join */}
+        {isCheckedIn && !outTime && (
           <CustomButton
             label="Check Out"
             onClick={() => handleCheckOut(new Date())}
