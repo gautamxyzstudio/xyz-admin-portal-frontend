@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState, useCallback } from "react";
 import {
@@ -20,7 +21,9 @@ import LinearGradient from "../../../components/LinearGradient/LinearGradient.js
 import CustomButton from "../../../components/CustomButton/CustomButton.js";
 import dayjs from "dayjs";
 import PickerInput from "../../../shared/components/pickerInput/PickerInput.js";
-import { CgClose } from "react-icons/cg";
+import { useDebounce } from "../../../hooks/useDebounce.js";
+import { FiDownload } from "react-icons/fi";
+import * as XLSX from "xlsx";
 
 /* ===================== Attendance Data Hook ===================== */
 const useAttendanceData = () => {
@@ -52,7 +55,19 @@ const useAttendanceData = () => {
           search: params.search,
         }).unwrap();
 
-        setAttendanceData(response.data || []);
+        const mappedData = (response.data || []).map((item: any) => ({
+          ...item,
+          user: {
+            ...item.user,
+            email: item.user?.email || "",
+            user_detial: {
+              ...item.user?.user_detial,
+              empCode: item.user?.user_detial?.empCode || "",
+            },
+          },
+        }));
+
+        setAttendanceData(mappedData);
         setTotalPages(response.meta.pagination.pageCount);
         setPage(params.page);
       } catch (error) {
@@ -72,6 +87,7 @@ const useAttendanceData = () => {
     totalPages,
     isInitialLoading,
     fetchAttendance,
+    getAllAttendance,
   };
 };
 
@@ -126,6 +142,7 @@ const AttendanceAdmin = () => {
     totalPages,
     isInitialLoading,
     fetchAttendance,
+    getAllAttendance,
   } = useAttendanceData();
 
   const {
@@ -141,6 +158,8 @@ const AttendanceAdmin = () => {
     clearFilters,
   } = useFilterState();
 
+  const debouncedSearch = useDebounce(searchQuery, 500);
+
   const {
     open,
     selectedAttendance,
@@ -155,20 +174,18 @@ const AttendanceAdmin = () => {
   } = useModalState();
 
   useEffect(() => {
-    fetchAttendance({ page: 1, startDate: "", endDate: "", search: "" }, true);
-  }, []);
+    if (startDate && !endDate) return;
 
-  const handleSearch = async () => {
-    await fetchAttendance(
+    fetchAttendance(
       {
         page: 1,
         startDate: startDate?.format("YYYY-MM-DD") || "",
         endDate: endDate?.format("YYYY-MM-DD") || "",
-        search: searchQuery,
+        search: debouncedSearch,
       },
       true
-    ); // Show loading for search
-  };
+    );
+  }, [debouncedSearch, startDate, endDate]);
 
   const handleClearFilter = async () => {
     clearFilters();
@@ -176,6 +193,92 @@ const AttendanceAdmin = () => {
       { page: 1, startDate: "", endDate: "", search: "" },
       true
     );
+  };
+
+  const handleExportCSV = async () => {
+    setIsLoading(true);
+
+    try {
+      let allRows: any[] = [];
+
+      //  Fetch ALL pages data
+      for (let p = 1; p <= totalPages; p++) {
+        const res = await getAllAttendance({
+          page: p,
+          pageSize: 10,
+          startDate: startDate?.format("YYYY-MM-DD") || "",
+          endDate: endDate?.format("YYYY-MM-DD") || "",
+          search: searchQuery || "",
+        }).unwrap();
+
+        allRows = [...allRows, ...(res.data || [])];
+      }
+
+      if (!allRows.length) return;
+
+      const wsData: any[][] = [];
+
+      //  Date row ONLY when filter applied
+      if (startDate || endDate) {
+        wsData.push([
+          `Date: ${startDate?.format("DD-MM-YYYY") || "All"}  To  ${
+            endDate?.format("DD-MM-YYYY") || "All"
+          }`,
+        ]);
+      }
+
+      //  Headers
+      wsData.push([
+        "Employee Code",
+        "Employee Name",
+        "Email",
+        "Date",
+        "Check In",
+        "Check Out",
+      ]);
+
+      //  All rows
+      allRows.forEach((row) => {
+        wsData.push([
+          row?.user?.user_detial?.empCode || "",
+          row?.user?.user_detial?.name || "",
+          row?.user?.email || "",
+          row?.Date ? dayjs(row.Date).format("DD/MM/YYYY") : "",
+          row.in ? convertTo12HourFormat(row.in) : "",
+          row.out ? convertTo12HourFormat(row.out) : "",
+        ]);
+      });
+
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+      //  Column width (always)
+      ws["!cols"] = [
+        { wch: 18 },
+        { wch: 22 },
+        { wch: 30 },
+        { wch: 14 },
+        { wch: 14 },
+        { wch: 14 },
+      ];
+
+      //  Style date row
+      if (startDate || endDate) {
+        ws["A1"].s = { font: { bold: true } };
+        ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }];
+      }
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Attendance");
+
+      const start = startDate?.format("YYYYMMDD") || "all";
+      const end = endDate?.format("YYYYMMDD") || "all";
+
+      XLSX.writeFile(wb, `attendance_${start}_to_${end}.xlsx`);
+    } catch (err) {
+      console.error("Export failed", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleUpdateAttendance = async () => {
@@ -316,27 +419,29 @@ const AttendanceAdmin = () => {
               (startDate && date.isBefore(startDate)) || date.isAfter(maxDate)
             }
           />
+
           <CustomButton
-            onClick={handleSearch}
-            disabled={!searchQuery.trim() || isInitialLoading || isLoading}
-            buttonStyle={!searchQuery.trim() ? "disabled" : "primary"}
-            customStyles="h-13 w-30 p-2!"
-            icon={
-              <img className="w-full h-full" src={Icons.SEARCH_ICON} alt="" />
-            }
-          />
-          <CustomButton
+            label="Clear"
             onClick={handleClearFilter}
-            customStyles="h-13 w-30 p-2!"
-            disabled={!searchQuery.trim() || isInitialLoading || isLoading}
-            buttonStyle={!searchQuery.trim() ? "disabled" : "primaryOutline"}
-            icon={<CgClose size={24} />}
+            customStyles=" w-30 p-2!"
+            buttonStyle="primary"
+            // icon={<CgClose size={24} />}
           />
         </div>
       </CustomBox>
 
       <CustomBox customClasses="w-full h-[70vh] p-5 pb-0 flex flex-col ">
-        <h3 className="text-2xl font-semibold leading-8">Attendance</h3>
+        <div className="flex justify-between mb-5">
+          <h3 className="text-2xl font-semibold leading-9">Attendance</h3>
+          <CustomButton
+            label="Export CSV"
+            onClick={handleExportCSV}
+            customStyles=" w-35 p-2!"
+            buttonStyle="primary"
+            icon={<FiDownload size={22} />}
+          />
+        </div>
+
         <div className="w-full h-full">
           <CustomDataTable
             columns={columns}
@@ -358,7 +463,7 @@ const AttendanceAdmin = () => {
                   page: p,
                   startDate: startDate?.format("YYYY-MM-DD") || "",
                   endDate: endDate?.format("YYYY-MM-DD") || "",
-                  search: searchQuery,
+                  search: debouncedSearch,
                 })
               }
               sx={{

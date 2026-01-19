@@ -63,8 +63,10 @@ export interface IUserAttendance {
   out: string | null;
   Date: string;
   user: {
+    email: string;
     id: number;
     user_detial: {
+      empCode: string;
       name: string;
       Photo: [
         {

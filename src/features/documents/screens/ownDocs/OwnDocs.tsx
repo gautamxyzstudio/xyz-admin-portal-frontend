@@ -31,6 +31,7 @@ const OwnDocs: React.FC<OwnDocsProps> = ({ userId, employeeName }) => {
   const [openPreviewDialog, setOpenPreviewDialog] = useState(false);
   const [previewDocument, setPreviewDocument] =
     useState<IDocumentResponse | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const effectiveUserId = userId || user?.id;
 
@@ -46,7 +47,7 @@ const OwnDocs: React.FC<OwnDocsProps> = ({ userId, employeeName }) => {
     setPreviewDocument(document);
     setOpenPreviewDialog(true);
   };
-  const [deleteDocument, { isLoading: isDeleting }] =
+  const [deleteDocument,] =
     useDeleteDocumentMutation();
 
   // const handleDeleteDocument = async (docId: number) => {
@@ -70,23 +71,16 @@ const OwnDocs: React.FC<OwnDocsProps> = ({ userId, employeeName }) => {
   //     toast.error("Failed to delete document");
   //   }
   // };
-
   const handleDelete = async (fileId: number) => {
-    console.log(" Delete clicked, fileId:", fileId);
+    setDeletingId(fileId);
 
     try {
-      console.log("Calling deleteDocument API...");
-      const res = await deleteDocument(fileId).unwrap();
-
-      console.log(" Delete API success response:", res);
+      await deleteDocument(fileId).unwrap();
       toast.success("Document deleted");
     } catch (err: any) {
-      console.error(" Delete API failed:", err);
-
-      console.error(" Status:", err?.status);
-      console.error(" Error data:", err?.data);
-
       toast.error(err?.data?.message || "Delete failed");
+    } finally {
+      setDeletingId(null); // ✅ success + fail dono me reset
     }
   };
 
@@ -207,14 +201,16 @@ const OwnDocs: React.FC<OwnDocsProps> = ({ userId, employeeName }) => {
                     onClick={() => handlePreviewDocument(doc)}
                     src={Icons.VIEW}
                   />
-                  <img
-                    className={`cursor-pointer w-6 h-6 ${
-                      isDeleting ? "opacity-50 pointer-events-none" : ""
-                    }`}
-                    src={Icons.DELETEICON}
-                    alt="Delete"
-                    onClick={() => handleDelete(doc.id)}
-                  />
+                  {deletingId === doc.id ? (
+                    <span className="w-6 h-6 animate-spin border-2 border-orange-500 border-t-transparent rounded-full" />
+                  ) : (
+                    <img
+                      className="cursor-pointer w-6 h-6"
+                      src={Icons.DELETEICON}
+                      alt="Delete"
+                      onClick={() => handleDelete(doc.id)}
+                    />
+                  )}
                 </div>
               </div>
             );

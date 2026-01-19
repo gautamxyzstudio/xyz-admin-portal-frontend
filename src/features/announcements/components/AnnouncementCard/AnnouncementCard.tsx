@@ -38,9 +38,9 @@ const AnnouncementCard: React.FC<AnnouncementItem> = ({
   return (
     <div
       key={id}
-      className="bg-background rounded-xl p-4 w-full h-auto flex flex-col gap-y-1"
+      className="bg-background rounded-xl p-4 w-full h-auto flex flex-col gap-y-1 "
     >
-      <div className="w-full flex flex-row flex-nowrap items-center justify-between">
+      <div className="w-full flex flex-row flex-nowrap items-center justify-between  ">
         <div className="flex flex-row flex-nowrap items-center gap-x-1.5">
           <img
             alt={title}

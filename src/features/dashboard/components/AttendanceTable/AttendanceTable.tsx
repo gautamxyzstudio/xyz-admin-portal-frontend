@@ -32,9 +32,19 @@ const AttendanceTable = () => {
         endDate: dates.endDate,
       }).unwrap();
 
-      const filteredData = res.data.filter((item: any) =>
-        isTodayOrYesterday(item.Date)
-      );
+      const filteredData = res.data
+        .filter((item: any) => isTodayOrYesterday(item.Date))
+        .map((item: any) => ({
+          ...item,
+          user: {
+            ...item.user,
+            email: item.user?.email || "",
+            user_detial: {
+              ...item.user?.user_detial,
+              empCode: item.user?.user_detial?.empCode || "",
+            },
+          },
+        }));
 
       if (isFirst) {
         setAttendanceData(filteredData);

@@ -77,7 +77,7 @@ const AnnouncementList = ({ customHeight }: { customHeight: string }) => {
     <CustomBox
       compRef={containerRef}
       customClasses={`p-5 pt-0 w-[41%] ${customHeight} ${
-        announcementsList.length > 3 ? "overflow-y-hidden" : "overflow-y-auto"
+        announcementsList.length > 3 ? "overflow-y-scroll" : "overflow-y-auto"
       } scrollbar-hide`}
     >
       <h4 className="text-black font-semibold text-2xl sticky top-0 bg-white z-10 w-full pt-4 pb-2">

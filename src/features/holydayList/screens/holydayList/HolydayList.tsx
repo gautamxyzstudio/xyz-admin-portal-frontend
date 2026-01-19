@@ -19,6 +19,37 @@ const HolidayList = () => {
   const [openAddDialog, setOpenAddDialog] = useState(false);
   const [selectedHoliday, setSelectedHoliday] = useState<number | null>(null);
 
+  // CSV \
+  // const downloadCSV = () => {
+  //   if (!holidays || holidays.length === 0) return;
+
+  //   // CSV Header
+  //   const headers = ["Holiday Name", "Date", "Day"];
+
+  //   // CSV Rows
+  //   const rows = holidays.map((item) => [
+  //     item.name,
+  //     dayjs(item.date).format("DD/MM/YYYY"),
+  //     dayjs(item.date).format("dddd"),
+  //   ]);
+
+  //   const csvContent = [
+  //     headers.join(","), // header row
+  //     ...rows.map((row) => row.join(",")), // data rows
+  //   ].join("\n");
+
+  //   // Create file
+  //   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  //   const url = URL.createObjectURL(blob);
+
+  //   const link = document.createElement("a");
+  //   link.href = url;
+  //   link.download = "holiday_list.csv";
+  //   link.click();
+
+  //   URL.revokeObjectURL(url);
+  // };
+
   const handleAddHoliday = () => {
     setSelectedHoliday(null); // ✅ IMPORTANT
     setOpenAddDialog(true);
@@ -45,15 +76,13 @@ const HolidayList = () => {
         field: "date",
         headerName: "Date",
         width: 180,
-        renderCell: (params) =>
-          dayjs(params.row?.date).format("DD/MM/YYYY"),
+        renderCell: (params) => dayjs(params.row?.date).format("DD/MM/YYYY"),
       },
       {
         field: "day",
         headerName: "Day",
         width: 180,
-        renderCell: (params) =>
-          dayjs(params.row?.date).format("dddd"),
+        renderCell: (params) => dayjs(params.row?.date).format("dddd"),
       },
     ];
 
@@ -85,6 +114,8 @@ const HolidayList = () => {
             onClick={handleAddHoliday}
           />
         )}
+
+        {/* <CustomButton label="Download CSV" onClick={downloadCSV} /> */}
       </div>
 
       <CustomDataTable
@@ -105,6 +136,5 @@ const HolidayList = () => {
     </CustomBox>
   );
 };
-
 
 export default HolidayList;

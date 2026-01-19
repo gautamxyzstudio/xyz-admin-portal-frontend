@@ -77,7 +77,7 @@ const AllEmployeeDocs = () => {
                 ))}
             </div>
           ) : (
-            <p className=" text-gray-500 text-sm">Loading......</p>
+            <p className=" text-primary text-2xl ">Loading.........</p>
           )}
         </div>
       ) : (

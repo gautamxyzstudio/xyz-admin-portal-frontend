@@ -11,6 +11,7 @@ import { useAppSelector } from "../../../state/store";
 import { useLoadingWrapper } from "../../../wrappers/loadingWrapper/LoadingWrapper.context";
 import AnnouncementDialog from "../../announcements/components/AnnouncementDialog/AnnouncementDialog";
 import AnnouncementList from "../components/announcementList/AnnouncementList";
+import { Link } from "react-router";
 
 interface DashboardStats {
   totalEmployees: number;
@@ -70,33 +71,45 @@ const HrDashboard = () => {
 
       {/* STATS */}
       <div className="w-full flex gap-x-5">
-        <StatCard
-          title="Total Employee"
-          value={stats.totalEmployees.toString()}
-          iconSrc={Icons.TOTAL_EMP}
-          iconBgColor="bg-[#49B6791A]"
-        />
-        <StatCard
-          title="Today Present"
-          value={stats.presentEmployees.toString()}
-          iconSrc={Icons.PRESENTS_EMP}
-          iconBgColor="bg-[#2F4CBA1A]"
-        />
-        <StatCard
-          title="Today Leaves"
-          value={stats.employeesOnLeave.toString()}
-          iconSrc={Icons.TOTAL_LEAVE}
-          iconBgColor="bg-[#6CADDD1A]"
-        />
-        <StatCard
-          title="Today Absent"
-          value={stats.absentEmployees.toString()}
-          iconSrc={Icons.TODAY_ABSENT}
-          iconBgColor="bg-[#FF00001A]"
-        />
+        <Link to="/employees" className="flex-1">
+          <StatCard
+            title="Total Employee"
+            value={stats.totalEmployees.toString()}
+            iconSrc={Icons.TOTAL_EMP}
+            iconBgColor="bg-[#49B6791A]"
+          />
+        </Link>
+
+        <Link to="/attendance?status=present" className="flex-1">
+          <StatCard
+            title="Today Present"
+            value={stats.presentEmployees.toString()}
+            iconSrc={Icons.PRESENTS_EMP}
+            iconBgColor="bg-[#2F4CBA1A]"
+          />
+        </Link>
+
+        <Link to="/leaves" className="flex-1">
+          <StatCard
+            title="Today Leaves"
+            value={stats.employeesOnLeave.toString()}
+            iconSrc={Icons.TOTAL_LEAVE}
+            iconBgColor="bg-[#6CADDD1A]"
+          />
+        </Link>
+
+        <Link to="/leaves" className="flex-1">
+          <StatCard
+            title="Today Absent"
+            value={stats.absentEmployees.toString()}
+            iconSrc={Icons.TODAY_ABSENT}
+            iconBgColor="bg-[#FF00001A]"
+          />
+        </Link>
       </div>
+
       <div className="w-full h-full flex flex-row gap-x-5 items-start">
-        <LeaveRequest  />
+        <LeaveRequest />
         <AnnouncementList customHeight="h-100" />
       </div>
       <AttendanceTable />

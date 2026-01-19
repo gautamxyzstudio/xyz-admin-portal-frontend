@@ -25,4 +25,5 @@ export interface ICustomDataTableProps extends TableProps, IEmptyScreenViewProps
   totalCount?: number;
   customStyles?: string;
   onRowClick?: (params: GridRenderCellParams<any, any, any>) => void;
+
 }
