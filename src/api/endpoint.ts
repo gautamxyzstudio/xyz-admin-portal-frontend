@@ -25,7 +25,7 @@ export const apiendpoint = {
   getBlogsList: (page?: number) =>
     `${baseUrl}/api/add-blogs?populate=*&sort=id:desc&pagination[page]=${
       page ?? 1
-    }&pagination[pageSize]=5`,
+    }&pagination[pageSize]=10`,
   postBlogs: `${baseUrl}/api/add-blogs`,
   editBlogs: (id: number) => `${baseUrl}/api/add-blogs/${id}?populate=*`,
   deleteBlogs: (id: number) => `${baseUrl}/api/add-blogs/${id}`,
