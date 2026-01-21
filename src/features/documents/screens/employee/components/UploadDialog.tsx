@@ -8,13 +8,14 @@ import { useSnackBarContext } from "../../../../../wrappers/snackbarContext/useS
 import type { ICustomErrorResponse } from "../../../../../state/types";
 import LinearGradient from "../../../../../components/LinearGradient/LinearGradient";
 import { MdOutlineFileUpload } from "react-icons/md";
+import { toast } from "react-toastify";
 
 interface Props {
   open: boolean;
   onClose: () => void;
 }
 
-const UploadDialog = ({ open, onClose }: Props) => {
+const UploadDialog = ({ open, onClose }: Props) => {  
   const user = useSelector(userInState);
   const { displaySnackbar } = useSnackBarContext();
 
@@ -37,12 +38,12 @@ const UploadDialog = ({ open, onClose }: Props) => {
 
   const handleUpload = async () => {
     if (!documentName.trim() || !selectedFile) {
-      displaySnackbar("error", "Please enter name & select file");
+      toast.error("Please enter name & select file");
       return;
     }
 
     if (!user?.id) {
-      displaySnackbar("error", "User information not available");
+      toast.error("User information not available");
       return;
     }
 
@@ -60,7 +61,7 @@ const UploadDialog = ({ open, onClose }: Props) => {
         },
       }).unwrap();
 
-      displaySnackbar("success", "Document uploaded successfully");
+      toast.success("Document uploaded successfully");
       handleClose();
     } catch (err) {
       const error = err as ICustomErrorResponse;

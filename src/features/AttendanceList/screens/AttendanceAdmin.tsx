@@ -231,7 +231,7 @@ const AttendanceAdmin = () => {
       wsData.push([
         "Employee Code",
         "Employee Name",
-        "Email",
+        // "Email",
         "Date",
         "Check In",
         "Check Out",
@@ -242,7 +242,7 @@ const AttendanceAdmin = () => {
         wsData.push([
           row?.user?.user_detial?.empCode || "",
           row?.user?.user_detial?.name || "",
-          row?.user?.email || "",
+          // row?.user?.email || "",
           row?.Date ? dayjs(row.Date).format("DD/MM/YYYY") : "",
           row.in ? convertTo12HourFormat(row.in) : "",
           row.out ? convertTo12HourFormat(row.out) : "",
@@ -255,7 +255,7 @@ const AttendanceAdmin = () => {
       ws["!cols"] = [
         { wch: 18 },
         { wch: 22 },
-        { wch: 30 },
+        // { wch: 30 },
         { wch: 14 },
         { wch: 14 },
         { wch: 14 },
@@ -436,7 +436,7 @@ const AttendanceAdmin = () => {
           <CustomButton
             label="Export CSV"
             onClick={handleExportCSV}
-            customStyles=" w-35 p-2!"
+            customStyles="w-35 p-2!"
             buttonStyle="primary"
             icon={<FiDownload size={22} />}
           />

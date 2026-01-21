@@ -89,7 +89,7 @@ const HrDashboard = () => {
           />
         </Link>
 
-        <Link to="/leaves" className="flex-1">
+        <Link to="/all-leaves" className="flex-1">
           <StatCard
             title="Today Leaves"
             value={stats.employeesOnLeave.toString()}
@@ -98,7 +98,7 @@ const HrDashboard = () => {
           />
         </Link>
 
-        <Link to="/leaves" className="flex-1">
+        <Link to="/all-leaves" className="flex-1">
           <StatCard
             title="Today Absent"
             value={stats.absentEmployees.toString()}

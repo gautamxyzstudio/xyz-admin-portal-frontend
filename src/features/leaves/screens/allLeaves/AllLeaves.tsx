@@ -45,7 +45,7 @@ const AllLeaves = () => {
         username: debouncedSearch.trim() || undefined,
       }).catch(() => {});
     },
-    [fetchLeaves, debouncedSearch]
+    [fetchLeaves, debouncedSearch],
   );
 
   const columns: GridColDef[] = [
@@ -81,7 +81,7 @@ const AllLeaves = () => {
         return (
           <span
             className={`${getLeaveStatusColor(
-              params.row.status
+              params.row.status,
             )} py-1.25 px-3.75 rounded-3xl text-xs`}
           >
             {params.row.status}
@@ -113,20 +113,22 @@ const AllLeaves = () => {
       <CustomBox customClasses="w-full h-full flex flex-col gap-y-5 p-5">
         <div className="w-full flex flex-row items-center-safe justify-between">
           <h2 className="text-2xl font-semibold">Leaves History</h2>
-          <TextField
-            label="Search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by employee name, email, or leave title..."
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <ImSearch size={20} className="text-primary" />
-                </InputAdornment>
-              ),
-            }}
-            sx={{ minWidth: 350 }}
-          />
+          {leavesData.length > 0 && (
+            <TextField
+              label="Search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by employee name, email, or leave title..."
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <ImSearch size={20} className="text-primary" />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ minWidth: 350 }}
+            />
+          )}
         </div>
         <div className="w-full h-100 flex flex-col gap-y-3">
           <CustomDataTable
@@ -142,15 +144,15 @@ const AllLeaves = () => {
               fetchError
                 ? "Error loading data"
                 : hasLoadedEmptyData
-                ? "No leaves found"
-                : "Loading..."
+                  ? "No leaves found"
+                  : "Loading..."
             }
             emptyViewSubTitle={
               fetchError
                 ? "Please try refreshing the page or contact support"
                 : hasLoadedEmptyData
-                ? "There are currently no leaves to display"
-                : "Please wait while we fetch the data"
+                  ? "There are currently no leaves to display"
+                  : "Please wait while we fetch the data"
             }
             withPagination={false}
           />
@@ -170,13 +172,15 @@ const AllLeaves = () => {
                 }}
               />
             ) : (
-              <Pagination
-                count={totalPages}
-                page={page}
-                onChange={(_, page) => {
-                  handlePageChange(page);
-                }}
-              />
+              leavesData.length > 0 && (
+                <Pagination
+                  count={totalPages}
+                  page={page}
+                  onChange={(_, page) => {
+                    handlePageChange(page);
+                  }}
+                />
+              )
             )}
           </div>
         </div>

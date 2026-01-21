@@ -80,7 +80,7 @@ const OwnDocs: React.FC<OwnDocsProps> = ({ userId, employeeName }) => {
     } catch (err: any) {
       toast.error(err?.data?.message || "Delete failed");
     } finally {
-      setDeletingId(null); // ✅ success + fail dono me reset
+      setDeletingId(null); 
     }
   };
 

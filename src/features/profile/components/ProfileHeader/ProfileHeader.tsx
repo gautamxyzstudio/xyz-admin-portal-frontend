@@ -10,6 +10,7 @@ import { useState } from "react";
 import { useUploadFileMutation } from "../../../../shared/api/sharedApi";
 import ActivityIndicator from "../../../../shared/components/activityIndicator/ActivityIndicator";
 import { useLazyUserDetailsQuery } from "../../../auth/authApi";
+import { toast } from "react-toastify";
 
 const getStatusText = (status: boolean) => (status ? "Active" : "Inactive");
 
@@ -55,7 +56,7 @@ const ProfileHeader: React.FC = () => {
       await refetchProfile({ id: user.id }).unwrap();
       displaySnackbar("success", "Cover image updated");
     } catch (err: any) {
-      displaySnackbar("error", err?.message || "Upload failed");
+    toast("error", err?.message || "Upload failed");
       setCoverPreview(userDetails?.coverImage ?? null);
     }
   };
