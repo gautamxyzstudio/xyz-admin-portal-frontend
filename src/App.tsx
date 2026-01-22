@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { Routes, Route } from "react-router-dom";
 import PrivateRoute from "./PrivateRoutes";
@@ -12,7 +12,6 @@ import SnackBarProvider from "./wrappers/snackbarContext/SnackbarProvider.js";
 import { ToastContainer } from "react-toastify";
 import { PersistGate } from "redux-persist/integration/react";
 import LeaveList from "./features/leaves/screens/leaveList/LeaveList";
-// import CreateLeave from "./features/leaves/screens/createLeaveDialog/CreateLeaveDialog.js";
 import AttendanceList from "./features/AttendanceList/screens/AttendanceList";
 import Dashboard from "./features/dashboard/screens/Dashboard";
 import EditEmployee from "./features/employee/screens/editEmployee/EditEmployee";
@@ -29,6 +28,44 @@ import BlogEditor from "./features/blogs/screens/blogEditor/index.jsx";
 import AnnouncementList from "./features/announcements/screens/AnnouncementsList/AnnouncementsList.js";
 
 const App: React.FC = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkResolution = () => {
+      if (window.innerWidth <= 768) {
+        setIsMobile(true);
+      } else {
+        setIsMobile(false);
+      }
+    };
+
+    
+    checkResolution();
+
+    // Listen for resize
+    window.addEventListener("resize", checkResolution);
+    return () => window.removeEventListener("resize", checkResolution);
+  }, []);
+
+  if (isMobile) {
+    return (
+      <div className="fixed inset-0 bg-background z-9999 flex items-center justify-center p-6 text-center">
+        <div className="bg-white rounded-2xl p-8 max-w-sm shadow-2xl border-t-4 border-red-500">
+          <div className="text-5xl mb-4">🚫</div>
+          <h1 className="text-xl font-bold text-gray-800 mb-2">
+            Access Denied
+          </h1>
+          <p className="text-gray-600 text-sm">
+            For security reasons, this portal is only accessible on **Desktop or
+            Laptop** devices.
+          </p>
+          <p className="mt-4 text-xs text-gray-400 italic">
+            Please login through a larger screen to continue.
+          </p>
+        </div>
+      </div>
+    );
+  }
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>

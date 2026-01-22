@@ -18,12 +18,10 @@ const AnnouncementList = ({ customHeight }: { customHeight: string }) => {
   useEffect(() => {
     if (!containerRef.current || !contentRef.current) return;
 
-    // ❌ Do NOT auto-scroll if announcements <= 3
     if (announcementsList.length <= 3) {
       tweenRef.current?.kill();
       tweenRef.current = null;
 
-      // remove clones if any
       containerRef.current
         .querySelectorAll(".clone")
         .forEach((n) => n.remove());
@@ -34,10 +32,8 @@ const AnnouncementList = ({ customHeight }: { customHeight: string }) => {
     const container = containerRef.current;
     const content = contentRef.current;
 
-    // Clear old clones
-    container.querySelectorAll(".clone").forEach((n) => n.remove());
+    if (container.querySelector(".clone")) return;
 
-    // Clone content for seamless scroll
     const clone = content.cloneNode(true) as HTMLDivElement;
     clone.classList.add("clone");
     container.appendChild(clone);
@@ -49,7 +45,7 @@ const AnnouncementList = ({ customHeight }: { customHeight: string }) => {
 
     tweenRef.current = gsap.to(container, {
       scrollTop: contentHeight,
-      duration: announcementsList?.length * 3,
+      duration: announcementsList.length * 3,
       ease: "none",
       repeat: -1,
       modifiers: {
@@ -66,7 +62,7 @@ const AnnouncementList = ({ customHeight }: { customHeight: string }) => {
 
     return () => {
       tweenRef.current?.kill();
-      clone.remove();
+      container.querySelectorAll(".clone").forEach((n) => n.remove());
       container.removeEventListener("mouseenter", pause);
       container.removeEventListener("mouseleave", play);
       container.removeEventListener("wheel", pause);
