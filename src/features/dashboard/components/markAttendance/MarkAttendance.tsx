@@ -122,8 +122,9 @@ const MarkAttendance = ({
           <CustomButton
             label="All done for today!"
             disabled
-            buttonStyle="disabled"
+            buttonStyle="disabled" 
           />
+          
         )}
 
         {/* Office Info */}
@@ -133,7 +134,7 @@ const MarkAttendance = ({
           <p className="text-black-50 text-sm">09:00AM – 06:00PM</p>
         </div>
       </div>
-    </CustomBox>
+    </CustomBox> 
   );
 };
 

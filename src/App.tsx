@@ -31,48 +31,48 @@ const App: React.FC = () => {
   const [isBlocked, setIsBlocked] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
 
-useEffect(() => {
-  const checkAccess = () => {
-    if (typeof window === "undefined") return;
+  useEffect(() => {
+    const checkAccess = () => {
+      if (typeof window === "undefined") return;
 
-    const ua = navigator.userAgent.toLowerCase();
-    const platform = navigator.platform.toLowerCase();
-    const maxTouch = navigator.maxTouchPoints || 0;
+      const ua = navigator.userAgent.toLowerCase();
+      const platform = navigator.platform.toLowerCase();
+      const maxTouch = navigator.maxTouchPoints || 0;
 
-    // 1. Mobile OS keywords check
-    const isMobileUA = /android|iphone|ipod|ipad/.test(ua);
-    
-    const isDesktopModeOnMobile = (platform.includes("linux") || platform.includes("mac")) && maxTouch > 1;
+      // 1. Mobile OS keywords check
+      const isMobileUA = /android|iphone|ipod|ipad/.test(ua);
 
-    // 3. iPad / Tablet Specific
-    const isIPad = platform === "macintel" && maxTouch > 1;
+      const isDesktopModeOnMobile =
+        (platform.includes("linux") || platform.includes("mac")) &&
+        maxTouch > 1;
 
-   
-    if (isMobileUA || isDesktopModeOnMobile || isIPad) {
-      
-      const isRealWindowsLaptop = platform.includes("win32") && maxTouch > 0;
-      
-      if (isRealWindowsLaptop && window.innerWidth > 1024) {
-        setIsBlocked(false);
+      // 3. iPad / Tablet Specific
+      const isIPad = platform === "macintel" && maxTouch > 1;
+
+      if (isMobileUA || isDesktopModeOnMobile || isIPad) {
+        const isRealWindowsLaptop = platform.includes("win32") && maxTouch > 0;
+
+        if (isRealWindowsLaptop && window.innerWidth > 1024) {
+          setIsBlocked(false);
+        } else {
+          setIsBlocked(true);
+        }
       } else {
-        setIsBlocked(true);
+        // Screen width check for extra safety
+        if (window.innerWidth <= 1024) {
+          setIsBlocked(true);
+        } else {
+          setIsBlocked(false);
+        }
       }
-    } else {
-      // Screen width check for extra safety
-      if (window.innerWidth <= 1024) {
-        setIsBlocked(true);
-      } else {
-        setIsBlocked(false);
-      }
-    }
-    
-    setIsChecking(false);
-  };
 
-  checkAccess();
-  window.addEventListener("resize", checkAccess);
-  return () => window.removeEventListener("resize", checkAccess);
-}, []);
+      setIsChecking(false);
+    };
+
+    checkAccess();
+    window.addEventListener("resize", checkAccess);
+    return () => window.removeEventListener("resize", checkAccess);
+  }, []);
 
   // ⏳ Prevent UI flicker
   if (isChecking) return null;
