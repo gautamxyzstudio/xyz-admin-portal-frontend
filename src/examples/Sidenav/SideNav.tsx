@@ -31,7 +31,7 @@ const SideNav = () => {
       <div className="w-full h-full  flex flex-col gap-y-8">
         <Link to="/">
           <img
-            className="w-[90%] h-full"
+            className="w-[80%] h-full"
             src={Images.BRAND_LOGO}
             alt="XYZ Studio"
           />

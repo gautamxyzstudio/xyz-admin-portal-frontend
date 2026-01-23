@@ -29,33 +29,58 @@ import AnnouncementList from "./features/announcements/screens/AnnouncementsList
 
 const App: React.FC = () => {
   const [isBlocked, setIsBlocked] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
 
-  useEffect(() => {
-    const checkAccess = () => {
+useEffect(() => {
+  const checkAccess = () => {
+    if (typeof window === "undefined") return;
+
+    const ua = navigator.userAgent.toLowerCase();
+    const platform = navigator.platform.toLowerCase();
+    const maxTouch = navigator.maxTouchPoints || 0;
+
+    // 1. Mobile OS keywords check
+    const isMobileUA = /android|iphone|ipod|ipad/.test(ua);
     
-      const isTouchDevice =
-        "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    const isDesktopModeOnMobile = (platform.includes("linux") || platform.includes("mac")) && maxTouch > 1;
 
-      const width = window.innerWidth;
+    // 3. iPad / Tablet Specific
+    const isIPad = platform === "macintel" && maxTouch > 1;
 
-      if (width <= 1024 || (isTouchDevice && width > 1024)) {
+   
+    if (isMobileUA || isDesktopModeOnMobile || isIPad) {
+      
+      const isRealWindowsLaptop = platform.includes("win32") && maxTouch > 0;
+      
+      if (isRealWindowsLaptop && window.innerWidth > 1024) {
+        setIsBlocked(false);
+      } else {
+        setIsBlocked(true);
+      }
+    } else {
+      // Screen width check for extra safety
+      if (window.innerWidth <= 1024) {
         setIsBlocked(true);
       } else {
         setIsBlocked(false);
       }
-    };
+    }
+    
+    setIsChecking(false);
+  };
 
-    checkAccess();
+  checkAccess();
+  window.addEventListener("resize", checkAccess);
+  return () => window.removeEventListener("resize", checkAccess);
+}, []);
 
-    // Listen for resize or orientation change
-    window.addEventListener("resize", checkAccess);
-    return () => window.removeEventListener("resize", checkAccess);
-  }, []);
+  // ⏳ Prevent UI flicker
+  if (isChecking) return null;
 
-  
+  // 🚫 BLOCK SCREEN
   if (isBlocked) {
     return (
-      <div className="fixed inset-0 bg-gray-100 z-[9999] flex items-center justify-center p-6 text-center">
+      <div className="fixed inset-0 bg-gray-100 z-9999 flex items-center justify-center p-6 text-center">
         <div className="bg-white rounded-2xl p-8 max-w-sm shadow-2xl border-t-4 border-red-500">
           <div className="text-5xl mb-4">🚫</div>
           <h1 className="text-xl font-bold text-gray-800 mb-2">
@@ -64,7 +89,7 @@ const App: React.FC = () => {
           <p className="text-gray-600 text-sm">
             This portal is{" "}
             <b>only accessible on a physical Desktop or Laptop</b>. Mobile
-            devices and "Desktop Mode" are not allowed for security reasons.
+            devices and <b>Desktop Mode</b> are not allowed.
           </p>
           <p className="mt-4 text-xs text-gray-400 italic">
             Please use a computer to continue.
@@ -73,6 +98,7 @@ const App: React.FC = () => {
       </div>
     );
   }
+
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>

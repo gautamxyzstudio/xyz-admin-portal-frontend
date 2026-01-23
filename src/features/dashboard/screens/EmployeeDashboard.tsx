@@ -54,7 +54,7 @@ const EmployeeDashboard = () => {
     },
     {
       skip: !userBasic?.id,
-      pollingInterval: 180000, // ✅ 3 minutes
+      pollingInterval: 60000, // 1 minutes
       refetchOnFocus: true, // browser tab focus
       refetchOnReconnect: true,
     }
