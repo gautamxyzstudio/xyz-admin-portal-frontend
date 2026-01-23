@@ -28,39 +28,46 @@ import BlogEditor from "./features/blogs/screens/blogEditor/index.jsx";
 import AnnouncementList from "./features/announcements/screens/AnnouncementsList/AnnouncementsList.js";
 
 const App: React.FC = () => {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
 
   useEffect(() => {
-    const checkResolution = () => {
-      if (window.innerWidth <= 768) {
-        setIsMobile(true);
+    const checkAccess = () => {
+    
+      const isTouchDevice =
+        "ontouchstart" in window || navigator.maxTouchPoints > 0;
+
+      const width = window.innerWidth;
+
+      if (width <= 1024 || (isTouchDevice && width > 1024)) {
+        setIsBlocked(true);
       } else {
-        setIsMobile(false);
+        setIsBlocked(false);
       }
     };
 
-    
-    checkResolution();
+    checkAccess();
 
-    // Listen for resize
-    window.addEventListener("resize", checkResolution);
-    return () => window.removeEventListener("resize", checkResolution);
+    // Listen for resize or orientation change
+    window.addEventListener("resize", checkAccess);
+    return () => window.removeEventListener("resize", checkAccess);
   }, []);
 
-  if (isMobile) {
+  
+  if (isBlocked) {
     return (
-      <div className="fixed inset-0 bg-background z-9999 flex items-center justify-center p-6 text-center">
+      <div className="fixed inset-0 bg-gray-100 z-[9999] flex items-center justify-center p-6 text-center">
         <div className="bg-white rounded-2xl p-8 max-w-sm shadow-2xl border-t-4 border-red-500">
           <div className="text-5xl mb-4">🚫</div>
           <h1 className="text-xl font-bold text-gray-800 mb-2">
             Access Denied
           </h1>
           <p className="text-gray-600 text-sm">
-            For security reasons, this portal is only accessible on **Desktop or
-            Laptop** devices.
+            This portal is{" "}
+            <b>only accessible on a physical Desktop or Laptop</b>. Mobile
+            devices and "Desktop Mode" are not allowed for security reasons.
           </p>
           <p className="mt-4 text-xs text-gray-400 italic">
-            Please login through a larger screen to continue.
+            Please use a computer to continue.
           </p>
         </div>
       </div>
