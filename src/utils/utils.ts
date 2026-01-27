@@ -126,3 +126,9 @@ export const getLeaveStatusColor = (
       return `text-black-50 bg-background capitalize`;
   }
 };
+
+export const secondsToHoursMinutes = (totalSeconds: number) => {
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  return `${hours}hrs ${minutes}min`;
+}

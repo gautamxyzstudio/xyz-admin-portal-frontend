@@ -8,7 +8,7 @@ import {
 import type { IUserAttendance } from "../../dashboard/types";
 import type { GridColDef } from "@mui/x-data-grid";
 import EmployeeTableRow from "../../employee/components/employeeTableRow/EmployeeTableRow";
-import { convertTo12HourFormat, getImageUrl } from "../../../utils/utils";
+import { convertTo12HourFormat, getImageUrl, secondsToHoursMinutes } from "../../../utils/utils";
 import { formatTimeForInput, formatTimeForAPI } from "../../../utils/timeUtils";
 import { useApiOperations } from "../../../hooks/useApiOperations";
 import { useFilterState } from "../../../hooks/useFilterState";
@@ -42,7 +42,7 @@ const useAttendanceData = () => {
         endDate: string;
         search: string;
       },
-      showLoading: boolean = true
+      showLoading: boolean = true,
     ) => {
       if (showLoading) setIsLoading(true);
 
@@ -78,7 +78,7 @@ const useAttendanceData = () => {
         setIsInitialLoading(false);
       }
     },
-    [getAllAttendance, setIsLoading]
+    [getAllAttendance, setIsLoading],
   );
 
   return {
@@ -183,7 +183,7 @@ const AttendanceAdmin = () => {
         endDate: endDate?.format("YYYY-MM-DD") || "",
         search: debouncedSearch,
       },
-      true
+      true,
     );
   }, [debouncedSearch, startDate, endDate]);
 
@@ -191,7 +191,7 @@ const AttendanceAdmin = () => {
     clearFilters();
     await fetchAttendance(
       { page: 1, startDate: "", endDate: "", search: "" },
-      true
+      true,
     );
   };
 
@@ -231,10 +231,10 @@ const AttendanceAdmin = () => {
       wsData.push([
         "Employee Code",
         "Employee Name",
-        // "Email",
         "Date",
         "Check In",
         "Check Out",
+        'Working Hours',
       ]);
 
       //  All rows
@@ -242,10 +242,10 @@ const AttendanceAdmin = () => {
         wsData.push([
           row?.user?.user_detial?.empCode || "",
           row?.user?.user_detial?.name || "",
-          // row?.user?.email || "",
           row?.Date ? dayjs(row.Date).format("DD/MM/YYYY") : "",
           row.in ? convertTo12HourFormat(row.in) : "",
           row.out ? convertTo12HourFormat(row.out) : "",
+          row.attendance_seconds ? secondsToHoursMinutes(row.attendance_seconds) : "",
         ]);
       });
 
@@ -255,10 +255,10 @@ const AttendanceAdmin = () => {
       ws["!cols"] = [
         { wch: 18 },
         { wch: 22 },
-        // { wch: 30 },
         { wch: 14 },
         { wch: 14 },
         { wch: 14 },
+        { wch: 20 },
       ];
 
       //  Style date row
@@ -306,7 +306,7 @@ const AttendanceAdmin = () => {
           endDate: endDate?.format("YYYY-MM-DD") || "",
           search: searchQuery,
         },
-        false
+        false,
       );
     }, setIsLoading);
   };
@@ -316,7 +316,7 @@ const AttendanceAdmin = () => {
     {
       field: "id",
       headerName: "Employee Code",
-      width: 130,
+      width: 110,
       renderCell: (params) => (
         <span className="text-sm font-medium">
           {params?.row?.user?.user_detial?.empCode}
@@ -326,7 +326,7 @@ const AttendanceAdmin = () => {
     {
       field: "employee",
       headerName: "Employee",
-      width: 290,
+      width: 230,
       renderCell: ({ row }) => (
         <EmployeeTableRow
           image={getImageUrl(row?.user?.user_detial?.Photo?.[0]?.url)}
@@ -368,9 +368,22 @@ const AttendanceAdmin = () => {
       ),
     },
     {
+      field: "attendance_seconds",
+      headerName: "Working Hours",
+      width: 100,
+      renderCell: (params) => {
+       
+        return (
+          <span className="text-xs font-medium">
+            {params.row.out ? secondsToHoursMinutes(params.row.attendance_seconds) : "in progress"}
+          </span>
+        );
+      },
+    },
+    {
       field: "action",
       headerName: "Action",
-      width: 70,
+      width: 60,
       renderCell: (params) => (
         <Button variant="text" onClick={() => openModal(params.row)}>
           {/* <Icon>update</Icon>&nbsp;Update */}
@@ -438,7 +451,7 @@ const AttendanceAdmin = () => {
             onClick={handleExportCSV}
             customStyles="w-35 p-2!"
             buttonStyle="primary"
-            icon={<FiDownload size={22} />}
+            icon={<FiDownload size={18} />}
           />
         </div>
 

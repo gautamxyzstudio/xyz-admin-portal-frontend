@@ -62,6 +62,7 @@ export interface IUserAttendance {
   in: string | null;
   out: string | null;
   Date: string;
+  attendance_seconds: number;
   user: {
     email: string;
     id: number;
@@ -83,6 +84,7 @@ export interface IGetAllAttendanceResponse {
     in: string | null;
     out: string | null;
     Date: string;
+    attendance_seconds: number;
     user: {
       id: number;
       user_detial: {
