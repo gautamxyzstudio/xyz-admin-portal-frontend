@@ -52,6 +52,14 @@ export const getRoutes = (user: IUserAdvance | null) => {
       permissions: ["Hr", "Admin"],
     },
     {
+      name: "Time Log Analytics",
+      key: "time-log-analytics",
+      icon: Icons.TIMELOG_UNFILL,
+      iconFill: Icons.TIMELOG,
+      route: "/time-log",
+      permissions: ["Hr", "Admin"],
+    },
+    {
       name: "Holidays",
       key: "holidays",
       icon: Icons.HOLIDAYS,

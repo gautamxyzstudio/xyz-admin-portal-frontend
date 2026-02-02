@@ -38,6 +38,7 @@ export const ROUTE_PERMISSIONS: Record<UserType, readonly string[]> = {
     "/blog/edit_blog/:id",
     "/notifications",
     "/announcement",
+    "/time-log"
   ],
   [UserType.HR]: [
     "/",
@@ -55,6 +56,7 @@ export const ROUTE_PERMISSIONS: Record<UserType, readonly string[]> = {
     "/blog/post_blog",
     "/blog/edit_blog/:id",
     "/announcement",
+    "/time-log"
   ],
   [UserType.EMPLOYEE]: [
     "/",

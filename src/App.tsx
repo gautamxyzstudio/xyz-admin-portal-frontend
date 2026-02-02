@@ -26,6 +26,7 @@ import DashboardLayout from "./examples/LayoutContainers/DashboardLayout/Dashboa
 import BlogList from "./features/blogs/screens/blogList/BlogList.js";
 import BlogEditor from "./features/blogs/screens/blogEditor/index.jsx";
 import AnnouncementList from "./features/announcements/screens/AnnouncementsList/AnnouncementsList.js";
+import TimeLogAnalytics from "./features/timeLogAnalytics/screens/TimeLogAnalytics.js";
 
 const App: React.FC = () => {
   const [isBlocked, setIsBlocked] = useState(false);
@@ -74,10 +75,10 @@ const App: React.FC = () => {
     return () => window.removeEventListener("resize", checkAccess);
   }, []);
 
-  // ⏳ Prevent UI flicker
+  // Prevent UI flicker
   if (isChecking) return null;
 
-  // 🚫 BLOCK SCREEN
+  //  BLOCK SCREEN
   if (isBlocked) {
     return (
       <div className="fixed inset-0 bg-gray-100 z-9999 flex items-center justify-center p-6 text-center">
@@ -202,6 +203,14 @@ const App: React.FC = () => {
                       element={
                         <DashboardLayout>
                           <AnnouncementList />
+                        </DashboardLayout>
+                      }
+                    />
+                    <Route
+                      path="time-log"
+                      element={
+                        <DashboardLayout>
+                          <TimeLogAnalytics />
                         </DashboardLayout>
                       }
                     />

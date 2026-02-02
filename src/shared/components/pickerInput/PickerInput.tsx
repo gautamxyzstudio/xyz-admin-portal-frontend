@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { DatePicker, LocalizationProvider, type DatePickerProps } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import type { Dayjs } from "dayjs";
 
-interface PickerInputProps {
+interface PickerInputProps extends DatePickerProps {
   value: Dayjs | null;
   setValue: (value: Dayjs) => void;
   label: string;
@@ -33,6 +33,7 @@ const PickerInput = ({
   disablePast = false,
   disableWeekend = true,
   popperPlacement = "bottom-start",
+  sx,
 }: PickerInputProps) => {
   const isWeekend = (date: Dayjs) => {
     const day = date.day();
@@ -52,7 +53,7 @@ const PickerInput = ({
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <div className="w-full max-w-full flex flex-col">
         <DatePicker
-          sx={{ width: "100%" }}
+          sx={{ ...sx, width: "100%" }}
           label={label}
           value={value}
           format="DD/MM/YYYY"

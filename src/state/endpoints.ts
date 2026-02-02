@@ -78,4 +78,12 @@ export const endpoints = {
   rejectLeave: (id: number) => `${baseUrl}/api/leave-status/${id}/reject`,
   hrApproveleave: (id: number) =>
     `${baseUrl}/api/leave-statuses/${id}/hr-update-and-approve-leave`,
+
+  getTimeLogs: (startDate: string, endDate: string, search?: string) => {
+    let url = `${baseUrl}/api/work-logs/userWorkLogs?startDate=${startDate}&endDate=${endDate}`;
+    if (search) {
+      url += `&search=${encodeURIComponent(search)}`;
+    }
+    return url;
+  },
 };
