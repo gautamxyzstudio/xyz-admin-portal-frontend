@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
@@ -5,13 +6,18 @@ import { FaCamera } from "react-icons/fa";
 import Cropper from "react-easy-crop";
 import { Icons, Images } from "../../../../assets/myAssets/exporter";
 import { userDetailsInState, userInState } from "../../../auth/authSlice";
-import { useUpdateEmployeeDetailsMutation } from "../../../employee/employeeApis";
+import {
+  useUpdateEmployeeDetailsMutation,
+  useUpdateUserMutation,
+} from "../../../employee/employeeApis";
 import { useUploadFileMutation } from "../../../../shared/api/sharedApi";
 import ActivityIndicator from "../../../../shared/components/activityIndicator/ActivityIndicator";
 import { useLazyUserDetailsQuery } from "../../../auth/authApi";
 import { toast } from "react-toastify";
 import CustomButton from "../../../../components/CustomButton/CustomButton";
 import { IoClose } from "react-icons/io5";
+import { Controller, useForm } from "react-hook-form";
+import { Switch } from "@mui/material";
 
 // Image quality fix logic
 const getCroppedImg = async (
@@ -69,6 +75,7 @@ const ProfileHeader: React.FC = () => {
   const [uploadFile, { isLoading: isUploading }] = useUploadFileMutation();
   const [updateProfile, { isLoading: isUpdating }] =
     useUpdateEmployeeDetailsMutation();
+  const [updateUser] = useUpdateUserMutation();
   const [refetchProfile] = useLazyUserDetailsQuery();
 
   const [coverPreview, setCoverPreview] = useState<string | null>(
@@ -102,6 +109,13 @@ const ProfileHeader: React.FC = () => {
     }
   };
 
+  const { control } = useForm({
+    defaultValues: {
+      emailSubscription: userDetails?.emailSubscription,
+    },
+  });
+
+  console.log(userDetails);
   const handleCropSave = async () => {
     if (!imageToCrop || !croppedAreaPixels) return;
     try {
@@ -146,6 +160,21 @@ const ProfileHeader: React.FC = () => {
       : `${import.meta.env.VITE_API_BASE_URL}${userDetails.photo}`
     : "/static/images/avatar/default.jpg";
 
+  /* ---------------- STATUS UPDATE ---------------- */
+  const updateStatus = async (value: boolean) => {
+    console.log(value);
+    try {
+      await updateUser({
+        id: user.id.toString(),
+        status: value,
+      }).unwrap();
+      await refetchProfile({ id: user.id }).unwrap();
+      toast.success("Status updated");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to update status");
+    }
+  };
+
   return (
     <div className="w-full rounded-xl overflow-hidden">
       {/* Banner Section */}
@@ -172,48 +201,69 @@ const ProfileHeader: React.FC = () => {
       </div>
 
       {/* Profile Section */}
-      <div className="flex flex-row gap-x-5 items-end-safe pl-8 pb-8 -mt-20">
-        <div className="relative">
-          <div className="w-38 h-38 rounded-full border-4 border-primary overflow-hidden bg-gray-100 shadow-lg relative">
-            <img
-              src={avatarSrc}
-              className="w-full h-full object-contain"
-              alt="Profile"
-            />
-            {isUploading && cropType === "profile" && (
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                <ActivityIndicator size={30} />
-              </div>
-            )}
+      <div className="flex justify-between ">
+        <div className="flex flex-row gap-x-5  justify-between pl-8 pb-8 -mt-16">
+          <div className="relative">
+            <div className="w-38 h-38 rounded-full border-4 border-primary overflow-hidden bg-gray-100 shadow-lg relative">
+              <img
+                src={avatarSrc}
+                className="w-full h-full object-contain"
+                alt="Profile"
+              />
+              {isUploading && cropType === "profile" && (
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                  <ActivityIndicator size={30} />
+                </div>
+              )}
+            </div>
+            <label className="absolute bottom-2 right-2 bg-primary p-2 rounded-full cursor-pointer shadow-md hover:scale-110 transition-transform">
+              <FaCamera size={18} className="text-white" />
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => handleFileSelect(e, "profile")}
+              />
+            </label>
           </div>
-          <label className="absolute bottom-2 right-2 bg-primary p-2 rounded-full cursor-pointer shadow-md hover:scale-110 transition-transform">
-            <FaCamera size={18} className="text-white" />
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => handleFileSelect(e, "profile")}
-            />
-          </label>
-        </div>
 
-        <div className="flex flex-row items-center gap-x-4 h-full">
-          <div className="flex flex-col">
-            <h2 className="text-2xl font-semibold text-black leading-8">
-              {userDetails?.name}
-            </h2>
-            <p className="text-black-80 font-normal text-base">
-              {userDetails?.designation}
-            </p>
+          <div className="flex flex-row items-center gap-x-4 h-full mt-10">
+            <div className="flex flex-col">
+              <h2 className="text-2xl font-semibold text-black leading-8">
+                {userDetails?.name}
+              </h2>
+              <p className="text-black-80 font-normal text-base">
+                {userDetails?.designation}
+              </p>
+            </div>
+            <span
+              className={`flex px-6.5 py-2 text-base rounded-full ${userDetails?.status ? "bg-lightGreen text-green" : "bg-lightRed text-red"}`}
+            >
+              {userDetails?.status ? "Active" : "Inactive"}
+            </span>
           </div>
-          <span
-            className={`flex px-6.5 py-2 text-base rounded-full ${userDetails?.status ? "bg-lightGreen text-green" : "bg-lightRed text-red"}`}
-          >
-            {userDetails?.status ? "Active" : "Inactive"}
-          </span>
+        </div>
+        <div className="flex justify-end ">
+          <div className="flex flex-row items-center gap-2">
+            <p className="text-base font-semibold">Email Subscription </p>
+            <Controller
+              control={control}
+              name="emailSubscription"
+              render={({ field }) => (
+                <Switch
+                  checked={field.value}
+                  value={field.value}
+                  onChange={(e) => {
+                    const value = e.target.checked;
+                    field.onChange(value);
+                    updateStatus(value);
+                  }}
+                />
+              )}
+            />
+          </div>
         </div>
       </div>
-
       {/* --- CROP MODAL (Clean Version) --- */}
       {showCropModal && imageToCrop && (
         <div className="fixed inset-0 z-1000 bg-black/80 flex flex-col items-center justify-center p-4">

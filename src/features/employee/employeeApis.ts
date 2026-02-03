@@ -46,7 +46,7 @@ export const employeeApis = enhancedEmployeeApi.injectEndpoints({
         body: data,
       }),
     }),
-   
+
     updateEmployeeDetails: builder.mutation<
       any,
       { id: string; data: IEditEmployeeArgs }
@@ -64,6 +64,15 @@ export const employeeApis = enhancedEmployeeApi.injectEndpoints({
       query: ({ id }) => ({
         url: endpoints.deleteUser(id),
         method: ApiMethodType.delete,
+      }),
+    }),
+    updateUser: builder.mutation<any, { id: string; status: boolean }>({
+      query: ({ id, status }) => ({
+        url: endpoints.updateUser(id),
+        method: ApiMethodType.PUT,
+        body: {
+          checkout_email_enabled: status,
+        },
       }),
     }),
     deleteEmployee: builder.mutation<any, { id: string }>({
@@ -92,4 +101,5 @@ export const {
   useGetEmployeeListQuery,
   useDeleteUserMutation,
   useDeleteEmployeeMutation,
+  useUpdateUserMutation,
 } = employeeApis;

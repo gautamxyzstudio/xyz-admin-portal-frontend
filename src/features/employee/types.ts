@@ -83,6 +83,7 @@ export interface IEmployeeFromResponse {
   user_type: string;
   createdAt: string;
   updatedAt: string;
+  checkout_email_enabled: boolean;
   role: {
     id: number;
     name: string;

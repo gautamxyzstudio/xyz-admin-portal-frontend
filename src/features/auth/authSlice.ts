@@ -51,6 +51,7 @@ const authSlice = createSlice({
             coverImage: action?.payload?.user_detial?.coverImage
               ? action?.payload?.user_detial?.coverImage.url
               : null,
+              emailSubscription: action?.payload?.checkout_email_enabled
           };
         }
       );

@@ -60,6 +60,14 @@ export const getRoutes = (user: IUserAdvance | null) => {
       permissions: ["Hr", "Admin"],
     },
     {
+      name: "Projects",
+      key: "projects",
+      icon: Icons.TIMELOG_UNFILL,
+      iconFill: Icons.TIMELOG,
+      route: "/projects",
+      permissions: ["Hr", "Admin"],
+    },
+    {
       name: "Holidays",
       key: "holidays",
       icon: Icons.HOLIDAYS,

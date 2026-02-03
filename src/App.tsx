@@ -27,6 +27,7 @@ import BlogList from "./features/blogs/screens/blogList/BlogList.js";
 import BlogEditor from "./features/blogs/screens/blogEditor/index.jsx";
 import AnnouncementList from "./features/announcements/screens/AnnouncementsList/AnnouncementsList.js";
 import TimeLogAnalytics from "./features/timeLogAnalytics/screens/TimeLogAnalytics.js";
+import Projects from "./features/profile/components/projects/Projects.js";
 
 const App: React.FC = () => {
   const [isBlocked, setIsBlocked] = useState(false);
@@ -211,6 +212,14 @@ const App: React.FC = () => {
                       element={
                         <DashboardLayout>
                           <TimeLogAnalytics />
+                        </DashboardLayout>
+                      }
+                    />
+                    <Route
+                      path="projects"
+                      element={
+                        <DashboardLayout>
+                          <Projects />
                         </DashboardLayout>
                       }
                     />

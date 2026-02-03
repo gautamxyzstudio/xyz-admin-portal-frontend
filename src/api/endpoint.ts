@@ -51,4 +51,6 @@ export const apiendpoint = {
   getAnnouncementById: (id: number) => `${baseUrl}/api/announcements/${id}`,
   // STATS API
   getDashboardStats: `${baseUrl}/api/dashboard/stats`,
+
+  
 };

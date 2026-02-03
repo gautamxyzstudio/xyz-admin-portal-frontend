@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from "react";
@@ -8,6 +7,7 @@ import { secondsToHoursMinutes } from "../../../utils/utils";
 import dayjs, { Dayjs } from "dayjs";
 import PickerInput from "../../../shared/components/pickerInput/PickerInput";
 import type { SxProps, Theme } from "@mui/material";
+import { ImSearch } from "react-icons/im";
 
 /* -------------------- TYPES -------------------- */
 interface WorkLog {
@@ -21,6 +21,10 @@ interface WorkLog {
   rawSeconds: number;
   tasks: any[];
 }
+
+const START_HOUR = 9;
+const END_HOUR = 22;
+const TOTAL_MINUTES = (END_HOUR - START_HOUR) * 60;
 
 const TimeLogAnalytics: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -50,7 +54,7 @@ const TimeLogAnalytics: React.FC = () => {
         id: log.id,
         employeeName: log.user?.username ?? "N/A",
         email: log.user?.email ?? "N/A",
-        avatar: log.user?.avatar,
+        avatar: log.user?.user_detial?.Photo[0]?.url,
         totalTime: log.total_time_taken
           ? secondsToHoursMinutes(log.total_time_taken)
           : "0 mins",
@@ -63,7 +67,8 @@ const TimeLogAnalytics: React.FC = () => {
         tasks: log.tasks ?? [],
       }));
       setWorkLogs(formatted);
-    } catch (err) {
+    } catch (err: any) {
+      console.error("Error fetching work logs:", err);
       setWorkLogs([]);
     } finally {
       setLoading(false);
@@ -101,8 +106,8 @@ const TimeLogAnalytics: React.FC = () => {
                    focus:outline-none focus:ring-2 focus:ring-indigo-100
                    placeholder:text-gray-400"
             />
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
-              🔍
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm">
+              <ImSearch size={20} className="text-primary" />{" "}
             </span>
           </div>
           <div className="flex gap-4">
@@ -127,7 +132,7 @@ const TimeLogAnalytics: React.FC = () => {
           <thead>
             <tr className="text-gray-400 text-[11px] uppercase tracking-wider">
               <th className="pb-2 text-left pl-4 font-semibold">Employee</th>
-              <th className="pb-2 text-left font-semibold">Tracked Time</th>
+              <th className="pb-2 text-left font-semibold">Total Time</th>
               <th className="pb-2 text-left font-semibold px-4">
                 Daily Activity Map
               </th>
@@ -159,11 +164,8 @@ const TimeLogAnalytics: React.FC = () => {
                         )}
                       </div>
                       <img
-                        className="w-8 h-8 rounded-lg shadow-sm"
-                        src={
-                          log.avatar ||
-                          `https://ui-avatars.com/api/?name=${log.employeeName}`
-                        }
+                        className="w-10 h-10 rounded-lg shadow-sm"
+                        src={log.avatar}
                         alt=""
                       />
                       <span className="text-xs font-bold text-slate-700">
@@ -192,7 +194,7 @@ const TimeLogAnalytics: React.FC = () => {
                         {log.tasks.map((t: any, i: number) => (
                           <div
                             key={i}
-                            className={`flex-1 rounded ${t.is_running === false && t.status === "completed" ? "bg-emerald-400" : t.is_running === true && t.status === "in-progress" ? "bg-blue-400" : "bg-blue-300"}`}
+                            className={`flex-1 rounded ${t.is_running === false && t.status === "completed" ? "bg-emerald-400" : t.is_running === true && t.status === "in-progress" ? "bg-blue-400" : "bg-orange-300"}`}
                           />
                         ))}
                       </div>
@@ -201,18 +203,27 @@ const TimeLogAnalytics: React.FC = () => {
 
                   {expandedRow === log.id && (
                     <tr className="bg-slate-50/50">
-                      <td colSpan={3} className="p-4 pt-0">
-                        <div className="ml-12 border-l-2 border-dashed border-gray-200 pl-6 pb-4 space-y-2">
-                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">
-                            Project & Task Breakdown
-                          </p>
+                      <td colSpan={5} className="p-4 pt-0">
+                        <div className="ml-2 border-l-2 border-dashed border-gray-200 pl-6 pb-4 space-y-2">
+                          <div className="flex flex-row justify-between items-center mb-3">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest w-[25%]">
+                              Project & Task Breakdown
+                            </p>{" "}
+                            <div className="flex justify-between text-xs text-gray-500 gap-x-2 w-[70%]">
+                              {Array.from({
+                                length: END_HOUR - START_HOUR + 1,
+                              }).map((_, i) => (
+                                <div key={i}>{START_HOUR + i}:00</div>
+                              ))}
+                            </div>
+                          </div>
                           {log.tasks.length > 0 ? (
                             log.tasks.map((task: any, idx: number) => (
                               <div
                                 key={idx}
-                                className="flex items-center justify-between bg-white p-3 rounded-xl border border-gray-100 shadow-sm"
+                                className="flex items-center justify-between bg-white p-3  rounded-xl border border-gray-100 shadow-sm"
                               >
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-3 w-[25%]">
                                   <div
                                     className={`p-2 rounded-lg ${task.is_running === false && task.status === "completed" ? "bg-emerald-400/50 text-emerald-600" : task.is_running === true && task.status === "in-progress" ? "bg-blue-600/50 text-blue-600" : "bg-orange-300 text-orange-600"}`}
                                   >
@@ -233,7 +244,7 @@ const TimeLogAnalytics: React.FC = () => {
                                     </p>
                                   </div>
                                 </div>
-                                <div className="text-right min-w-20">
+                                <div className="w-[70%]">
                                   <div className="flex items-center justify-end gap-1.5 mb-1">
                                     <Clock
                                       size={10}
@@ -245,11 +256,94 @@ const TimeLogAnalytics: React.FC = () => {
                                       )}
                                     </p>
                                   </div>
-                                  <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
+                                  {/* <div className="h-1 w-[10%] bg-gray-100 rounded-full overflow-hidden">
                                     <div
                                       className={`h-full rounded-full ${task.is_running === false && task.status === "completed" ? "bg-emerald-400" : task.is_running === true && task.status === "in-progress" ? "bg-blue-400" : "bg-blue-300"}`}
                                       style={{ width: "100%" }}
                                     />
+                                  </div> */}
+                                  <div className="relative h-6 rounded w-full">
+                                    {task.work_sessions.map(
+                                      (s: any, si: any) => {
+                                        const end =
+                                          s.end || dayjs().toISOString();
+                                        function leftPercent(start: any) {
+                                          const startTime = dayjs(start);
+                                          const timelineStart = startTime
+                                            .startOf("day")
+                                            .hour(START_HOUR)
+                                            .minute(0)
+                                            .second(0);
+                                          let minutesFromStart = startTime.diff(
+                                            timelineStart,
+                                            "minute",
+                                          );
+                                          if (minutesFromStart < 0)
+                                            minutesFromStart = 0;
+                                          if (minutesFromStart > TOTAL_MINUTES)
+                                            minutesFromStart = TOTAL_MINUTES;
+                                          return (
+                                            (minutesFromStart / TOTAL_MINUTES) *
+                                            100
+                                          );
+                                        }
+
+                                        function widthPercent(
+                                          start: any,
+                                          end: any,
+                                        ): number {
+                                          const startTime = dayjs(start);
+                                          const endTime = dayjs(end);
+                                          const timelineStart = startTime
+                                            .startOf("day")
+                                            .hour(START_HOUR)
+                                            .minute(0)
+                                            .second(0);
+                                          // clamp start/end to timeline bounds
+                                          let startMinutes = startTime.diff(
+                                            timelineStart,
+                                            "minute",
+                                          );
+                                          let endMinutes = endTime.diff(
+                                            timelineStart,
+                                            "minute",
+                                          );
+                                          if (startMinutes < 0)
+                                            startMinutes = 0;
+                                          if (startMinutes > TOTAL_MINUTES)
+                                            startMinutes = TOTAL_MINUTES;
+                                          if (endMinutes < 0) endMinutes = 0;
+                                          if (endMinutes > TOTAL_MINUTES)
+                                            endMinutes = TOTAL_MINUTES;
+                                          const durationMinutes = Math.max(
+                                            endMinutes - startMinutes,
+                                            0,
+                                          );
+                                          return (
+                                            (durationMinutes / TOTAL_MINUTES) *
+                                            100
+                                          );
+                                        }
+
+                                        return (
+                                          <div
+                                            key={si}
+                                            className={`absolute top-1 h-4 rounded ${
+                                              s.end
+                                                ? "bg-blue-500"
+                                                : "bg-emerald-500"
+                                            }`}
+                                            style={{
+                                              left: `${leftPercent(s.start)}%`,
+                                              width: `${Math.max(
+                                                widthPercent(s.start, end),
+                                                1,
+                                              )}%`,
+                                            }}
+                                          />
+                                        );
+                                      },
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -286,9 +380,10 @@ const TimeLogAnalytics: React.FC = () => {
                 hoveredLog.avatar ||
                 `https://ui-avatars.com/api/?name=${hoveredLog.employeeName}`
               }
-              className="w-10 h-10 rounded-full"
+              className="w-10 h-10 "
               alt=""
             />
+
             <div>
               <h4 className="text-[13px] font-bold text-slate-800 leading-tight">
                 {hoveredLog.employeeName}

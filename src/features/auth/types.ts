@@ -36,6 +36,7 @@ export interface IUserAdvance {
   photo: string | null;
   active_blogs: boolean | null;
   coverImage: string | null;
+  emailSubscription: boolean;
 }
 
 export interface IUserDetailsResponse {
@@ -51,6 +52,7 @@ export interface IUserDetailsResponse {
   role: {
     name: string;
   };
+   checkout_email_enabled: boolean;
   user_detial: {
     id: number;
     name: string;
