@@ -380,7 +380,7 @@ const TimeLogAnalytics: React.FC = () => {
                 hoveredLog.avatar ||
                 `https://ui-avatars.com/api/?name=${hoveredLog.employeeName}`
               }
-              className="w-10 h-10 "
+              className="w-10 h-10 rounded-sm "
               alt=""
             />
 

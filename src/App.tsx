@@ -29,6 +29,7 @@ import AnnouncementList from "./features/announcements/screens/AnnouncementsList
 import TimeLogAnalytics from "./features/timeLogAnalytics/screens/TimeLogAnalytics.js";
 import Projects from "./features/projects/screens/Projects.js";
 
+
 const App: React.FC = () => {
   const [isBlocked, setIsBlocked] = useState(false);
   const [isChecking, setIsChecking] = useState(true);

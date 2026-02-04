@@ -56,6 +56,8 @@ import ANNOUNCEMENT_MENU_FILL from "./icons/announcementMenuFill.svg";
 import  DELETEICON from "./icons/deleteIcon.svg";
 import TIMELOG from "./icons/timelog.svg";
 import TIMELOG_UNFILL from "./icons/Timelog_unfill.svg"
+import  PROJECT_UNFILL from "./icons/project_unfill.svg"
+import PROJECT_FILL from "./icons/project_fill.svg"
 
 
 export const Icons = {
@@ -113,7 +115,9 @@ export const Icons = {
   NO_DATA,
   ANNOUNCEMENT_MENU, ANNOUNCEMENT_MENU_FILL,
   DELETEICON,
-  TIMELOG, TIMELOG_UNFILL
+  TIMELOG, TIMELOG_UNFILL,
+  PROJECT_UNFILL,
+  PROJECT_FILL,
 };
 
 // Images

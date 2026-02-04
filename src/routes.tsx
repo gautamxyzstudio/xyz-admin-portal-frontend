@@ -62,8 +62,8 @@ export const getRoutes = (user: IUserAdvance | null) => {
     {
       name: "Projects",
       key: "projects",
-      icon: Icons.TIMELOG_UNFILL,
-      iconFill: Icons.TIMELOG,
+      icon: Icons.PROJECT_UNFILL,
+      iconFill: Icons.PROJECT_FILL,
       route: "/projects",
       permissions: ["Hr", "Admin", "Management"],
     },

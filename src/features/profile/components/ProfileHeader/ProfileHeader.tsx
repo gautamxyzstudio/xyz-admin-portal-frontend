@@ -161,19 +161,27 @@ const ProfileHeader: React.FC = () => {
     : "/static/images/avatar/default.jpg";
 
   /* ---------------- STATUS UPDATE ---------------- */
-  const updateStatus = async (value: boolean) => {
-    console.log(value);
-    try {
-      await updateUser({
-        id: user.id.toString(),
-        status: value,
-      }).unwrap();
-      await refetchProfile({ id: user.id }).unwrap();
-      toast.success("Status updated");
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to update status");
+const updateStatus = async (value: boolean) => {
+  try {
+    await updateUser({
+      id: user.id.toString(),
+      status: value,
+    }).unwrap();
+
+    await refetchProfile({ id: user.id }).unwrap();
+
+    if (value) {
+      toast.success("Email subscription turned ON");
+    } else {
+      toast.info("Email subscription turned OFF");
+  
     }
-  };
+  } catch (err: any) {
+    toast.error(err?.message || "Failed to update status");
+  }
+};
+
+
 
   return (
     <div className="w-full rounded-xl overflow-hidden">
@@ -245,14 +253,14 @@ const ProfileHeader: React.FC = () => {
         </div>
         <div className="flex justify-end ">
           <div className="flex flex-row items-center gap-2">
-            <p className="text-base font-semibold">Email Subscription </p>
+            <p className="text-base font-semibold">Email Subscription</p>
+
             <Controller
               control={control}
               name="emailSubscription"
               render={({ field }) => (
                 <Switch
                   checked={field.value}
-                  value={field.value}
                   onChange={(e) => {
                     const value = e.target.checked;
                     field.onChange(value);
@@ -291,7 +299,7 @@ const ProfileHeader: React.FC = () => {
                 showGrid={false}
                 onCropChange={setCrop}
                 onZoomChange={setZoom}
-                onCropComplete={(_, pixels) => setCroppedAreaPixels(pixels)}
+                onCropComplete={(_, pixels) => setCroppedAreaPixels(pixels)}  
                 zoomWithScroll={true}
                 maxZoom={10}
               />
