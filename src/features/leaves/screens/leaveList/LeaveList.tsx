@@ -170,7 +170,7 @@ const LeaveList = () => {
         return (
           <span
             className={`${getLeaveStatusColor(
-              params.row.status
+              params.row.status,
             )} py-1.25 px-3.75 rounded-3xl text-xs`}
           >
             {params.row.status}
@@ -260,7 +260,7 @@ const LeaveList = () => {
           onClose={() => setOpenModal(false)}
         />
       )}
-      
+
       {/* Apply Leave Dialog */}
       <CreateLeaveDialog
         open={openApplyLeaveModal}

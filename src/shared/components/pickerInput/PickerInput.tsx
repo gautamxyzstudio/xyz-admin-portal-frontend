@@ -1,5 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { DatePicker, LocalizationProvider, type DatePickerProps } from "@mui/x-date-pickers";
+import {
+  DatePicker,
+  LocalizationProvider,
+  type DatePickerProps,
+} from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import type { Dayjs } from "dayjs";
 
@@ -13,6 +17,7 @@ interface PickerInputProps extends DatePickerProps {
   disablePast?: boolean;
   disableFuture?: boolean;
   disableWeekend?: boolean;
+  disableTyping?: boolean;
   popperPlacement?:
     | "top"
     | "top-start"
@@ -32,6 +37,7 @@ const PickerInput = ({
   disableFuture = false,
   disablePast = false,
   disableWeekend = true,
+  disableTyping = false,
   popperPlacement = "bottom-start",
   sx,
 }: PickerInputProps) => {
@@ -52,35 +58,46 @@ const PickerInput = ({
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <div className="w-full max-w-full flex flex-col">
-        <DatePicker
-          sx={{ ...sx, width: "100%" }}
-          label={label}
-          value={value}
-          format="DD/MM/YYYY"
-          disablePast={disablePast}
-          disableFuture={disableFuture}
-          shouldDisableDate={customShouldDisableDate}
-          slotProps={{
-            textField: {
-              error: !!errorMessage,
-              helperText: !!errorMessage,
-              ...slotProps?.textField,
-            },
+       <DatePicker
+  sx={{ ...sx, width: "100%" }}
+  label={label}
+  value={value}
+  format="DD/MM/YYYY"
+  disablePast={disablePast}
+  disableFuture={disableFuture}
+  shouldDisableDate={customShouldDisableDate}
+  slotProps={{
+    textField: {
+      error: !!errorMessage,
+      helperText: errorMessage,
 
-            popper: {
-              placement: popperPlacement,
-              modifiers: [
-                {
-                  name: "flip",
-                  enabled: false,
-                },
-              ],
-            },
-          }}
-          onChange={(newValue) => {
-            if (newValue) setValue(newValue);
-          }}
-        />
+      ...(disableTyping && {
+        onKeyDown: (e) => e.preventDefault(),
+        onPaste: (e) => e.preventDefault(),
+        inputProps: {
+          readOnly: true,
+          style: { cursor: "pointer" },
+        },
+      }),
+
+      ...slotProps?.textField,
+    },
+
+    popper: {
+      placement: popperPlacement,
+      modifiers: [
+        {
+          name: "flip",
+          enabled: false,
+        },
+      ],
+    },
+  }}
+  onChange={(newValue) => {
+    if (newValue) setValue(newValue);
+  }}
+/>
+
 
         {errorMessage && (
           <p className="text-xs mt-1 text-red-700">{errorMessage}</p>

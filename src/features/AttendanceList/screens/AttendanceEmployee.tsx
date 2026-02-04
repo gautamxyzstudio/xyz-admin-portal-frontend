@@ -22,7 +22,7 @@ const AttendanceEmployee = () => {
       startDate: startDate?.format("YYYY-MM-DD"),
       endDate: endDate?.format("YYYY-MM-DD"),
     }),
-    [user?.id, startDate, endDate]
+    [user?.id, startDate, endDate],
   );
   const {
     data = [],
@@ -89,6 +89,13 @@ const AttendanceEmployee = () => {
               onChange={(newValue) => setStartDate(newValue)}
               slots={{ openPickerIcon: Calendar }}
               sx={pickerStyles}
+              slotProps={{
+                textField: {
+                  inputProps: {
+                    readOnly: true, 
+                  },
+                },
+              }}
             />
             to
             <DesktopDatePicker

@@ -327,6 +327,8 @@ const CreateLeaveDialog = ({
                     value={field.value}
                     setValue={field.onChange}
                     errorMessage={getError(errors.startDate)}
+                    disableTyping
+                
                   />
                 )}
               />
@@ -360,6 +362,7 @@ const CreateLeaveDialog = ({
                       setValue={field.onChange}
                       errorMessage={getError(errors.endDate)}
                       shouldDisableDate={shouldDisableDate}
+                      disableTyping
                     />
                   );
                 }}

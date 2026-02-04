@@ -27,7 +27,7 @@ import BlogList from "./features/blogs/screens/blogList/BlogList.js";
 import BlogEditor from "./features/blogs/screens/blogEditor/index.jsx";
 import AnnouncementList from "./features/announcements/screens/AnnouncementsList/AnnouncementsList.js";
 import TimeLogAnalytics from "./features/timeLogAnalytics/screens/TimeLogAnalytics.js";
-import Projects from "./features/profile/components/projects/Projects.js";
+import Projects from "./features/projects/screens/Projects.js";
 
 const App: React.FC = () => {
   const [isBlocked, setIsBlocked] = useState(false);

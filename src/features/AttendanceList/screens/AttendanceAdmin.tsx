@@ -8,7 +8,11 @@ import {
 import type { IUserAttendance } from "../../dashboard/types";
 import type { GridColDef } from "@mui/x-data-grid";
 import EmployeeTableRow from "../../employee/components/employeeTableRow/EmployeeTableRow";
-import { convertTo12HourFormat, getImageUrl, secondsToHoursMinutes } from "../../../utils/utils";
+import {
+  convertTo12HourFormat,
+  getImageUrl,
+  secondsToHoursMinutes,
+} from "../../../utils/utils";
 import { formatTimeForInput, formatTimeForAPI } from "../../../utils/timeUtils";
 import { useApiOperations } from "../../../hooks/useApiOperations";
 import { useFilterState } from "../../../hooks/useFilterState";
@@ -234,7 +238,7 @@ const AttendanceAdmin = () => {
         "Date",
         "Check In",
         "Check Out",
-        'Working Hours',
+        "Working Hours",
       ]);
 
       //  All rows
@@ -245,7 +249,9 @@ const AttendanceAdmin = () => {
           row?.Date ? dayjs(row.Date).format("DD/MM/YYYY") : "",
           row.in ? convertTo12HourFormat(row.in) : "",
           row.out ? convertTo12HourFormat(row.out) : "",
-          row.attendance_seconds ? secondsToHoursMinutes(row.attendance_seconds) : "",
+          row.attendance_seconds
+            ? secondsToHoursMinutes(row.attendance_seconds)
+            : "",
         ]);
       });
 
@@ -372,10 +378,11 @@ const AttendanceAdmin = () => {
       headerName: "Working Hours",
       width: 100,
       renderCell: (params) => {
-       
         return (
           <span className="text-xs font-medium">
-            {params.row.out ? secondsToHoursMinutes(params.row.attendance_seconds) : "in progress"}
+            {params.row.out
+              ? secondsToHoursMinutes(params.row.attendance_seconds)
+              : "in progress"}
           </span>
         );
       },
