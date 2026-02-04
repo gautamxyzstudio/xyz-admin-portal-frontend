@@ -16,7 +16,7 @@ export interface ILoginResponse {
 export interface IUserBasic {
   id: number;
   email: string;
-  user_type: "Admin" | "Employee" | "Hr" | "Manager";
+  user_type: "Admin" | "Employee" | "Hr" | "Management";
   leave_balance: number;
   unpaid_leave_balance: number;
   token: string;

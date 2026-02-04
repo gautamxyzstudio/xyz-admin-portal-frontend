@@ -53,7 +53,7 @@ export const apiendpoint = {
   getDashboardStats: `${baseUrl}/api/dashboard/stats`,
 
   // Projects Endpoint
-  getProjects: `${baseUrl}/api/projects?populate=*&sort=id:desc`,
+  getProjects: `${baseUrl}/api/projects?populate=*`,
 
   postProjects: `${baseUrl}/api/projects`,
   updateProject: (id: number) => `${baseUrl}/api/projects/${id}`,

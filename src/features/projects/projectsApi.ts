@@ -1,11 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { apiendpoint } from "../../api/endpoint";
 import { baseApi } from "../../state/baseApi";
 
 import type {
-  GetProjectsResponse,
-  ProjectUI,
   ProjectPayload,
   UpdateProjectArgs,
 } from "./projects.types";
@@ -16,30 +13,14 @@ export const enhancedProjectsApi = baseApi.enhanceEndpoints({
 
 export const projectsApi = enhancedProjectsApi.injectEndpoints({
   endpoints: (builder) => ({
-
     /* ===============================
        GET PROJECTS
     ================================ */
-    getProjects: builder.query<ProjectUI[], void>({
+    getProjects: builder.query<any, void>({
       query: () => ({
         url: apiendpoint.getProjects,
         method: "GET",
       }),
-      transformResponse: (response: GetProjectsResponse): ProjectUI[] => {
-        return response.data.map((item) => ({
-          id: item.id,
-          title: item.attributes.title,
-
-          users:
-            item.attributes.users_permissions_users?.data?.map((user) => ({
-              id: user.id,
-              username: user.attributes.username,
-            })) || [],
-
-          logoUrl:
-            item.attributes.logo?.data?.attributes?.url,
-        }));
-      },
       providesTags: ["Projects"],
     }),
 

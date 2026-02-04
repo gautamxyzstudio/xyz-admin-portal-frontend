@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Search,
   Trash2,
@@ -9,6 +9,7 @@ import {
   CheckCircle,
   Briefcase,
   Layout,
+  Loader2,
 } from "lucide-react";
 import {
   useAddProjectMutation,
@@ -20,15 +21,27 @@ import type { ProjectPayload } from "../projects.types";
 import { useSelector } from "react-redux";
 import { userInState } from "../../auth/authSlice";
 import { employeeListInState } from "../../employee/employeeSlice";
+import { useGetEmployeeListQuery } from "../../employee/employeeApis";
+import { useUploadFileMutation } from "../../../shared/api/sharedApi";
+import { Icons } from "../../../assets/myAssets/exporter";
 
 const Projects = () => {
   // ===== API =====
   const user = useSelector(userInState);
   const employeeList = useSelector(employeeListInState);
-  const { data: assignments = [], isLoading } = useGetProjectsQuery();
+
+  const { isLoading: isEmployeeListLoading } = useGetEmployeeListQuery({
+    user_type: user ? user.user_type : "",
+  });
+
+  const { data: projects, isLoading, refetch } = useGetProjectsQuery();
+
   const [addProject] = useAddProjectMutation();
   const [updateProject] = useUpdateProjectMutation();
   const [deleteProject] = useDeleteProjectMutation();
+  const [uploadFile, { isLoading: isUploading }] = useUploadFileMutation();
+
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // ===== LOCAL UI STATE =====
   const [searchTerm, setSearchTerm] = useState("");
@@ -36,29 +49,31 @@ const Projects = () => {
 
   const [formData, setFormData] = useState({
     selectedEmployees: [] as string[],
+    selectedEmployeesIds: [] as number[],
     project: "",
+    projectDescription: "",
+    logo: null as number | null,
+    logoPreview: "" as string,
   });
 
   if (!user) return null;
-  const filteredEmployeeList = employeeList?.filter(
-    (employee) => employee.role !== user?.user_type.toLocaleLowerCase(),
-  );
 
-  // const employeeList = [
-  //   "Sumit Thakur",
-  //   "Amit singh",
-  //   "Fiza",
-  //   "Pooja Sharma",
-  //   "Arun",
-  // ];
+  const filteredEmployeeList = employeeList.filter(
+    (employee) => employee.id !== user?.id && employee.role !== "Management",
+  );
 
   // ===== HANDLERS =====
 
-  const handleEmployeeSelect = (name: string) => {
-    if (!formData.selectedEmployees.includes(name)) {
+  const handleEmployeeSelect = (emp: number) => {
+    console.log(emp);
+    const employeeName = filteredEmployeeList.find((e) => e.id === emp)?.name;
+    console.log(employeeName);
+    if (!employeeName) return;
+    if (!formData.selectedEmployees.includes(employeeName)) {
       setFormData({
         ...formData,
-        selectedEmployees: [...formData.selectedEmployees, name],
+        selectedEmployeesIds: [...formData.selectedEmployeesIds, emp],
+        selectedEmployees: [...formData.selectedEmployees, employeeName],
       });
     }
   };
@@ -71,17 +86,29 @@ const Projects = () => {
   };
 
   const handleEdit = (item: any) => {
+    console.log(item);
     setIsEditing(item.id);
     setFormData({
-      selectedEmployees: item.employees,
-      project: item.project,
+      selectedEmployees: item.users_permissions_users.map((u: any) => u.username),
+      selectedEmployeesIds: item.users_permissions_users.map((u: any) => u.id),
+      project: item.title,
+      projectDescription: item.description || "",
+      logo: item.logo?.id || null,
+      logoPreview: item.logo?.url || "",
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const resetForm = () => {
     setIsEditing(null);
-    setFormData({ selectedEmployees: [], project: "" });
+    setFormData({
+      selectedEmployees: [],
+      selectedEmployeesIds: [],
+      project: "",
+      projectDescription: "",
+      logo: null,
+      logoPreview: "",
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -90,7 +117,9 @@ const Projects = () => {
 
     const payload: ProjectPayload = {
       title: formData.project,
-      users_permissions_users: formData.selectedEmployees.map((emp) => emp),
+      users_permissions_users: formData.selectedEmployeesIds.map((emp) => emp),
+      description: formData.projectDescription,
+      logo: formData.logo,
     };
 
     try {
@@ -109,14 +138,49 @@ const Projects = () => {
     }
   };
 
+  const handleIconClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Preview
+    const previewUrl = URL.createObjectURL(file);
+    setFormData((prev) => ({ ...prev, logoPreview: previewUrl }));
+
+    const form = new FormData();
+    form.append("files", file);
+
+    try {
+      const response = await uploadFile(form).unwrap();
+      if (response && response.length > 0) {
+        setFormData((prev) => ({ ...prev, logo: response[0].id }));
+      }
+    } catch (err) {
+      console.error("Upload failed", err);
+      setFormData((prev) => ({ ...prev, logoPreview: "" }));
+    }
+  };
+
+  const handleDeleteProject = async (id: number) => {
+    try {
+      await deleteProject(id).unwrap();
+      refetch();
+    } catch (err) {
+      console.error("Project delete failed", err);
+    }
+  };
+
   // ===== UI =====
   return (
-    <div className="p-2 bg-background min-h-screen plus-jakarta-sans text-black">
+    <div className="p-2 bg-background plus-jakarta-sans text-black">
       <div className="mb-5">
         <h1 className="text-2xl font-semibold">Project Management</h1>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-8 items-start">
+      <div className="flex flex-col lg:flex-row gap-8 items-start h-full">
         {/* Assign Project Form */}
         <div
           className={`w-full lg:w-80 bg-white p-6 rounded-3xl shadow-sm border transition-all duration-300 shrink-0 ${
@@ -156,14 +220,14 @@ const Projects = () => {
                 Team Members
               </label>
               <select
-                onChange={(e) => handleEmployeeSelect(e.target.value)}
+                onChange={(e) => handleEmployeeSelect(Number(e.target.value))}
                 value=""
                 className="w-full mt-1 p-4 bg-primary-20/20 border border-primary-20 rounded-2xl text-sm focus:border-primary outline-none transition-all"
               >
                 <option value="" disabled>
                   Select Team...
                 </option>
-                {filteredEmployeeList.map((emp) => (
+                {filteredEmployeeList?.map((emp) => (
                   <option key={emp.id} value={emp.id}>
                     {emp.name}
                   </option>
@@ -203,14 +267,56 @@ const Projects = () => {
               />
             </div>
 
+            <div>
+              <label className="text-[10px] font-black text-black-50 uppercase tracking-widest ml-1">
+                Project Description(optional)
+              </label>
+              <textarea
+                rows={3}
+                value={formData.projectDescription}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    projectDescription: e.target.value,
+                  })
+                }
+                placeholder="Project description..."
+                className="w-full mt-1 p-4 bg-white border border-black-20 rounded-2xl text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+              />
+            </div>
+
             {/* Icon preview */}
-            <div className="flex items-center gap-3 p-3 bg-background rounded-2xl border border-dashed border-black-20">
-              <div className="p-2 bg-white rounded-lg shadow-sm text-primary">
-                <Layout size={18} />
+            <div
+              onClick={handleIconClick}
+              className="flex items-center gap-3 p-3 bg-background rounded-2xl border border-dashed border-black-20 cursor-pointer hover:border-primary transition-colors group"
+            >
+              <div className="p-2 bg-white rounded-lg shadow-sm text-primary group-hover:bg-primary-20">
+                {isUploading ? (
+                  <Loader2 size={18} className="animate-spin" />
+                ) : formData.logoPreview ? (
+                  <img
+                    src={formData.logoPreview}
+                    alt="Logo Preview"
+                    className="w-7 h-7 rounded"
+                  />
+                ) : (
+                  <Layout size={18} />
+                )}
               </div>
-              <span className="text-[10px] font-bold uppercase text-black-50">
-                Project Icon Assigned
+              <span className="text-[10px] font-bold uppercase text-black-50 group-hover:text-primary">
+                {formData.logo
+                  ? "Project Icon Assigned"
+                  : isUploading
+                    ? "Uploading Icon..."
+                    : "Assign Project Icon"}
               </span>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="image/*"
+                className="hidden"
+              />
             </div>
 
             <button
@@ -226,7 +332,7 @@ const Projects = () => {
         </div>
 
         {/* Projects List */}
-        <div className="flex-1 w-full bg-white rounded-3xl shadow-sm border border-black-20 overflow-hidden">
+        <div className="flex-1 w-full h-full bg-white rounded-3xl shadow-sm border border-black-20 overflow-hidden">
           <div className="p-6 border-b border-black-20 flex justify-between items-center gap-4">
             <h2 className="font-bold text-black-800 uppercase text-sm tracking-widest">
               Active Projects
@@ -247,57 +353,98 @@ const Projects = () => {
             </div>
           </div>
 
-          <div className="overflow-y-auto max-h-90 scrollbar-hide">
+          <div className="overflow-y-auto h-[65dvh] scrollbar-hide">
             <table className="w-full">
+              <thead>
+                <tr className="bg-background text-left text-xs font-black uppercase text-black-50 tracking-widest">
+                  <th className="px-6 py-4">Team Members</th>
+                  <th className="px-6 py-4">Project Name</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
+                </tr>
+              </thead>
               <tbody className="divide-y divide-black-20">
-                {isLoading && (
-                  <tr>
-                    <td
-                      colSpan={3}
-                      className="px-6 py-10 text-center text-xs font-bold uppercase text-black-50"
-                    >
-                      Loading projects...
-                    </td>
-                  </tr>
-                )}
-
-                {assignments
-                  .filter((a: any) =>
-                    a.project.toLowerCase().includes(searchTerm.toLowerCase()),
-                  )
-                  .map((item: any) => (
-                    <tr key={item.id}>
-                      <td className="px-6 py-6">
-                        <div className="flex -space-x-3">
-                          {item.employees.map((emp: string, i: number) => (
-                            <div
-                              key={i}
-                              className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center text-[10px] font-black"
-                            >
-                              {emp[0]}
-                            </div>
-                          ))}
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-6">
-                        <p className="text-sm font-black uppercase">
-                          {item.project}
-                        </p>
-                      </td>
-
-                      <td className="px-6 py-6 text-right">
-                        <div className="flex justify-end gap-3">
-                          <button onClick={() => handleEdit(item)}>
-                            <Edit3 size={18} />
-                          </button>
-                          <button onClick={() => deleteProject(item.id)}>
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
+                {isEmployeeListLoading ||
+                  (isLoading && (
+                    <tr>
+                      <td
+                        colSpan={3}
+                        className="px-6 py-10 text-center text-xs font-bold uppercase text-black-50"
+                      >
+                        Loading projects...
                       </td>
                     </tr>
                   ))}
+                {!isLoading &&
+                  projects?.projects?.filter((a: any) =>
+                    a?.title?.toLowerCase().includes(searchTerm.toLowerCase()),
+                  ).length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={3}
+                        className="px-6 py-10 text-center text-xs font-bold uppercase text-black-50"
+                      >
+                        No projects found
+                      </td>
+                    </tr>
+                  )}
+
+                {projects?.projects &&
+                  projects?.projects
+                    .filter((a: any) =>
+                      a?.title
+                        ?.toLowerCase()
+                        .includes(searchTerm.toLowerCase()),
+                    )
+                    .map((item: any) => (
+                      <tr key={item.id}>
+                        <td className="px-6 py-4">
+                          <div className="flex -space-x-3">
+                            {item.users_permissions_users.map(
+                              (emp: any, i: number) => (
+                                <img
+                                  key={i}
+                                  src={emp?.photo?.url}
+                                  title={emp?.username}
+                                  alt={emp?.username}
+                                  className="w-10 h-10 rounded-full flex items-center justify-center border-2 border-primary"
+                                />
+                              ),
+                            )}
+                          </div>
+                        </td>
+
+                        <td className="px-6 py-4">
+                          <div className="flex gap-x-2 items-center">
+                            <img
+                              src={item?.logo?.url ?? Icons.PROFILE_PICTURE}
+                              title={item?.title}
+                              alt={item?.title}
+                              className="w-10 h-10 rounded-full object-contain border border-primary"
+                            />
+                            <p className="text-sm font-black uppercase">
+                              {item.title}
+                            </p>
+                          </div>
+                        </td>
+
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex justify-end gap-3">
+                            <button
+                              onClick={() => handleEdit(item)}
+                              className=" cursor-pointer"
+                            >
+                              <Edit3 size={18} className="stroke-primary" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteProject(item.id)}
+                              className=" cursor-pointer"
+                            >
+                              <Trash2 size={18} className="stroke-red" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
               </tbody>
             </table>
           </div>

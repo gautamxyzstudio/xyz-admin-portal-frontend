@@ -7,8 +7,7 @@ const Dashboard = () => {
   const user = useSelector(userInState);
   return (
     <>
-      {user?.user_type === "Employee" ||
-      user?.user_type === "Manager"  ? (
+      {user?.user_type === "Employee" ? (
         <EmployeeDashboard />
       ) : (
         <HrDashboard />

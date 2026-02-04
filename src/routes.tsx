@@ -9,7 +9,7 @@ export const getRoutes = (user: IUserAdvance | null) => {
       icon: Icons.DASHBOARD,
       iconFill: Icons.DASHBOARD_FILL,
       route: "/",
-      permissions: ["Admin", "Employee", "Hr", "Manager"],
+      permissions: ["Admin", "Employee", "Hr", "Management"], 
     },
     {
       name: "Employees",
@@ -17,7 +17,7 @@ export const getRoutes = (user: IUserAdvance | null) => {
       icon: Icons.EMPLOYEE,
       iconFill: Icons.EMPLOYEE_FILL,
       route: "/employees",
-      permissions: ["Admin", "Hr"],
+      permissions: ["Admin", "Hr", "Management"],
     },
     {
       name: "Leaves",
@@ -25,7 +25,7 @@ export const getRoutes = (user: IUserAdvance | null) => {
       icon: Icons.LEAVES,
       iconFill: Icons.LEAVES_FILL,
       route: "/all-leaves",
-      permissions: ["Admin", "Hr"],
+      permissions: ["Admin", "Hr", "Management"],
     },
     {
       name: "Attendance",
@@ -33,7 +33,7 @@ export const getRoutes = (user: IUserAdvance | null) => {
       icon: Icons.ATTENDANCE,
       iconFill: Icons.ATTENDANCE_FILL,
       route: "/attendance",
-      permissions: ["Employee", "Hr", "Admin"],
+      permissions: ["Employee", "Hr", "Admin", "Management"],
     },
     {
       name: "Leaves",
@@ -49,15 +49,15 @@ export const getRoutes = (user: IUserAdvance | null) => {
       icon: Icons.ANNOUNCEMENT_MENU,
       iconFill: Icons.ANNOUNCEMENT_MENU_FILL,
       route: "/announcement",
-      permissions: ["Hr", "Admin"],
+      permissions: ["Hr", "Admin", "Management"],
     },
-    {
+    { 
       name: "Time Log Analytics",
       key: "time-log-analytics",
       icon: Icons.TIMELOG_UNFILL,
       iconFill: Icons.TIMELOG,
       route: "/time-log",
-      permissions: ["Hr", "Admin"],
+      permissions: ["Hr", "Admin", "Management"],
     },
     {
       name: "Projects",
@@ -65,7 +65,7 @@ export const getRoutes = (user: IUserAdvance | null) => {
       icon: Icons.TIMELOG_UNFILL,
       iconFill: Icons.TIMELOG,
       route: "/projects",
-      permissions: ["Hr", "Admin"],
+      permissions: ["Hr", "Admin", "Management"],
     },
     {
       name: "Holidays",
@@ -73,7 +73,7 @@ export const getRoutes = (user: IUserAdvance | null) => {
       icon: Icons.HOLIDAYS,
       iconFill: Icons.HOLIDAYS_FILL,
       route: "/holidays",
-      permissions: ["Admin", "Employee", "Hr"],
+      permissions: ["Admin", "Employee", "Hr", "Management"],
     },
     ...(user?.active_blogs
       ? [
@@ -83,7 +83,7 @@ export const getRoutes = (user: IUserAdvance | null) => {
             icon: Icons.BLOG,
             iconFill: Icons.BLOG_FILL,
             route: "/blog",
-            permissions: ["Admin", "Employee", 'Hr'],
+            permissions: ["Admin", "Employee", 'Hr', "Management"],
           },
         ]
       : []),
@@ -93,7 +93,7 @@ export const getRoutes = (user: IUserAdvance | null) => {
       icon: Icons.DOCUMENT,
       iconFill: Icons.DOCUMENT_FILL,
       route: "/documents",
-      permissions: ["Employee", "Hr"],
+      permissions: ["Employee", "Hr", "Management"],
     },
     {
       name: "All Employee Docs",
@@ -101,7 +101,7 @@ export const getRoutes = (user: IUserAdvance | null) => {
       icon: Icons.ALL_EMP_DOC,
       iconFill: Icons.ALL_EMP_DOC_FILL,
       route: "/all-employee-docs",
-      permissions: ["Admin", "Hr"],
+      permissions: ["Admin", "Hr", "Management"],
     },
   ];
 };
