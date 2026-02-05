@@ -14,20 +14,28 @@ import type { GridColDef } from "@mui/x-data-grid";
 const HolidayList = () => {
   const user = useSelector(userInState);
   const { data, isLoading } = useGetHolidaysQuery();
-  const holidays = data || [];
+  const holidays = data || []
+
+  const sortedHolidays = useMemo(() => {
+  if (!holidays) return [];
+  return [...holidays].sort(
+    (a, b) => dayjs(a.date).valueOf() - dayjs(b.date).valueOf()
+  );
+}, [holidays]);
+
 
   const [openAddDialog, setOpenAddDialog] = useState(false);
   const [selectedHoliday, setSelectedHoliday] = useState<number | null>(null);
 
   // CSV \
   // const downloadCSV = () => {
-  //   if (!holidays || holidays.length === 0) return;
+  //   if (!sortedHolidays || sortedHolidays.length === 0) return;
 
   //   // CSV Header
   //   const headers = ["Holiday Name", "Date", "Day"];
 
   //   // CSV Rows
-  //   const rows = holidays.map((item) => [
+  //   const rows = sortedHolidays.map((item) => [
   //     item.name,
   //     dayjs(item.date).format("DD/MM/YYYY"),
   //     dayjs(item.date).format("dddd"),
@@ -119,11 +127,11 @@ const HolidayList = () => {
       </div>
 
       <CustomDataTable
-        rows={holidays}
+        rows={sortedHolidays}
         columns={columns}
         isLoading={isLoading}
         withPagination={false}
-        isDataEmpty={holidays.length === 0}
+        isDataEmpty={sortedHolidays.length === 0}
         emptyViewTitle="No holiday found"
         emptyViewSubTitle="There are not any holiday"
       />
