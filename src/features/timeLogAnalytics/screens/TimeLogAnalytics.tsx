@@ -33,6 +33,7 @@ const TimeLogAnalytics: React.FC = () => {
 
   // Popup states
   const [hoveredLog, setHoveredLog] = useState<WorkLog | null>(null);
+  const [hoveredTask, setHoveredTask] = useState<any | null>(null);
   const [popupPos, setPopupPos] = useState({ x: 0, y: 0 });
 
   const [expandedRow, setExpandedRow] = useState<string | number | null>(null);
@@ -88,6 +89,8 @@ const TimeLogAnalytics: React.FC = () => {
   const toggleRow = (id: string | number) => {
     setExpandedRow(expandedRow === id ? null : id);
   };
+
+  console.log("hoveredLog", hoveredLog);
 
   return (
     <div className="flex-1 p-6 bg-[#F8F9FB] min-h-screen relative">
@@ -148,7 +151,7 @@ const TimeLogAnalytics: React.FC = () => {
             ) : (
               filteredData.map((log) => (
                 <React.Fragment key={log.id}>
-                  <tr className="bg-white group cursor-pointer hover:bg-slate-50 transition-all border border-gray-100 shadow-sm overflow-hidden rounded-xl">
+                  <tr className="bg-white group cursor-pointer transition-all shadow-sm hover:shadow-md">
                     <td className="py-4 pl-4 flex items-center gap-3 rounded-l-xl">
                       <div
                         onClick={(e) => {
@@ -166,7 +169,7 @@ const TimeLogAnalytics: React.FC = () => {
                       <img
                         className="w-10 h-10 rounded-lg shadow-sm"
                         src={log.avatar}
-                        alt=""
+                        alt={log.employeeName}
                       />
                       <span className="text-xs font-bold text-slate-700">
                         {log.employeeName}
@@ -178,22 +181,25 @@ const TimeLogAnalytics: React.FC = () => {
                         {log.totalTime}
                       </div>
                     </td>
-                    <td className="px-4 rounded-r-xl">
-                      <div
-                        className="flex gap-1 h-6"
-                        onMouseEnter={(e) => {
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          setPopupPos({
-                            x: rect.left + rect.width / 2,
-                            y: rect.top - 10,
-                          });
-                          setHoveredLog(log);
-                        }}
-                        onMouseLeave={() => setHoveredLog(null)}
-                      >
+                    <td className="px-4 rounded-l-xl">
+                      <div className="flex gap-1 h-6">
                         {log.tasks.map((t: any, i: number) => (
                           <div
                             key={i}
+                            onMouseEnter={(e) => {
+                              const rect =
+                                e.currentTarget.getBoundingClientRect();
+                              setPopupPos({
+                                x: rect.left + rect.width / 2,
+                                y: rect.top - 10,
+                              });
+                              setHoveredLog(log);
+                              setHoveredTask(t);
+                            }}
+                            onMouseLeave={() => {
+                              setHoveredLog(null);
+                              setHoveredTask(null);
+                            }}
                             className={`flex-1 rounded ${t.is_running === false && t.status === "completed" ? "bg-emerald-400" : t.is_running === true && t.status === "in-progress" ? "bg-blue-400" : "bg-orange-300"}`}
                           />
                         ))}
@@ -256,12 +262,6 @@ const TimeLogAnalytics: React.FC = () => {
                                       )}
                                     </p>
                                   </div>
-                                  {/* <div className="h-1 w-[10%] bg-gray-100 rounded-full overflow-hidden">
-                                    <div
-                                      className={`h-full rounded-full ${task.is_running === false && task.status === "completed" ? "bg-emerald-400" : task.is_running === true && task.status === "in-progress" ? "bg-blue-400" : "bg-blue-300"}`}
-                                      style={{ width: "100%" }}
-                                    />
-                                  </div> */}
                                   <div className="relative h-6 rounded w-full">
                                     {task.work_sessions.map(
                                       (s: any, si: any) => {
@@ -397,22 +397,44 @@ const TimeLogAnalytics: React.FC = () => {
               {hoveredLog.totalTime}
             </div>
             <span
-              className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${hoveredLog.tasks.some((t) => t.is_running) ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-orange-50 text-orange-600 border-orange-100"}`}
+              className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                hoveredTask
+                  ? hoveredTask.is_running === false &&
+                    hoveredTask.status === "completed"
+                    ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+                    : hoveredTask.is_running === true &&
+                        hoveredTask.status === "in-progress"
+                      ? "bg-blue-50 text-blue-600 border-blue-100"
+                      : "bg-orange-50 text-orange-600 border-orange-100"
+                  : hoveredLog.tasks.some((t) => t.is_running)
+                    ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+                    : "bg-orange-50 text-orange-600 border-orange-100"
+              }`}
             >
-              {hoveredLog.tasks.some((t) => t.is_running)
-                ? "• In Progress"
-                : "• Paused"}
+              {hoveredTask
+                ? hoveredTask.is_running === false &&
+                  hoveredTask.status === "completed"
+                  ? "• Completed"
+                  : hoveredTask.is_running === true &&
+                      hoveredTask.status === "in-progress"
+                    ? "• In Progress"
+                    : "• Paused"
+                : hoveredLog.tasks.some((t) => t.is_running)
+                  ? "• In Progress"
+                  : "• Paused"}
             </span>
           </div>
           <div className="bg-[#EEF2FF] border border-[#E0E7FF] p-2.5 rounded-xl flex justify-between items-center">
             <span className="text-[11px] font-bold text-[#4F46E5] truncate max-w-35">
-              {hoveredLog.currentTask}
+              {hoveredTask ? hoveredTask.task_title : hoveredLog.currentTask}
             </span>
             <span className="text-[10px] font-bold text-[#818CF8]">
-              {hoveredLog.totalTime}
+              {hoveredTask
+                ? secondsToHoursMinutes(hoveredTask.time_spent || 0)
+                : hoveredLog.totalTime}
             </span>
           </div>
-          <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white rotate-45 border-r border-b border-gray-100 shadow-sm" />
+          <div className="absolute -z-10 bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white rotate-45 border-r border-b border-gray-100 shadow-sm" />
         </div>
       )}
     </div>

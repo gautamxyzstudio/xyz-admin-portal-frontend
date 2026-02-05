@@ -398,7 +398,7 @@ const Projects = () => {
                     .map((item: any) => (
                       <tr key={item.id}>
                         <td className="px-6 py-4">
-                          <div className="flex -space-x-3">
+                          <div className="flex -space-x-3 cursor-pointer">
                             {item.users_permissions_users.map(
                               (emp: any, i: number) => (
                                 <img
@@ -431,13 +431,13 @@ const Projects = () => {
                           <div className="flex justify-end gap-3">
                             <button
                               onClick={() => handleEdit(item)}
-                              className=" cursor-pointer"
+                              className="cursor-pointer"
                             >
                               <Edit3 size={18} className="stroke-primary" />
                             </button>
                             <button
                               onClick={() => handleDeleteProject(item.id)}
-                              className=" cursor-pointer"
+                              className="cursor-pointer"
                             >
                               <Trash2 size={18} className="stroke-red" />
                             </button>
