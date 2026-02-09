@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { baseApi } from "../../state/baseApi";
-import { endpoints } from "../../state/endpoints";
+import { endpoints } from "../../api/endpoints";
 import { ApiMethodType } from "../../state/types";
 import type {
   IAddEmployeeArgs,

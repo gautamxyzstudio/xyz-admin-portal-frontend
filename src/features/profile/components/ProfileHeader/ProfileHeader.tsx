@@ -115,7 +115,6 @@ const ProfileHeader: React.FC = () => {
     },
   });
 
-  console.log(userDetails);
   const handleCropSave = async () => {
     if (!imageToCrop || !croppedAreaPixels) return;
     try {
@@ -161,27 +160,24 @@ const ProfileHeader: React.FC = () => {
     : "/static/images/avatar/default.jpg";
 
   /* ---------------- STATUS UPDATE ---------------- */
-const updateStatus = async (value: boolean) => {
-  try {
-    await updateUser({
-      id: user.id.toString(),
-      status: value,
-    }).unwrap();
+  const updateStatus = async (value: boolean) => {
+    try {
+      await updateUser({
+        id: user.id.toString(),
+        status: value,
+      }).unwrap();
 
-    await refetchProfile({ id: user.id }).unwrap();
+      await refetchProfile({ id: user.id }).unwrap();
 
-    if (value) {
-      toast.success("Email subscription turned ON");
-    } else {
-      toast.info("Email subscription turned OFF");
-  
+      if (value) {
+        toast.success("Email subscription turned ON");
+      } else {
+        toast.info("Email subscription turned OFF");
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to update status");
     }
-  } catch (err: any) {
-    toast.error(err?.message || "Failed to update status");
-  }
-};
-
-
+  };
 
   return (
     <div className="w-full rounded-xl overflow-hidden">
@@ -251,26 +247,28 @@ const updateStatus = async (value: boolean) => {
             </span>
           </div>
         </div>
-        <div className="flex justify-end ">
-          <div className="flex flex-row items-center gap-2">
-            <p className="text-base font-semibold">Email Subscription</p>
+        {userDetails?.role !== "Employee" && (
+          <div className="flex justify-end ">
+            <div className="flex flex-row items-center gap-2">
+              <p className="text-base font-semibold">Email Notification</p>
 
-            <Controller
-              control={control}
-              name="emailSubscription"
-              render={({ field }) => (
-                <Switch
-                  checked={field.value}
-                  onChange={(e) => {
-                    const value = e.target.checked;
-                    field.onChange(value);
-                    updateStatus(value);
-                  }}
-                />
-              )}
-            />
+              <Controller
+                control={control}
+                name="emailSubscription"
+                render={({ field }) => (
+                  <Switch
+                    checked={field.value}
+                    onChange={(e) => {
+                      const value = e.target.checked;
+                      field.onChange(value);
+                      updateStatus(value);
+                    }}
+                  />
+                )}
+              />
+            </div>
           </div>
-        </div>
+        )}
       </div>
       {/* --- CROP MODAL (Clean Version) --- */}
       {showCropModal && imageToCrop && (
@@ -299,7 +297,7 @@ const updateStatus = async (value: boolean) => {
                 showGrid={false}
                 onCropChange={setCrop}
                 onZoomChange={setZoom}
-                onCropComplete={(_, pixels) => setCroppedAreaPixels(pixels)}  
+                onCropComplete={(_, pixels) => setCroppedAreaPixels(pixels)}
                 zoomWithScroll={true}
                 maxZoom={10}
               />

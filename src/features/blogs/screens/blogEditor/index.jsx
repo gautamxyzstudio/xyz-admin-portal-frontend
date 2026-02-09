@@ -9,7 +9,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
 import { Editor } from "@tinymce/tinymce-react";
 import { useMutation } from "../../../../api/customApi";
-import { apiendpoint } from "../../../../api/endpoint";
+import { endpoints } from "../../../../api/endpoints";
 import CustomBox from "../../../../components/CustomBox/CustomBox";
 import CustomButton from "../../../../components/CustomButton/CustomButton";
 import { ArrowBack } from "@mui/icons-material";
@@ -78,7 +78,7 @@ const BlogEditor = () => {
         setIsLoading(true);
         const response = await makeRequest({
           type: "get",
-          url: apiendpoint.editBlogs(blogId),
+          url: endpoints.editBlogs(blogId),
         });
         if (response) {
           const attrs = response.data.attributes;
@@ -143,7 +143,7 @@ const BlogEditor = () => {
       const formData = new FormData();
       formData.append("files", uploadedImage);
       try {
-        const res = await axios.post(apiendpoint.uploadImg, formData);
+        const res = await axios.post(endpoints.uploadImg, formData);
         return res.data[0]?.id || null;
       } catch {
         toast.error("Image upload failed.");
@@ -158,8 +158,8 @@ const BlogEditor = () => {
     async (bannerId, editorContent) => {
       try {
         const url = id
-          ? apiendpoint.editBlogs(Number(id))
-          : apiendpoint.postBlogs;
+          ? endpoints.editBlogs(Number(id))
+          : endpoints.postBlogs;
         const body = {
           data: {
             metaTitle: inputValue.metaTitle,
@@ -173,8 +173,8 @@ const BlogEditor = () => {
           },
         };
         const response = id
-          ? await axios.put(apiendpoint.editBlogs(Number(id)), body)
-          : await axios.post(apiendpoint.postBlogs, body);
+          ? await axios.put(endpoints.editBlogs(Number(id)), body)
+          : await axios.post(endpoints.postBlogs, body);
         if (response) {
           toast.success("Content saved successfully!");
           navigate("/blog", { state: { refreshed: true } });
@@ -364,7 +364,7 @@ const BlogEditor = () => {
               automatic_uploads: true,
               file_picker_types: "image",
               images_reuse_filename: true,
-              images_upload_url: apiendpoint.UPLOAD_IMAGE,
+              images_upload_url: endpoints.UPLOAD_IMAGE,
             }}
           />
 

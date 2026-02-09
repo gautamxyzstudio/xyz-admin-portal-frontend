@@ -7,7 +7,7 @@ import type {
   IHolidayApiResponse,
 } from "./holydayList.types";
 import type { IHolidayRequest } from "./holydayList.types";
-import { apiendpoint } from "../../api/endpoint";
+import { endpoints } from "../../api/endpoints";
 
 export const enhancedHolidayListApi = baseApi.enhanceEndpoints({
   addTagTypes: ["Holiday"],
@@ -18,7 +18,7 @@ export const holidayListApi = enhancedHolidayListApi.injectEndpoints({
     // ✅ Get all holidays (FLATTENED)
     getHolidays: builder.query<IHolidayFlat[], void>({
       query: () => ({
-        url: apiendpoint.getHolidays,
+        url: endpoints.getHolidays,
         method: ApiMethodType.get,
       }),
       providesTags: ["Holiday"],
@@ -33,7 +33,7 @@ export const holidayListApi = enhancedHolidayListApi.injectEndpoints({
 
     getHolidayById: builder.query<IHolidayFlat, number>({
       query: (id: number) => ({
-        url: apiendpoint.getHolidayById(id),
+        url: endpoints.getHolidayById(id),
         method: ApiMethodType.get,
       }),
       providesTags: (_result, _error, id) => [{ type: "Holiday", id }],
@@ -49,7 +49,7 @@ export const holidayListApi = enhancedHolidayListApi.injectEndpoints({
     // ✅ Delete holiday
     deleteHoliday: builder.mutation<void, number>({
       query: (id) => ({
-        url: apiendpoint.deleteHoliday(id),
+        url: endpoints.deleteHoliday(id),
         method: ApiMethodType.delete,
       }),
       invalidatesTags: ["Holiday"],
@@ -58,7 +58,7 @@ export const holidayListApi = enhancedHolidayListApi.injectEndpoints({
     // ✅ Create holiday
     postHoliday: builder.mutation<IHoliday, IHolidayRequest>({
       query: (data) => ({
-        url: apiendpoint.postHoliday,
+        url: endpoints.postHoliday,
         method: ApiMethodType.post,
         body: data,
       }),
@@ -71,7 +71,7 @@ export const holidayListApi = enhancedHolidayListApi.injectEndpoints({
       { id: number; data: IHolidayRequest }
     >({
       query: ({ id, data }) => ({
-        url: apiendpoint.patchHoliday(id),
+        url: endpoints.patchHoliday(id),
         method: ApiMethodType.PUT,
         body: data,
       }),

@@ -44,7 +44,7 @@ const LoginPage = () => {
         identifier: values.identifier,
         password: values.password,
       }).unwrap();
-      console.log(response.user, "user login response");
+      // console.log(response.user, "user login response");
       if (response && response.user.user_type !== "Admin") {
         const userDetailsResponse = await getUserDetails({
           id: response?.user?.id,

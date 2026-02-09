@@ -79,7 +79,7 @@ const EmployeeDashboard = () => {
 
   useEffect(() => {
     if (attendance) {
-      console.log(attendance);
+      // console.log(attendance);
       if (attendance.in) {
         dispatch(checkIn(attendance.in));
       }
@@ -143,7 +143,7 @@ const EmployeeDashboard = () => {
   if (!userBasic || userBasic.id === undefined) return null;
 
   const onCheckIn = async (time: Date) => {
-    console.log(dayjs().format());
+    // console.log(dayjs().format());
     setIsLoading(true);
     const checkInTime = dateToTimeString(time);
     try {

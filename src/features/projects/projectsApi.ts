@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { apiendpoint } from "../../api/endpoint";
+import { endpoints } from "../../api/endpoints";
 import { baseApi } from "../../state/baseApi";
 
 import type {
@@ -18,7 +18,7 @@ export const projectsApi = enhancedProjectsApi.injectEndpoints({
     ================================ */
     getProjects: builder.query<any, void>({
       query: () => ({
-        url: apiendpoint.getProjects,
+        url: endpoints.getProjects,
         method: "GET",
       }),
       providesTags: ["Projects"],
@@ -29,7 +29,7 @@ export const projectsApi = enhancedProjectsApi.injectEndpoints({
     ================================ */
     addProject: builder.mutation<void, ProjectPayload>({
       query: (data) => ({
-        url: apiendpoint.postProjects,
+        url: endpoints.postProjects,
         method: "POST",
         body: {
           data,
@@ -43,7 +43,7 @@ export const projectsApi = enhancedProjectsApi.injectEndpoints({
     ================================ */
     updateProject: builder.mutation<void, UpdateProjectArgs>({
       query: ({ id, data }) => ({
-        url: apiendpoint.updateProject(id),
+        url: endpoints.updateProject(id),
         method: "PUT",
         body: {
           data,
@@ -57,7 +57,7 @@ export const projectsApi = enhancedProjectsApi.injectEndpoints({
     ================================ */
     deleteProject: builder.mutation<void, number>({
       query: (id) => ({
-        url: apiendpoint.deleteProject(id),
+        url: endpoints.deleteProject(id),
         method: "DELETE",
       }),
       invalidatesTags: ["Projects"],

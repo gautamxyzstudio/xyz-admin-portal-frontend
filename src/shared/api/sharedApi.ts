@@ -1,5 +1,5 @@
 import { baseApi } from '../../state/baseApi';
-import { endpoints } from '../../state/endpoints';
+import { endpoints } from "../../api/endpoints";
 import { ApiMethodType } from '../../state/types';
 import type { IImageUploadResponse } from './types';
 

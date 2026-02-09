@@ -58,50 +58,45 @@ const PickerInput = ({
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <div className="w-full max-w-full flex flex-col">
-       <DatePicker
-  sx={{ ...sx, width: "100%" }}
-  label={label}
-  value={value}
-  format="DD/MM/YYYY"
-  disablePast={disablePast}
-  disableFuture={disableFuture}
-  shouldDisableDate={customShouldDisableDate}
-  slotProps={{
-    textField: {
-      error: !!errorMessage,
-      helperText: errorMessage,
+        <DatePicker
+          sx={{ ...sx, width: "100%" }}
+          label={label}
+          value={value}
+          format="DD/MM/YYYY"
+          disablePast={disablePast}
+          disableFuture={disableFuture}
+          shouldDisableDate={customShouldDisableDate}
+          slotProps={{
+            textField: {
+              error: !!errorMessage,
+              helperText: errorMessage,
 
-      ...(disableTyping && {
-        onKeyDown: (e) => e.preventDefault(),
-        onPaste: (e) => e.preventDefault(),
-        inputProps: {
-          readOnly: true,
-          style: { cursor: "pointer" },
-        },
-      }),
+              ...(disableTyping && {
+                onKeyDown: (e) => e.preventDefault(),
+                onPaste: (e) => e.preventDefault(),
+                inputProps: {
+                  readOnly: true,
+                  style: { cursor: "pointer" },
+                },
+              }),
 
-      ...slotProps?.textField,
-    },
+              ...slotProps?.textField,
+            },
 
-    popper: {
-      placement: popperPlacement,
-      modifiers: [
-        {
-          name: "flip",
-          enabled: false,
-        },
-      ],
-    },
-  }}
-  onChange={(newValue) => {
-    if (newValue) setValue(newValue);
-  }}
-/>
-
-
-        {errorMessage && (
-          <p className="text-xs mt-1 text-red-700">{errorMessage}</p>
-        )}
+            popper: {
+              placement: popperPlacement,
+              modifiers: [
+                {
+                  name: "flip",
+                  enabled: false,
+                },
+              ],
+            },
+          }}
+          onChange={(newValue) => {
+            if (newValue) setValue(newValue);
+          }}
+        />
       </div>
     </LocalizationProvider>
   );

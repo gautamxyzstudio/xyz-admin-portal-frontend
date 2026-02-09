@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { baseApi } from '../../state/baseApi';
-import { apiendpoint } from '../../api/endpoint';
+import { endpoints } from "../../api/endpoints";
 import { ApiMethodType } from '../../state/types';
 import type { IDocument, IDocumentsListResponse } from './documents.types';
 
@@ -12,14 +12,14 @@ export const documentsApi = enhancedDocumentsApi.injectEndpoints({
   endpoints: (builder) => ({
     getDocumentsByUser: builder.query<IDocumentsListResponse, number>({
       query: (id: number) => ({
-        url: apiendpoint.getDocumentsByUser(id),
+        url: endpoints.getDocumentsByUser(id),
         method: ApiMethodType.get,
       }),
       providesTags: ['Documents'],
     }),
     addNewDocument: builder.mutation<any, IDocument>({
       query: (data: IDocument) => ({
-        url: apiendpoint.postDocuments,
+        url: endpoints.postDocuments,
         method: ApiMethodType.post,
         body: data,
       }),
@@ -27,7 +27,7 @@ export const documentsApi = enhancedDocumentsApi.injectEndpoints({
     }),
     deleteDocument: builder.mutation<any, number>({
       query: (id: number) => ({
-        url: apiendpoint.deleteDocuments(id),
+        url: endpoints.deleteDocuments(id),
         method: ApiMethodType.delete,
       }),
       invalidatesTags: ['Documents'],

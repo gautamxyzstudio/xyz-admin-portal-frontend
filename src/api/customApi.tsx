@@ -47,10 +47,10 @@ export const useMutation = () => {
       }
     } catch (error) {
       const customError = error as AxiosError;
-      console.log("====================================");
-      console.log(JSON.stringify(error));
-      console.log(customError, "Error")
-      console.log("====================================");
+      // console.log("====================================");
+      // console.log(JSON.stringify(error));
+      // console.log(customError, "Error")
+      // console.log("====================================");
       const filteredError = {
         statusCode: customError.response?.status ?? 0,
         message: customError.message ?? "Something went wrong",

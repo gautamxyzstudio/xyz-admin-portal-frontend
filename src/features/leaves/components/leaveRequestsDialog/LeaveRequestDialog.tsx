@@ -20,7 +20,7 @@ import FormTextInput from "../../../../shared/components/formInput/FormInput";
 import { getError } from "../../../../utils/utils";
 import CustomButton from "../../../../components/CustomButton/CustomButton";
 import axios from "axios";
-import { endpoints } from "../../../../state/endpoints";
+import { endpoints } from "../../../../api/endpoints";
 import { useSelector } from "react-redux";
 import { userInState } from "../../../auth/authSlice";
 import { useLoadingWrapper } from "../../../../wrappers/loadingWrapper/LoadingWrapper.context";

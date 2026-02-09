@@ -85,11 +85,19 @@ const CreateLeaveDialog = ({
       setIsLoading(true);
       const response = await applyLeave({
         data: {
-          start_date: formatDateToMMDDYYYY(data.startDate.toDate()),
+          start_date:
+            data.leaveCategory === "Half Day" ||
+            data.leaveCategory === "Short Leave"
+              ? formatDateToMMDDYYYY(data.date.toDate())
+              : formatDateToMMDDYYYY(data.startDate.toDate()),
           end_date:
             data?.endDate && data?.endDate?.isValid()
-              ? formatDateToMMDDYYYY(data.endDate.toDate())
-              : formatDateToMMDDYYYY(data.date.toDate()),
+              ? data.leaveCategory === "Half Day" ||
+                data.leaveCategory === "Short Leave"
+                ? formatDateToMMDDYYYY(data.date.toDate())
+                : formatDateToMMDDYYYY(data.endDate.toDate())
+              : formatDateToMMDDYYYY(data.endDate.toDate()),
+
           status: "pending",
           decline_reason: "",
           description: data.description,
@@ -118,15 +126,11 @@ const CreateLeaveDialog = ({
           user: user.id.toString(),
         },
       }).unwrap();
-
-      console.log("Response", response);
-
       if (response) {
         toast.success("Leave applied successfully");
         onSuccess();
-        reset() 
+        reset();
       }
-
     } catch (error: any) {
       toast.error(error?.message ?? "Failed to apply leave");
     } finally {
@@ -144,14 +148,13 @@ const CreateLeaveDialog = ({
           borderRadius: "16px",
           padding: 0,
           overflow: "scroll",
-          msOverflowStyle: "none", 
+          msOverflowStyle: "none",
           scrollbarWidth: "none",
         },
         "& .MuiDialog-paper::-webkit-scrollbar": {
-          display: "none", 
+          display: "none",
         },
       }}
-      
     >
       <CustomBox customClasses="p-6 flex   flex-col gap-y-3">
         <h4 className="text-xl font-semibold">Apply Leave</h4>
@@ -251,6 +254,7 @@ const CreateLeaveDialog = ({
                       disablePast
                       setValue={field.onChange}
                       errorMessage={getError(errors.date)}
+                      disableTyping
                     />
                   )}
                 />
@@ -328,7 +332,6 @@ const CreateLeaveDialog = ({
                     setValue={field.onChange}
                     errorMessage={getError(errors.startDate)}
                     disableTyping
-                
                   />
                 )}
               />

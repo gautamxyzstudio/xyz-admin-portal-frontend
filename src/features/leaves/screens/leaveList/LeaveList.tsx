@@ -39,7 +39,7 @@ const LeaveList = () => {
   // Handle query errors
   useEffect(() => {
     if (error) {
-      console.error("Error fetching leaves:", error);
+      // console.error("Error fetching leaves:", error);
       toast.error("Failed to load leaves. Please try again.");
     }
     refetch();

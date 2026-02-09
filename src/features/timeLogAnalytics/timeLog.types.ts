@@ -1,6 +1,8 @@
 export interface TimeLogAnalyticsResponse {
   userId: string;      
-  count: number;           
+  count: number; 
+  endDate: string;
+startDate: string;          
   work_logs: WorkLog[];
 }
 export interface WorkLog {

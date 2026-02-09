@@ -1,4 +1,4 @@
-import { apiendpoint } from "../../api/endpoint";
+import { endpoints } from "../../api/endpoints";
 import { baseApi } from "../../state/baseApi";
 import { ApiMethodType } from "../../state/types";
 import type {
@@ -18,7 +18,7 @@ export const announcementListApi = enhancedAnnouncementListApi.injectEndpoints({
     createAnnouncement: builder.mutation<IAnnouncementUI, IAnnouncementRequest>(
       {
         query: (data) => ({
-          url: apiendpoint.getAnnouncements,
+          url: endpoints.getAnnouncements,
           method: ApiMethodType.post,
           body: data,
         }),
@@ -28,7 +28,7 @@ export const announcementListApi = enhancedAnnouncementListApi.injectEndpoints({
     // Get All Announcement
     getAnnouncements: builder.query<IAnnouncementUI[], void>({
       query: () => ({
-        url: apiendpoint.getAnnouncements,
+        url: endpoints.getAnnouncements,
         method: ApiMethodType.get,
       }),
       providesTags: ["Announcement"],
@@ -47,7 +47,7 @@ export const announcementListApi = enhancedAnnouncementListApi.injectEndpoints({
     // Get Announcement Detail by Id
     getAnnouncementById: builder.query<IAnnouncementUI, number>({
       query: (id: number) => ({
-        url: apiendpoint.getAnnouncementById(id),
+        url: endpoints.getAnnouncementById(id),
         method: ApiMethodType.get,
       }),
       providesTags: (_result, _error, id) => [{ type: "Announcement", id }],
@@ -69,7 +69,7 @@ export const announcementListApi = enhancedAnnouncementListApi.injectEndpoints({
       { id: number; data: IAnnouncementRequest }
     >({
       query: ({ id, data }) => ({
-        url: apiendpoint.getAnnouncementById(id),
+        url: endpoints.getAnnouncementById(id),
         method: ApiMethodType.PUT,
         body: data,
       }),

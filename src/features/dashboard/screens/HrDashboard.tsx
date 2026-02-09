@@ -6,7 +6,7 @@ import LeaveRequest from "../components/leaveRequests/LeaveRequest";
 import AttendanceTable from "../components/AttendanceTable/AttendanceTable";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { apiendpoint } from "../../../api/endpoint";
+import { endpoints } from "../../../api/endpoints";
 import { useAppSelector } from "../../../state/store";
 import { useLoadingWrapper } from "../../../wrappers/loadingWrapper/LoadingWrapper.context";
 import AnnouncementDialog from "../../announcements/components/AnnouncementDialog/AnnouncementDialog";
@@ -31,7 +31,7 @@ const HrDashboard = () => {
     const fetchStats = async () => {
       try {
         setIsLoading(true);
-        const res = await axios.get(apiendpoint.getDashboardStats);
+        const res = await axios.get(endpoints.getDashboardStats);
         setStats(res.data);
       } catch (error) {
         console.error("Stats API error", error);

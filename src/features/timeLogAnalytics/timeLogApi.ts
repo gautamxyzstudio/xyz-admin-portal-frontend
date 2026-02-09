@@ -1,5 +1,5 @@
 import { baseApi } from "../../state/baseApi";
-import { endpoints } from "../../state/endpoints";
+import { endpoints } from "../../api/endpoints";
 import { type TimeLogAnalyticsResponse } from "./timeLog.types";
 
 export const enhancedTimeLogApi = baseApi.enhanceEndpoints({

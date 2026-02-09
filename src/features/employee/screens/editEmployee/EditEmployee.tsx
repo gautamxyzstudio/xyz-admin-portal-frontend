@@ -60,7 +60,7 @@ const EditEmployee = () => {
     },
   });
 
-  console.log(employee);
+  // console.log(employee);
 
   // Populate form fields with employee data
   useEffect(() => {

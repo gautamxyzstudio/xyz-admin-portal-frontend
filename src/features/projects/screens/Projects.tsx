@@ -65,9 +65,7 @@ const Projects = () => {
   // ===== HANDLERS =====
 
   const handleEmployeeSelect = (emp: number) => {
-    console.log(emp);
     const employeeName = filteredEmployeeList.find((e) => e.id === emp)?.name;
-    console.log(employeeName);
     if (!employeeName) return;
     if (!formData.selectedEmployees.includes(employeeName)) {
       setFormData({
@@ -86,7 +84,6 @@ const Projects = () => {
   };
 
   const handleEdit = (item: any) => {
-    console.log(item);
     setIsEditing(item.id);
     setFormData({
       selectedEmployees: item.users_permissions_users.map((u: any) => u.username),
