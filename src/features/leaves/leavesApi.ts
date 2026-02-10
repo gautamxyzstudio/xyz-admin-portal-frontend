@@ -38,7 +38,6 @@ export const leavesApi = enhancedLeavesApi.injectEndpoints({
       providesTags: ["Leaves"],
       transformResponse: (response: any) => {
         const data = response.data.map((item: ILeave) => ({ ...item }));
-        // console.log(data, "leave");
         return {
           data,
         };
@@ -196,6 +195,19 @@ export const leavesApi = enhancedLeavesApi.injectEndpoints({
       }),
       providesTags: ["Leaves"],
     }),
+
+    getAllLeaveBalance: builder.query<any[], void>({
+      query: () => ({
+        url: endpoints.allLeaveBalance,
+        method: ApiMethodType.get,
+      }),
+      transformResponse: (response: any[]) =>
+        response.map((item) => ({
+          ...item,
+          id: item.user.id, // ✅ REQUIRED by DataGrid
+        })),
+      providesTags: ["Leaves"],
+    }),
   }),
 });
 
@@ -211,4 +223,5 @@ export const {
   useGetLeavesDetialsQuery,
   useLazyGetAllUserLeavesQuery,
   useGeLeaveBalanceQuery,
+  useGetAllLeaveBalanceQuery,
 } = leavesApi;

@@ -9,9 +9,11 @@ export const endpoints = {
   // Employee
   info: `${baseUrl}/api/emp-details/?populate=*&sort=id`, // used in apiendpoint
   addinfo: `${baseUrl}/api/emp-details/?populate=*`, // used in apiendpoint
-  infoEdit: (id: number | string) => `${baseUrl}/api/emp-details/${id}/?populate=*`, // used in apiendpoint
+  infoEdit: (id: number | string) =>
+    `${baseUrl}/api/emp-details/${id}/?populate=*`, // used in apiendpoint
   employeeDetails: `${baseUrl}/api/emp-details`, // used in endpoints
-  updateEmployeeDetails: (id: string | number) => `${baseUrl}/api/emp-details/${id}`, // used in endpoints
+  updateEmployeeDetails: (id: string | number) =>
+    `${baseUrl}/api/emp-details/${id}`, // used in endpoints
   employeeList: (user_type: string) => `${baseUrl}/api/users/${user_type}`, // used in endpoints
   deleteUser: (id: string | number) => `${baseUrl}/api/users/${id}`, // used in endpoints
   updateUser: (id: string | number) => `${baseUrl}/api/users/${id}`, // used in endpoints
@@ -26,15 +28,22 @@ export const endpoints = {
   // Attendance
   getAttendanceLegacy: `${baseUrl}/api/daily-attendances/?populate=*&sort=id`, // From apiendpoint.getAttendance
   postAttendance: `${baseUrl}/api/daily-attendances`,
-  editAttendance: (id: number | string) => `${baseUrl}/api/daily-attendances/${id}/?populate=*`,
-  deleteAttendance: (id: number | string) => `${baseUrl}/api/daily-attendances/${id}`,
+  editAttendance: (id: number | string) =>
+    `${baseUrl}/api/daily-attendances/${id}/?populate=*`,
+  deleteAttendance: (id: number | string) =>
+    `${baseUrl}/api/daily-attendances/${id}`,
   filterDateRange: (startDate: string, endDate: string) =>
     `${baseUrl}/api/daily-attendances/?populate=*&sort=id&filters[Date][$gte]=${startDate}&filters[Date][$lte]=${endDate}`,
-  
-  getTodayAttendance: (id: number | string) => `${baseUrl}/api/daily-attendance/today/${id}`,
+
+  getTodayAttendance: (id: number | string) =>
+    `${baseUrl}/api/daily-attendance/today/${id}`,
   checkIn: `${baseUrl}/api/daily-attendance/check-in`,
   checkOut: `${baseUrl}/api/daily-attendance/check-out`,
-  getAttendance: (id: number | string, startDate?: string, endDate?: string) => {
+  getAttendance: (
+    id: number | string,
+    startDate?: string,
+    endDate?: string,
+  ) => {
     let url = `${baseUrl}/api/daily-attendance/${id}`;
     if (startDate) {
       url += `?fromDate=${startDate}&toDate=${endDate}`;
@@ -46,7 +55,7 @@ export const endpoints = {
     pageSize: number,
     startDate?: string,
     endDate?: string,
-    search?: string
+    search?: string,
   ) => {
     let url = `${baseUrl}/api/daily-attendance/all?page=${page}&pageSize=${pageSize}&sort=id:DESC`;
     if (startDate && endDate) {
@@ -57,11 +66,13 @@ export const endpoints = {
     }
     return url;
   },
-  updateAttendance: (id: number | string) => `${baseUrl}/api/daily-attendances/${id}/manual-update`,
+  updateAttendance: (id: number | string) =>
+    `${baseUrl}/api/daily-attendances/${id}/manual-update`,
 
   // Leaves
   updateLeave: (id: number | string) => `${baseUrl}/api/leave-statuses/${id}`,
-  getUserLeavesLegacy: (id: number | string) => `${baseUrl}/api/users/${id}/?populate=*`, // apiendpoint.getUserLeaves
+  getUserLeavesLegacy: (id: number | string) =>
+    `${baseUrl}/api/users/${id}/?populate=*`, // apiendpoint.getUserLeaves
   getLeavesList: (page?: number, search?: string) => {
     let url = `${baseUrl}/api/leave-statuses?populate=*&pagination[page]=${page ?? 1}&pagination[pageSize]=10`;
     if (search) {
@@ -81,12 +92,18 @@ export const endpoints = {
   getLeaves: `${baseUrl}/api/leave-statuses`,
   deleteLeave: (id: number | string) => `${baseUrl}/api/leave-statuses/${id}`,
   getLeaveRequests: `${baseUrl}/api/leave-statuses?filters[status][$eq]=pending&populate[user][populate][user_detial][populate]=Photo&sort=id:desc`,
-  approveLeave: (id: number | string) => `${baseUrl}/api/leave-status/${id}/approve`,
-  rejectLeave: (id: number | string) => `${baseUrl}/api/leave-status/${id}/reject`,
-  hrApproveleave: (id: number | string) => `${baseUrl}/api/leave-statuses/${id}/hr-update-and-approve-leave`,
-  updateUserLeaveBalance: (id: string | number) => `${baseUrl}/api/user/${id}/leave-balance`,
-  getEmployeeLeaveBalance: (id: string | number) => `${baseUrl}/api/user/${id}/leave-balance`,
+  approveLeave: (id: number | string) =>
+    `${baseUrl}/api/leave-status/${id}/approve`,
+  rejectLeave: (id: number | string) =>
+    `${baseUrl}/api/leave-status/${id}/reject`,
+  hrApproveleave: (id: number | string) =>
+    `${baseUrl}/api/leave-statuses/${id}/hr-update-and-approve-leave`,
+  updateUserLeaveBalance: (id: string | number) =>
+    `${baseUrl}/api/user/${id}/leave-balance`,
+  getEmployeeLeaveBalance: (id: string | number) =>
+    `${baseUrl}/api/user/${id}/leave-balance`,
   getLeaveBalance: `${baseUrl}/api/leave-balance/me`,
+  allLeaveBalance: `${baseUrl}/api/leave-balance/all`,
 
   // Holidays
   getHolidays: `${baseUrl}/api/holiday-lists`,
@@ -99,20 +116,23 @@ export const endpoints = {
   getBlogsList: (page?: number) =>
     `${baseUrl}/api/add-blogs?populate=*&sort=id:desc&pagination[page]=${page ?? 1}&pagination[pageSize]=10`,
   postBlogs: `${baseUrl}/api/add-blogs`,
-  editBlogs: (id: number | string) => `${baseUrl}/api/add-blogs/${id}?populate=*`,
+  editBlogs: (id: number | string) =>
+    `${baseUrl}/api/add-blogs/${id}?populate=*`,
   deleteBlogs: (id: number | string) => `${baseUrl}/api/add-blogs/${id}`,
 
   // Documents
   getDocuments: `${baseUrl}/api/documents?populate=*&sort=id`,
   postDocuments: `${baseUrl}/api/documents?populate=*`,
-  editDocuments: (id: number | string) => `${baseUrl}/api/documents/${id}/?populate=*`,
+  editDocuments: (id: number | string) =>
+    `${baseUrl}/api/documents/${id}/?populate=*`,
   deleteDocuments: (id: number | string) => `${baseUrl}/api/documents/${id}`,
   getDocumentsByUser: (id: number | string) =>
     `${baseUrl}/api/documents?populate=*&sort=id&filters[user][id][$eq]=${id}`,
 
   // Announcements
   getAnnouncements: `${baseUrl}/api/announcements?sort=Date:desc`,
-  getAnnouncementById: (id: number | string) => `${baseUrl}/api/announcements/${id}`,
+  getAnnouncementById: (id: number | string) =>
+    `${baseUrl}/api/announcements/${id}`,
 
   // Stats
   getDashboardStats: `${baseUrl}/api/dashboard/stats`,

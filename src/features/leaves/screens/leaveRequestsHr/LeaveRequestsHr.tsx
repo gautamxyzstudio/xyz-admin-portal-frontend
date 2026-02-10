@@ -13,6 +13,8 @@ import dayjs from "dayjs";
 import { getLeaveCategoryTitle } from "../../utils";
 import type { ILeaveRequest } from "../../leaves.types";
 import LeaveRequestDialog from "../../components/leaveRequestsDialog/LeaveRequestDialog";
+import CustomButton from "../../../../components/CustomButton/CustomButton";
+import { useNavigate } from "react-router";
 
 const LeaveRequestsHr = ({
   onLeaveActionSuccess,
@@ -22,12 +24,13 @@ const LeaveRequestsHr = ({
   const dispatch = useDispatch();
   const [openModal, setOpenModal] = useState<boolean>(false);
   const [leaveReqData, setLeaveReqData] = useState<ILeaveRequest | null>();
+  const navigate = useNavigate()
   /* ===================== API ===================== */
   const {
     data: leaveRequests,
     isLoading,
     refetch,
-    isFetching
+    isFetching,
   } = useGetLeaveRequestsQuery(undefined, {
     refetchOnFocus: true,
   });
@@ -36,13 +39,13 @@ const LeaveRequestsHr = ({
     if (leaveRequests?.data) {
       dispatch(setLeaveRequests(leaveRequests.data));
     }
-    refetch()
+    refetch();
   }, [leaveRequests?.data, refetch]);
 
   const leaveRequestsFromStore = useSelector(selectLeaveRequests);
 
   const refetchLeaveList = () => {
-    refetch(); 
+    refetch();
     onLeaveActionSuccess();
   };
 
@@ -98,16 +101,23 @@ const LeaveRequestsHr = ({
   return (
     <React.Fragment>
       <CustomBox customClasses="w-full h-full flex flex-col gap-y-5 px-5 py-6">
-        <div className="w-full flex flex-row items-center-safe gap-x-2.5">
-          <span className="text-2xl font-semibold">Leaves Request</span>{" "}
-          <span className="text-sm px-3 py-2 bg-background rounded-full">
-            {leaveRequestsFromStore.length === 0
-              ? "No Leave Requests"
-              : ` ${String(leaveRequestsFromStore.length).padStart(
-                  2,
-                  "0"
-                )} New Requests`}
-          </span>
+        <div className="w-full flex flex-row items-center justify-between">
+          <div className=" flex flex-row items-center-safe gap-x-2.5">
+            <span className="text-2xl font-semibold">Leaves Request</span>{" "}
+            <span className="text-sm px-3 py-2 bg-background rounded-full">
+              {leaveRequestsFromStore.length === 0
+                ? "No Leave Requests"
+                : ` ${String(leaveRequestsFromStore.length).padStart(
+                    2,
+                    "0",
+                  )} New Requests`}
+            </span>
+          </div>
+          <CustomButton
+            label="Leave Balances"
+            onClick={() => navigate('/all-leaves/leave-balance')}
+            buttonStyle="primary"
+          />
         </div>
         <div className="w-full h-60">
           <CustomDataTable

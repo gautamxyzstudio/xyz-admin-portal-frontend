@@ -113,7 +113,7 @@ const EmployeeList = () => {
       headerName: "Action",
       width: 100,
       renderCell: (params) => (
-        <div className="flex w-full justify-center gap-3">
+        <div className="flex w-full gap-3">
           {(user.user_type === "Admin" ||
             user.user_type === "Hr" ||
             user?.user_type === "Management") && (
@@ -129,7 +129,7 @@ const EmployeeList = () => {
             </button>
           )}
 
-          {(user.user_type === "Admin" || user?.user_type === "Management") && (
+          {user.user_type === "Admin" && (
             <button
               className="text-red-600 text-sm font-medium hover:underline"
               onClick={() =>
@@ -150,7 +150,9 @@ const EmployeeList = () => {
       <div className="flex justify-between items-center ">
         <h2 className="text-black text-lg font-semibold">Employee </h2>
 
-        {(user.user_type === "Admin" || user.user_type === "Hr" || user?.user_type === "Management") && (
+        {(user.user_type === "Admin" ||
+          user.user_type === "Hr" ||
+          user?.user_type === "Management") && (
           <CustomButton
             onClick={() => navigate("/employees/register")}
             customStyles="text-sm"
