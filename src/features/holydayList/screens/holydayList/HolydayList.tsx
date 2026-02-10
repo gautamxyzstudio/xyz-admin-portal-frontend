@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import dayjs from "dayjs";
@@ -94,7 +95,7 @@ const HolidayList = () => {
       },
     ];
 
-    if (user?.user_type === "Admin" || user?.user_type === "Hr") {
+    if (user?.user_type === "Admin" || user?.user_type === "Hr" || user?.user_type === "Management") {
       cols.push({
         field: "action",
         headerName: "Action",
@@ -115,7 +116,7 @@ const HolidayList = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-semibold">Holiday List</h2>
 
-        {(user?.user_type === "Admin" || user?.user_type === "Hr") && (
+        {(user?.user_type === "Admin" || user?.user_type === "Hr" || user?.user_type === "Management") && (
           <CustomButton
             label="Add Holiday"
             icon={<TbPlus size={22} />}

@@ -19,7 +19,7 @@ export type IRegisterUserResponse = {
     provider: string;
     confirmed: boolean;
     blocked: boolean;
-    user_type: "Admin" | "Employee" | "Hr";
+    user_type: "Admin" | "Employee" | "Hr" | "Management";
     createdAt: string;
     updatedAt: string;
   };

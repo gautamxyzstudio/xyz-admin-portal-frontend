@@ -27,7 +27,6 @@ const EmployeeList = () => {
 
   const navigate = useNavigate();
   const { setIsLoading } = useLoadingWrapper();
-  
 
   const { isLoading } = useGetEmployeeListQuery({
     user_type: user ? user.user_type : "",
@@ -39,7 +38,7 @@ const EmployeeList = () => {
   if (!user) return null;
 
   const filteredEmployeeList = employeeList.filter(
-    (employee) => employee.id !== user?.id
+    (employee) => employee.id !== user?.id,
   );
   // console.log("Employee List Data:", filteredEmployeeList);
 
@@ -115,7 +114,9 @@ const EmployeeList = () => {
       width: 100,
       renderCell: (params) => (
         <div className="flex w-full justify-center gap-3">
-          {(user.user_type === "Admin" || user.user_type === "Hr") && (
+          {(user.user_type === "Admin" ||
+            user.user_type === "Hr" ||
+            user?.user_type === "Management") && (
             <button
               className="text-blue-600 text-sm font-medium hover:underline"
               onClick={() =>
@@ -128,7 +129,7 @@ const EmployeeList = () => {
             </button>
           )}
 
-          {user.user_type === "Admin" && (
+          {(user.user_type === "Admin" || user?.user_type === "Management") && (
             <button
               className="text-red-600 text-sm font-medium hover:underline"
               onClick={() =>
@@ -149,7 +150,7 @@ const EmployeeList = () => {
       <div className="flex justify-between items-center ">
         <h2 className="text-black text-lg font-semibold">Employee </h2>
 
-        {(user.user_type === "Admin" || user.user_type === "Hr") && (
+        {(user.user_type === "Admin" || user.user_type === "Hr" || user?.user_type === "Management") && (
           <CustomButton
             onClick={() => navigate("/employees/register")}
             customStyles="text-sm"
