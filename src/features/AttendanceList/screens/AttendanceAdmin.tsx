@@ -222,7 +222,6 @@ const AttendanceAdmin = () => {
 
       const wsData: any[][] = [];
 
-      //  Date row ONLY when filter applied
       if (startDate || endDate) {
         wsData.push([
           `Date: ${startDate?.format("DD-MM-YYYY") || "All"}  To  ${
@@ -243,15 +242,24 @@ const AttendanceAdmin = () => {
 
       //  All rows
       allRows.forEach((row) => {
+        let workingHours = "";
+
+        if (row.in && row.out) {
+          const start = dayjs(`2000-01-01 ${row.in}`);
+          const end = dayjs(`2000-01-01 ${row.out}`);
+          const diff = end.diff(start, "second");
+          workingHours = secondsToHoursMinutes(diff);
+        } else if (row.in) {
+          workingHours = "In Progress";
+        }
+
         wsData.push([
           row?.user?.user_detial?.empCode || "",
           row?.user?.user_detial?.name || "",
           row?.Date ? dayjs(row.Date).format("DD/MM/YYYY") : "",
           row.in ? convertTo12HourFormat(row.in) : "",
           row.out ? convertTo12HourFormat(row.out) : "",
-          row.attendance_seconds
-            ? secondsToHoursMinutes(row.attendance_seconds)
-            : "",
+          workingHours, // Updated calculated hours
         ]);
       });
 
@@ -293,10 +301,14 @@ const AttendanceAdmin = () => {
       return;
     }
 
+    // Modal pehle band karein taaki user ko fast response mile
     closeModal();
 
     await executeWithLoading(async () => {
       if (!selectedAttendance?.id) return;
+
+      // API update call
+      // invalidatesTags: ["Attendance"] ki wajah se cache automatic refresh ho jayega
       await updateAttendance({
         id: selectedAttendance.id,
         data: {
@@ -305,6 +317,8 @@ const AttendanceAdmin = () => {
         },
       }).unwrap();
 
+      // Ab important part: Kyunki aapne 'attendanceData' ko local state mein rakha hai,
+      // humein fetchAttendance call karna hoga naya data state mein bharne ke liye.
       await fetchAttendance(
         {
           page,
@@ -312,7 +326,7 @@ const AttendanceAdmin = () => {
           endDate: endDate?.format("YYYY-MM-DD") || "",
           search: searchQuery,
         },
-        false,
+        false, // Silent refresh (loading spinner nahi dikhayenge)
       );
     }, setIsLoading);
   };
@@ -376,13 +390,27 @@ const AttendanceAdmin = () => {
     {
       field: "attendance_seconds",
       headerName: "Working Hours",
-      width: 100,
+      width: 120,
       renderCell: (params) => {
+        const { in: checkIn, out: checkOut } = params.row;
+
+        // Yahan manual calculation logic taaki backend ki galti na dikhe
+        if (checkIn && checkOut) {
+          const startTime = dayjs(`2000-01-01 ${checkIn}`);
+          const endTime = dayjs(`2000-01-01 ${checkOut}`);
+
+          const diffInSeconds = endTime.diff(startTime, "second");
+
+          return (
+            <span className="text-xs font-medium">
+              {secondsToHoursMinutes(diffInSeconds)}
+            </span>
+          );
+        }
+
         return (
           <span className="text-xs font-medium">
-            {params.row.out
-              ? secondsToHoursMinutes(params.row.attendance_seconds)
-              : "in progress"}
+            {checkIn ? "in progress" : "-"}
           </span>
         );
       },

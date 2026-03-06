@@ -54,8 +54,8 @@ const EmployeeDashboard = () => {
     },
     {
       skip: !userBasic?.id,
-      pollingInterval: 60000, // 1 minutes
-      refetchOnFocus: true, // browser tab focus
+      pollingInterval: 60000, 
+      refetchOnFocus: true,  
       refetchOnReconnect: true,
     }
   );
@@ -156,7 +156,7 @@ const EmployeeDashboard = () => {
           checkin_started_at: dayjs().format(),
         },
       }).unwrap();
-      await refetch(); // ✅ force sync
+      await refetch(); //  force sync
       dispatch(checkIn(checkInTime));
       dispatch(setAttendanceId(res.id));
     } catch (error) {
@@ -177,7 +177,7 @@ const EmployeeDashboard = () => {
           id: attendanceId,
         },
       }).unwrap();
-      await refetch(); // ✅ force sync
+      await refetch(); //  force sync
       dispatch(checkOut(checkOutTime));
     } catch (error) {
       toast.error((error as any).message);

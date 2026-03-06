@@ -1,12 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useState } from "react";
 import type { ILeave } from "../leaves.types";
-// import { useLoadingWrapper } from "../../../wrappers/loadingWrapper/LoadingWrapper.context";
-import { toast } from "react-toastify";
+ import { toast } from "react-toastify";
 import { useLazyGetAllUserLeavesQuery } from "../leavesApi";
 
-// Custom hook for leaves data management
-export const useLeavesData = () => {
+ export const useLeavesData = () => {
   const [getAllLeaves, { isFetching, isLoading }] = useLazyGetAllUserLeavesQuery();
   const [leavesData, setLeavesData] = useState<ILeave[]>([]);
   const [page, setPage] = useState(1);

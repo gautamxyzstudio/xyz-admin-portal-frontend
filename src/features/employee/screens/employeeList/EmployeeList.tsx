@@ -38,7 +38,7 @@ const EmployeeList = () => {
   if (!user) return null;
 
   const filteredEmployeeList = employeeList.filter(
-    (employee) => employee.id !== user?.id,
+    (employee) => employee.id !== user?.id && employee.status === true,
   );
   // console.log("Employee List Data:", filteredEmployeeList);
 

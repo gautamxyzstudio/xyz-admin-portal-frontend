@@ -31,10 +31,11 @@ export const attendanceApi = enhancedAttendanceApi.injectEndpoints({
           pageSize,
           startDate,
           endDate,
-          search
+          search,
         ),
         method: "GET",
       }),
+      providesTags: ["Attendance"],
     }),
     getTodayAttendance: builder.query<IAttendance, IGetTodayAttendanceRequest>({
       query: ({ id }) => ({
@@ -70,6 +71,7 @@ export const attendanceApi = enhancedAttendanceApi.injectEndpoints({
         method: "PUT",
         body: data,
       }),
+       invalidatesTags: ["Attendance"],
     }),
   }),
 });

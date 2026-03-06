@@ -12,7 +12,7 @@ import type {
 } from "./leaves.types";
 
 export const enhancedLeavesApi = baseApi.enhanceEndpoints({
-  addTagTypes: ["Leaves"],
+  addTagTypes: ["Leaves", "LeaveBalance"],
 });
 
 export const leavesApi = enhancedLeavesApi.injectEndpoints({
@@ -204,9 +204,22 @@ export const leavesApi = enhancedLeavesApi.injectEndpoints({
       transformResponse: (response: any[]) =>
         response.map((item) => ({
           ...item,
-          id: item.user.id, // ✅ REQUIRED by DataGrid
+          id: item.id,
         })),
       providesTags: ["Leaves"],
+    }),
+    updateLeaveBalance: builder.mutation<
+      any,
+      { id: number | string; data: any }
+    >({
+      query: ({ id, data }) => ({
+        url: endpoints.updateLeaveBalance(id),
+        method: "PUT",
+        body:  {
+          data: data,
+        },
+      }),
+      invalidatesTags: ["LeaveBalance"],
     }),
   }),
 });
@@ -224,4 +237,5 @@ export const {
   useLazyGetAllUserLeavesQuery,
   useGeLeaveBalanceQuery,
   useGetAllLeaveBalanceQuery,
+  useUpdateLeaveBalanceMutation,
 } = leavesApi;

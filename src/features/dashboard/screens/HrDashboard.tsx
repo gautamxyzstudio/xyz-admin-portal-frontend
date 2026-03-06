@@ -1,4 +1,5 @@
-import { userDetailsInState } from "../../auth/authSlice";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { userDetailsInState, userInState } from "../../auth/authSlice";
 import { Icons } from "../../../assets/myAssets/exporter";
 import CustomButton from "../../../components/CustomButton/CustomButton";
 import StatCard from "../../../shared/components/StatCard/StatCard";
@@ -12,6 +13,8 @@ import { useLoadingWrapper } from "../../../wrappers/loadingWrapper/LoadingWrapp
 import AnnouncementDialog from "../../announcements/components/AnnouncementDialog/AnnouncementDialog";
 import AnnouncementList from "../components/announcementList/AnnouncementList";
 import { Link } from "react-router";
+import StatusDetailsDialog from "../../../components/StatusDetailsDialog/StatusDetailsDialog";
+import { useSelector } from "react-redux";
 
 interface DashboardStats {
   totalEmployees: number;
@@ -22,16 +25,29 @@ interface DashboardStats {
 
 const HrDashboard = () => {
   const userDetail = useAppSelector(userDetailsInState);
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [openDialog, setOpenDialog] = useState(false);
+  const userBasic = useSelector(userInState);
   const { setIsLoading } = useLoadingWrapper();
 
-  // Fetch dashboard stats
-  useEffect(() => {
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [openDialog, setOpenDialog] = useState(false);
+
+  // Dialog details state with Loading
+  const [statusDialog, setStatusDialog] = useState({
+    open: false,
+    title: "",
+    data: [] as any[],
+    isLoading: false,
+  });
+
+   useEffect(() => {
     const fetchStats = async () => {
       try {
         setIsLoading(true);
-        const res = await axios.get(endpoints.getDashboardStats);
+        const res = await axios.get(endpoints.getDashboardStats, {
+          headers: {
+            Authorization: `Bearer ${userBasic?.token}`,
+          },
+        });
         setStats(res.data);
       } catch (error) {
         console.error("Stats API error", error);
@@ -39,8 +55,46 @@ const HrDashboard = () => {
         setIsLoading(false);
       }
     };
-    fetchStats();
-  }, [setIsLoading]);
+
+    if (userBasic?.token) {
+      fetchStats();
+    }
+  }, [setIsLoading, userBasic?.token]);
+
+   const handleCardClick = async (type: "present" | "leave" | "absent") => {
+    let title = "";
+    let url = "";
+
+    if (type === "present") {
+      title = "Today's Present Employees";
+      url = endpoints.getPresentEmployees;
+    } else if (type === "leave") {
+      title = "Employees on Leave";
+      url = endpoints.getLeaveEmployees;
+    } else if (type === "absent") {
+      title = "Today's Absent Employees";
+      url = endpoints.getAbsentEmployees;
+    }
+
+     setStatusDialog({ open: true, title, data: [], isLoading: true });
+
+    try {
+      const res = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${userBasic?.token}`,
+        },
+      });
+    
+      setStatusDialog((prev) => ({
+        ...prev,
+        data: res.data || [],
+        isLoading: false,
+      }));
+    } catch (error) {
+      console.error(`Error fetching ${type} list:`, error);
+      setStatusDialog((prev) => ({ ...prev, isLoading: false }));
+    }
+  };
 
   if (!stats) return null;
 
@@ -80,32 +134,41 @@ const HrDashboard = () => {
           />
         </Link>
 
-        <Link to="/attendance?status=present" className="flex-1">
+        <div
+          className="flex-1 cursor-pointer"
+          onClick={() => handleCardClick("present")}
+        >
           <StatCard
             title="Today Present"
             value={stats.presentEmployees.toString()}
             iconSrc={Icons.PRESENTS_EMP}
             iconBgColor="bg-[#2F4CBA1A]"
           />
-        </Link>
+        </div>
 
-        <Link to="/all-leaves" className="flex-1">
+        <div
+          className="flex-1 cursor-pointer"
+          onClick={() => handleCardClick("leave")}
+        >
           <StatCard
             title="Today Leaves"
             value={stats.employeesOnLeave.toString()}
             iconSrc={Icons.TOTAL_LEAVE}
             iconBgColor="bg-[#6CADDD1A]"
           />
-        </Link>
+        </div>
 
-        <Link to="/all-leaves" className="flex-1">
+        <div
+          className="flex-1 cursor-pointer"
+          onClick={() => handleCardClick("absent")}
+        >
           <StatCard
             title="Today Absent"
             value={stats.absentEmployees.toString()}
             iconSrc={Icons.TODAY_ABSENT}
             iconBgColor="bg-[#FF00001A]"
           />
-        </Link>
+        </div>
       </div>
 
       <div className="w-full h-full flex flex-row gap-x-5 items-start">
@@ -113,9 +176,19 @@ const HrDashboard = () => {
         <AnnouncementList customHeight="h-100" />
       </div>
       <AttendanceTable />
+
       <AnnouncementDialog
         open={openDialog}
         onClose={() => setOpenDialog(false)}
+      />
+
+      {/* Status Details Popup */}
+      <StatusDetailsDialog
+        open={statusDialog.open}
+        onClose={() => setStatusDialog((prev) => ({ ...prev, open: false }))}
+        title={statusDialog.title}
+        data={statusDialog.data}
+        isLoading={statusDialog.isLoading}
       />
     </div>
   );

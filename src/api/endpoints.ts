@@ -105,6 +105,9 @@ export const endpoints = {
   getLeaveBalance: `${baseUrl}/api/leave-balance/me`,
   allLeaveBalance: `${baseUrl}/api/leave-balance/all`,
 
+  updateLeaveBalance: (id: number | string) =>
+    `${baseUrl}/api/leave-balances/${id}`,
+
   // Holidays
   getHolidays: `${baseUrl}/api/holiday-lists`,
   getHolidayById: (id: number | string) => `${baseUrl}/api/holiday-lists/${id}`,
@@ -136,6 +139,9 @@ export const endpoints = {
 
   // Stats
   getDashboardStats: `${baseUrl}/api/dashboard/stats`,
+  getPresentEmployees: `${baseUrl}/api/dashboard/stats/present`,
+  getAbsentEmployees: `${baseUrl}/api/dashboard/stats/absent`, 
+  getLeaveEmployees: `${baseUrl}/api/dashboard/stats/leave`,
 
   // Projects
   getProjects: `${baseUrl}/api/projects?populate=*`,
