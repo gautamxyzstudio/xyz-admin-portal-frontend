@@ -81,6 +81,7 @@ export const ROUTE_PERMISSIONS: Record<string, readonly string[]> = {
     "/attendance",
     "/leaves",
     "/employees/register",
+    "/documents",
     "/employees/:name",
     "/profile",
     "/holidays",
