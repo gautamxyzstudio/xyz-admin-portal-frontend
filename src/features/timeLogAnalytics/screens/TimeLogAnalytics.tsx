@@ -9,6 +9,8 @@ import PickerInput from "../../../shared/components/pickerInput/PickerInput";
 import type { SxProps, Theme } from "@mui/material";
 import { ImSearch } from "react-icons/im";
 import ActivityIndicator from "../../../shared/components/activityIndicator/ActivityIndicator";
+import CustomButton from "../../../components/CustomButton/CustomButton";
+import { FiDownload } from "react-icons/fi";
 
 /* -------------------- TYPES -------------------- */
 interface WorkLog {
@@ -25,7 +27,7 @@ interface WorkLog {
 
 const START_HOUR = 9;
 const END_HOUR = 24;
-const TOTAL_MINUTES = (END_HOUR - START_HOUR) * 60;
+const TOTAL_MINUTES = (END_HOUR - START_HOUR) * 60;                                         
 
 const TimeLogAnalytics: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -94,13 +96,64 @@ const TimeLogAnalytics: React.FC = () => {
     });
 
     // Sort dates descending
-    return Object.entries(groups).sort((a, b) =>
-      dayjs(b[0]).diff(dayjs(a[0])),
-    );
+    return Object.entries(groups).sort((a, b) => dayjs(b[0]).diff(dayjs(a[0])));
   }, [searchTerm, workLogs]);
 
   const toggleRow = (id: string | number) => {
     setExpandedRow(expandedRow === id ? null : id);
+  };
+
+  const exportToCSV = () => {
+    if (!workLogs.length) return;
+
+    const rows: any[] = [];
+
+    workLogs
+      .filter((log) =>
+        log.employeeName.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
+      .forEach((log) => {
+        if (log.tasks.length > 0) {
+          log.tasks.forEach((task: any) => {
+            rows.push({
+              Employee: log.employeeName,
+              Email: log.email,
+              Date: dayjs(log.workDate).format("DD-MM-YYYY"),
+              Task: task.task_title || "N/A",
+              Project: task.project?.title || "N/A",
+              Status: task.status,
+              TimeSpent: secondsToHoursMinutes(task.time_spent || 0),
+            });
+          });
+        } else {
+          rows.push({
+            Employee: log.employeeName,
+            Email: log.email,
+            Date: dayjs(log.workDate).format("DD-MM-YYYY"),
+            Task: "No Task",
+            Project: "-",
+            Status: "-",
+            TimeSpent: log.totalTime,
+          });
+        }
+      });
+
+    const headers = Object.keys(rows[0]).join(",");
+    const csvContent =
+      headers +
+      "\n" +
+      rows.map((row) => Object.values(row).join(",")).join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+
+    link.href = url;
+    link.setAttribute("download", "time_logs.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -140,6 +193,15 @@ const TimeLogAnalytics: React.FC = () => {
               sx={pickerStyles}
             />
           </div>
+        </div>
+        <div className="flex justify-end">
+          <CustomButton
+            label="Export CSV"
+            onClick={exportToCSV}
+            customStyles="w-35 p-2!"
+            buttonStyle="primary"
+            icon={<FiDownload size={18} />}
+          />
         </div>
 
         <table className="w-full border-separate border-spacing-y-2">
