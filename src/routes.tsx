@@ -93,7 +93,7 @@ export const getRoutes = (user: IUserAdvance | null) => {
       icon: Icons.DOCUMENT,
       iconFill: Icons.DOCUMENT_FILL,
       route: "/documents",
-      permissions: ["Employee", "Hr", "ManagementF"],
+      permissions: ["Employee", "Hr", "Management"],
     },
     {
       name: "All Employee Docs",
