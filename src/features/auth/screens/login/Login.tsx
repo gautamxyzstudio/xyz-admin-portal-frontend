@@ -138,25 +138,29 @@ const LoginPage = () => {
             />
           </div>
           <div className="flex items-center w-full mt-6">
-            <hr className="flex-1 text-primary" />
-            <div className="px-2 bg-white items-center flex space-x-2">
+            {/* Left Gradient Line */}
+            <div className="flex-1 h-0.5 bg-linear-to-r from-transparent to-primary" />
+
+            <div className="px-2 bg-white items-center flex space-x-4">
               <Link
                 to="https://www.instagram.com/xyzdotstudio/"
                 target="_blank"
               >
-                <img src={Insta} alt="Instagram" />
+                <img src={Insta} alt="Instagram" className="w-5 h-5" />
               </Link>
               <Link to="https://www.facebook.com/xyzdotstudio/" target="_blank">
-                <img src={Facebook} alt="Facebook" />
+                <img src={Facebook} alt="Facebook" className="w-5 h-5" />
               </Link>
               <Link
                 to="https://www.linkedin.com/company/xyzdotstudio"
                 target="_blank"
               >
-                <img src={LinkedIn} alt="LinkedIn" />
+                <img src={LinkedIn} alt="LinkedIn" className="w-5 h-5" />
               </Link>
             </div>
-            <hr className="flex-1 text-primary" />
+
+            {/* Right Gradient Line */}
+            <div className="flex-1 h-0.5 bg-linear-to-l from-transparent to-primary" />
           </div>
         </div>
       </div>
