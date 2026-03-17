@@ -1,5 +1,5 @@
 import { Icons } from "./assets/myAssets/exporter";
-import type { IUserAdvance, } from "./features/auth/types";
+import type { IUserAdvance } from "./features/auth/types";
 
 export const getRoutes = (user: IUserAdvance | null) => {
   return [
@@ -9,7 +9,7 @@ export const getRoutes = (user: IUserAdvance | null) => {
       icon: Icons.DASHBOARD,
       iconFill: Icons.DASHBOARD_FILL,
       route: "/",
-      permissions: ["Admin", "Employee", "Hr", "Management"], 
+      permissions: ["Admin", "Employee", "Hr", "Management"],
     },
     {
       name: "Employees",
@@ -51,7 +51,7 @@ export const getRoutes = (user: IUserAdvance | null) => {
       route: "/announcement",
       permissions: ["Hr", "Admin", "Management"],
     },
-    { 
+    {
       name: "Time Log Analytics",
       key: "time-log-analytics",
       icon: Icons.TIMELOG_UNFILL,
@@ -83,7 +83,7 @@ export const getRoutes = (user: IUserAdvance | null) => {
             icon: Icons.BLOG,
             iconFill: Icons.BLOG_FILL,
             route: "/blog",
-            permissions: ["Admin", "Employee", 'Hr', "Management"],
+            permissions: ["Admin", "Employee", "Hr", "Management"],
           },
         ]
       : []),
@@ -93,7 +93,7 @@ export const getRoutes = (user: IUserAdvance | null) => {
       icon: Icons.DOCUMENT,
       iconFill: Icons.DOCUMENT_FILL,
       route: "/documents",
-      permissions: ["Employee", "Hr", "Management"],
+      permissions: ["Employee", "Hr", "ManagementF"],
     },
     {
       name: "All Employee Docs",

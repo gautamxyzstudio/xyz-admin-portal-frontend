@@ -59,7 +59,7 @@ const Projects = () => {
   if (!user) return null;
 
   const filteredEmployeeList = employeeList.filter(
-    (employee) => employee.id !== user?.id && employee.role !== "Management",
+    (employee) => employee.id !== user?.id && employee.role !== "Management" && employee.status === true,
   );
 
   // ===== HANDLERS =====
@@ -396,6 +396,7 @@ const Projects = () => {
                       <tr key={item.id}>
                         <td className="px-6 py-4">
                           <div className="flex -space-x-3 cursor-pointer">
+                            
                             {item.users_permissions_users.map(
                               (emp: any, i: number) => (
                                 <img

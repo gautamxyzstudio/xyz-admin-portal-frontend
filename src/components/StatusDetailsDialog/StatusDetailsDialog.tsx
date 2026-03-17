@@ -30,6 +30,16 @@ const StatusDetailsDialog = ({
       headerName: "Employee Name",
       flex: 1.5,
       width: 160,
+      renderCell: (params: any) => (
+        <div className="flex items-center gap-2">
+          <img
+            src={params.row.photo}
+            alt="emp"
+            className="w-10 h-10 rounded-[10px] border border-primary object-cover"
+          />
+          <span className="text-sm">{params.row.name}</span>
+        </div>
+      ),
     },
 
     {
@@ -37,7 +47,7 @@ const StatusDetailsDialog = ({
       headerName: "Phone Number",
       flex: 1,
       width: 150,
-    }
+    },
   ];
   return (
     <Dialog

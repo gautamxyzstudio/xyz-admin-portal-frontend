@@ -10,6 +10,9 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import { Icons } from "../../../../assets/myAssets/exporter";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ActivityIndicator from "../../../../shared/components/activityIndicator/ActivityIndicator";
+import CustomButton from "../../../../components/CustomButton/CustomButton";
+import { TbPlus } from "react-icons/tb";
+import { UploadDialog } from "../employee/components";
 
 type SelectedEmployee = {
   id: number;
@@ -17,6 +20,7 @@ type SelectedEmployee = {
 };
 
 const AllEmployeeDocs = () => {
+  const [openUploadDialog, setOpenUploadDialog] = useState(false);
   const user = useSelector(userInState);
   const employeeList = useSelector(employeeListInState);
 
@@ -39,7 +43,15 @@ const AllEmployeeDocs = () => {
     <CustomBox customClasses="p-6 w-full h-full flex flex-col">
       {!selectedEmployee ? (
         <div className="w-full h-full flex flex-col gap-y-4">
-          <h2 className="text-xl font-semibold">Select an Employee</h2>
+          <div className="flex  justify-between">
+            <h2 className="text-xl font-semibold">Select an Employee</h2>
+            <CustomButton
+              onClick={() => setOpenUploadDialog(true)}
+              icon={<TbPlus size={22} />}
+              label="Add Employee Docs"
+              type="button"
+            />
+          </div>
 
           {/* ---------------- Loading ---------------- */}
           {isLoading && (
@@ -125,6 +137,10 @@ const AllEmployeeDocs = () => {
           </div>
         </>
       )}
+      <UploadDialog
+        open={openUploadDialog}
+        onClose={() => setOpenUploadDialog(false)}
+      />
     </CustomBox>
   );
 };

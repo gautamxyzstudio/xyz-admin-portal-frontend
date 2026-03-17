@@ -7,26 +7,26 @@ export const endpoints = {
   userDetails: (id: number | string) => `${baseUrl}/api/user/${id}`,
 
   // Employee
-  info: `${baseUrl}/api/emp-details/?populate=*&sort=id`, // used in apiendpoint
-  addinfo: `${baseUrl}/api/emp-details/?populate=*`, // used in apiendpoint
+  info: `${baseUrl}/api/emp-details/?populate=*&sort=id`,  
+  addinfo: `${baseUrl}/api/emp-details/?populate=*`,  
   infoEdit: (id: number | string) =>
-    `${baseUrl}/api/emp-details/${id}/?populate=*`, // used in apiendpoint
-  employeeDetails: `${baseUrl}/api/emp-details`, // used in endpoints
+    `${baseUrl}/api/emp-details/${id}/?populate=*`,  
+  employeeDetails: `${baseUrl}/api/emp-details`,  
   updateEmployeeDetails: (id: string | number) =>
-    `${baseUrl}/api/emp-details/${id}`, // used in endpoints
-  employeeList: (user_type: string) => `${baseUrl}/api/users/${user_type}`, // used in endpoints
-  deleteUser: (id: string | number) => `${baseUrl}/api/users/${id}`, // used in endpoints
-  updateUser: (id: string | number) => `${baseUrl}/api/users/${id}`, // used in endpoints
-  deleteEmployee: (id: string | number) => `${baseUrl}/api/emp-details/${id}`, // used in endpoints
+    `${baseUrl}/api/emp-details/${id}`, 
+  employeeList: (user_type: string) => `${baseUrl}/api/users/${user_type}`,  
+  deleteUser: (id: string | number) => `${baseUrl}/api/users/${id}`, 
+  updateUser: (id: string | number) => `${baseUrl}/api/users/${id}`, 
+  deleteEmployee: (id: string | number) => `${baseUrl}/api/emp-details/${id}`,  
 
   // File Upload
-  uploadFiles: `${baseUrl}/api/upload`, // from endpoints
-  uploadImg: `${baseUrl}/api/upload`, // from apiendpoint
+  uploadFiles: `${baseUrl}/api/upload`,  
+  uploadImg: `${baseUrl}/api/upload`,  
   getuploadImg: (id: number | string) => `${baseUrl}/api/upload/files/${id}`,
   UPLOAD_IMAGE: `${baseUrl}/api/upload`,
 
   // Attendance
-  getAttendanceLegacy: `${baseUrl}/api/daily-attendances/?populate=*&sort=id`, // From apiendpoint.getAttendance
+  getAttendanceLegacy: `${baseUrl}/api/daily-attendances/?populate=*&sort=id`, 
   postAttendance: `${baseUrl}/api/daily-attendances`,
   editAttendance: (id: number | string) =>
     `${baseUrl}/api/daily-attendances/${id}/?populate=*`,

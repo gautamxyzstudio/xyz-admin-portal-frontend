@@ -9,23 +9,31 @@ import type { ICustomErrorResponse } from "../../../../../state/types";
 import LinearGradient from "../../../../../components/LinearGradient/LinearGradient";
 import { MdOutlineFileUpload } from "react-icons/md";
 import { toast } from "react-toastify";
+import { employeeListInState } from "../../../../employee/employeeSlice";
+import { useLocation } from "react-router";
 
 interface Props {
   open: boolean;
   onClose: () => void;
 }
 
-const UploadDialog = ({ open, onClose }: Props) => {  
+const UploadDialog = ({ open, onClose }: Props) => {
   const user = useSelector(userInState);
   const { displaySnackbar } = useSnackBarContext();
-
+  const employeeList = useSelector(employeeListInState);
   const [documentName, setDocumentName] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | "">("");
 
   const [uploadFile, { isLoading: isUploading }] = useUploadFileMutation();
   const [addDocument, { isLoading: isAdding }] = useAddNewDocumentMutation();
+
+  const route = useLocation();
+
+const isHrAllEmployeePage =
+  route.pathname === "/all-employee-docs";
 
   if (!open) return null;
 
@@ -35,6 +43,10 @@ const UploadDialog = ({ open, onClose }: Props) => {
     setSelectedFile(file);
     setPreviewUrl(URL.createObjectURL(file));
   };
+
+  const filteredEmployeeList = employeeList.filter(
+    (employee) => employee.id !== user?.id && employee.role !== "Management",
+  );
 
   const handleUpload = async () => {
     if (!documentName.trim() || !selectedFile) {
@@ -57,7 +69,7 @@ const UploadDialog = ({ open, onClose }: Props) => {
         data: {
           documentName: documentName.trim(),
           document: uploadRes[0].id.toString(),
-          user: user.id,
+          user: selectedEmployeeId ? selectedEmployeeId : user.id,
         },
       }).unwrap();
 
@@ -80,7 +92,29 @@ const UploadDialog = ({ open, onClose }: Props) => {
     <div className="fixed  inset-0 z-999 bg-black/40 flex items-center justify-center">
       <div className="bg-white w-full max-w-md rounded-xl p-4 flex flex-col gap-y-3">
         <h2 className="text-lg font-semibold">Upload New Document</h2>
-        <LinearGradient customClasses=" " />
+        <LinearGradient customClasses="" />
+      {isHrAllEmployeePage &&  <div>
+          <label className="text-black-50 text-base font-normal">
+            Select Employee
+          </label>
+          <select
+            onChange={(e) => {
+              const value = Number(e.target.value);
+              setSelectedEmployeeId(value);
+            }}
+            value={selectedEmployeeId}
+            className="w-full mt-1 p-4 border border-black-20 rounded-2xl text-sm outline-none transition-all"
+          >
+            <option className="text-black-20" value="" disabled>
+              Select Employee
+            </option>
+            {filteredEmployeeList?.map((emp) => (
+              <option key={emp.id} value={emp.id}>
+                {emp.name}
+              </option>
+            ))}
+          </select>
+        </div>}
         <div>
           <label className="text-black-50 text-base font-normal">
             Documents Name
