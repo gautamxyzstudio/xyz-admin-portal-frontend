@@ -36,9 +36,8 @@ const EmployeeList = () => {
   const [deleteEmployee] = useDeleteEmployeeMutation();
 
   if (!user) return null;
-const filteredEmployeeList = employeeList.filter(
-  (employee) => employee.id !== user?.id
-);
+const filteredEmployeeList = employeeList 
+ 
   // console.log("Employee List Data:", filteredEmployeeList);
 
   const deleteUserHandler = async (id: string, detailsId: string) => {

@@ -27,7 +27,7 @@ interface WorkLog {
 
 const START_HOUR = 9;
 const END_HOUR = 24;
-const TOTAL_MINUTES = (END_HOUR - START_HOUR) * 60;                                         
+const TOTAL_MINUTES = (END_HOUR - START_HOUR) * 60;
 
 const TimeLogAnalytics: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -289,7 +289,15 @@ const TimeLogAnalytics: React.FC = () => {
                                   setHoveredLog(null);
                                   setHoveredTask(null);
                                 }}
-                                className={`flex-1 rounded ${t.is_running === false && t.status === "completed" ? "bg-emerald-400" : t.is_running === true && t.status === "in-progress" ? "bg-blue-400" : "bg-orange-300"}`}
+                                className={`flex-1 rounded ${
+                                  t.is_running === false &&
+                                  t.status === "completed"
+                                    ? "bg-emerald-400"
+                                    : t.is_running === true &&
+                                        t.status === "in-progress"
+                                      ? "bg-blue-400"
+                                      : "bg-orange-300"
+                                }`}
                               />
                             ))}
                           </div>
@@ -325,11 +333,11 @@ const TimeLogAnalytics: React.FC = () => {
                                         <Briefcase size={14} />
                                       </div>
                                       <div>
-                                        <p className="text-[12px] font-bold text-black">
+                                        <p className="text-[12px] font-bold text-black line-clamp-1">
                                           {task.task_title ||
                                             "Untitled Task Title"}
                                         </p>
-                                        <p className="text-[10px] font-semibold text-black-50">
+                                        <p className="text-[10px] font-semibold text-black-50  ">
                                           Project:{" "}
                                           {task.project?.title || "No Project"}
                                         </p>
@@ -357,10 +365,19 @@ const TimeLogAnalytics: React.FC = () => {
                                         </p>
                                       </div>
                                       <div className="relative h-6 rounded w-full">
+                                      
                                         {task.work_sessions.map(
                                           (s: any, si: any) => {
                                             const end =
                                               s.end || dayjs().toISOString();
+
+                                            const sessionDurationSeconds =
+                                              dayjs(end).diff(
+                                                dayjs(s.start),
+                                                "second",
+                                              );
+                                          
+
                                             function leftPercent(start: any) {
                                               const startTime = dayjs(start);
                                               const timelineStart = startTime
@@ -398,7 +415,7 @@ const TimeLogAnalytics: React.FC = () => {
                                                 .hour(START_HOUR)
                                                 .minute(0)
                                                 .second(0);
-                                              // clamp start/end to timeline bounds
+
                                               let startMinutes = startTime.diff(
                                                 timelineStart,
                                                 "minute",
@@ -407,20 +424,24 @@ const TimeLogAnalytics: React.FC = () => {
                                                 timelineStart,
                                                 "minute",
                                               );
-                                              if (startMinutes < 0)
-                                                startMinutes = 0;
-                                              if (startMinutes > TOTAL_MINUTES)
-                                                startMinutes = TOTAL_MINUTES;
-                                              if (endMinutes < 0)
-                                                endMinutes = 0;
-                                              if (endMinutes > TOTAL_MINUTES)
-                                                endMinutes = TOTAL_MINUTES;
-                                              const durationMinutes = Math.max(
-                                                endMinutes - startMinutes,
+
+                                              startMinutes = Math.max(
                                                 0,
+                                                Math.min(
+                                                  startMinutes,
+                                                  TOTAL_MINUTES,
+                                                ),
                                               );
+                                              endMinutes = Math.max(
+                                                0,
+                                                Math.min(
+                                                  endMinutes,
+                                                  TOTAL_MINUTES,
+                                                ),
+                                              );
+
                                               return (
-                                                (durationMinutes /
+                                                ((endMinutes - startMinutes) /
                                                   TOTAL_MINUTES) *
                                                 100
                                               );
@@ -429,17 +450,39 @@ const TimeLogAnalytics: React.FC = () => {
                                             return (
                                               <div
                                                 key={si}
-                                                className={`absolute top-1 h-4 rounded ${
+                                                onMouseEnter={(e) => {
+                                                  e.stopPropagation();
+                                                  const rect =
+                                                    e.currentTarget.getBoundingClientRect();
+                                                  setPopupPos({
+                                                    x:
+                                                      rect.left +
+                                                      rect.width / 2,
+                                                    y: rect.top - 10,
+                                                  });
+                                                  setHoveredLog(log);
+                                                  setHoveredTask({
+                                                    ...task,
+                                                    time_spent:
+                                                      sessionDurationSeconds,
+                                                    sessionStart: s.start,
+                                                    sessionEnd: end,
+                                                    is_running: !s.end,
+                                                  });
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                  e.stopPropagation();
+                                                  setHoveredLog(null);
+                                                  setHoveredTask(null);
+                                                }}
+                                                className={`absolute top-1 h-4 rounded cursor-pointer transition-all hover:brightness-90 ${
                                                   s.end
                                                     ? "bg-blue-500"
                                                     : "bg-emerald-500"
                                                 }`}
                                                 style={{
                                                   left: `${leftPercent(s.start)}%`,
-                                                  width: `${Math.max(
-                                                    widthPercent(s.start, end),
-                                                    1,
-                                                  )}%`,
+                                                  width: `${Math.max(widthPercent(s.start, end), 0.5)}%`,
                                                 }}
                                               />
                                             );
@@ -528,7 +571,7 @@ const TimeLogAnalytics: React.FC = () => {
             </span>
           </div>
           <div className="bg-[#EEF2FF] border border-[#E0E7FF] p-2.5 rounded-xl flex justify-between items-center">
-            <span className="text-[11px] font-bold text-[#4F46E5] truncate max-w-35">
+            <span className="text-[11px] font-bold text-[#4F46E5]  truncate max-w-35">
               {hoveredTask ? hoveredTask.task_title : hoveredLog.currentTask}
             </span>
             <span className="text-[10px] font-bold text-[#818CF8]">
@@ -537,7 +580,8 @@ const TimeLogAnalytics: React.FC = () => {
                 : hoveredLog.totalTime}
             </span>
           </div>
-          <div className="absolute -z-10 bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white rotate-45 border-r border-b border-gray-100 shadow-sm" />
+
+          <div className="absolute -z-10 -bottom-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#4F46E5] rotate-45 border-r border-b border-gray-100 shadow-sm" />
         </div>
       )}
     </div>
