@@ -1,7 +1,10 @@
 import { Icons } from "./assets/myAssets/exporter";
 import type { IUserAdvance } from "./features/auth/types";
 
-export const getRoutes = (user: IUserAdvance | null) => {
+export const getRoutes = (
+  user: IUserAdvance | null,
+  unreadCount: number = 0,
+) => {
   return [
     {
       name: "Dashboard",
@@ -26,6 +29,7 @@ export const getRoutes = (user: IUserAdvance | null) => {
       iconFill: Icons.LEAVES_FILL,
       route: "/all-leaves",
       permissions: ["Admin", "Hr", "Management"],
+      count: unreadCount > 0 && unreadCount,
     },
     {
       name: "Attendance",
@@ -36,7 +40,7 @@ export const getRoutes = (user: IUserAdvance | null) => {
       permissions: ["Employee", "Hr", "Admin", "Management"],
     },
     {
-      name: "Leaves",
+      name: "Leave",
       key: "leaves",
       icon: Icons.LEAVES,
       iconFill: Icons.LEAVES_FILL,

@@ -6,6 +6,7 @@ import CustomButton from "../../../../components/CustomButton/CustomButton";
 import { TbLogin, TbLogin2 } from "react-icons/tb";
 import { Icons } from "../../../../assets/myAssets/exporter";
 import dayjs from "dayjs";
+import Swal from "sweetalert2";
 
 interface Props {
   inTime: string | null;
@@ -28,40 +29,98 @@ const MarkAttendance = ({
 }: Props) => {
   const [elapsedSeconds, setElapsedSeconds] = useState(attendanceSeconds);
 
-  /* ⏱️ Timer */
   useEffect(() => {
-  // 🛑 NOT checked in → freeze & trust stored seconds
-  if (!isCheckedIn || !checkinStartedAt) {
-    setElapsedSeconds(attendanceSeconds);
-    return;
-  }
+    if (!isCheckedIn || !checkinStartedAt) {
+      setElapsedSeconds(attendanceSeconds);
+      return;
+    }
 
-  const startedAt = new Date(checkinStartedAt).getTime();
-  if (isNaN(startedAt)) return;
+    const startedAt = new Date(checkinStartedAt).getTime();
+    if (isNaN(startedAt)) return;
 
-  const tick = () => {
-    const liveSeconds = Math.floor((Date.now() - startedAt) / 1000);
-    setElapsedSeconds(
-      attendanceSeconds + Math.max(0, liveSeconds)
-    );
+    const tick = () => {
+      const liveSeconds = Math.floor((Date.now() - startedAt) / 1000);
+      setElapsedSeconds(attendanceSeconds + Math.max(0, liveSeconds));
+    };
+
+    tick();
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, [isCheckedIn, checkinStartedAt, attendanceSeconds]);
+
+  // 2. Check In with SweetAlert
+  const onConfirmCheckIn = async () => {
+    const result = await Swal.fire({
+      title: "Check In?",
+      text: "Do you want to start your attendance?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Yes, Check In",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#FF7D00",
+      cancelButtonColor: "#E0E0E0",
+      customClass: {
+        popup: "swal-rounded-popup",
+        confirmButton: "swal-rounded-button",
+        cancelButton: "swal-rounded-button",
+      },
+    });
+
+    if (result.isConfirmed) {
+      handleCheckIn(new Date());
+    }
   };
 
-  tick();
-  const timer = setInterval(tick, 1000);
-  return () => clearInterval(timer);
-}, [
-  isCheckedIn,
-  checkinStartedAt,
-  attendanceSeconds,
-]);
+  // 2. Join (Resume)
+  const handleJoin = async () => {
+    const result = await Swal.fire({
+      title: "Join Back?",
+      text: "Are you ready to resume your work?",
+      icon: "info",
+      showCancelButton: true,
+      confirmButtonText: "Yes, Join",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#FF7D00",
+      cancelButtonColor: "#E0E0E0",
+      customClass: {
+        popup: "swal-rounded-popup",
+        confirmButton: "swal-rounded-button",
+        cancelButton: "swal-rounded-button",
+      },
+    });
 
-
-  const handleJoin = () => {
-    handleCheckIn(new Date());
+    if (result.isConfirmed) {
+      handleCheckIn(new Date());
+    }
   };
 
+  // 3. Check Out
+  const onConfirmCheckOut = async () => {
+    const result = await Swal.fire({
+      title: "Check Out?",
+      text: "Are you sure you want to end your shift for today?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, Check Out",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#FF7D00",
+      cancelButtonColor: "#E0E0E0",
+      customClass: {
+        popup: "swal-rounded-popup",
+        confirmButton: "swal-rounded-button",
+        cancelButton: "swal-rounded-button",
+      },
+    });
+
+    if (result.isConfirmed) {
+      handleCheckOut(new Date());
+    }
+  };
   const hours = String(Math.floor(elapsedSeconds / 3600)).padStart(2, "0");
-  const minutes = String(Math.floor((elapsedSeconds % 3600) / 60)).padStart(2, "0");
+  const minutes = String(Math.floor((elapsedSeconds % 3600) / 60)).padStart(
+    2,
+    "0",
+  );
   const seconds = String(elapsedSeconds % 60).padStart(2, "0");
 
   return (
@@ -94,12 +153,12 @@ const MarkAttendance = ({
         {!inTime && !outTime && (
           <CustomButton
             label="Check In"
-            onClick={() => handleCheckIn(new Date())}
+            onClick={onConfirmCheckIn}
             icon={<TbLogin2 size={32} />}
           />
         )}
 
-        {/* After 1 PM → Join */}
+        {/* After Break → Join */}
         {inTime && !isCheckedIn && !outTime && (
           <CustomButton
             label="Join"
@@ -108,23 +167,21 @@ const MarkAttendance = ({
           />
         )}
 
-        {/* After 2 PM → Checkout again after Join */}
+        {/* Working → Checkout */}
         {isCheckedIn && !outTime && (
           <CustomButton
             label="Check Out"
-            onClick={() => handleCheckOut(new Date())}
+            onClick={onConfirmCheckOut}
             icon={<TbLogin size={32} />}
           />
         )}
 
-        {/* Done */}
         {outTime && (
           <CustomButton
             label="All done for today!"
             disabled
-            buttonStyle="disabled" 
+            buttonStyle="disabled"
           />
-          
         )}
 
         {/* Office Info */}
@@ -134,7 +191,7 @@ const MarkAttendance = ({
           <p className="text-black-50 text-sm">09:00AM – 06:00PM</p>
         </div>
       </div>
-    </CustomBox> 
+    </CustomBox>
   );
 };
 

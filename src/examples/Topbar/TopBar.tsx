@@ -1,3 +1,5 @@
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useDispatch, useSelector } from "react-redux";
 import { Icons } from "../../assets/myAssets/exporter";
 import CustomBox from "../../components/CustomBox/CustomBox";
@@ -7,18 +9,22 @@ import { useState } from "react";
 import DrawerNotification from "../../components/DrawerNotification/DrawerNotification";
 import { Logout } from "@mui/icons-material";
 import PermIdentityIcon from "@mui/icons-material/PermIdentity";
+import { useNotificationsQuery } from "../../shared/api/sharedApi";
 
 const TopBar = () => {
   const navigate = useNavigate();
   const dispatcher = useDispatch();
   const user = useSelector(userDetailsInState);
   const [openDrawer, setOpenDrawer] = useState(false);
+  const { data } = useNotificationsQuery(undefined, {
+    pollingInterval: 5000,
+  });
 
+  const unread = data?.filter((n: any) => !n.isRead).length;
+
+ 
   const openOutlook = () => {
-    // Try to open Outlook desktop app
     window.location.href = "ms-outlook://";
-
-    // Fallback to Outlook Web after 1 second
     setTimeout(() => {
       window.open("https://outlook.office.com/mail/", "_blank");
     }, 1000);
@@ -33,12 +39,9 @@ const TopBar = () => {
 
   return (
     <CustomBox customClasses="w-full rounded-xl p-3.5 flex items-center justify-between sticky top-0 shadow z-99">
-      {/* Left */}
       <p className="text-black-50 ml-2.5 font-semibold">Dashboard</p>
 
-      {/* Right */}
       <div className="flex items-center gap-2.5">
-        {/* Message icon */}
         <div
           className="w-10 h-10 p-2 flex items-center justify-center rounded-xl bg-gray-100 cursor-pointer "
           onClick={openOutlook}
@@ -46,15 +49,18 @@ const TopBar = () => {
           <img src={Icons.OUTLOOK} alt="" />
         </div>
 
-        {/* Notification icon */}
         <div
           onClick={() => setOpenDrawer(true)}
           className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-100 cursor-pointer relative"
         >
           <img src={Icons.NOTIFICATION} alt="" />
-        </div>
 
-        {/* Profile image */}
+          {unread > 0 && (
+            <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white animate-in fade-in zoom-in duration-300">
+              {unread > 9 ? "9+" : unread}
+            </span>
+          )}
+        </div>
         <div className="dropdown dropdown-hover dropdown-end">
           <img
             src={
@@ -77,7 +83,6 @@ const TopBar = () => {
               onClick={() => navigate("/profile")}
             >
               <PermIdentityIcon className="group-hover:text-primary" />
-             
               Profile
             </button>
             <button
@@ -93,7 +98,6 @@ const TopBar = () => {
       <DrawerNotification
         open={openDrawer}
         onClose={() => setOpenDrawer(false)}
-        // onOpen={() => setOpenDrawer(true)}
       />
     </CustomBox>
   );

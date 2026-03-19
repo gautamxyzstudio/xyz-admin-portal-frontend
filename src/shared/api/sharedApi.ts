@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { baseApi } from '../../state/baseApi';
 import { endpoints } from "../../api/endpoints";
 import { ApiMethodType } from '../../state/types';
@@ -13,7 +14,14 @@ export const sharedApi = baseApi.injectEndpoints({
         formData: true,
       }),
     }),
+    notifications : builder.query<any, void>({
+      query: () => ({
+        url: endpoints.getNotifications,
+        method: "GET",
+      }),
   }),
+})
+
 });
 
-export const { useUploadFileMutation } = sharedApi;
+export const { useUploadFileMutation, useNotificationsQuery } = sharedApi;

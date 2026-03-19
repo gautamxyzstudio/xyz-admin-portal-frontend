@@ -96,3 +96,8 @@ body {
   -ms-overflow-style: none; /* IE & Edge */
   scrollbar-width: none; /* Firefox */
 }
+
+.swal-rounded-popup {
+  border-radius: 20px !important;  
+  padding: 20px !important;
+}

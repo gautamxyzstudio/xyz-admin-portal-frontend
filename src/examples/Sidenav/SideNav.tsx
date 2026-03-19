@@ -6,7 +6,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router";
 import { getRoutes } from "../../routes";
 import { userDetailsInState, userInState } from "../../features/auth/authSlice";
-
+import { useGetLeaveRequestsQuery } from "../../features/leaves/leavesApi";
+ 
 const SideNav = () => {
   const dispatcher = useDispatch();
   const navigate = useNavigate();
@@ -19,7 +20,12 @@ const SideNav = () => {
       navigate("/login");
     }
   };
-  const routes = getRoutes(userDetail);
+    const { data } = useGetLeaveRequestsQuery(undefined, {
+      refetchOnFocus:true
+    });
+   
+      const routes = getRoutes(userDetail, data?.data?.length);
+
 
   if (!user) return null;
 
@@ -72,6 +78,7 @@ const SideNav = () => {
                   } transition text-sm duration-300 ease-in-out`}
                 >
                   {route.name}
+                 {route.count && <span className="py-1 px-2 ml-2 rounded-full text-xs text-primary font-bold bg-primary-20">{route.count}</span>}
                 </span>
               </Link>
             );

@@ -7,26 +7,26 @@ export const endpoints = {
   userDetails: (id: number | string) => `${baseUrl}/api/user/${id}`,
 
   // Employee
-  info: `${baseUrl}/api/emp-details/?populate=*&sort=id`,  
-  addinfo: `${baseUrl}/api/emp-details/?populate=*`,  
+  info: `${baseUrl}/api/emp-details/?populate=*&sort=id`,
+  addinfo: `${baseUrl}/api/emp-details/?populate=*`,
   infoEdit: (id: number | string) =>
-    `${baseUrl}/api/emp-details/${id}/?populate=*`,  
-  employeeDetails: `${baseUrl}/api/emp-details`,  
+    `${baseUrl}/api/emp-details/${id}/?populate=*`,
+  employeeDetails: `${baseUrl}/api/emp-details`,
   updateEmployeeDetails: (id: string | number) =>
-    `${baseUrl}/api/emp-details/${id}`, 
-  employeeList: (user_type: string) => `${baseUrl}/api/users/${user_type}`,  
-  deleteUser: (id: string | number) => `${baseUrl}/api/users/${id}`, 
-  updateUser: (id: string | number) => `${baseUrl}/api/users/${id}`, 
-  deleteEmployee: (id: string | number) => `${baseUrl}/api/emp-details/${id}`,  
+    `${baseUrl}/api/emp-details/${id}`,
+  employeeList: (user_type: string) => `${baseUrl}/api/users/${user_type}`,
+  deleteUser: (id: string | number) => `${baseUrl}/api/users/${id}`,
+  updateUser: (id: string | number) => `${baseUrl}/api/users/${id}`,
+  deleteEmployee: (id: string | number) => `${baseUrl}/api/emp-details/${id}`,
 
   // File Upload
-  uploadFiles: `${baseUrl}/api/upload`,  
-  uploadImg: `${baseUrl}/api/upload`,  
+  uploadFiles: `${baseUrl}/api/upload`,
+  uploadImg: `${baseUrl}/api/upload`,
   getuploadImg: (id: number | string) => `${baseUrl}/api/upload/files/${id}`,
   UPLOAD_IMAGE: `${baseUrl}/api/upload`,
 
   // Attendance
-  getAttendanceLegacy: `${baseUrl}/api/daily-attendances/?populate=*&sort=id`, 
+  getAttendanceLegacy: `${baseUrl}/api/daily-attendances/?populate=*&sort=id`,
   postAttendance: `${baseUrl}/api/daily-attendances`,
   editAttendance: (id: number | string) =>
     `${baseUrl}/api/daily-attendances/${id}/?populate=*`,
@@ -108,6 +108,11 @@ export const endpoints = {
   updateLeaveBalance: (id: number | string) =>
     `${baseUrl}/api/leave-balances/${id}`,
 
+  // Notification
+  getNotifications: `${baseUrl}/api/notifications/my`,
+  markNotificationRead: (id: number | string) =>
+    `${baseUrl}/api/notifications/${id}/read`,
+
   // Holidays
   getHolidays: `${baseUrl}/api/holiday-lists`,
   getHolidayById: (id: number | string) => `${baseUrl}/api/holiday-lists/${id}`,
@@ -140,7 +145,7 @@ export const endpoints = {
   // Stats
   getDashboardStats: `${baseUrl}/api/dashboard/stats`,
   getPresentEmployees: `${baseUrl}/api/dashboard/stats/present`,
-  getAbsentEmployees: `${baseUrl}/api/dashboard/stats/absent`, 
+  getAbsentEmployees: `${baseUrl}/api/dashboard/stats/absent`,
   getLeaveEmployees: `${baseUrl}/api/dashboard/stats/leave`,
 
   // Projects

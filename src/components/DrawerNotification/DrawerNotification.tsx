@@ -1,59 +1,55 @@
+/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useSelector } from "react-redux";
+import { tokenInState, userInState } from "../../features/auth/authSlice";
 import Drawer from "@mui/material/Drawer";
 import CloseIcon from "@mui/icons-material/Close";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import LinearGradient from "../LinearGradient/LinearGradient";
+import axios from "axios";
+import { endpoints } from "../../api/endpoints";
+import { useNotificationsQuery } from "../../shared/api/sharedApi";
+import { Link } from "react-router";
 
 type Props = {
   open: boolean;
   onClose: () => void;
 };
 
-const notifications = [
-  {
-    title: "Your leaves request",
-    desc: "Your leave request is approve by HR Management",
-    time: "10 Min",
-    active: true,
-  },
-  {
-    title: "Emergency leave",
-    desc: "Your emergency leave has been granted.",
-    time: "20 Min",
-  },
-  {
-    title: "Sick leave application",
-    desc: "Your sick leave has been approved.",
-    time: "5 Min",
-  },
-  {
-    title: "Personal leave",
-    desc: "Your personal leave request is being processed.",
-    time: "25 Min",
-  },
-  {
-    title: "Conference leave",
-    desc: "Your conference leave is approved.",
-    time: "12 Min",
-  },
-  {
-    title: "Conference leave",
-    desc: "Your conference leave is approved.",
-    time: "12 Min",
-  },
-  {
-    title: "Conference leave",
-    desc: "Your conference leave is approved.",
-    time: "12 Min",
-  },
-  {
-    title: "Conference leave",
-    desc: "Your conference leave is approved.",
-    time: "12 Min",
-  },
-];
-
 const DrawerNotification = ({ open, onClose }: Props) => {
-  const [activeIndex, setActiveIndex] = useState<number | null>(0);
+  const [notifications, setNotifications] = useState<any>("");
+  const { data, isLoading } = useNotificationsQuery(undefined, {
+  pollingInterval: 5000, 
+});
+  const user = useSelector(userInState)
+
+  useEffect(() => {
+    if (open && data) {
+      setNotifications(data);
+    }
+  }, [open, data]);
+
+  const token = useSelector(tokenInState);
+
+  const handleMarkAsRead = async (id: number | string) => {
+    if (!token) return;
+    try {
+      await axios.put(
+        endpoints.markNotificationRead(id),
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      setNotifications((prev: any) =>
+        prev.map((n: any) => (n.id === id ? { ...n, isRead: true } : n)),
+      );
+    } catch (error) {
+      console.error("Mark Read Error:", error);
+    }
+  };
+
   return (
     <Drawer
       anchor="right"
@@ -63,19 +59,18 @@ const DrawerNotification = ({ open, onClose }: Props) => {
         "& .MuiDrawer-paper": {
           borderTopLeftRadius: "20px",
           borderBottomLeftRadius: "20px",
+          width: "350px",
         },
       }}
     >
-      <div className="rounded-2xl p-4 flex flex-col h-full">
-        {/* Header */}
+      <div className="p-4 flex flex-col h-full bg-white">
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
-            <h3 className="text-xl font-semibold text-black leading-7">
-              Notification
-            </h3>
-            <span className="text-xs text-gray-400">(01)</span>
+            <h3 className="text-xl font-semibold text-black">Notification</h3>
+            {/* <span className="text-xs text-gray-400">
+              ({notifications.filter(n => !n.isRead).length})
+            </span> */}
           </div>
-
           <button onClick={onClose}>
             <CloseIcon
               className="text-gray-400 cursor-pointer"
@@ -85,24 +80,38 @@ const DrawerNotification = ({ open, onClose }: Props) => {
         </div>
         <LinearGradient />
 
-        {/* Notifications */}
-        <div className="flex-1 overflow-y-auto scrollbar-hide space-y-2 pr-1 mt-2">
-          {notifications.map((item, index) => (
-            <div
-              key={index}
-              onClick={() => setActiveIndex(index)}
-              className={`rounded-xl p-3 cursor-pointer transition
-                ${index === activeIndex ? "bg-gray-100" : "bg-white "}
-              `}
-            >
-              <div className="flex justify-between items-start">
-                <p className="text-sm font-medium">{item.title}</p>
-                <span className="text-xs text-gray-400">{item.time}</span>
-              </div>
-              <p className="text-xs text-gray-400 mt-1">{item.desc}</p>
-            </div>
-          ))}
+      <div className="flex-1 overflow-y-auto flex flex-col gap-3 mt-4 scrollbar-hide">
+  {isLoading ? (
+    <p className="text-center text-gray-400 text-sm mt-5">Loading...</p>
+  ) : notifications?.length === 0 ? (
+    <p className="text-center text-gray-400 text-sm mt-5">
+      No notifications
+    </p>
+  ) : (
+    notifications.map((item: any) => (
+      <Link to={user?.user_type === 'Employee'? "/leaves":"/all-leaves"} key={item.id} onClick={onClose}>  
+        <div
+          onClick={() => !item.isRead && handleMarkAsRead(item.id)}
+          className={`rounded-xl p-3 cursor-pointer transition border ${
+            !item.isRead
+              ? "bg-blue-50 border-blue-100"
+              : "bg-white border-gray-100"
+          } hover:shadow-sm`}  
+        >
+          <div className="flex justify-between items-start">
+            <p className={`text-sm ${!item.isRead ? "font-bold text-primary" : "text-gray-700"}`}>
+              {item.title}
+            </p>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">{item.message}</p>
+          <p className="text-[10px] text-gray-400 mt-2">
+            {new Date(item.createdAt).toLocaleDateString()}
+          </p>
         </div>
+      </Link>
+    ))
+  )}
+</div>
       </div>
     </Drawer>
   );
