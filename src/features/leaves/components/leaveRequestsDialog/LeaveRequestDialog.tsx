@@ -28,7 +28,7 @@ import { useLoadingWrapper } from "../../../../wrappers/loadingWrapper/LoadingWr
 const buildLeaveApprovalPayload = (
   status: UIStatus,
   leaveDays: ILeaveDay[],
-  decline_reason: string
+  decline_reason: string,
 ) => {
   const apiStatus = status === "Approved" ? "approved" : "declined";
 
@@ -119,7 +119,7 @@ const LeaveRequestDialog = ({
           scrollbarWidth: "none",
         },
         "& .MuiDialog-paper::-webkit-scrollbar": {
-          display: "none", 
+          display: "none",
         },
       }}
       fullWidth
@@ -228,7 +228,9 @@ const LeaveRequestDialog = ({
               <div className="grid grid-cols-3 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-600">
                 <div>Date</div>
                 <div>Day</div>
-                <div>Leave Type</div>
+                {leave?.leave_category !== "short_leave" && (
+                  <div>Leave Type</div>
+                )}
               </div>
 
               {/* Table Rows */}
@@ -246,49 +248,51 @@ const LeaveRequestDialog = ({
                   <div className="text-sm text-gray-800">{day.day}</div>
 
                   {/* Leave Type */}
-                  <div>
-                    <Controller
-                      control={control}
-                      name={`leaveDay.${index}.leave_type`}
-                      rules={{ required: "Leave type is required" }}
-                      render={({ field, fieldState }) => (
-                        <Autocomplete
-                          fullWidth
-                          disablePortal
-                          options={leaveOptions}
-                          getOptionLabel={(option) => option.label}
-                          disableClearable
-                          freeSolo={false}
-                          value={
-                            leaveOptions.find(
-                              (opt) => opt.value === field.value
-                            ) || undefined
-                          }
-                          onChange={(_, option) =>
-                            field.onChange(option?.value || "")
-                          }
-                          disabled={day.leave_type === "Holiday"}  
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              size="small"
-                              label="Leave Type"
-                              variant="outlined"
-                              fullWidth
-                              error={!!fieldState.error}
-                              helperText={fieldState.error?.message}
-                              sx={{
-                                minWidth: 120,
-                                "& .MuiOutlinedInput-root": {
-                                  borderRadius: "9999px",
-                                },
-                              }}
-                            />
-                          )}
-                        />
-                      )}
-                    />
-                  </div>
+                  {leave?.leave_category !== "short_leave" && (
+                    <div>
+                      <Controller
+                        control={control}
+                        name={`leaveDay.${index}.leave_type`}
+                        rules={{ required: "Leave type is required" }}
+                        render={({ field, fieldState }) => (
+                          <Autocomplete
+                            fullWidth
+                            disablePortal
+                            options={leaveOptions}
+                            getOptionLabel={(option) => option.label}
+                            disableClearable
+                            freeSolo={false}
+                            value={
+                              leaveOptions.find(
+                                (opt) => opt.value === field.value,
+                              ) || undefined
+                            }
+                            onChange={(_, option) =>
+                              field.onChange(option?.value || "")
+                            }
+                            disabled={day.leave_type === "Holiday"}
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                size="small"
+                                label="Leave Type"
+                                variant="outlined"
+                                fullWidth
+                                error={!!fieldState.error}
+                                helperText={fieldState.error?.message}
+                                sx={{
+                                  minWidth: 120,
+                                  "& .MuiOutlinedInput-root": {
+                                    borderRadius: "9999px",
+                                  },
+                                }}
+                              />
+                            )}
+                          />
+                        )}
+                      />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -366,8 +370,8 @@ const LeaveRequestDialog = ({
               status === "Pending"
                 ? "Pending"
                 : status === "Approved"
-                ? "Approved"
-                : "Reject"
+                  ? "Approved"
+                  : "Reject"
             }
             buttonStyle={status === "Pending" ? "secondary" : "primary"}
             disabled={status === "Pending"}
