@@ -7,7 +7,17 @@ export const EmployeeRole = {
   EMPLOYEE: "Employee",
 } as const;
 
+export const EmergencyContactRelation = {
+  father: "Father",
+  mother: "Mother",
+  husband: "Husband",
+  wife: "Wife",
+  guardian: "Guardian",
+} as const;
+
 export type EmployeeRole = (typeof EmployeeRole)[keyof typeof EmployeeRole];
+export type EmergencyContactRelation =
+  (typeof EmergencyContactRelation)[keyof typeof EmergencyContactRelation];
 
 export const UserType = {
   ADMIN: "Admin",

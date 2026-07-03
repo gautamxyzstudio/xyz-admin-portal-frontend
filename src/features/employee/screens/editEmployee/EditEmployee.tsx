@@ -6,12 +6,13 @@ import { Controller, useForm } from "react-hook-form";
 import PhotoUpload from "../../../../shared/components/photoUpload/PhotoUpload";
 import FormTextInput from "../../../../shared/components/formInput/FormInput";
 import { Autocomplete, Switch, TextField } from "@mui/material";
-import { EmployeeRole } from "../../../../shared/enums";
+import {
+  EmergencyContactRelation,
+  EmployeeRole,
+} from "../../../../shared/enums";
 import dayjs from "dayjs";
 import PickerInput from "../../../../shared/components/pickerInput/PickerInput";
-import {
-  useUpdateEmployeeDetailsMutation,
-} from "../../employeeApis";
+import { useUpdateEmployeeDetailsMutation } from "../../employeeApis";
 import { toast } from "react-toastify";
 import { getError, getString } from "../../../../utils/utils.js";
 import CustomBox from "../../../../components/CustomBox/CustomBox.js";
@@ -31,6 +32,8 @@ type EditEmployeeForm = {
   date_of_birth?: string;
   active_blogs?: boolean;
   joinig_date?: string;
+  emergency_contact: string;
+  relation_of: string;
 };
 
 const EditEmployee = () => {
@@ -42,6 +45,7 @@ const EditEmployee = () => {
     control,
     handleSubmit,
     setValue,
+    getValues,
     formState: { errors },
   } = useForm<EditEmployeeForm>({
     defaultValues: {
@@ -57,6 +61,8 @@ const EditEmployee = () => {
       date_of_birth: "",
       active_blogs: false,
       coverImage: "",
+      emergency_contact: "",
+      relation_of: "",
     },
   });
 
@@ -76,6 +82,8 @@ const EditEmployee = () => {
       setValue("status", employee.status);
       setValue("date_of_birth", employee.dateOfBirth);
       setValue("active_blogs", employee.active_blogs);
+      setValue("emergency_contact", employee.emergency_contact);
+      setValue("relation_of", employee.relation_of);
     }
   }, [employee, setValue]);
 
@@ -90,6 +98,8 @@ const EditEmployee = () => {
       status: data.status,
       date_of_birth: dayjs(data.date_of_birth).format("YYYY-MM-DD"),
       active_blogs: data.active_blogs,
+      emergency_contact: data.emergency_contact,
+      relation_of: data.relation_of.toLowerCase(),
     };
 
     try {
@@ -193,42 +203,62 @@ const EditEmployee = () => {
                       {...params}
                       label="Role"
                       variant="outlined"
+                      error={!!(errors as any).role}
+                      helperText={getError(errors.role)}
                       inputProps={{ ...params.inputProps, readOnly: true }}
                     />
                   )}
                 />
               )}
             />
-            <div className="flex flex-row items-center justify-between gap-2">
-              <div className="flex flex-row items-center gap-x-2">
-                <p className="text-sm font-semibold">Status:</p>
-                <Controller
-                  control={control}
-                  name="status"
-                  render={({ field }) => (
-                    <Switch
-                      checked={field.value}
-                      color="warning"
-                      onChange={(_, checked) => field.onChange(checked)}
+            <Controller
+              control={control}
+              name="relation_of"
+              rules={{ required: "Relation is required" }}
+              render={({ field }) => (
+                <Autocomplete
+                  disablePortal
+                  options={Object.values(EmergencyContactRelation)}
+                  disableClearable
+                  freeSolo={false}
+                  value={field.value || ""}
+                  sx={{
+                    "& .MuiOutlinedInput-root .MuiAutocomplete-input": {
+                      textTransform: "capitalize",
+                    },
+                  }}
+                  onChange={(_, value) => field.onChange(value)}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Relation of"
+                      variant="outlined"
+                      error={!!(errors as any).relation_of}
+                      helperText={getError(errors.relation_of)}
+                      inputProps={{
+                        ...params.inputProps,
+                        readOnly: true,
+                      }}
                     />
                   )}
                 />
-              </div>
-              <div className="flex flex-row items-center gap-2">
-                <p className="text-sm font-semibold">Active Blog:</p>
-                <Controller
-                  control={control}
-                  name="active_blogs"
-                  render={({ field }) => (
-                    <Switch
-                      checked={field.value}
-                      color="warning"
-                      onChange={(_, checked) => field.onChange(checked)}
-                    />
-                  )}
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="date_of_birth"
+              rules={{ required: "Date of birth is required" }}
+              render={({ field }) => (
+                <PickerInput
+                  label="Date of Birth"
+                  value={field.value ? dayjs(field.value) : dayjs()}
+                  disableFuture
+                  setValue={field.onChange}
+                  errorMessage={getError(errors.date_of_birth)}
                 />
-              </div>
-            </div>
+              )}
+            />
           </div>
 
           {/* Right Column */}
@@ -276,27 +306,76 @@ const EditEmployee = () => {
                 />
               )}
             />
+
             <Controller
               control={control}
-              name="date_of_birth"
-              rules={{ required: "Date of birth is required" }}
+              name="emergency_contact"
+              rules={{
+                required: "Emergency Contact is required",
+                pattern: {
+                  value: /^[0-9]{10}$/,
+                  message: "Invalid phone number",
+                },
+                minLength: {
+                  value: 10,
+                  message: "Phone number must be at least 10 digits",
+                },
+                maxLength: {
+                  value: 10,
+                  message: "Phone number must be at most 10 digits",
+                },
+                validate: (value) =>
+                  value !== getValues("phone") ||
+                  "Emergency contact cannot be the same as phone number",
+              }}
               render={({ field }) => (
-                <PickerInput
-                  label="Date of Birth"
-                  value={field.value ? dayjs(field.value) : dayjs()}
-                  disableFuture
-                  setValue={field.onChange}
-                  errorMessage={getError(errors.date_of_birth)}
+                <FormTextInput
+                  errorMessage={getError(errors.emergency_contact)}
+                  label={"Emergency Contact"}
+                  value={field.value}
+                  placeholder="Emergency Contact"
+                  onChange={field.onChange}
                 />
               )}
             />
+
+            <div className="flex flex-row items-center justify-between gap-2">
+              <div className="flex flex-row items-center gap-x-2">
+                <p className="text-sm font-semibold">Status:</p>
+                <Controller
+                  control={control}
+                  name="status"
+                  render={({ field }) => (
+                    <Switch
+                      checked={field.value}
+                      color="warning"
+                      onChange={(_, checked) => field.onChange(checked)}
+                    />
+                  )}
+                />
+              </div>
+              <div className="flex flex-row items-center gap-2">
+                <p className="text-sm font-semibold">Active Blog:</p>
+                <Controller
+                  control={control}
+                  name="active_blogs"
+                  render={({ field }) => (
+                    <Switch
+                      checked={field.value}
+                      color="warning"
+                      onChange={(_, checked) => field.onChange(checked)}
+                    />
+                  )}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Submit */}
         <div className="flex flex-row mt-12 w-full justify-center items-center mb-5">
           <CustomButton
-            label={isLoading  ? "Updating..." : "Update"}
+            label={isLoading ? "Updating..." : "Update"}
             onClick={handleSubmit(onSubmit)}
             disabled={isLoading}
             buttonStyle={isLoading ? "disabled" : "primary"}

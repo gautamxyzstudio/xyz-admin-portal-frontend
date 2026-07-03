@@ -6,7 +6,10 @@ import PhotoUpload from "../../../../shared/components/photoUpload/PhotoUpload";
 import PasswordInput from "../../../../shared/components/PasswordInput/PasswordInput";
 import { useEffect, useState } from "react";
 import type { AddEmployeeFormData } from "./AddEmployeeForm.types";
-import { EmployeeRole } from "../../../../shared/enums";
+import {
+  EmergencyContactRelation,
+  EmployeeRole,
+} from "../../../../shared/enums";
 import dayjs from "dayjs";
 import PickerInput from "../../../../shared/components/pickerInput/PickerInput";
 import { toast } from "react-toastify";
@@ -36,29 +39,28 @@ const AddEmployeeForm = ({
     designation: "",
     employeeCode: "",
     role: "",
-    dob:'',
+    dob: "",
+    emergencyContact: "",
+    relationOf: "",
   };
 
-
-
-  
   const {
     control,
     handleSubmit,
     formState: { errors },
     reset,
+    getValues,
   } = useForm({
     defaultValues,
   });
 
- const onSubmit = (data: AddEmployeeFormData) => {
-  onPressSubmit({
-    ...data,
-    dob: data.dob ? dayjs(data.dob).format("YYYY-MM-DD") : "",
-  });
-  reset();
-};
-
+  const onSubmit = (data: AddEmployeeFormData) => {
+    onPressSubmit({
+      ...data,
+      dob: data.dob ? dayjs(data.dob).format("YYYY-MM-DD") : "",
+    });
+    reset();
+  };
 
   useEffect(() => {
     if (errors.avatar) {
@@ -169,6 +171,36 @@ const AddEmployeeForm = ({
               />
             )}
           />
+
+          <Controller
+            control={control}
+            name="relationOf"
+            rules={{ required: "Relation is required" }}
+            render={({ field }) => (
+              <Autocomplete
+                disablePortal
+                options={Object.values(EmergencyContactRelation)}
+                disableClearable
+                freeSolo={false}
+                value={field.value || ""}
+                onChange={(_, value) => field.onChange(value)}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Relation of"
+                    variant="outlined"
+                    error={!!(errors as any).relationOf}
+                    helperText={(errors as any).relationOf?.message}
+                    inputProps={{
+                      ...params.inputProps,
+                      readOnly: true,
+                    }}
+                  />
+                )}
+              />
+            )}
+          />
+
           <Controller
             control={control}
             name="role"
@@ -186,6 +218,8 @@ const AddEmployeeForm = ({
                     {...params}
                     label="Role"
                     variant="outlined"
+                    error={!!(errors as any).role}
+                    helperText={(errors as any).role?.message}
                     inputProps={{
                       ...params.inputProps,
                       readOnly: true,
@@ -255,6 +289,8 @@ const AddEmployeeForm = ({
                 setValue={(value) =>
                   field.onChange(value ? value.format("YYYY-MM-DD") : "")
                 }
+                disableFuture={true}
+                disableWeekend={true}
                 errorMessage={errors.joiningDate?.message}
               />
             )}
@@ -270,7 +306,39 @@ const AddEmployeeForm = ({
                 setValue={(value) => field.onChange(value)}
                 errorMessage={errors.dob?.message}
                 popperPlacement="top-end"
-                 disableWeekend={false}
+                disableWeekend={false}
+                disableFuture={true}
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="emergencyContact"
+            rules={{
+              required: "Emergency Contact is required",
+              pattern: {
+                value: /^[0-9]{10}$/,
+                message: "Invalid phone number",
+              },
+              minLength: {
+                value: 10,
+                message: "Phone number must be at least 10 digits",
+              },
+              maxLength: {
+                value: 10,
+                message: "Phone number must be at most 10 digits",
+              },
+              validate: (value) =>
+                value !== getValues("phone") ||
+                "Emergency contact cannot be the same as phone number",
+            }}
+            render={({ field }) => (
+              <FormTextInput
+                errorMessage={(errors as any).emergencyContact?.message}
+                label={"Emergency Contact"}
+                value={field.value}
+                placeholder="Emergency Contact"
+                onChange={field.onChange}
               />
             )}
           />

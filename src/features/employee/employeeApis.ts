@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { baseApi } from "../../state/baseApi";
+import { getImageUrl } from "../../utils/utils";
 import { endpoints } from "../../api/endpoints";
 import { ApiMethodType } from "../../state/types";
 import type {
@@ -83,13 +84,40 @@ export const employeeApis = enhancedEmployeeApi.injectEndpoints({
       invalidatesTags: ["Employee"],
     }),
 
-    getEmployeeList: builder.query<any, { user_type: string }>({
-      query: ({ user_type }) => ({
-        url: endpoints.employeeList(user_type),
-        method: ApiMethodType.get,
-      }),
-      providesTags: ["Employee"],
-    }),
+    getEmployeeList: builder.query<any, { user_type: string; search?: string }>(
+      {
+        query: ({ user_type, search }) => ({
+          url: endpoints.employeeList(user_type, search),
+          method: ApiMethodType.get,
+        }),
+        transformResponse: (response: any[]) => {
+          return response.map((employee: any) => {
+            const photo = employee?.user_detial?.Photo?.[0];
+            return {
+              id: employee?.id ?? 0,
+              name: employee?.user_detial?.name ?? "",
+              designation: employee?.user_detial?.designation ?? "",
+              empCode: employee?.user_detial?.empCode ?? "",
+              phoneNumber: employee?.user_detial?.phoneNumber ?? "",
+              joiningDate: employee?.user_detial?.joinig_date ?? "",
+              role: employee?.role?.name ?? "",
+              status: employee?.user_detial?.status ?? "",
+              image: photo?.url ? getImageUrl(photo.url) : "",
+              imageId: photo?.id ?? 0,
+              email: employee?.email ?? "",
+              details_id: employee?.user_detial?.id ?? 0,
+              dateOfBirth: employee?.user_detial?.date_of_birth ?? "0",
+              active_blogs: employee?.user_detial?.active_blogs ?? false,
+              coverImage: employee?.user_detial?.coverImage ?? "",
+              checkout_email_enabled: employee?.checkout_email_enabled ?? false,
+              emergency_contact: employee?.user_detial?.emergency_contact ?? "",
+              relation_of: employee?.user_detial?.relation_of ?? "",
+            };
+          });
+        },
+        providesTags: ["Employee"],
+      },
+    ),
   }),
 });
 

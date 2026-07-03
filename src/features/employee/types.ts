@@ -22,6 +22,8 @@ export type IRegisterUserResponse = {
     user_type: "Admin" | "Employee" | "Hr" | "Management";
     createdAt: string;
     updatedAt: string;
+    emergency_contact: string;
+    relation_of: string;
   };
 };
 
@@ -37,6 +39,8 @@ export type IAddEmployeeArgs = {
   date_of_birth: string;
   active_blogs: boolean;
   joinig_date: string;
+  emergency_contact: string;
+  relation_of: string;
 };
 
 export type IEditEmployeeArgs = {
@@ -50,6 +54,8 @@ export type IEditEmployeeArgs = {
   date_of_birth?: string;
   active_blogs?: boolean;
   joinig_date?: string;
+  emergency_contact?: string;
+  relation_of?: string;
 };
 
 export interface IEmployee {
@@ -68,6 +74,8 @@ export interface IEmployee {
   active_blogs: boolean;
   dateOfBirth: string;
   coverImage: string;
+  emergency_contact: string;
+  relation_of: string;
 }
 
 export interface IEmployeeFromResponse {
@@ -106,6 +114,8 @@ export interface IEmployeeFromResponse {
     date_of_birth: string;
     active_blogs: boolean;
     joinig_date: string;
+    emergency_contact: string;
+    relation_of: string;
     Photo: {
       id: number;
       name: string;

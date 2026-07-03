@@ -3,7 +3,8 @@ export interface IBlogResponse {
   attributes: {
     title: string;
     shortDesc?: string | null;
-    BlogDate?: string; // API returns string, not Date
+    BlogDate?: string;
+    blogSlug: string;
     banner?: {
       data?: {
         id: number;

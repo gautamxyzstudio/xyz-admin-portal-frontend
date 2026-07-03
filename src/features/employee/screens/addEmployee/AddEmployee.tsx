@@ -39,6 +39,8 @@ const AddEmployee = () => {
           user_detail: registerResponse.toString(),
           date_of_birth: data.dob,
           active_blogs: data.activeBlog,
+          emergency_contact: data.emergencyContact,
+          relation_of: data.relationOf.toLocaleLowerCase(),
         });
         if (addEmployeeDetailsResponse) {
           navigation("/employees");

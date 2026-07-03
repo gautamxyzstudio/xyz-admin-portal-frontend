@@ -45,7 +45,7 @@ const useBlogListData = () => {
         setIsInitialLoading(false);
       }
     },
-    [getAllBlog, setIsLoading]
+    [getAllBlog, setIsLoading],
   );
   return {
     blogList,
@@ -131,7 +131,7 @@ const BlogList = () => {
           blogList.map((item: IBlogResponse) => {
             const blogData = item?.attributes;
             const imageUrl = blogData?.banner?.data?.attributes?.url.startsWith(
-              "https"
+              "https",
             )
               ? `${blogData?.banner.data?.attributes?.url}`
               : `${import.meta.env.VITE_API_BASE_URL}${
@@ -139,10 +139,7 @@ const BlogList = () => {
                 }`;
             const date = dayjs(blogData?.BlogDate).format("DD/MM/YYYY");
             const shortDesc = blogData?.shortDesc;
-            const href = `https://www.xyz.studio/blog/${blogData?.title.replaceAll(
-              / /g,
-              "-"
-            )}`;
+            const href = `https://www.xyz.studio/blog/${blogData?.blogSlug}`;
 
             return (
               <div

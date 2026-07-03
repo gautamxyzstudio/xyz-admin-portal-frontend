@@ -18,26 +18,30 @@ import EmployeeStatusRow from "../../components/employeestatusRow/EmployeeStatus
 import CustomBox from "../../../../components/CustomBox/CustomBox.js";
 import { Icons } from "../../../../assets/myAssets/exporter.js";
 import CustomButton from "../../../../components/CustomButton/CustomButton.js";
-import { TbPlus } from "react-icons/tb";
+import { TbPlus, TbX } from "react-icons/tb";
 import dayjs from "dayjs";
+import { useState } from "react";
+import { ImSearch } from "react-icons/im";
 
 const EmployeeList = () => {
   const user = useSelector(userInState);
   const employeeList = useSelector(employeeListInState);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const navigate = useNavigate();
   const { setIsLoading } = useLoadingWrapper();
 
-  const { isLoading } = useGetEmployeeListQuery({
+  const { data, isLoading, isFetching } = useGetEmployeeListQuery({
     user_type: user ? user.user_type : "",
+    search: searchTerm,
   });
 
   const [deleteUser] = useDeleteUserMutation();
   const [deleteEmployee] = useDeleteEmployeeMutation();
 
   if (!user) return null;
-const filteredEmployeeList = employeeList 
- 
+  const filteredEmployeeList = data || employeeList;
+
   // console.log("Employee List Data:", filteredEmployeeList);
 
   const deleteUserHandler = async (id: string, detailsId: string) => {
@@ -146,7 +150,32 @@ const filteredEmployeeList = employeeList
     <CustomBox customClasses="p-6 w-full h-full overflow-scroll scrollbar-hide">
       {/* ===== Header ===== */}
       <div className="flex justify-between items-center ">
-        <h2 className="text-black text-lg font-semibold">Employee </h2>
+        <div className="flex flex-row gap-2 items-center ">
+          <h2 className="text-black text-2xl font-semibold">Employee </h2>
+
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search by employee name or code"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-76 pl-10 pr-8 py-2 text-sm rounded-2xl border border-gray-200 
+                           focus:outline-none focus:ring-2 focus:ring-indigo-100
+                           placeholder:text-gray-400"
+            />
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm">
+              <ImSearch size={20} className="text-primary" />
+            </span>
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 flex items-center justify-center cursor-pointer"
+              >
+                <TbX size={18} />
+              </button>
+            )}
+          </div>
+        </div>
 
         {(user.user_type === "Admin" ||
           user.user_type === "Hr" ||
@@ -166,7 +195,7 @@ const filteredEmployeeList = employeeList
         <CustomDataTable
           columns={columns}
           rows={filteredEmployeeList}
-          isLoading={isLoading}
+          isLoading={isLoading || isFetching}
           withPagination={false}
           isDataEmpty={filteredEmployeeList.length === 0}
           emptyViewTitle="No Employee Found"

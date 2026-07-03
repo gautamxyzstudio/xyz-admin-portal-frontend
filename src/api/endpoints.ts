@@ -14,7 +14,13 @@ export const endpoints = {
   employeeDetails: `${baseUrl}/api/emp-details`,
   updateEmployeeDetails: (id: string | number) =>
     `${baseUrl}/api/emp-details/${id}`,
-  employeeList: (user_type: string) => `${baseUrl}/api/users/${user_type}`,
+  employeeList: (user_type: string, search?: string) => {
+    let url = `${baseUrl}/api/users/${user_type}`;
+    if (search) {
+      url += `?search=${search}`;
+    }
+    return url;
+  },
   deleteUser: (id: string | number) => `${baseUrl}/api/users/${id}`,
   updateUser: (id: string | number) => `${baseUrl}/api/users/${id}`,
   deleteEmployee: (id: string | number) => `${baseUrl}/api/emp-details/${id}`,
