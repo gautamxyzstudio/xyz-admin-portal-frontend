@@ -53,12 +53,13 @@ import SEARCH_ICON from "./icons/search-icon.svg";
 import NO_DATA from "./icons/No-data.svg";
 import ANNOUNCEMENT_MENU from "./icons/announcementMenu.svg";
 import ANNOUNCEMENT_MENU_FILL from "./icons/announcementMenuFill.svg";
-import  DELETEICON from "./icons/deleteIcon.svg";
+import DELETEICON from "./icons/deleteIcon.svg";
 import TIMELOG from "./icons/timelog.svg";
-import TIMELOG_UNFILL from "./icons/Timelog_unfill.svg"
-import  PROJECT_UNFILL from "./icons/project_unfill.svg"
-import PROJECT_FILL from "./icons/project_fill.svg"
-
+import TIMELOG_UNFILL from "./icons/Timelog_unfill.svg";
+import PROJECT_UNFILL from "./icons/project_unfill.svg";
+import PROJECT_FILL from "./icons/project_fill.svg";
+import HANDBOOK from "./icons/handbook.svg";
+import HANDBOOK_FILL from "./icons/handbook_fill.svg";
 
 export const Icons = {
   CROSS_ICON,
@@ -113,11 +114,15 @@ export const Icons = {
   DELETE,
   SEARCH_ICON,
   NO_DATA,
-  ANNOUNCEMENT_MENU, ANNOUNCEMENT_MENU_FILL,
+  ANNOUNCEMENT_MENU,
+  ANNOUNCEMENT_MENU_FILL,
   DELETEICON,
-  TIMELOG, TIMELOG_UNFILL,
+  TIMELOG,
+  TIMELOG_UNFILL,
   PROJECT_UNFILL,
   PROJECT_FILL,
+  HANDBOOK,
+  HANDBOOK_FILL,
 };
 
 // Images

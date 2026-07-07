@@ -40,6 +40,14 @@ export const getRoutes = (
       permissions: ["Employee", "Hr", "Admin", "Management"],
     },
     {
+      name: "Employee Handbook",
+      key: "handbook",
+      icon: Icons.HANDBOOK,
+      iconFill: Icons.HANDBOOK_FILL,
+      route: "/handbook",
+      permissions: ["Employee", "Hr", "Admin", "Management"],
+    },
+    {
       name: "Leave",
       key: "leaves",
       icon: Icons.LEAVES,

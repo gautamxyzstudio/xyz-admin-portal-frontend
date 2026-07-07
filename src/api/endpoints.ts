@@ -168,4 +168,9 @@ export const endpoints = {
     }
     return url;
   },
+
+  // Handbook
+  employeeHandbook: `${baseUrl}/api/handbook`,
+  updateEmployeeHandbook: (id: number | string) =>
+    `${baseUrl}/api/handbook/${id}`,
 };
