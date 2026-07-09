@@ -67,7 +67,9 @@ const BlogEditor = () => {
         ...prev,
         blogSlug: slugify(inputValue.title),
       }));
-      setIsSlugSynced(false);
+      if (inputValue.blogSlug !== slugify(inputValue.title)) {
+        setIsSlugSynced(false);
+      }
     }
   }, [inputValue.title, isSlugSynced]);
 
@@ -89,8 +91,11 @@ const BlogEditor = () => {
             description: attrs.shortDesc || "",
             blogDate: attrs.BlogDate || "",
             blogData: attrs.blogData || "",
-            blogSlug: attrs.blogSlug || "",
+            blogSlug: attrs.blogSlug,
           });
+          if (attrs.blogSlug) {
+            setIsSlugSynced(false);
+          }
           const bannerData = attrs.banner?.data;
           setExistingImageId(bannerData?.id || "");
           if (bannerData?.attributes?.url) {
@@ -99,7 +104,7 @@ const BlogEditor = () => {
                 ? bannerData.attributes.url
                 : `${import.meta.env.VITE_API_BASE_URL}${
                     bannerData.attributes.url
-                  }`
+                  }`,
             );
           } else {
             setImagePath("");
@@ -111,7 +116,7 @@ const BlogEditor = () => {
         setIsLoading(false);
       }
     },
-    [makeRequest]
+    [makeRequest],
   );
 
   // Handle post submission
@@ -157,9 +162,7 @@ const BlogEditor = () => {
   const saveBlogPost = useCallback(
     async (bannerId, editorContent) => {
       try {
-        const url = id
-          ? endpoints.editBlogs(Number(id))
-          : endpoints.postBlogs;
+        const url = id ? endpoints.editBlogs(Number(id)) : endpoints.postBlogs;
         const body = {
           data: {
             metaTitle: inputValue.metaTitle,
@@ -183,7 +186,7 @@ const BlogEditor = () => {
         toast.error("Failed to save content.");
       }
     },
-    [id, inputValue, navigate]
+    [id, inputValue, navigate],
   );
 
   // Handle selecting and previewing an image
@@ -271,7 +274,9 @@ const BlogEditor = () => {
               setInputValue((prev) => ({
                 ...prev,
                 title: e.target.value,
-                blogSlug: slugify(e.target.value),
+                blogSlug: isSlugSynced
+                  ? slugify(e.target.value)
+                  : inputValue.blogSlug,
               }))
             }
             multiline
