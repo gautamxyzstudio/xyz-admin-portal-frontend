@@ -188,7 +188,7 @@ const MarkAttendance = ({
         <div className="bg-background p-2 rounded-md flex items-center gap-x-2">
           <img src={Icons.OFFICE} alt="office" className="w-6 h-6" />
           <span className="text-primary text-sm">Office</span>
-          <p className="text-black-50 text-sm">09:00AM – 06:00PM</p>
+          <p className="text-black-50 text-sm">10:00AM – 07:00PM</p>
         </div>
       </div>
     </CustomBox>
