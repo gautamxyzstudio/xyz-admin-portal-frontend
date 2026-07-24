@@ -6,6 +6,12 @@ export const endpoints = {
   register: `${baseUrl}/api/auth/local/register`,
   userDetails: (id: number | string) => `${baseUrl}/api/user/${id}`,
 
+  // Forgot Password
+  sendOtp:`${baseUrl}/api/forgot-password`,
+  verifyOtp : `${baseUrl}/api/verify-reset-otp`,
+  resetPassword :`${baseUrl}/api/reset-password`,
+  resendOtp : `${baseUrl}/api/resend-reset-otp`,
+
   // Employee
   info: `${baseUrl}/api/emp-details/?populate=*&sort=id`,
   addinfo: `${baseUrl}/api/emp-details/?populate=*`,

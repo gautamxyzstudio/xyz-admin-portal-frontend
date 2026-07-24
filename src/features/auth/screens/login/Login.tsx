@@ -112,24 +112,38 @@ const LoginPage = () => {
                 />
               )}
             />
-            <Controller
-              control={control}
-              name="password"
-              rules={{
-                required: "Password is required",
-              }}
-              render={({ field }) => (
-                <PasswordInput
-                  showPassword={showPassword}
-                  handleClickShowPassword={() => setShowPassword(!showPassword)}
-                  value={field.value}
-                  errorMessage={errors.password?.message}
-                  onChange={field.onChange}
-                />
-              )}
-            />
+            <div>
+              <Controller
+                control={control}
+                name="password"
+                rules={{
+                  required: "Password is required",
+                }}
+                render={({ field }) => (
+                  <PasswordInput
+                    showPassword={showPassword}
+                    handleClickShowPassword={() =>
+                      setShowPassword(!showPassword)
+                    }
+                    value={field.value}
+                    errorMessage={errors.password?.message}
+                    onChange={field.onChange}
+                  />
+                )}
+              />
+
+              {/* Forgot Password */}
+              <div className="flex justify-end mt-2">
+                <Link
+                  to="/forgot-password"
+                  className="text-sm text-orange-500 hover:text-orange-600 hover:underline transition-colors"
+                >
+                  Forgot Password?
+                </Link>
+              </div>
+            </div>
           </div>
-          <div className="mt-8 w-full">
+          <div className="mt-6 w-full">
             <CustomButton
               label="Login"
               customStyles="w-full py-3!"

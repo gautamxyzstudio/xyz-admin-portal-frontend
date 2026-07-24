@@ -4,6 +4,9 @@ import { Routes, Route } from "react-router-dom";
 import PrivateRoute from "./PrivateRoutes";
 import HolidayList from "./features/holydayList/screens/holydayList/HolydayList";
 import LoginPage from "./features/auth/screens/login/Login";
+import SendOtp from "./features/forgotPassword/SendOtp.js";
+import VerifyOtp from "./features/forgotPassword/VerifyOtp";
+import ResetPassword from "./features/forgotPassword/ResetPassword";
 import { Provider } from "react-redux";
 import store, { persistor } from "./state/store";
 import EmployeeList from "./features/employee/screens/employeeList/EmployeeList";
@@ -268,6 +271,15 @@ const App: React.FC = () => {
                     />
                   </Route>
                   <Route path="/login" element={<LoginPage />} />
+                  <Route path="/forgot-password" element={<SendOtp />} />
+                  <Route
+                    path="/verify-reset-otp"
+                    element={<VerifyOtp />}
+                  />
+                  <Route
+  path="/reset-password"
+  element={<ResetPassword />}
+/>
                 </Routes>
               </ThemeProvider>
             </SnackBarProvider>
