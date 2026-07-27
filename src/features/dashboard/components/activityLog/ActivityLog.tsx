@@ -86,7 +86,6 @@ useEffect(() => {
           <EmptyScreenView
             isDataEmpty
             emptyViewTitle="No activity logs found"
-            emptyViewSubTitle="Please check back later"
           />
         ) : (
           <CustomDataTable

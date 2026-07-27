@@ -73,8 +73,6 @@ const ViewAllActivityLogs = () => {
     return rows.slice(start, start + PAGE_SIZE);
   }, [rows, page]);
 
-  console.log(paginatedRows)
-
  return (
   <div className="w-full flex flex-col gap-6">
     <h2 className="text-3xl font-semibold">Activity Logs</h2>
