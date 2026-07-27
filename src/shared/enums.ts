@@ -53,6 +53,7 @@ export const ROUTE_PERMISSIONS: Record<string, readonly string[]> = {
     "/projects",
     "/all-leaves/leave-balance",
     "/handbook",
+    "/activity-logs"
   ],
   [UserType.HR]: [
     "/",
@@ -74,6 +75,7 @@ export const ROUTE_PERMISSIONS: Record<string, readonly string[]> = {
     "/projects",
     "/all-leaves/leave-balance",
     "/handbook",
+    "/activity-logs"
   ],
   [UserType.EMPLOYEE]: [
     "/",
@@ -109,6 +111,7 @@ export const ROUTE_PERMISSIONS: Record<string, readonly string[]> = {
     "/projects",
     "/all-leaves/leave-balance",
     "/handbook",
+    "/activity-logs"
   ],
 } as const;
 

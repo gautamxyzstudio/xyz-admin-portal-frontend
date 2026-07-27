@@ -71,10 +71,30 @@ export const attendanceApi = enhancedAttendanceApi.injectEndpoints({
         method: "PUT",
         body: data,
       }),
-       invalidatesTags: ["Attendance"],
+      invalidatesTags: ["Attendance"],
     }),
+
+    getLatestActivityLogs: builder.query<any, void>({
+      query: () => ({
+        url: endpoints.ActivityLog,
+        method: "GET",
+        params: {
+          latest: true,
+        },
+      }),
+    }),
+
+   getAllActivityLogs: builder.query<any, void>({
+  query: () => ({
+    url: endpoints.ActivityLog,
+    method: "GET",
+  }),
+}),
+
   }),
 });
+
+
 
 export const {
   useGetTodayAttendanceQuery,
@@ -82,4 +102,6 @@ export const {
   useUpdateAttendanceMutation,
   useLazyGetAllAttendanceQuery,
   useCheckOutMutation,
+  useLazyGetLatestActivityLogsQuery,
+  useLazyGetAllActivityLogsQuery,
 } = attendanceApi;

@@ -37,6 +37,9 @@ export const endpoints = {
   getuploadImg: (id: number | string) => `${baseUrl}/api/upload/files/${id}`,
   UPLOAD_IMAGE: `${baseUrl}/api/upload`,
 
+  // Activity Log
+  ActivityLog :`${baseUrl}/api/activity-logs`,
+
   // Attendance
   getAttendanceLegacy: `${baseUrl}/api/daily-attendances/?populate=*&sort=id`,
   postAttendance: `${baseUrl}/api/daily-attendances`,
