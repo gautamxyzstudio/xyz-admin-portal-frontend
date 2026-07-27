@@ -11,6 +11,7 @@ interface StatCardProps {
   subTitleColor?: string;
   subTitleBgColor?: string;
   dashboard?: boolean;
+  navigateTo?: string;
 }
 
 const StatCard: React.FC<StatCardProps> = ({

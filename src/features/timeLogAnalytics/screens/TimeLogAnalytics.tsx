@@ -138,11 +138,20 @@ const TimeLogAnalytics: React.FC = () => {
         }
       });
 
-    const headers = Object.keys(rows[0]).join(",");
-    const csvContent =
-      headers +
-      "\n" +
-      rows.map((row) => Object.values(row).join(",")).join("\n");
+    if (rows.length === 0) return;
+
+    const formatCell = (val: any) => {
+      if (val === null || val === undefined) return '""';
+      const str = String(val);
+      return `"${str.replace(/"/g, '""')}"`;
+    };
+
+    const headers = Object.keys(rows[0]).map(formatCell).join(",");
+    const csvLines = rows.map((row) =>
+      Object.values(row).map(formatCell).join(",")
+    );
+
+    const csvContent = "\uFEFF" + [headers, ...csvLines].join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
 

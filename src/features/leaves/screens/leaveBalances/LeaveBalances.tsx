@@ -21,7 +21,7 @@ import CustomButton from "../../../../components/CustomButton/CustomButton";
 import { toast } from "react-toastify";
  
 const LeaveBalances = () => {
-  const { data = [], isLoading } = useGetAllLeaveBalanceQuery(undefined, {
+  const { data = [], isLoading,refetch } = useGetAllLeaveBalanceQuery(undefined, {
     refetchOnFocus: true,
   });
 
@@ -65,6 +65,7 @@ console.log(selectedEmployee,"sssdd")
 
       toast.success("Leave balance updated successfully!");
       handleClose();
+      refetch();
     } catch (error) {
       console.error("Update Error:", error);
       toast.error("Failed to update balance");
