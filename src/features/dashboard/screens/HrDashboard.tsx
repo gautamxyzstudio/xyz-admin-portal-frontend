@@ -15,6 +15,7 @@ import AnnouncementList from "../components/announcementList/AnnouncementList";
 import { Link } from "react-router";
 import StatusDetailsDialog from "../../../components/StatusDetailsDialog/StatusDetailsDialog";
 import { useSelector } from "react-redux";
+import ActivityLog from "../components/activityLog/ActivityLog";
 
 interface DashboardStats {
   totalEmployees: number;
@@ -176,6 +177,7 @@ const HrDashboard = () => {
         <AnnouncementList customHeight="h-100" />
       </div>
       <AttendanceTable />
+      <ActivityLog/>
 
       <AnnouncementDialog
         open={openDialog}

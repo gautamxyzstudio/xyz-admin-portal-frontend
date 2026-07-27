@@ -33,6 +33,7 @@ import TimeLogAnalytics from "./features/timeLogAnalytics/screens/TimeLogAnalyti
 import Projects from "./features/projects/screens/Projects.js";
 import LeaveBalances from "./features/leaves/screens/leaveBalances/LeaveBalances.js";
 import HandBook from "./features/handbook/screens/HandBook.js";
+import ViewAllActivityLogs from "./features/dashboard/components/activityLog/ViewAllActivityLogs.js";
 
 const App: React.FC = () => {
   const [isBlocked, setIsBlocked] = useState(false);
@@ -131,6 +132,7 @@ const App: React.FC = () => {
                         </DashboardLayout>
                       }
                     />
+
                     <Route
                       path="attendance"
                       element={
@@ -184,6 +186,14 @@ const App: React.FC = () => {
                       element={
                         <DashboardLayout>
                           <AddEmployee />
+                        </DashboardLayout>
+                      }
+                    />
+                    <Route
+                      path="activity-logs"
+                      element={
+                        <DashboardLayout>
+                          <ViewAllActivityLogs />
                         </DashboardLayout>
                       }
                     />
@@ -245,6 +255,15 @@ const App: React.FC = () => {
                         </DashboardLayout>
                       }
                     />
+
+                    <Route
+                      path="activity-logs"
+                      element={
+                        <DashboardLayout>
+                          <ViewAllActivityLogs />
+                        </DashboardLayout>
+                      }
+                    />
                     <Route
                       path="handbook"
                       element={
@@ -277,9 +296,9 @@ const App: React.FC = () => {
                     element={<VerifyOtp />}
                   />
                   <Route
-  path="/reset-password"
-  element={<ResetPassword />}
-/>
+                    path="/reset-password"
+                    element={<ResetPassword />}
+                  />
                 </Routes>
               </ThemeProvider>
             </SnackBarProvider>
