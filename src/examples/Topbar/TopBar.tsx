@@ -6,6 +6,7 @@ import CustomBox from "../../components/CustomBox/CustomBox";
 import { userDetailsInState } from "../../features/auth/authSlice";
 import { useNavigate } from "react-router";
 import { useState } from "react";
+import HistoryIcon from "@mui/icons-material/History";
 import DrawerNotification from "../../components/DrawerNotification/DrawerNotification";
 import { Logout } from "@mui/icons-material";
 import PermIdentityIcon from "@mui/icons-material/PermIdentity";
@@ -15,6 +16,10 @@ const TopBar = () => {
   const navigate = useNavigate();
   const dispatcher = useDispatch();
   const user = useSelector(userDetailsInState);
+const canViewActivityLogs =
+  user?.role === "Admin" ||
+  user?.role === "Hr" ||
+  user?.role === "Management";  
   const [openDrawer, setOpenDrawer] = useState(false);
   const { data } = useNotificationsQuery(undefined, {
     pollingInterval: 5000,
@@ -22,7 +27,7 @@ const TopBar = () => {
 
   const unread = data?.filter((n: any) => !n.isRead).length;
 
- 
+
   const openOutlook = () => {
     window.location.href = "ms-outlook://";
     setTimeout(() => {
@@ -85,6 +90,15 @@ const TopBar = () => {
               <PermIdentityIcon className="group-hover:text-primary" />
               Profile
             </button>
+            {canViewActivityLogs && (
+  <button
+    className="flex items-center gap-0.5 w-full cursor-pointer group hover:text-primary hover:bg-background px-4 py-2 rounded-lg transition-colors duration-300 ease-in-out"
+    onClick={() => navigate("/activity-logs")}
+  >
+    <HistoryIcon className="group-hover:text-primary" />
+    Activity Log
+  </button>
+)}
             <button
               className="flex items-center gap-0.5 w-full cursor-pointer group hover:text-primary hover:bg-background px-4 py-2 rounded-lg transition-colors duration-300 ease-in-out"
               onClick={() => handleLinkPress("Log Out")}

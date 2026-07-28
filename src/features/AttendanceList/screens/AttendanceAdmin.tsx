@@ -139,6 +139,7 @@ const AttendanceAdmin = () => {
   const [updateAttendance] = useUpdateAttendanceMutation();
   const { isLoading, setIsLoading } = useLoadingWrapper();
   const { executeWithLoading } = useApiOperations();
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   const {
     attendanceData,
@@ -162,6 +163,13 @@ const AttendanceAdmin = () => {
     clearFilters,
   } = useFilterState();
 
+  useEffect(() => {
+  const today = dayjs();
+
+  if (!startDate) setStartDate(today);
+  if (!endDate) setEndDate(today);
+}, []);
+
   const debouncedSearch = useDebounce(searchQuery, 500);
 
   const {
@@ -177,19 +185,48 @@ const AttendanceAdmin = () => {
     closeModal,
   } = useModalState();
 
-  useEffect(() => {
+ useEffect(() => {
+  const loadAttendance = async () => {
     if (startDate && !endDate) return;
+
+    const currentStart = startDate?.format("YYYY-MM-DD") || "";
+    const currentEnd = endDate?.format("YYYY-MM-DD") || "";
+
+    // Only on first load, try today's attendance first
+    if (isInitialLoad) {
+      const response = await getAllAttendance({
+        page: 1,
+        pageSize: 10,
+        startDate: currentStart,
+        endDate: currentEnd,
+        search: debouncedSearch,
+      }).unwrap();
+
+      if ((response.data || []).length === 0) {
+        const yesterday = dayjs().subtract(1, "day");
+
+        setStartDate(yesterday);
+        setEndDate(yesterday);
+        setIsInitialLoad(false);
+        return;
+      }
+
+      setIsInitialLoad(false);
+    }
 
     fetchAttendance(
       {
         page: 1,
-        startDate: startDate?.format("YYYY-MM-DD") || "",
-        endDate: endDate?.format("YYYY-MM-DD") || "",
+        startDate: currentStart,
+        endDate: currentEnd,
         search: debouncedSearch,
       },
-      true,
+      false
     );
-  }, [debouncedSearch, startDate, endDate]);
+  };
+
+  loadAttendance();
+}, [debouncedSearch, startDate, endDate]);
 
   const handleClearFilter = async () => {
     clearFilters();
@@ -224,8 +261,7 @@ const AttendanceAdmin = () => {
 
       if (startDate || endDate) {
         wsData.push([
-          `Date: ${startDate?.format("DD-MM-YYYY") || "All"}  To  ${
-            endDate?.format("DD-MM-YYYY") || "All"
+          `Date: ${startDate?.format("DD-MM-YYYY") || "All"}  To  ${endDate?.format("DD-MM-YYYY") || "All"
           }`,
         ]);
       }
@@ -242,16 +278,7 @@ const AttendanceAdmin = () => {
 
       //  All rows
       allRows.forEach((row) => {
-        let workingHours = "";
 
-        if (row.in && row.out) {
-          const start = dayjs(`2000-01-01 ${row.in}`);
-          const end = dayjs(`2000-01-01 ${row.out}`);
-          const diff = end.diff(start, "second");
-          workingHours = secondsToHoursMinutes(diff);
-        } else if (row.in) {
-          workingHours = "In Progress";
-        }
 
         wsData.push([
           row?.user?.user_detial?.empCode || "",
@@ -259,7 +286,10 @@ const AttendanceAdmin = () => {
           row?.Date ? dayjs(row.Date).format("DD/MM/YYYY") : "",
           row.in ? convertTo12HourFormat(row.in) : "",
           row.out ? convertTo12HourFormat(row.out) : "",
-          workingHours, // Updated calculated hours
+          row.out
+            ? secondsToHoursMinutes(row.working_hours || 0)
+            : "In Progress",
+
         ]);
       });
 
@@ -301,14 +331,12 @@ const AttendanceAdmin = () => {
       return;
     }
 
-    // Modal pehle band karein taaki user ko fast response mile
     closeModal();
 
     await executeWithLoading(async () => {
       if (!selectedAttendance?.id) return;
 
       // API update call
-      // invalidatesTags: ["Attendance"] ki wajah se cache automatic refresh ho jayega
       await updateAttendance({
         id: selectedAttendance.id,
         data: {
@@ -317,8 +345,6 @@ const AttendanceAdmin = () => {
         },
       }).unwrap();
 
-      // Ab important part: Kyunki aapne 'attendanceData' ko local state mein rakha hai,
-      // humein fetchAttendance call karna hoga naya data state mein bharne ke liye.
       await fetchAttendance(
         {
           page,
@@ -326,7 +352,7 @@ const AttendanceAdmin = () => {
           endDate: endDate?.format("YYYY-MM-DD") || "",
           search: searchQuery,
         },
-        false, // Silent refresh (loading spinner nahi dikhayenge)
+        false,
       );
     }, setIsLoading);
   };
@@ -388,29 +414,15 @@ const AttendanceAdmin = () => {
       ),
     },
     {
-      field: "attendance_seconds",
+      field: "working_hours",
       headerName: "Working Hours",
       width: 120,
       renderCell: (params) => {
-        const { in: checkIn, out: checkOut } = params.row;
-
-        // Yahan manual calculation logic taaki backend ki galti na dikhe
-        if (checkIn && checkOut) {
-          const startTime = dayjs(`2000-01-01 ${checkIn}`);
-          const endTime = dayjs(`2000-01-01 ${checkOut}`);
-
-          const diffInSeconds = endTime.diff(startTime, "second");
-
-          return (
-            <span className="text-xs font-medium">
-              {secondsToHoursMinutes(diffInSeconds)}
-            </span>
-          );
-        }
-
         return (
           <span className="text-xs font-medium">
-            {checkIn ? "in progress" : "-"}
+            {params.row.out
+              ? secondsToHoursMinutes(params.row.working_hours || 0)
+              : "in progress"}
           </span>
         );
       },
@@ -473,7 +485,7 @@ const AttendanceAdmin = () => {
             onClick={handleClearFilter}
             customStyles=" w-30 p-2!"
             buttonStyle="primary"
-            // icon={<CgClose size={24} />}
+          // icon={<CgClose size={24} />}
           />
         </div>
       </CustomBox>
