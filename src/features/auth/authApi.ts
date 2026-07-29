@@ -11,6 +11,16 @@ export const authApi = baseApi.injectEndpoints({
     userDetails: builder.query<any, { id: number }>({
       query: ({ id }) => ({ url: endpoints.userDetails(id), method: "GET" }),
     }),
+    changePassword: builder.mutation<
+      any,
+      { currentPassword: string; newPassword: string }
+    >({
+      query: (data) => ({
+        url: endpoints.changePassword,
+        method: "POST",
+        body: data,
+      }),
+    }),
   }),
 });
 
@@ -18,4 +28,5 @@ export const {
   useLoginMutation,
   useLazyUserDetailsQuery,
   useUserDetailsQuery,
+  useChangePasswordMutation,
 } = authApi;

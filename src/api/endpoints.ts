@@ -5,6 +5,7 @@ export const endpoints = {
   login: `${baseUrl}/api/auth/local`,
   register: `${baseUrl}/api/auth/local/register`,
   userDetails: (id: number | string) => `${baseUrl}/api/user/${id}`,
+  changePassword: `${baseUrl}/api/change-password`,
 
   // Forgot Password
   sendOtp:`${baseUrl}/api/forgot-password`,
