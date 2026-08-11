@@ -1,4 +1,3 @@
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useDispatch, useSelector } from "react-redux";
 import { Icons } from "../../assets/myAssets/exporter";
@@ -29,7 +28,6 @@ const TopBar = () => {
   });
 
   const unread = data?.filter((n: any) => !n.isRead).length;
-
 
   const openOutlook = () => {
     window.location.href = "ms-outlook://";
@@ -84,11 +82,11 @@ const TopBar = () => {
           />
           <div
             tabIndex={-1}
-            className="dropdown-content menu bg-white rounded-2xl z-[999] p-2 shadow-2xl border border-gray-100 gap-y-1 w-64 mt-2"
+            className="dropdown-content menu bg-white rounded-2xl z-999 p-2 shadow-2xl border border-gray-100 gap-y-1 w-64 mt-1"
           >
             {/* User Profile Header */}
             <div
-              className="flex items-center gap-3 p-2.5 rounded-xl bg-gradient-to-r from-slate-50 to-gray-50 border border-slate-100 mb-1 cursor-pointer hover:bg-slate-100/70 transition-colors"
+              className="flex items-center gap-3 p-2.5 rounded-xl bg-linear-to-r from-slate-50 to-gray-50 border border-slate-100 mb-1 cursor-pointer hover:bg-slate-100/70 transition-colors"
               onClick={() => navigate("/profile")}
             >
               <img
@@ -128,7 +126,6 @@ const TopBar = () => {
                 onClick={() => navigate("/activity-logs")}
               >
                 <div className="w-8 h-8 rounded-lg bg-primary-20 text-primary flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
-
                   <HistoryIcon className="group-hover:text-primary" />
                 </div>
                 Activity Log

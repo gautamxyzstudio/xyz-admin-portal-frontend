@@ -22,7 +22,7 @@ const LeaveDetailsDialog = ({
   const leaveDays = data?.leave_days ?? [];
 
   const hasDifferentLeaveTypes = leaveDays.some(
-    (day: ILeaveDay) => day.leave_type !== leaveDays[0]?.leave_type
+    (day: ILeaveDay) => day.leave_type !== leaveDays[0]?.leave_type,
   );
 
   return (
@@ -62,7 +62,7 @@ const LeaveDetailsDialog = ({
             <h6 className="font-semibold text-xl">Leave Details</h6>
             <span
               className={`${getLeaveStatusColor(
-                data?.status ?? "pending"
+                data?.status ?? "pending",
               )} text-xs py-1.5 px-3 rounded-full`}
             >
               {data?.status}
@@ -95,7 +95,7 @@ const LeaveDetailsDialog = ({
               </span>
               <p className="text-base capitalize">
                 {getLeaveTypeTitle(
-                  data?.leave_type as "CL" | "EL" | "SL" | "un-paid"
+                  data?.leave_type as "CL" | "EL" | "SL" | "un-paid",
                 )}
               </p>
             </div>
@@ -115,7 +115,9 @@ const LeaveDetailsDialog = ({
                   Which Half?
                 </span>
                 <p className="text-base capitalize">
-                  {data.half_day_type ? "First Half" : "Second Half"}
+                  {data.half_day_type === "second_half"
+                    ? "Second Half"
+                    : "First Half"}
                 </p>
               </div>
             )}
@@ -170,7 +172,7 @@ const LeaveDetailsDialog = ({
                       {/* Leave Type */}
                       <div className="text-sm text-gray-800">
                         {getLeaveTypeTitle(
-                          day.leave_type as "CL" | "EL" | "SL" | "un-paid"
+                          day.leave_type as "CL" | "EL" | "SL" | "un-paid",
                         )}
                       </div>
                     </div>
