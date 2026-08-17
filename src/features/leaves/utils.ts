@@ -1,7 +1,7 @@
 import type { UIStatus } from "./leaves.types";
 
 export const getLeaveType = (
-  type: "Causal Leave" | "Earn Leave" | "Sick Leave" | "Unpaid Leave"
+  type: "Causal Leave" | "Earn Leave" | "Sick Leave" | "Unpaid Leave",
 ) => {
   switch (type) {
     case "Causal Leave":
@@ -18,7 +18,7 @@ export const getLeaveType = (
 };
 
 export const getLeaveCategory = (
-  category: "Full Day" | "Half Day" | "Short Leave"
+  category: "Full Day" | "Half Day" | "Short Leave",
 ) => {
   switch (category) {
     case "Full Day":
@@ -54,13 +54,12 @@ export const getLeaveTypeTitle = (type?: "CL" | "EL" | "SL" | "un-paid") => {
     case "un-paid":
       return "Unpaid Leave";
     default:
-      return "Leave";
+      return "Short Leave";
   }
 };
 
-
 export const mapStatusToUI = (
-  status?: "pending" | "approved" | "declined"
+  status?: "pending" | "approved" | "declined",
 ): UIStatus => {
   switch (status) {
     case "approved":
@@ -74,4 +73,3 @@ export const mapStatusToUI = (
 
 export const normalizeStatusToBackend = (status: UIStatus) =>
   status.toLowerCase() as Lowercase<UIStatus>;
-

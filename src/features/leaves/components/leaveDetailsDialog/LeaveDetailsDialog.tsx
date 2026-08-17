@@ -133,12 +133,14 @@ const LeaveDetailsDialog = ({
                 {dayjs(data?.end_date).format("DD MMM, YYYY")}
               </p>
             </div>
-            <div className="flex flex-col gap-y-0.5">
-              <span className="text-black-80 text-sm font-semibold">
-                Leave Days
-              </span>
-              <p className="text-base">{data?.days ?? 1}</p>
-            </div>
+            {data?.leave_category !== "short_leave" && (
+              <div className="flex flex-col gap-y-0.5">
+                <span className="text-black-80 text-sm font-semibold">
+                  Leave Days
+                </span>
+                <p className="text-base">{data?.days ?? 1}</p>
+              </div>
+            )}
           </div>
           {hasDifferentLeaveTypes &&
             leaveDays?.length > 1 &&
