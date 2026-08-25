@@ -60,6 +60,8 @@ import PROJECT_UNFILL from "./icons/project_unfill.svg";
 import PROJECT_FILL from "./icons/project_fill.svg";
 import HANDBOOK from "./icons/handbook.svg";
 import HANDBOOK_FILL from "./icons/handbook_fill.svg";
+import TASKS from "./icons/Tasks.svg";
+import TASKS_FILL from "./icons/Tasks_FILL.svg";
 
 export const Icons = {
   CROSS_ICON,
@@ -123,6 +125,8 @@ export const Icons = {
   PROJECT_FILL,
   HANDBOOK,
   HANDBOOK_FILL,
+  TASKS,
+  TASKS_FILL
 };
 
 // Images

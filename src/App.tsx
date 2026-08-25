@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Tasks from "./features/tasks/components/tasks.jsx";
 import "react-toastify/dist/ReactToastify.css";
 import { Routes, Route } from "react-router-dom";
 import PrivateRoute from "./PrivateRoutes";
@@ -158,6 +159,15 @@ const App: React.FC = () => {
                       }
                     />
                     <Route
+                      path="tasks"
+                      element={
+                        <DashboardLayout>
+                          <Tasks />
+                        </DashboardLayout>
+                      }
+                    />
+                    
+                    <Route
                       path="all-leaves/leave-balance"
                       element={
                         <DashboardLayout>
@@ -291,14 +301,8 @@ const App: React.FC = () => {
                   </Route>
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/forgot-password" element={<SendOtp />} />
-                  <Route
-                    path="/verify-reset-otp"
-                    element={<VerifyOtp />}
-                  />
-                  <Route
-                    path="/reset-password"
-                    element={<ResetPassword />}
-                  />
+                  <Route path="/verify-reset-otp" element={<VerifyOtp />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
                 </Routes>
               </ThemeProvider>
             </SnackBarProvider>
