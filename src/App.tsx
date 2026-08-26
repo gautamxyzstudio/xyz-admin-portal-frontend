@@ -35,6 +35,7 @@ import LeaveBalances from "./features/leaves/screens/leaveBalances/LeaveBalances
 import HandBook from "./features/handbook/screens/HandBook.js";
 import ViewAllActivityLogs from "./features/dashboard/components/activityLog/ViewAllActivityLogs.js";
 import TaskListComponents from "./features/tasks/components/TaskListComponents.js";
+import AllTasks from "./features/allTasks/components/AllTasks.tsx";
 
 const App: React.FC = () => {
   const [isBlocked, setIsBlocked] = useState(false);
@@ -163,6 +164,15 @@ const App: React.FC = () => {
                       element={
                         <DashboardLayout>
                           <TaskListComponents />
+                        </DashboardLayout>
+                      }
+                    />
+
+                    <Route
+                      path="employee-tasks"
+                      element={
+                        <DashboardLayout>
+                          <AllTasks />
                         </DashboardLayout>
                       }
                     />

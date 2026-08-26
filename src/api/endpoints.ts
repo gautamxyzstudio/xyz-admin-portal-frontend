@@ -14,6 +14,7 @@ export const endpoints = {
   resendOtp: `${baseUrl}/api/resend-reset-otp`,
 
   // Employee
+  activeEmployees: `${baseUrl}/api/employees/active-employees`,
   info: `${baseUrl}/api/emp-details/?populate=*&sort=id`,
   addinfo: `${baseUrl}/api/emp-details/?populate=*`,
   infoEdit: (id: number | string) =>
@@ -46,6 +47,8 @@ export const endpoints = {
   createTask: `${baseUrl}/api/task-items`,
   deleteTask: (id: string | number) => `${baseUrl}/api/task-items/${id}`,
   updateTask: (id: string | number) => `${baseUrl}/api/task-items/${id}`,
+  getAllTasks: `${baseUrl}/api/task-assigneds`,
+
   // Attendance
   getAttendanceLegacy: `${baseUrl}/api/daily-attendances/?populate=*&sort=id`,
   postAttendance: `${baseUrl}/api/daily-attendances`,

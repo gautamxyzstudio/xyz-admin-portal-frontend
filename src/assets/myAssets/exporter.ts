@@ -126,7 +126,7 @@ export const Icons = {
   HANDBOOK,
   HANDBOOK_FILL,
   TASKS,
-  TASKS_FILL
+  TASKS_FILL,
 };
 
 // Images
