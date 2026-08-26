@@ -8,10 +8,10 @@ export const endpoints = {
   changePassword: `${baseUrl}/api/change-password`,
 
   // Forgot Password
-  sendOtp:`${baseUrl}/api/forgot-password`,
-  verifyOtp : `${baseUrl}/api/verify-reset-otp`,
-  resetPassword :`${baseUrl}/api/reset-password`,
-  resendOtp : `${baseUrl}/api/resend-reset-otp`,
+  sendOtp: `${baseUrl}/api/forgot-password`,
+  verifyOtp: `${baseUrl}/api/verify-reset-otp`,
+  resetPassword: `${baseUrl}/api/reset-password`,
+  resendOtp: `${baseUrl}/api/resend-reset-otp`,
 
   // Employee
   info: `${baseUrl}/api/emp-details/?populate=*&sort=id`,
@@ -39,8 +39,13 @@ export const endpoints = {
   UPLOAD_IMAGE: `${baseUrl}/api/upload`,
 
   // Activity Log
-  ActivityLog :`${baseUrl}/api/activity-logs`,
+  ActivityLog: `${baseUrl}/api/activity-logs`,
 
+  // Tasks
+  getTodayTasks: `${baseUrl}/api/task-assigned/today`,
+  createTask: `${baseUrl}/api/task-items`,
+  deleteTask: (id: string | number) => `${baseUrl}/api/task-items/${id}`,
+  updateTask: (id: string | number) => `${baseUrl}/api/task-items/${id}`,
   // Attendance
   getAttendanceLegacy: `${baseUrl}/api/daily-attendances/?populate=*&sort=id`,
   postAttendance: `${baseUrl}/api/daily-attendances`,

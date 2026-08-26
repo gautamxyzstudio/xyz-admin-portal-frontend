@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Tasks from "./features/tasks/components/tasks.jsx";
+import Tasks from "./features/tasks/components/Tasks";
 import "react-toastify/dist/ReactToastify.css";
 import { Routes, Route } from "react-router-dom";
 import PrivateRoute from "./PrivateRoutes";
