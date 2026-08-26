@@ -7,7 +7,6 @@ import {
   CheckCircleOutline,
   AccessTime,
   EditOutlined,
-  DeleteOutline,
   PersonOutline,
   KeyboardArrowDown,
   AssignmentOutlined,
@@ -17,7 +16,6 @@ import { CircularProgress } from "@mui/material";
 import {
   useGetTodayTasksQuery,
   useUpdateTaskMutation,
-  useDeleteTaskMutation,
   type TaskStatus,
   type ITaskItem,
 } from "../taskApi";
@@ -54,12 +52,10 @@ const StatusSelect: React.FC<StatusSelectProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Detect whether to open upwards or downwards based on viewport space
   const handleToggle = () => {
     if (!isOpen && dropdownRef.current) {
       const rect = dropdownRef.current.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
-      // 160px is the approximate height of the status dropdown
       setOpenUpwards(spaceBelow < 170);
     }
     setIsOpen(!isOpen);
@@ -84,7 +80,11 @@ const StatusSelect: React.FC<StatusSelectProps> = ({
           <KeyboardArrowDown
             sx={{
               fontSize: 15,
-              transform: isOpen ? (openUpwards ? "rotate(0deg)" : "rotate(180deg)") : "rotate(0deg)",
+              transform: isOpen
+                ? openUpwards
+                  ? "rotate(0deg)"
+                  : "rotate(180deg)"
+                : "rotate(0deg)",
               transition: "transform 0.2s ease-in-out",
             }}
           />
@@ -142,10 +142,6 @@ const TaskListComponents = () => {
   const [selectedTaskToEdit, setSelectedTaskToEdit] = useState<ITaskItem | null>(
     null
   );
-
-  const [deletingTaskId, setDeletingTaskId] = useState<string | number | null>(
-    null
-  );
   const [updatingTaskId, setUpdatingTaskId] = useState<string | number | null>(
     null
   );
@@ -159,7 +155,6 @@ const TaskListComponents = () => {
 
   // RTK Query: Mutations
   const [updateTask] = useUpdateTaskMutation();
-  const [deleteTask] = useDeleteTaskMutation();
 
   // Status Counts
   const inProgressCount = taskItems.filter(
@@ -176,7 +171,6 @@ const TaskListComponents = () => {
       ? taskItems
       : taskItems.filter((task) => task.status === activeTab);
 
-  // Modal Handlers
   const handleOpenAddModal = () => {
     setSelectedTaskToEdit(null);
     setIsModalOpen(true);
@@ -187,7 +181,6 @@ const TaskListComponents = () => {
     setIsModalOpen(true);
   };
 
-  // Status Dropdown Update with Refetch Sync
   const handleStatusChange = async (
     id: string | number,
     newStatus: TaskStatus
@@ -203,19 +196,6 @@ const TaskListComponents = () => {
       console.error(`Failed to update task ${id}:`, error);
     } finally {
       setUpdatingTaskId(null);
-    }
-  };
-
-  // Delete with Refetch Sync
-  const handleDeleteTask = async (id: string | number) => {
-    try {
-      setDeletingTaskId(id);
-      await deleteTask(id).unwrap();
-      await refetch();
-    } catch (error) {
-      console.error(`Failed to delete task ${id}:`, error);
-    } finally {
-      setDeletingTaskId(null);
     }
   };
 
@@ -361,12 +341,28 @@ const TaskListComponents = () => {
         ))}
       </div>
 
-      {/* 4. Independent Scrollable Task List with Hidden Scrollbars */}
+      {/* 4. Independent Scrollable Task List with Smooth Skeleton Loading */}
       <div className="flex-1 min-h-0 overflow-y-auto pr-1 pb-4 flex flex-col gap-2.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {isLoading ? (
-          <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center my-auto">
-            <CircularProgress size={26} sx={{ color: "#ea580c" }} />
-            <p className="text-gray-400 text-xs mt-2">Loading today's tasks...</p>
+          <div className="flex flex-col gap-2.5 py-1">
+            {[1, 2, 3, 4].map((n) => (
+              <div
+                key={n}
+                className="bg-white rounded-xl border border-gray-100 p-3.5 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-3 animate-pulse"
+              >
+                <div className="flex flex-col gap-2.5 flex-1 w-full">
+                  <div className="h-3.5 bg-gray-200 rounded-md w-2/5"></div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 bg-gray-100 rounded-md w-20"></div>
+                    <div className="h-4 bg-gray-100 rounded-md w-28"></div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 w-full md:w-auto justify-end">
+                  <div className="h-7 bg-gray-100 rounded-lg w-32"></div>
+                  <div className="h-7 w-7 bg-gray-100 rounded-lg"></div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : filteredTasks.length === 0 ? (
           <div className="bg-white rounded-2xl border border-dashed border-gray-200 py-16 px-6 flex flex-col items-center justify-center text-center shadow-2xs my-auto">
@@ -400,21 +396,19 @@ const TaskListComponents = () => {
         ) : (
           filteredTasks.map((item) => {
             const formattedTime = formatEstimatedTime(item.estimatedMinutes);
-            const isItemDeleting = deletingTaskId === item.id;
             const isItemUpdating = updatingTaskId === item.id;
-            const isItemBusy = isItemDeleting || isItemUpdating;
 
             return (
               <div
                 key={item.id}
                 className={`bg-white rounded-xl border border-gray-100 p-3.5 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-3 transition hover:border-orange-200 ${
-                  isItemBusy ? "opacity-75" : ""
+                  isItemUpdating ? "opacity-75" : ""
                 }`}
               >
-                {/* Left: Task Description */}
+                {/* Left: Task Title Only & Metadata Badges */}
                 <div className="flex flex-col flex-1 pl-1">
                   <span className="text-sm font-semibold leading-snug text-gray-800">
-                    {item.description}
+                    {item.title}
                   </span>
 
                   <div className="flex items-center gap-2 mt-2 flex-wrap">
@@ -439,12 +433,12 @@ const TaskListComponents = () => {
                   </div>
                 </div>
 
-                {/* Right: Custom Status Dropdown, Edit & Delete Buttons */}
+                {/* Right: Custom Status Dropdown & Edit Button */}
                 <div className="flex items-center gap-1.5 w-full md:w-auto justify-between md:justify-end pt-2 md:pt-0 border-t md:border-t-0 border-gray-100">
                   <StatusSelect
                     currentStatus={item.status}
                     loading={isItemUpdating}
-                    disabled={isItemBusy}
+                    disabled={isItemUpdating}
                     onSelect={(newStatus) =>
                       handleStatusChange(item.id, newStatus)
                     }
@@ -453,25 +447,11 @@ const TaskListComponents = () => {
                   {/* Edit Button */}
                   <button
                     onClick={() => handleOpenEditModal(item)}
-                    disabled={isItemBusy}
+                    disabled={isItemUpdating}
                     title="Edit task"
                     className="text-gray-400 hover:text-blue-600 transition p-1.5 rounded-lg hover:bg-blue-50 flex items-center justify-center cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <EditOutlined sx={{ fontSize: 18 }} />
-                  </button>
-
-                  {/* Delete Button */}
-                  <button
-                    onClick={() => handleDeleteTask(item.id)}
-                    disabled={isItemBusy}
-                    title="Delete task"
-                    className="text-gray-300 hover:text-red-500 transition p-1.5 rounded-lg hover:bg-red-50 flex items-center justify-center cursor-pointer disabled:cursor-not-allowed"
-                  >
-                    {isItemDeleting ? (
-                      <CircularProgress size={16} sx={{ color: "#ef4444" }} />
-                    ) : (
-                      <DeleteOutline sx={{ fontSize: 18 }} />
-                    )}
                   </button>
                 </div>
               </div>

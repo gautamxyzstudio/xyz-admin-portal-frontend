@@ -133,10 +133,12 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 }) => {
   const todayStr = new Date().toISOString().split("T")[0];
 
+  const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<TaskStatus>("planned");
   const [hours, setHours] = useState<number | string>("");
   const [minutes, setMinutes] = useState<number | string>("");
+  const [errors, setErrors] = useState<{ title?: string; time?: string }>({});
   const [isProcessing, setIsProcessing] = useState(false);
 
   const [createTask, { isLoading: isCreating }] = useCreateTaskMutation();
@@ -147,20 +149,19 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
   useEffect(() => {
     if (taskToEdit) {
+      setTitle(taskToEdit.title || "");
       setDescription(taskToEdit.description || "");
       setStatus(taskToEdit.status || "planned");
-
-      const totalMins = taskToEdit.estimatedMinutes || 0;
-      const h = Math.floor(totalMins / 60);
-      const m = totalMins % 60;
-
-      setHours(h > 0 ? h : "");
-      setMinutes(m > 0 ? m : "");
+      setHours("");
+      setMinutes("");
+      setErrors({});
     } else {
+      setTitle("");
       setDescription("");
       setStatus("planned");
       setHours("");
       setMinutes("");
+      setErrors({});
     }
   }, [taskToEdit, isOpen]);
 
@@ -168,9 +169,22 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!description.trim()) return;
+    const newErrors: { title?: string; time?: string } = {};
+
+    if (!title.trim()) {
+      newErrors.title = "Task title is required.";
+    }
 
     const totalMinutes = (Number(hours) || 0) * 60 + (Number(minutes) || 0);
+
+    if (!isEditMode && totalMinutes <= 0) {
+      newErrors.time = "Please enter estimated time.";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
 
     try {
       setIsProcessing(true);
@@ -178,14 +192,15 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         await updateTask({
           id: taskToEdit.id,
           body: {
+            title: title.trim(),
             description: description.trim(),
             status,
-            estimatedMinutes: totalMinutes,
             date: taskToEdit.date || todayStr,
           },
         }).unwrap();
       } else {
         await createTask({
+          title: title.trim(),
           description: description.trim(),
           status,
           estimatedMinutes: totalMinutes,
@@ -212,63 +227,112 @@ export const TaskModal: React.FC<TaskModalProps> = ({
           {isEditMode ? "Edit Task" : "Add Today's Task"}
         </h2>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-3.5">
+          {/* Title Input */}
           <div>
-            <label className="text-xs font-semibold text-gray-600 block mb-1.5">
-              Description *
+            <label className="text-xs font-semibold text-gray-600 block mb-1">
+              Title <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              placeholder="What task are you working on today?"
+              value={title}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                if (errors.title) setErrors((prev) => ({ ...prev, title: undefined }));
+              }}
+              className={`w-full text-xs px-3.5 py-2.5 border rounded-xl outline-none transition text-gray-800 ${
+                errors.title
+                  ? "border-red-400 focus:border-red-500 bg-red-50/20"
+                  : "border-gray-200 focus:border-orange-500"
+              }`}
+            />
+            {errors.title && (
+              <span className="text-[11px] text-red-500 font-medium mt-1 block">
+                {errors.title}
+              </span>
+            )}
+          </div>
+
+          {/* Description Textarea */}
+          <div>
+            <label className="text-xs font-semibold text-gray-600 block mb-1">
+              Description 
             </label>
             <textarea
-              rows={5}
-              required
-              placeholder="What are you working on today?"
+              rows={6}
+              placeholder="Add key objectives, links, or task notes...    (optional)"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full min-h-[130px] text-xs px-3.5 py-2.5 border border-gray-200 rounded-xl outline-none focus:border-orange-500 transition resize-y leading-relaxed text-gray-800 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="w-full min-h-[85px] text-xs px-3.5 py-2.5 border border-gray-200 rounded-xl outline-none focus:border-orange-500 transition resize-y leading-relaxed text-gray-800 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             />
           </div>
 
+          {/* Status Select */}
           <div>
-            <label className="text-xs font-semibold text-gray-600 block mb-1.5">
-              Status
+            <label className="text-xs font-semibold text-gray-600 block mb-1">
+              Status <span className="text-red-500">*</span>
             </label>
             <ModalStatusSelect value={status} onChange={setStatus} />
           </div>
 
-          <div>
-            <label className="text-xs font-semibold text-gray-600 block mb-1.5">
-              Estimated Time
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="relative flex items-center">
-                <input
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  value={hours}
-                  onChange={(e) => setHours(e.target.value)}
-                  className="w-full text-xs px-3.5 py-2.5 pr-10 border border-gray-200 rounded-xl outline-none focus:border-orange-500 transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                />
-                <span className="absolute right-3.5 text-xs text-gray-400 pointer-events-none">
-                  hrs
-                </span>
-              </div>
+          {/* Estimated Time */}
+          {!isEditMode && (
+            <div>
+              <label className="text-xs font-semibold text-gray-600 block mb-1">
+                Estimated Time <span className="text-red-500">*</span>
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="relative flex items-center">
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={hours}
+                    onChange={(e) => {
+                      setHours(e.target.value);
+                      if (errors.time) setErrors((prev) => ({ ...prev, time: undefined }));
+                    }}
+                    className={`w-full text-xs px-3.5 py-2.5 pr-10 border rounded-xl outline-none transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                      errors.time
+                        ? "border-red-400 focus:border-red-500 bg-red-50/20"
+                        : "border-gray-200 focus:border-orange-500"
+                    }`}
+                  />
+                  <span className="absolute right-3.5 text-xs text-gray-400 pointer-events-none">
+                    hrs
+                  </span>
+                </div>
 
-              <div className="relative flex items-center">
-                <input
-                  type="number"
-                  min="0"
-                  max="59"
-                  placeholder="30"
-                  value={minutes}
-                  onChange={(e) => setMinutes(e.target.value)}
-                  className="w-full text-xs px-3.5 py-2.5 pr-10 border border-gray-200 rounded-xl outline-none focus:border-orange-500 transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                />
-                <span className="absolute right-3.5 text-xs text-gray-400 pointer-events-none">
-                  mins
-                </span>
+                <div className="relative flex items-center">
+                  <input
+                    type="number"
+                    min="0"
+                    max="59"
+                    placeholder="30"
+                    value={minutes}
+                    onChange={(e) => {
+                      setMinutes(e.target.value);
+                      if (errors.time) setErrors((prev) => ({ ...prev, time: undefined }));
+                    }}
+                    className={`w-full text-xs px-3.5 py-2.5 pr-10 border rounded-xl outline-none transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                      errors.time
+                        ? "border-red-400 focus:border-red-500 bg-red-50/20"
+                        : "border-gray-200 focus:border-orange-500"
+                    }`}
+                  />
+                  <span className="absolute right-3.5 text-xs text-gray-400 pointer-events-none">
+                    mins
+                  </span>
+                </div>
               </div>
+              {errors.time && (
+                <span className="text-[11px] text-red-500 font-medium mt-1 block">
+                  {errors.time}
+                </span>
+              )}
             </div>
-          </div>
+          )}
 
           <div className="flex items-center justify-end gap-3 mt-2">
             <button

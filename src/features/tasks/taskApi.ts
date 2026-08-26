@@ -7,7 +7,8 @@ export type TaskStatus = "in-progress" | "planned" | "blocked" | "completed";
 
 export interface ITaskItem {
   id: string | number;
-  description: string;
+  title: string;
+  description?: string;
   status: TaskStatus;
   estimatedMinutes?: number;
   date: string;
@@ -22,7 +23,8 @@ export interface ITaskAssignedToday {
 }
 
 export interface ICreateTaskPayload {
-  description: string;
+  title: string;
+  description?: string;
   status: TaskStatus;
   date: string;
   estimatedMinutes?: number;
@@ -31,6 +33,7 @@ export interface ICreateTaskPayload {
 export interface IUpdateTaskPayload {
   id: string | number;
   body: {
+    title?: string;
     description?: string;
     status?: TaskStatus;
     estimatedMinutes?: number;
