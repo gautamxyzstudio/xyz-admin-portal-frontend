@@ -1,5 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
-import { KeyboardArrowDown } from "@mui/icons-material";
+import React, { useState, useEffect } from "react";
 import { CircularProgress } from "@mui/material";
 import {
   useCreateTaskMutation,
@@ -49,78 +48,38 @@ const ModalStatusSelect: React.FC<{
   value: TaskStatus;
   onChange: (status: TaskStatus) => void;
 }> = ({ value, onChange }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const activeConfig = STATUS_CONFIG[value] || STATUS_CONFIG.planned;
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   return (
-    <div className="relative w-full" ref={dropdownRef}>
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-3 py-2 border border-gray-200 rounded-xl text-xs font-medium text-gray-700 bg-white outline-none focus:border-orange-500 transition cursor-pointer"
-      >
-        <span
-          className={`px-2 py-0.5 rounded-md font-semibold ${activeConfig.bg} ${activeConfig.text}`}
-        >
-          {activeConfig.label}
-        </span>
-        <KeyboardArrowDown
-          sx={{
-            fontSize: 16,
-            color: "#9ca3af",
-            transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
-            transition: "transform 0.2s ease-in-out",
-          }}
-        />
-      </button>
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full">
+      {(Object.keys(STATUS_CONFIG) as TaskStatus[]).map((statusKey) => {
+        const config = STATUS_CONFIG[statusKey];
+        const isSelected = statusKey === value;
 
-      {isOpen && (
-        <div className="absolute left-0 right-0 mt-1.5 rounded-xl bg-white border border-gray-100 shadow-xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
-          {(Object.keys(STATUS_CONFIG) as TaskStatus[]).map((statusKey) => {
-            const config = STATUS_CONFIG[statusKey];
-            const isSelected = statusKey === value;
-
-            return (
-              <button
-                key={statusKey}
-                type="button"
-                onClick={() => {
-                  onChange(statusKey);
-                  setIsOpen(false);
-                }}
-                className={`w-full flex items-center justify-between px-3.5 py-2 text-xs transition cursor-pointer ${
-                  isSelected
-                    ? "bg-orange-50/60 font-semibold"
-                    : "hover:bg-gray-50"
-                }`}
-              >
-                <span
-                  className={`px-2 py-0.5 rounded-md font-medium ${config.bg} ${config.text}`}
-                >
-                  {config.label}
-                </span>
-                {isSelected && (
-                  <span className="text-orange-500 text-xs font-bold">✓</span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
+        return (
+          <button
+            key={statusKey}
+            type="button"
+            onClick={() => onChange(statusKey)}
+            className={`py-2 px-2.5 rounded-xl text-xs font-semibold border text-center transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              isSelected
+                ? `${config.bg} ${config.text} ${config.border} shadow-2xs ring-1.5 ring-orange-400/40`
+                : "bg-gray-50/70 border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+            }`}
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                statusKey === "in-progress"
+                  ? "bg-orange-500"
+                  : statusKey === "planned"
+                  ? "bg-blue-500"
+                  : statusKey === "blocked"
+                  ? "bg-red-500"
+                  : "bg-emerald-500"
+              }`}
+            />
+            <span>{config.label}</span>
+          </button>
+        );
+      })}
     </div>
   );
 };
@@ -257,7 +216,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
           {/* Description Textarea */}
           <div>
             <label className="text-xs font-semibold text-gray-600 block mb-1">
-              Description 
+              Description
             </label>
             <textarea
               rows={6}
@@ -268,7 +227,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
             />
           </div>
 
-          {/* Status Select */}
+          {/* Status Select (Segmented Pills) */}
           <div>
             <label className="text-xs font-semibold text-gray-600 block mb-1">
               Status <span className="text-red-500">*</span>
@@ -279,7 +238,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
           {/* Estimated Time */}
           {!isEditMode && (
             <div>
-              <label className="text-xs font-semibold text-gray-600 block mb-1">
+              <label className="text-xs font-semibold text-gray-600 block mt-4">
                 Estimated Time <span className="text-red-500">*</span>
               </label>
               <div className="grid grid-cols-2 gap-3">
@@ -334,7 +293,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
             </div>
           )}
 
-          <div className="flex items-center justify-end gap-3 mt-2">
+          <div className="flex items-center justify-end gap-3 mt-5">
             <button
               type="button"
               disabled={isSubmitting}
