@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import Tasks from "./features/tasks/components/Tasks";
 import "react-toastify/dist/ReactToastify.css";
 import { Routes, Route } from "react-router-dom";
 import PrivateRoute from "./PrivateRoutes";
@@ -35,6 +34,7 @@ import Projects from "./features/projects/screens/Projects.js";
 import LeaveBalances from "./features/leaves/screens/leaveBalances/LeaveBalances.js";
 import HandBook from "./features/handbook/screens/HandBook.js";
 import ViewAllActivityLogs from "./features/dashboard/components/activityLog/ViewAllActivityLogs.js";
+import TaskListComponents from "./features/tasks/components/TaskListComponents.js";
 
 const App: React.FC = () => {
   const [isBlocked, setIsBlocked] = useState(false);
@@ -162,7 +162,7 @@ const App: React.FC = () => {
                       path="tasks"
                       element={
                         <DashboardLayout>
-                          <Tasks />
+                          <TaskListComponents />
                         </DashboardLayout>
                       }
                     />

@@ -135,7 +135,7 @@ const formatEstimatedTime = (totalMinutes?: number) => {
   return `${minutes} mins`;
 };
 
-const Tasks: React.FC = () => {
+const TaskListComponents = () => {
   const todayStr = new Date().toISOString().split("T")[0];
   const [activeTab, setActiveTab] = useState<TaskStatus | "all">("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -496,4 +496,4 @@ const Tasks: React.FC = () => {
   );
 };
 
-export default Tasks;
+export default TaskListComponents;
