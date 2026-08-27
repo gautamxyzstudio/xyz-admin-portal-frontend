@@ -20,8 +20,9 @@ export interface IEmployeeTaskContainer {
   date: string;
   employee: string | null;
   employee_id?: number | null;
-  profile_photo?: string | null;
+  profile_photo?: any;
   task_items: ITaskItem[];
+  [key: string]: any;
 }
 
 export interface IActiveEmployee {
@@ -29,13 +30,7 @@ export interface IActiveEmployee {
   username: string;
   email?: string;
   name?: string;
-  profile_photo?: {
-    url?: string;
-    formats?: {
-      thumbnail?: { url: string };
-      small?: { url: string };
-    };
-  } | string | null;
+  profile_photo?: any;
   [key: string]: any;
 }
 
@@ -102,6 +97,11 @@ export const allTasksApi = enhancedAllTasksApi.injectEndpoints({
           method: ApiMethodType.get,
         };
       },
+      transformResponse: (response: any) => {
+        if (Array.isArray(response)) return response;
+        if (Array.isArray(response?.data)) return response.data;
+        return [];
+      },
       providesTags: ["AllTasks"],
     }),
 
@@ -111,6 +111,11 @@ export const allTasksApi = enhancedAllTasksApi.injectEndpoints({
         url: endpoints.activeEmployees,
         method: ApiMethodType.get,
       }),
+      transformResponse: (response: any) => {
+        if (Array.isArray(response)) return response;
+        if (Array.isArray(response?.data)) return response.data;
+        return [];
+      },
       providesTags: ["Employees"],
     }),
 

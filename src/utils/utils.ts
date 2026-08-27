@@ -1,8 +1,128 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-export const getImageUrl = (url: string) => {
-  return url.startsWith("https")
-    ? url
-    : `${import.meta.env.VITE_API_BASE_URL}${url}`;
+export const getImageUrl = (url?: string | null): string => {
+  if (!url || typeof url !== "string") return "";
+  const trimmed = url.trim();
+  if (!trimmed) return "";
+  if (
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("//") ||
+    trimmed.startsWith("data:") ||
+    trimmed.startsWith("blob:")
+  ) {
+    return trimmed;
+  }
+  const baseUrl = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
+  const path = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+  return `${baseUrl}${path}`;
+};
+
+export const extractEmployeePhotoUrl = (empOrContainer: any): string => {
+  if (!empOrContainer) return "";
+
+  if (typeof empOrContainer === "string") {
+    return getImageUrl(empOrContainer);
+  }
+
+  // 1. profile_photo (string or object with formats/url)
+  if (empOrContainer.profile_photo) {
+    if (typeof empOrContainer.profile_photo === "string") {
+      const u = getImageUrl(empOrContainer.profile_photo);
+      if (u) return u;
+    } else if (typeof empOrContainer.profile_photo === "object") {
+      const p = empOrContainer.profile_photo;
+      const raw =
+        p?.formats?.thumbnail?.url ||
+        p?.formats?.small?.url ||
+        p?.formats?.medium?.url ||
+        p?.formats?.large?.url ||
+        p?.url;
+      if (raw) return getImageUrl(raw);
+    }
+  }
+
+  // 2. Photo (Strapi media array or object)
+  if (empOrContainer.Photo) {
+    if (Array.isArray(empOrContainer.Photo) && empOrContainer.Photo.length > 0) {
+      const p = empOrContainer.Photo[0];
+      const raw =
+        p?.formats?.thumbnail?.url ||
+        p?.formats?.small?.url ||
+        p?.formats?.medium?.url ||
+        p?.url;
+      if (raw) return getImageUrl(raw);
+    } else if (typeof empOrContainer.Photo === "object") {
+      const p = empOrContainer.Photo;
+      const raw =
+        p?.formats?.thumbnail?.url ||
+        p?.formats?.small?.url ||
+        p?.formats?.medium?.url ||
+        p?.url;
+      if (raw) return getImageUrl(raw);
+    } else if (typeof empOrContainer.Photo === "string") {
+      const u = getImageUrl(empOrContainer.Photo);
+      if (u) return u;
+    }
+  }
+
+  // 3. photo (lowercase variation)
+  if (empOrContainer.photo) {
+    if (Array.isArray(empOrContainer.photo) && empOrContainer.photo.length > 0) {
+      const p = empOrContainer.photo[0];
+      const raw =
+        p?.formats?.thumbnail?.url ||
+        p?.formats?.small?.url ||
+        p?.formats?.medium?.url ||
+        p?.url;
+      if (raw) return getImageUrl(raw);
+    } else if (typeof empOrContainer.photo === "object") {
+      const p = empOrContainer.photo;
+      const raw =
+        p?.formats?.thumbnail?.url ||
+        p?.formats?.small?.url ||
+        p?.formats?.medium?.url ||
+        p?.url;
+      if (raw) return getImageUrl(raw);
+    } else if (typeof empOrContainer.photo === "string") {
+      const u = getImageUrl(empOrContainer.photo);
+      if (u) return u;
+    }
+  }
+
+  // 4. Nested user_detial (Strapi employee details)
+  if (empOrContainer.user_detial) {
+    const nestedUrl = extractEmployeePhotoUrl(empOrContainer.user_detial);
+    if (nestedUrl) return nestedUrl;
+  }
+
+  // 5. Nested user or Employee_task relation
+  if (empOrContainer.user) {
+    const nestedUrl = extractEmployeePhotoUrl(empOrContainer.user);
+    if (nestedUrl) return nestedUrl;
+  }
+  if (empOrContainer.Employee_task) {
+    const nestedUrl = extractEmployeePhotoUrl(empOrContainer.Employee_task);
+    if (nestedUrl) return nestedUrl;
+  }
+  if (empOrContainer.employee_details) {
+    const nestedUrl = extractEmployeePhotoUrl(empOrContainer.employee_details);
+    if (nestedUrl) return nestedUrl;
+  }
+
+  // 6. Direct image or avatar or coverImage
+  if (typeof empOrContainer.image === "string" && empOrContainer.image) {
+    const u = getImageUrl(empOrContainer.image);
+    if (u) return u;
+  }
+  if (typeof empOrContainer.avatar === "string" && empOrContainer.avatar) {
+    const u = getImageUrl(empOrContainer.avatar);
+    if (u) return u;
+  }
+  if (typeof empOrContainer.coverImage === "string" && empOrContainer.coverImage) {
+    const u = getImageUrl(empOrContainer.coverImage);
+    if (u) return u;
+  }
+
+  return "";
 };
 
 export const timeStringToDate = (timeString: string) => {

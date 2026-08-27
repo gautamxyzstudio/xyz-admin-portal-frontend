@@ -15,6 +15,7 @@ import {
   useCreateAdminTaskMutation,
   useUpdateAdminTaskMutation,
 } from "../allTaskApi";
+import { extractEmployeePhotoUrl } from "../../../utils/utils";
 
 export const STATUS_CONFIG: Record<
   TaskStatus,
@@ -352,16 +353,26 @@ export const AdminTaskModal: React.FC<AdminTaskModalProps> = ({
                   className="w-full flex items-center justify-between text-xs px-3.5 py-2.5 bg-gray-50/70 border border-gray-200 rounded-xl cursor-pointer hover:bg-white focus:border-orange-500 transition text-gray-800 font-medium"
                 >
                   <div className="flex items-center gap-2 truncate">
-                    {currentEmployee?.profile_photo && typeof currentEmployee.profile_photo === "object" ? (
-                      <img
-                        src={
-                          currentEmployee.profile_photo.formats?.thumbnail?.url ||
-                          currentEmployee.profile_photo.url
-                        }
-                        alt=""
-                        className="w-4 h-4 rounded-full object-cover shrink-0"
-                      />
-                    ) : null}
+                    {(() => {
+                      const photoUrl = extractEmployeePhotoUrl(currentEmployee);
+                      if (photoUrl) {
+                        return (
+                          <img
+                            src={photoUrl}
+                            alt=""
+                            className="w-5 h-5 rounded-full object-cover shrink-0 border border-orange-200"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLElement).style.display = "none";
+                            }}
+                          />
+                        );
+                      }
+                      return (
+                        <div className="w-5 h-5 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-[10px] shrink-0">
+                          {(currentEmployee?.name || currentEmployee?.username || "U").slice(0, 1).toUpperCase()}
+                        </div>
+                      );
+                    })()}
                     <span className="truncate">
                       {currentEmployee?.name || currentEmployee?.username || "Select Employee"}
                     </span>
@@ -388,12 +399,7 @@ export const AdminTaskModal: React.FC<AdminTaskModalProps> = ({
                     {/* Scrollbar hidden cleanly with Tailwind utilities */}
                     <div className="absolute top-full mt-1.5 left-0 w-full bg-white border border-gray-100 shadow-xl rounded-xl overflow-hidden z-20 py-1 max-h-48 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                       {employees.map((emp) => {
-                        const avatarUrl =
-                          typeof emp.profile_photo === "object"
-                            ? emp.profile_photo?.formats?.thumbnail?.url || emp.profile_photo?.url
-                            : typeof emp.profile_photo === "string"
-                            ? emp.profile_photo
-                            : null;
+                        const avatarUrl = extractEmployeePhotoUrl(emp);
 
                         return (
                           <div
@@ -410,9 +416,16 @@ export const AdminTaskModal: React.FC<AdminTaskModalProps> = ({
                             }`}
                           >
                             {avatarUrl ? (
-                              <img src={avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover" />
+                              <img
+                                src={avatarUrl}
+                                alt=""
+                                className="w-5 h-5 rounded-full object-cover shrink-0 border border-orange-200"
+                                onError={(e) => {
+                                  (e.currentTarget as HTMLElement).style.display = "none";
+                                }}
+                              />
                             ) : (
-                              <div className="w-5 h-5 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-[10px]">
+                              <div className="w-5 h-5 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-[10px] shrink-0">
                                 {(emp.name || emp.username || "U").slice(0, 1).toUpperCase()}
                               </div>
                             )}
