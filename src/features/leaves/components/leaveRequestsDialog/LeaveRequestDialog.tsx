@@ -97,6 +97,13 @@ const LeaveRequestDialog = ({
 
   const watchedLeaveDays = watch("leaveDay") || [];
 
+  // Determine if this is a multi-day full-day leave
+  const isMultiDay =
+    leave?.leave_category === "full_day" &&
+    ((watchedLeaveDays && watchedLeaveDays.length > 1) ||
+      (Boolean(leave?.start_date && leave?.end_date) &&
+        leave.start_date !== leave.end_date));
+
   const editableDays = watchedLeaveDays.filter(
     (d) => d.editable !== false && d.leave_type !== "Holiday",
   );
@@ -113,7 +120,7 @@ const LeaveRequestDialog = ({
     editableDays.length > 0 && approvedDays.length === editableDays.length;
   const isAllDeclined =
     editableDays.length > 0 && declinedDays.length === editableDays.length;
-  const isPartial = approvedDays.length > 0 && declinedDays.length > 0;
+  const isPartial = isMultiDay && approvedDays.length > 0 && declinedDays.length > 0;
 
   // Batch action handlers
   const handleApproveAll = () => {
@@ -195,6 +202,7 @@ const LeaveRequestDialog = ({
       if (willBeAllDeclined) {
         toast.success("Leave request declined successfully");
       } else if (
+        isMultiDay &&
         currentApprovedDays.length > 0 &&
         currentDeclinedDays.length > 0
       ) {
@@ -258,19 +266,19 @@ const LeaveRequestDialog = ({
         <div className="w-full flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">
             <h4 className="text-xl font-semibold">Leave Request</h4>
-            {isPartial && (
+            {isMultiDay && isPartial && (
               <span className="text-xs px-3 py-1 rounded-full bg-amber-100 text-amber-800 font-semibold border border-amber-300">
                 Partially Approved ({approvedDays.length} Approved,{" "}
                 {declinedDays.length} Declined)
               </span>
             )}
-            {isAllApproved && editableDays.length > 0 && (
+            {isMultiDay && isAllApproved && editableDays.length > 0 && (
               <span className="text-xs px-3 py-1 rounded-full bg-green-100 text-green-800 font-semibold border border-green-300">
                 All Days Approved ({approvedDays.length}{" "}
                 {approvedDays.length === 1 ? "Day" : "Days"})
               </span>
             )}
-            {isAllDeclined && editableDays.length > 0 && (
+            {isMultiDay && isAllDeclined && editableDays.length > 0 && (
               <span className="text-xs px-3 py-1 rounded-full bg-red-100 text-red-800 font-semibold border border-red-300">
                 All Days Declined ({declinedDays.length}{" "}
                 {declinedDays.length === 1 ? "Day" : "Days"})
@@ -371,7 +379,6 @@ const LeaveRequestDialog = ({
             label="Description"
             value={leave?.description || "N/A"}
           />
-
           {/* Leave Days Table with Day-wise Partial Approval Actions */}
           {watchedLeaveDays.length > 0 && (
             <div className="w-full flex flex-col gap-y-2">
@@ -456,11 +463,36 @@ const LeaveRequestDialog = ({
                               render={({ field, fieldState }) => (
                                 <Autocomplete
                                   fullWidth
-                                  disablePortal
                                   options={leaveOptions}
                                   getOptionLabel={(option) => option.label}
                                   disableClearable
                                   freeSolo={false}
+                                  slotProps={{
+                                    popper: {
+                                      placement: "top-start",
+                                      modifiers: [
+                                        {
+                                          name: "flip",
+                                          enabled: true,
+                                          options: {
+                                            fallbackPlacements: [
+                                              "top-start",
+                                              "bottom-start",
+                                            ],
+                                          },
+                                        },
+                                        {
+                                          name: "preventOverflow",
+                                          enabled: true,
+                                          options: {
+                                            boundary: "clippingParents",
+                                            padding: 8,
+                                          },
+                                        },
+                                      ],
+                                      sx: { zIndex: 1400 },
+                                    },
+                                  }}
                                   value={
                                     leaveOptions.find(
                                       (opt) => opt.value === field.value,
@@ -607,3 +639,4 @@ const LeaveRequestDialog = ({
 };
 
 export default LeaveRequestDialog;
+
