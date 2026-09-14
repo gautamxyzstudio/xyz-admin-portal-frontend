@@ -1,12 +1,17 @@
-import { Dialog } from "@mui/material";
+import { Dialog, IconButton } from "@mui/material";
 import CustomBox from "../../../../components/CustomBox/CustomBox";
 import LinearGradient from "../../../../components/LinearGradient/LinearGradient";
 import dayjs from "dayjs";
 import { convertTo12HourFormat } from "../../../../utils/timeUtils";
-import { getLeaveCategoryTitle, getLeaveTypeTitle } from "../../utils";
+import {
+  getLeaveCategoryTitle,
+  getLeaveTypeTitle,
+  isLeavePartiallyApproved,
+} from "../../utils";
 import { getLeaveStatusColor } from "../../../../utils/utils";
 import { useGetLeavesDetialsQuery } from "../../leavesApi";
 import type { ILeaveDay } from "../../leaves.types";
+import { CgClose } from "react-icons/cg";
 
 const LeaveDetailsDialog = ({
   open,
@@ -20,24 +25,33 @@ const LeaveDetailsDialog = ({
   const { data, isFetching } = useGetLeavesDetialsQuery(leaveId);
 
   const leaveDays = data?.leave_days ?? [];
-
-  const hasDifferentLeaveTypes = leaveDays.some(
-    (day: ILeaveDay) => day.leave_type !== leaveDays[0]?.leave_type,
-  );
+  const isPartial = isLeavePartiallyApproved(data);
+  const displayStatus = isPartial
+    ? "Partially Approved"
+    : (data?.status ?? "pending");
 
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="lg"
+      maxWidth="md"
+      fullWidth
       sx={{
         "& .MuiDialog-paper": {
           borderRadius: "16px",
+          padding: 0,
+          maxHeight: "90vh",
+          overflowY: "auto",
+          msOverflowStyle: "none",
+          scrollbarWidth: "none",
+        },
+        "& .MuiDialog-paper::-webkit-scrollbar": {
+          display: "none",
         },
       }}
     >
       {isFetching ? (
-        <CustomBox customClasses="p-5 w-[550px] h-full flex flex-col gap-y-3">
+        <CustomBox customClasses="p-5 w-full h-full flex flex-col gap-y-3">
           <div className="flex flex-row items-center justify-between">
             <div className="w-40 h-6 animate-pulse bg-black-20/60 rounded" />
             <div className="w-10 h-6 animate-pulse bg-black-20/60 rounded-xl" />
@@ -57,27 +71,34 @@ const LeaveDetailsDialog = ({
           <div className="w-full h-6 animate-pulse bg-black-20/60" />
         </CustomBox>
       ) : (
-        <CustomBox customClasses="p-5 w-[550px] h-full flex flex-col gap-y-3">
-          <div className="w-full flex flex-row items-center-safe justify-between">
-            <h6 className="font-semibold text-xl">Leave Details</h6>
-            <span
-              className={`${getLeaveStatusColor(
-                data?.status ?? "pending",
-              )} text-xs py-1.5 px-3 rounded-full`}
-            >
-              {data?.status}
-            </span>
+        <CustomBox customClasses="p-6 w-full h-full flex flex-col gap-y-3.5">
+          <div className="w-full flex flex-row items-center justify-between">
+            <div className="flex items-center gap-3">
+              <h6 className="font-semibold text-xl">Leave Details</h6>
+              <span
+                className={`${getLeaveStatusColor(
+                  isPartial
+                    ? "partially_approved"
+                    : (data?.status ?? "pending"),
+                )} text-xs py-1.5 px-3.5 rounded-full font-semibold`}
+              >
+                {displayStatus}
+              </span>
+            </div>
+            <IconButton onClick={onClose}>
+              <CgClose className="text-black" size={24} />
+            </IconButton>
           </div>
           <LinearGradient />
           <div className="flex flex-col gap-y-0.5">
             <span className="text-black-80 text-sm font-semibold">Title</span>
-            <p className="text-base">{data?.title}</p>
+            <p className="text-base">{data?.title || "N/A"}</p>
           </div>
           <div className="flex flex-col gap-y-0.5">
             <span className="text-black-80 text-sm font-semibold">
               Description
             </span>
-            <p className="text-base">{data?.description}</p>
+            <p className="text-base">{data?.description || "N/A"}</p>
           </div>
           <LinearGradient />
           <div className="w-full flex flex-row flex-wrap items-start gap-y-3">
@@ -136,60 +157,103 @@ const LeaveDetailsDialog = ({
             {data?.leave_category !== "short_leave" && (
               <div className="flex flex-col gap-y-0.5">
                 <span className="text-black-80 text-sm font-semibold">
-                  Leave Days
+                  Approved Leave Days
                 </span>
-                <p className="text-base">{data?.days ?? 1}</p>
+                <p className="text-base font-medium">{data?.days ?? 1} Days</p>
               </div>
             )}
           </div>
-          {hasDifferentLeaveTypes &&
-            leaveDays?.length > 1 &&
-            data?.status === "approved" && (
-              <>
-                <LinearGradient />
-                <span className="text-black-80 text-sm font-semibold">
-                  Leaves Breakdown
-                </span>
-                <div className="w-full border border-gray-200 rounded-xl overflow-hidden">
-                  {/* Table Header */}
-                  <div className="grid grid-cols-3 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-600">
-                    <div>Date</div>
-                    <div>Day</div>
-                    <div>Leave Type</div>
-                  </div>
 
-                  {leaveDays.map((day: ILeaveDay, idx: number) => (
+          {/* Leaves Breakdown Table */}
+          {leaveDays && leaveDays.length > 0 && (
+            <>
+              <LinearGradient />
+              <div className="flex flex-row items-center justify-between">
+                <span className="text-black-80 text-sm font-semibold">
+                  Leaves Breakdown ({leaveDays.length}{" "}
+                  {leaveDays.length === 1 ? "Day" : "Days"})
+                </span>
+              </div>
+              <div className="w-full border border-gray-200 rounded-xl overflow-hidden shadow-xs">
+                {/* Table Header */}
+                <div className="grid grid-cols-12 bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <div className="col-span-3">Date</div>
+                  <div className="col-span-3">Day</div>
+                  <div className="col-span-3">Leave Type</div>
+                  <div className="col-span-3 text-center">Status</div>
+                </div>
+
+                {leaveDays.map((day: ILeaveDay, idx: number) => {
+                  const isHoliday =
+                    day.leave_type === "Holiday" || day.editable === false;
+                  const isDeclined = day.approval_status === "declined";
+                  const isApproved =
+                    day.approval_status === "approved" ||
+                    (!day.approval_status && data?.status === "approved");
+
+                  return (
                     <div
                       key={idx}
-                      className="grid grid-cols-3 px-4 py-3 items-center border-t border-gray-200"
+                      className={`grid grid-cols-12 px-4 py-3 items-center border-t border-gray-200 ${
+                        isDeclined ? "bg-red-50/30" : "bg-white"
+                      }`}
                     >
                       {/* Date */}
-                      <div className="text-sm text-gray-800">
+                      <div className="col-span-3 text-sm font-medium text-gray-800">
                         {dayjs(day.date).format("DD/MM/YYYY")}
                       </div>
 
                       {/* Day */}
-                      <div className="text-sm text-gray-800">{day.day}</div>
+                      <div className="col-span-3 text-sm text-gray-600">
+                        {day.day}
+                      </div>
 
                       {/* Leave Type */}
-                      <div className="text-sm text-gray-800">
-                        {getLeaveTypeTitle(
-                          day.leave_type as "CL" | "EL" | "SL" | "un-paid",
+                      <div className="col-span-3 text-sm text-gray-800">
+                        {isHoliday
+                          ? "Holiday"
+                          : getLeaveTypeTitle(
+                              day.leave_type as "CL" | "EL" | "SL" | "un-paid",
+                            )}
+                      </div>
+
+                      {/* Status */}
+                      <div className="col-span-3 flex justify-center">
+                        {isHoliday ? (
+                          <span className="text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 font-medium">
+                            Holiday
+                          </span>
+                        ) : isDeclined ? (
+                          <span className="text-xs px-2.5 py-1 rounded-full bg-red-100 text-red font-semibold">
+                            Declined
+                          </span>
+                        ) : isApproved ? (
+                          <span className="text-xs px-2.5 py-1 rounded-full bg-green-100 text-green font-semibold">
+                            Approved
+                          </span>
+                        ) : (
+                          <span className="text-xs px-2.5 py-1 rounded-full bg-[#7F41DF29] text-[#7F41DF] font-semibold">
+                            Pending
+                          </span>
                         )}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </>
-            )}
+                  );
+                })}
+              </div>
+            </>
+          )}
+
           {data?.decline_reason && (
             <>
               <LinearGradient />
               <div className="flex flex-col gap-y-0.5">
                 <span className="text-black-80 text-sm font-semibold">
-                  Decline Reason
+                  Decline Reason / Note
                 </span>
-                <p className="text-base">{data?.decline_reason}</p>
+                <p className="text-base text-gray-800">
+                  {data?.decline_reason}
+                </p>
               </div>
             </>
           )}

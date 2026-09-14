@@ -233,16 +233,20 @@ export const getError = (error: { message?: string } | undefined) =>
 // };
 
 export const getLeaveStatusColor = (
-  status: "pending" | "approved" | "declined" | ""
+  status: "pending" | "approved" | "declined" | "partially_approved" | "Partially Approved" | string
 ) => {
-  switch (status) {
+  switch (status?.toLowerCase?.() ?? "") {
     case "approved":
       return `text-green bg-lightGreen capitalize`;
+    case "partially_approved":
+    case "partially approved":
+      return `text-[#B45309] bg-[#FEF3C7] capitalize`;
     case "pending":
       return `text-[#7F41DF] bg-[#7F41DF29] capitalize`;
     case "declined":
       return `text-red bg-lightRed capitalize`;
     case "":
+    default:
       return `text-black-50 bg-background capitalize`;
   }
 };

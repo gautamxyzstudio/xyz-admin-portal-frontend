@@ -1,4 +1,4 @@
-import type { UIStatus } from "./leaves.types";
+import type { ILeaveDay, UIStatus } from "./leaves.types";
 
 export const getLeaveType = (
   type: "Causal Leave" | "Earn Leave" | "Sick Leave" | "Unpaid Leave",
@@ -73,3 +73,27 @@ export const mapStatusToUI = (
 
 export const normalizeStatusToBackend = (status: UIStatus) =>
   status.toLowerCase() as Lowercase<UIStatus>;
+
+export const isLeavePartiallyApproved = (
+  leave?: { status?: string; leave_days?: ILeaveDay[] } | null
+): boolean => {
+  if (!leave) return false;
+  const status = leave.status?.toLowerCase();
+  if (status !== "approved") return false;
+
+  const leaveDays: ILeaveDay[] = leave.leave_days || [];
+  if (leaveDays.length <= 1) return false;
+
+  const hasApproved = leaveDays.some(
+    (d) =>
+      (d.approval_status === "approved" || !d.approval_status) &&
+      d.leave_type !== "Holiday" &&
+      d.editable !== false
+  );
+  const hasDeclined = leaveDays.some(
+    (d) => d.approval_status === "declined"
+  );
+
+  return Boolean(hasApproved && hasDeclined);
+};
+

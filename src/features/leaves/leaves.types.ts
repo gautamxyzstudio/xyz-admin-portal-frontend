@@ -28,6 +28,7 @@ export interface ILeave {
   leave_category: "short_leave" | "half_day" | "full_day";
   half_day_type: "first_half" | "second_half";
   leave_type?: "CL" | "EL" | "SL" | "un-paid";
+  leave_days?: ILeaveDay[];
   user: {
     data: {
       id: number;
@@ -175,6 +176,7 @@ export interface ILeaveDay {
   duration: number; // 1
   editable: boolean;
   leave_type: string; // "CL"
+  approval_status?: "approved" | "declined";
 }
 export interface IUserRelation {
   data: IUserData;

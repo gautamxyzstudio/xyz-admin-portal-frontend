@@ -8,7 +8,7 @@ import LeaveRequestsHr from "../leaveRequestsHr/LeaveRequestsHr.js";
 import { ImSearch } from "react-icons/im";
 import CustomButton from "../../../../components/CustomButton/CustomButton.js";
 import dayjs from "dayjs";
-import { getLeaveCategoryTitle } from "../../utils.js";
+import { getLeaveCategoryTitle, isLeavePartiallyApproved } from "../../utils.js";
 import { getLeaveStatusColor } from "../../../../utils/utils.js";
 import { useDebounce } from "../../../../hooks/useDebounce.js";
 import LeaveDetailsDialog from "../../components/leaveDetailsDialog/LeaveDetailsDialog.tsx";
@@ -76,15 +76,17 @@ const AllLeaves = () => {
     {
       field: "status",
       headerName: "Status",
-      width: 80,
+      width: 140,
       renderCell: (params) => {
+        const isPartial = isLeavePartiallyApproved(params.row);
+        const displayStatus = isPartial ? "Partially Approved" : params.row.status;
         return (
           <span
             className={`${getLeaveStatusColor(
-              params.row.status,
-            )} py-1.25 px-3.75 rounded-3xl text-xs`}
+              isPartial ? "partially_approved" : params.row.status,
+            )} py-1.25 px-3.75 rounded-3xl text-xs whitespace-nowrap`}
           >
-            {params.row.status}
+            {displayStatus}
           </span>
         );
       },

@@ -6,7 +6,7 @@ import EmptyScreenView from "../../../../shared/components/EmptyScreenView/Empty
 import type { GridColDef } from "@mui/x-data-grid";
 import dayjs from "dayjs";
 import { Link } from "react-router";
-import { getLeaveCategoryTitle } from "../../../leaves/utils";
+import { getLeaveCategoryTitle, isLeavePartiallyApproved } from "../../../leaves/utils";
 
 const LeaveAnalytics = ({
   leaves,
@@ -46,15 +46,17 @@ const LeaveAnalytics = ({
     {
       field: "status",
       headerName: "Status",
-      width: 100,
+      width: 140,
       renderCell: (params) => {
+        const isPartial = isLeavePartiallyApproved(params.row);
+        const displayStatus = isPartial ? "Partially Approved" : params.row.status;
         return (
           <span
             className={`${getLeaveStatusColor(
-              params.row.status
-            )} py-1.25 px-3.75 rounded-3xl text-xs`}
+              isPartial ? "partially_approved" : params.row.status,
+            )} py-1.25 px-3.75 rounded-3xl text-xs whitespace-nowrap`}
           >
-            {params.row.status}
+            {displayStatus}
           </span>
         );
       },

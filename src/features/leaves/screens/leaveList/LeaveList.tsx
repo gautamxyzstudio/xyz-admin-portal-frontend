@@ -15,7 +15,7 @@ import CustomButton from "../../../../components/CustomButton/CustomButton.tsx";
 import { TbPlus } from "react-icons/tb";
 import dayjs from "dayjs";
 import CreateLeaveDialog from "../../components/createLeaveDialog/CreateLeaveDialog.tsx";
-import { getLeaveCategoryTitle } from "../../utils.ts";
+import { getLeaveCategoryTitle, isLeavePartiallyApproved } from "../../utils.ts";
 import LeaveDetailsDialog from "../../components/leaveDetailsDialog/LeaveDetailsDialog.tsx";
 
 const LeaveList = () => {
@@ -165,15 +165,17 @@ const LeaveList = () => {
     {
       field: "status",
       headerName: "Status",
-      width: 100,
+      width: 140,
       renderCell: (params) => {
+        const isPartial = isLeavePartiallyApproved(params.row);
+        const displayStatus = isPartial ? "Partially Approved" : params.row.status;
         return (
           <span
             className={`${getLeaveStatusColor(
-              params.row.status,
-            )} py-1.25 px-3.75 rounded-3xl text-xs`}
+              isPartial ? "partially_approved" : params.row.status,
+            )} py-1.25 px-3.75 rounded-3xl text-xs whitespace-nowrap`}
           >
-            {params.row.status}
+            {displayStatus}
           </span>
         );
       },
