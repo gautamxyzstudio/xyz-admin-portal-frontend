@@ -31,6 +31,10 @@ export const endpoints = {
   },
   deleteUser: (id: string | number) => `${baseUrl}/api/users/${id}`,
   updateUser: (id: string | number) => `${baseUrl}/api/users/${id}`,
+  getNoTaskEmailSettings: (id: string | number) =>
+    `${baseUrl}/api/user/${id}/no-task-email-settings`,
+  updateNoTaskEmailSettings: (id: string | number) =>
+    `${baseUrl}/api/user/${id}/no-task-email-settings`,
   deleteEmployee: (id: string | number) => `${baseUrl}/api/emp-details/${id}`,
 
   // File Upload

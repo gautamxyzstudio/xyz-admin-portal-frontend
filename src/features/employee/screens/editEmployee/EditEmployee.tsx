@@ -2,22 +2,28 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { IEmployee } from "../../types";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import PhotoUpload from "../../../../shared/components/photoUpload/PhotoUpload";
 import FormTextInput from "../../../../shared/components/formInput/FormInput";
-import { Autocomplete, Switch, TextField } from "@mui/material";
+import { Autocomplete, CircularProgress, Switch, TextField } from "@mui/material";
 import {
   EmergencyContactRelation,
   EmployeeRole,
 } from "../../../../shared/enums";
 import dayjs from "dayjs";
 import PickerInput from "../../../../shared/components/pickerInput/PickerInput";
-import { useUpdateEmployeeDetailsMutation } from "../../employeeApis";
+import {
+  useGetNoTaskEmailSettingsQuery,
+  useUpdateEmployeeDetailsMutation,
+  useUpdateNoTaskEmailSettingsMutation,
+} from "../../employeeApis";
 import { toast } from "react-toastify";
 import { getError, getString } from "../../../../utils/utils.js";
 import CustomBox from "../../../../components/CustomBox/CustomBox.js";
 import CustomButton from "../../../../components/CustomButton/CustomButton.js";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { useSelector } from "react-redux";
+import { userInState } from "../../../auth/authSlice";
 
 type EditEmployeeForm = {
   name: string;
@@ -34,12 +40,22 @@ type EditEmployeeForm = {
   joinig_date?: string;
   emergency_contact: string;
   relation_of: string;
+  no_task_email_enabled: boolean;
 };
 
 const EditEmployee = () => {
   const { employee } = useLocation()?.state as { employee: IEmployee };
+  const loggedInUser = useSelector(userInState);
   const navigate = useNavigate();
-  const [updateEmployee, { isLoading }] = useUpdateEmployeeDetailsMutation();
+  const [updateEmployee, { isLoading: isUpdatingEmployee }] =
+    useUpdateEmployeeDetailsMutation();
+  const [updateNoTaskEmailSettings, { isLoading: isUpdatingEmailSettings }] =
+    useUpdateNoTaskEmailSettingsMutation();
+
+  const { data: noTaskSettings } = useGetNoTaskEmailSettingsQuery(
+    loggedInUser?.id ?? "",
+    { skip: !loggedInUser?.id }
+  );
 
   const {
     control,
@@ -51,10 +67,10 @@ const EditEmployee = () => {
     defaultValues: {
       name: "",
       phone: "",
-      status: employee.status,
+      status: employee?.status,
       joinig_date: "",
       avatar: null,
-      photoId: employee.imageId ? employee.imageId.toString() : "",
+      photoId: employee?.imageId ? employee.imageId.toString() : "",
       designation: "",
       employeeCode: "",
       role: "",
@@ -63,10 +79,11 @@ const EditEmployee = () => {
       coverImage: "",
       emergency_contact: "",
       relation_of: "",
+      no_task_email_enabled: employee?.status ?? true,
     },
   });
 
-  // console.log(employee);
+  const isStatusActive = useWatch({ control, name: "status" });
 
   // Populate form fields with employee data
   useEffect(() => {
@@ -86,6 +103,59 @@ const EditEmployee = () => {
       setValue("relation_of", employee.relation_of);
     }
   }, [employee, setValue]);
+
+  useEffect(() => {
+    if (!employee?.status) {
+      setValue("no_task_email_enabled", false);
+    } else if (noTaskSettings) {
+      const disabledList = (
+        noTaskSettings.disabled_no_task_employee_ids || []
+      ).map(Number);
+      const isMuted = disabledList.includes(Number(employee?.id));
+      setValue("no_task_email_enabled", !isMuted);
+    } else {
+      setValue("no_task_email_enabled", true);
+    }
+  }, [noTaskSettings, employee?.id, employee?.status, setValue]);
+
+  const handleToggleTaskAlert = async (checked: boolean) => {
+    if (!loggedInUser?.id || !employee?.id) return;
+    try {
+      const currentDisabledList: number[] = (
+        noTaskSettings?.disabled_no_task_employee_ids || []
+      ).map(Number);
+      const empId = Number(employee.id);
+
+      let updatedDisabledList: number[];
+      if (checked) {
+        // Alert enabled -> Unmute employee (remove from disabled list)
+        updatedDisabledList = currentDisabledList.filter((id) => id !== empId);
+      } else {
+        // Alert disabled -> Mute employee (add to disabled list)
+        updatedDisabledList = Array.from(
+          new Set([...currentDisabledList, empId])
+        );
+      }
+
+      setValue("no_task_email_enabled", checked);
+
+      await updateNoTaskEmailSettings({
+        id: loggedInUser.id,
+        data: {
+          disabled_no_task_employee_ids: updatedDisabledList,
+        },
+      }).unwrap();
+
+      toast.success(
+        `Task alerts ${checked ? "enabled" : "disabled"} for ${employee.name || "employee"}`
+      );
+    } catch (error: any) {
+      setValue("no_task_email_enabled", !checked);
+      toast.error(error?.message ?? "Failed to update task alerts setting");
+    }
+  };
+
+  const isLoading = isUpdatingEmployee;
 
   const onSubmit = async (data: EditEmployeeForm) => {
     const employeePayload = {
@@ -107,6 +177,7 @@ const EditEmployee = () => {
         id: employee.details_id.toString(),
         data: employeePayload,
       }).unwrap();
+
       toast.success("Employee updated successfully");
       navigate("/employees");
     } catch (error: any) {
@@ -349,12 +420,17 @@ const EditEmployee = () => {
                     <Switch
                       checked={field.value}
                       color="warning"
-                      onChange={(_, checked) => field.onChange(checked)}
+                      onChange={(_, checked) => {
+                        field.onChange(checked);
+                        if (!checked) {
+                          setValue("no_task_email_enabled", false);
+                        }
+                      }}
                     />
                   )}
                 />
               </div>
-              <div className="flex flex-row items-center gap-2">
+              <div className="flex flex-row items-center gap-x-2">
                 <p className="text-sm font-semibold">Active Blog:</p>
                 <Controller
                   control={control}
@@ -365,6 +441,30 @@ const EditEmployee = () => {
                       color="warning"
                       onChange={(_, checked) => field.onChange(checked)}
                     />
+                  )}
+                />
+              </div>
+              <div className="flex flex-row items-center gap-x-2">
+                <p className="text-sm font-semibold">Task Alert:</p>
+                <Controller
+                  control={control}
+                  name="no_task_email_enabled"
+                  render={({ field }) => (
+                    <div className="flex items-center gap-1">
+                      <Switch
+                        checked={
+                          isStatusActive ? (field.value ?? false) : false
+                        }
+                        disabled={!isStatusActive || isUpdatingEmailSettings}
+                        color="warning"
+                        onChange={(_, checked) =>
+                          handleToggleTaskAlert(checked)
+                        }
+                      />
+                      {isUpdatingEmailSettings && (
+                        <CircularProgress size={16} color="warning" />
+                      )}
+                    </div>
                   )}
                 />
               </div>

@@ -58,6 +58,17 @@ export type IEditEmployeeArgs = {
   relation_of?: string;
 };
 
+export interface INoTaskEmailSettingsResponse {
+  userId: number;
+  no_task_email_enabled: boolean;
+  disabled_no_task_employee_ids: number[];
+}
+
+export interface IUpdateNoTaskEmailSettingsArgs {
+  no_task_email_enabled?: boolean;
+  disabled_no_task_employee_ids?: number[];
+}
+
 export interface IEmployee {
   id: number;
   email: string;
@@ -76,6 +87,8 @@ export interface IEmployee {
   coverImage: string;
   emergency_contact: string;
   relation_of: string;
+  no_task_email_enabled?: boolean;
+  disabled_no_task_employee_ids?: number[];
 }
 
 export interface IEmployeeFromResponse {
@@ -92,6 +105,8 @@ export interface IEmployeeFromResponse {
   createdAt: string;
   updatedAt: string;
   checkout_email_enabled: boolean;
+  no_task_email_enabled?: boolean;
+  disabled_no_task_employee_ids?: number[];
   role: {
     id: number;
     name: string;

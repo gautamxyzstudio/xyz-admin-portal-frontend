@@ -5,6 +5,7 @@
 export const EmployeeRole = {
   HR: "Hr",
   EMPLOYEE: "Employee",
+  MANAGEMENT: "Management",
 } as const;
 
 export const EmergencyContactRelation = {

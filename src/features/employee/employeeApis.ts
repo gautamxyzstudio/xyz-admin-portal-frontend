@@ -6,9 +6,11 @@ import { ApiMethodType } from "../../state/types";
 import type {
   IAddEmployeeArgs,
   IEditEmployeeArgs,
+  INoTaskEmailSettingsResponse,
   IRegisterUserArgs,
   IRegisterUserResponse,
   IUpdateLeaveBalanceArgs,
+  IUpdateNoTaskEmailSettingsArgs,
 } from "./types";
 
 export const enhancedEmployeeApi = baseApi.enhanceEndpoints({
@@ -76,6 +78,27 @@ export const employeeApis = enhancedEmployeeApi.injectEndpoints({
         },
       }),
     }),
+    getNoTaskEmailSettings: builder.query<
+      INoTaskEmailSettingsResponse,
+      string | number
+    >({
+      query: (id) => ({
+        url: endpoints.getNoTaskEmailSettings(id),
+        method: ApiMethodType.get,
+      }),
+      providesTags: ["Employee"],
+    }),
+    updateNoTaskEmailSettings: builder.mutation<
+      any,
+      { id: string | number; data: IUpdateNoTaskEmailSettingsArgs }
+    >({
+      query: ({ id, data }) => ({
+        url: endpoints.updateNoTaskEmailSettings(id),
+        method: ApiMethodType.PUT,
+        body: data,
+      }),
+      invalidatesTags: ["Employee"],
+    }),
     deleteEmployee: builder.mutation<any, { id: string }>({
       query: ({ id }) => ({
         url: endpoints.deleteEmployee(id),
@@ -110,6 +133,12 @@ export const employeeApis = enhancedEmployeeApi.injectEndpoints({
               active_blogs: employee?.user_detial?.active_blogs ?? false,
               coverImage: employee?.user_detial?.coverImage ?? "",
               checkout_email_enabled: employee?.checkout_email_enabled ?? false,
+              no_task_email_enabled:
+                employee?.user_detial?.status === false
+                  ? false
+                  : (employee?.no_task_email_enabled ?? true),
+              disabled_no_task_employee_ids:
+                employee?.disabled_no_task_employee_ids ?? [],
               emergency_contact: employee?.user_detial?.emergency_contact ?? "",
               relation_of: employee?.user_detial?.relation_of ?? "",
             };
@@ -130,4 +159,6 @@ export const {
   useDeleteUserMutation,
   useDeleteEmployeeMutation,
   useUpdateUserMutation,
+  useGetNoTaskEmailSettingsQuery,
+  useUpdateNoTaskEmailSettingsMutation,
 } = employeeApis;
