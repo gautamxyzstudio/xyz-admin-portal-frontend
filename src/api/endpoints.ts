@@ -52,6 +52,7 @@ export const endpoints = {
   deleteTask: (id: string | number) => `${baseUrl}/api/task-items/${id}`,
   updateTask: (id: string | number) => `${baseUrl}/api/task-items/${id}`,
   getAllTasks: `${baseUrl}/api/task-assigneds`,
+  taskBoard: `${baseUrl}/api/task-board`,
 
   // Attendance
   getAttendanceLegacy: `${baseUrl}/api/daily-attendances/?populate=*&sort=id`,
