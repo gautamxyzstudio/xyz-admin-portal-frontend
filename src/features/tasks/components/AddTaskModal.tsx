@@ -119,16 +119,17 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       setTitle(taskToEdit.title || "");
       setDescription(taskToEdit.description || "");
       setStatus(taskToEdit.status || "planned");
-      setHours("");
-      setMinutes("");
+      const est = taskToEdit.estimatedMinutes || 0;
+      setHours(est > 0 ? String(Math.floor(est / 60)) : "");
+      setMinutes(est > 0 ? String(est % 60) : "");
       setAttachments(extractTaskAttachments(taskToEdit.attachments));
       setErrors({});
     } else {
       setTitle("");
       setDescription("");
       setStatus("planned");
-      setHours("");
-      setMinutes("");
+      setHours("1");
+      setMinutes("0");
       setAttachments([]);
       setErrors({});
     }
@@ -195,7 +196,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-99999">
-      <div className="bg-white w-full max-w-lg rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
+      <div className="bg-white w-full max-w-lg rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto scrollbar-hide animate-in fade-in zoom-in-95 duration-150">
         <h2 className="text-base font-bold text-gray-800 mb-4">
           {isEditMode ? "Edit Task" : "Add Today's Task"}
         </h2>

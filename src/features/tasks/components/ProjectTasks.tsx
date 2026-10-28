@@ -226,9 +226,10 @@ const ProjectTasks: React.FC = () => {
     title: "",
     description: "",
     priority: "medium" as "low" | "medium" | "high",
-    estimatedMinutes: 60,
     assignedTo: "" as string | number,
   });
+  const [estimatedHours, setEstimatedHours] = useState("1");
+  const [estimatedMinutes, setEstimatedMinutes] = useState("0");
   const [attachments, setAttachments] = useState<IUploadedAttachment[]>([]);
   const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
 
@@ -334,9 +335,10 @@ const ProjectTasks: React.FC = () => {
       title: "",
       description: "",
       priority: "medium",
-      estimatedMinutes: 60,
       assignedTo: "",
     });
+    setEstimatedHours("1");
+    setEstimatedMinutes("0");
     setAttachments([]);
     setIsAddModalOpen(true);
   };
@@ -352,13 +354,23 @@ const ProjectTasks: React.FC = () => {
       return;
     }
 
+    const totalMinutes =
+      (Number(estimatedHours) || 0) * 60 + (Number(estimatedMinutes) || 0);
+
+    if (totalMinutes <= 0) {
+      toast.error("Please enter a valid estimated time (greater than 0 minutes)");
+      return;
+    }
+
     try {
+      const todayStr = new Date().toISOString().split("T")[0];
       await createTask({
         title: taskForm.title.trim(),
         description: taskForm.description.trim(),
         status: modalTargetStatus,
         priority: taskForm.priority,
-        estimatedMinutes: Number(taskForm.estimatedMinutes) || 60,
+        estimatedMinutes: totalMinutes,
+        date: todayStr,
         project: projectName,
         assignedTo: taskForm.assignedTo || undefined,
         attachments: attachments.map((a) => a.id),
@@ -821,7 +833,7 @@ const ProjectTasks: React.FC = () => {
       {/* Modal: Create Task */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-99999 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 w-full max-w-lg shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-lg shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto scrollbar-hide animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="text-base font-bold text-slate-900">
                 Create Task in {projectName}
@@ -836,8 +848,8 @@ const ProjectTasks: React.FC = () => {
 
             <form onSubmit={handleCreateTaskSubmit} className="space-y-4 mt-4">
               <div>
-                <label className="text-xs font-semibold text-slate-700">
-                  Task Title *
+                <label className="text-xs font-semibold text-slate-800 block mb-1.5">
+                  Task Title <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -847,13 +859,13 @@ const ProjectTasks: React.FC = () => {
                   onChange={(e) =>
                     setTaskForm({ ...taskForm, title: e.target.value })
                   }
-                  className="w-full mt-1.5 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-primary focus:bg-white"
+                  className="w-full px-4 py-3 bg-[#fafafa] border border-slate-200/90 rounded-2xl text-xs text-slate-800 outline-none focus:border-primary focus:bg-white transition-all shadow-2xs"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-700">
-                  Description *
+                <label className="text-xs font-semibold text-slate-800 block mb-1.5">
+                  Description <span className="text-rose-500">*</span>
                 </label>
                 <textarea
                   required
@@ -863,69 +875,100 @@ const ProjectTasks: React.FC = () => {
                   onChange={(e) =>
                     setTaskForm({ ...taskForm, description: e.target.value })
                   }
-                  className="w-full mt-1.5 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-primary focus:bg-white resize-none"
+                  className="w-full px-4 py-3 bg-[#fafafa] border border-slate-200/90 rounded-2xl text-xs text-slate-800 outline-none focus:border-primary focus:bg-white resize-none transition-all shadow-2xs"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              {/* Row 1: Assignee on left, Priority on right */}
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-semibold text-slate-700">
-                    Priority
+                  <label className="text-xs font-semibold text-slate-800 block mb-1.5">
+                    Assignee
                   </label>
-                  <select
-                    value={taskForm.priority}
-                    onChange={(e) =>
-                      setTaskForm({
-                        ...taskForm,
-                        priority: e.target.value as any,
-                      })
-                    }
-                    className="w-full mt-1.5 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-primary focus:bg-white cursor-pointer"
-                  >
-                    <option value="low">Low Priority</option>
-                    <option value="medium">Medium Priority</option>
-                    <option value="high">High Priority</option>
-                  </select>
+                  <div className="relative">
+                    <select
+                      value={taskForm.assignedTo}
+                      onChange={(e) =>
+                        setTaskForm({ ...taskForm, assignedTo: e.target.value })
+                      }
+                      className="w-full px-4 py-3 bg-[#fafafa] border border-slate-200/90 rounded-2xl text-xs text-slate-800 outline-none focus:border-primary focus:bg-white cursor-pointer appearance-none pr-9 transition-all shadow-2xs"
+                    >
+                      <option value="">Assign to me (default)</option>
+                      {activeEmployees.map((emp) => (
+                        <option key={emp.id} value={emp.id}>
+                          {emp.name || emp.username}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      size={15}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                    />
+                  </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-700">
-                    Estimated (Minutes)
+                  <label className="text-xs font-semibold text-slate-800 block mb-1.5">
+                    Priority
                   </label>
-                  <input
-                    type="number"
-                    min={5}
-                    step={15}
-                    value={taskForm.estimatedMinutes}
-                    onChange={(e) =>
-                      setTaskForm({
-                        ...taskForm,
-                        estimatedMinutes: Number(e.target.value) || 0,
-                      })
-                    }
-                    className="w-full mt-1.5 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-primary focus:bg-white"
-                  />
+                  <div className="relative">
+                    <select
+                      value={taskForm.priority}
+                      onChange={(e) =>
+                        setTaskForm({
+                          ...taskForm,
+                          priority: e.target.value as any,
+                        })
+                      }
+                      className="w-full px-4 py-3 bg-[#fafafa] border border-slate-200/90 rounded-2xl text-xs text-slate-800 outline-none focus:border-primary focus:bg-white cursor-pointer appearance-none pr-9 transition-all shadow-2xs"
+                    >
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                    </select>
+                    <ChevronDown
+                      size={15}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                    />
+                  </div>
                 </div>
               </div>
 
+              {/* Row 2: Estimated Time * with hrs and mins */}
               <div>
-                <label className="text-xs font-semibold text-slate-700">
-                  Assign To
+                <label className="text-xs font-semibold text-slate-800 block mb-1.5">
+                  Estimated Time <span className="text-rose-500">*</span>
                 </label>
-                <select
-                  value={taskForm.assignedTo}
-                  onChange={(e) =>
-                    setTaskForm({ ...taskForm, assignedTo: e.target.value })
-                  }
-                  className="w-full mt-1.5 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-primary focus:bg-white cursor-pointer"
-                >
-                  <option value="">Assign to me (default)</option>
-                  {activeEmployees.map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.name || emp.username}
-                    </option>
-                  ))}
-                </select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="relative flex items-center">
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="1"
+                      value={estimatedHours}
+                      onChange={(e) => setEstimatedHours(e.target.value)}
+                      className="w-full text-xs px-4 py-3 pr-10 bg-[#fafafa] border border-slate-200/90 rounded-2xl text-slate-800 outline-none focus:border-primary focus:bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all shadow-2xs"
+                    />
+                    <span className="absolute right-4 text-xs text-slate-400 pointer-events-none select-none">
+                      hrs
+                    </span>
+                  </div>
+
+                  <div className="relative flex items-center">
+                    <input
+                      type="number"
+                      min="0"
+                      max="59"
+                      placeholder="0"
+                      value={estimatedMinutes}
+                      onChange={(e) => setEstimatedMinutes(e.target.value)}
+                      className="w-full text-xs px-4 py-3 pr-10 bg-[#fafafa] border border-slate-200/90 rounded-2xl text-slate-800 outline-none focus:border-primary focus:bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all shadow-2xs"
+                    />
+                    <span className="absolute right-4 text-xs text-slate-400 pointer-events-none select-none">
+                      mins
+                    </span>
+                  </div>
+                </div>
               </div>
 
               {/* Attachments Option */}
@@ -963,8 +1006,8 @@ const ProjectTasks: React.FC = () => {
 
       {/* Modal: View Task & Move Status */}
       {selectedTask && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-99999 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto scrollbar-hide animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-start justify-between pb-3 border-b border-slate-100">
               <div>
                 <span className="text-[11px] font-semibold text-slate-400 uppercase">
