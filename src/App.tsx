@@ -34,7 +34,7 @@ import Projects from "./features/projects/screens/Projects.js";
 import LeaveBalances from "./features/leaves/screens/leaveBalances/LeaveBalances.js";
 import HandBook from "./features/handbook/screens/HandBook.js";
 import ViewAllActivityLogs from "./features/dashboard/components/activityLog/ViewAllActivityLogs.js";
-import TaskListComponents from "./features/tasks/components/TaskListComponents.js";
+import ProjectTasks from "./features/tasks/components/ProjectTasks";
 import AllTasks from "./features/allTasks/components/AllTasks.tsx";
 import TaskBoard from "./features/taskBoard/screens/TaskBoard";
 
@@ -173,7 +173,7 @@ const App: React.FC = () => {
                       path="tasks"
                       element={
                         <DashboardLayout>
-                          <TaskListComponents />
+                          <ProjectTasks />
                         </DashboardLayout>
                       }
                     />

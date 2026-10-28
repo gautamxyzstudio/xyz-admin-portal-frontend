@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Search,
   FolderKanban,
@@ -12,6 +13,7 @@ import { getImageUrl } from "../../../utils/utils";
 import type { ITaskBoardProject } from "../taskBoard.types";
 
 const TaskBoard: React.FC = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [failedLogos, setFailedLogos] = useState<Record<number, boolean>>({});
 
@@ -159,6 +161,9 @@ const TaskBoard: React.FC = () => {
               return (
                 <div
                   key={project.id}
+                  onClick={() =>
+                    navigate(`/tasks?project=${encodeURIComponent(project.title)}`)
+                  }
                   className="group bg-white rounded-2xl p-4 border border-gray-100 shadow-xs hover:shadow-md hover:border-primary/40 transition-all duration-200 flex items-center justify-between gap-3.5 cursor-pointer min-h-[82px]"
                 >
                   {/* Left Section: Logo + (Project Name & In-Progress below it) */}
