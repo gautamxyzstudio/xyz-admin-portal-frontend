@@ -54,6 +54,7 @@ export const endpoints = {
   getAllTasks: `${baseUrl}/api/task-assigneds`,
   taskBoard: `${baseUrl}/api/task-board`,
   projectTasks: `${baseUrl}/api/task-items/project`,
+  taskComments: `${baseUrl}/api/task-comments`,
 
   // Attendance
   getAttendanceLegacy: `${baseUrl}/api/daily-attendances/?populate=*&sort=id`,
@@ -192,7 +193,7 @@ export const endpoints = {
     }
     return url;
   },
-
+ 
   // Handbook
   employeeHandbook: `${baseUrl}/api/handbook`,
   updateEmployeeHandbook: (id: number | string) =>

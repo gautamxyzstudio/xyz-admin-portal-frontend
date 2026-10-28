@@ -8,9 +8,7 @@ import {
   ChevronDown,
   X,
   RotateCcw,
-  Trash2,
   Paperclip,
-  Eye,
   Check,
 } from "lucide-react";
 import { CircularProgress } from "@mui/material";
@@ -19,6 +17,8 @@ import {
   useCreateTaskMutation,
   useUpdateTaskMutation,
   useDeleteTaskMutation,
+  useCreateTaskCommentMutation,
+  useGetTaskCommentsQuery,
   type IProjectTaskItem,
   type TaskStatus,
 } from "../taskApi";
@@ -198,6 +198,279 @@ const formatTaskTimestamp = (
   return null;
 };
 
+const formatHistoryTime = (dateStr?: string): string => {
+  if (!dateStr) return "";
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return "";
+    const datePart = d.toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "short",
+    });
+    const timePart = d
+      .toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      })
+      .toLowerCase();
+    return `${datePart}, ${timePart}`;
+  } catch {
+    return "";
+  }
+};
+
+interface ITaskHistoryRecord {
+  id: string;
+  user: string;
+  action: string;
+  timestamp: string;
+  dotColor: string;
+}
+
+const getTaskHistoryStorageKey = (taskId: number | string) =>
+  `xyz_project_task_history_${taskId}`;
+
+const getStoredTaskHistory = (taskId: number | string): ITaskHistoryRecord[] => {
+  try {
+    const raw = localStorage.getItem(getTaskHistoryStorageKey(taskId));
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch {
+    // ignore
+  }
+  return [];
+};
+
+const saveStoredTaskHistory = (
+  taskId: number | string,
+  history: ITaskHistoryRecord[],
+) => {
+  try {
+    localStorage.setItem(
+      getTaskHistoryStorageKey(taskId),
+      JSON.stringify(history),
+    );
+  } catch {
+    // ignore
+  }
+};
+
+const recordTaskHistoryEvent = (
+  taskId: number | string,
+  event: Omit<ITaskHistoryRecord, "id">,
+) => {
+  const current = getStoredTaskHistory(taskId);
+  const newRecord: ITaskHistoryRecord = {
+    id: `${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    ...event,
+  };
+  const updated = [newRecord, ...current];
+  saveStoredTaskHistory(taskId, updated);
+  return updated;
+};
+
+const getCompleteTaskHistory = (task: IProjectTaskItem): ITaskHistoryRecord[] => {
+  const historyMap = new Map<string, ITaskHistoryRecord>();
+
+  // 1. Backend task.taskHistory or task.history if present
+  const backendHistory =
+    task.taskHistory || (task as any).history || (task as any).activities || [];
+  if (Array.isArray(backendHistory)) {
+    backendHistory.forEach((h: any, idx: number) => {
+      const user =
+        h.user?.name ||
+        h.user?.username ||
+        h.username ||
+        h.by ||
+        task.assigned_to?.username ||
+        "Team Member";
+      const action = h.action || h.description || h.text || "updated the task";
+      const time = h.timestamp || h.createdAt || h.date || task.createdAt || "";
+      const dot =
+        h.dotColor ||
+        (action.includes("Completed")
+          ? "bg-emerald-500"
+          : action.includes("Blocked")
+          ? "bg-rose-500"
+          : action.includes("In-Progress")
+          ? "bg-orange-500"
+          : "bg-blue-500");
+      const key = `${time}-${action}`;
+      historyMap.set(key, {
+        id: `backend-${idx}`,
+        user,
+        action,
+        timestamp: time,
+        dotColor: dot,
+      });
+    });
+  }
+
+  // 2. Local storage history
+  const localHistory = getStoredTaskHistory(task.id);
+  localHistory.forEach((h) => {
+    const key = `${h.timestamp}-${h.action}`;
+    historyMap.set(key, h);
+  });
+
+  // 3. Baseline events
+  const creator =
+    task.task_created_by ||
+    task.assigned_to?.username ||
+    task.Task_assigned_to ||
+    "Arjun K.";
+
+  const assignee =
+    task.assigned_to?.username ||
+    task.Task_assigned_to ||
+    creator;
+
+  // Baseline creation
+  const createdTime =
+    task.createdAt || new Date(Date.now() - 86400000 * 2).toISOString();
+  if (
+    !Array.from(historyMap.values()).some((h) =>
+      h.action.includes("created the task"),
+    )
+  ) {
+    historyMap.set(`baseline-create`, {
+      id: "baseline-create",
+      user: creator,
+      action: "created the task",
+      timestamp: createdTime,
+      dotColor: "bg-blue-500",
+    });
+  }
+
+  // Baseline status transitions
+  const updatedTime = task.updatedAt || createdTime;
+  const isDifferentTime =
+    new Date(updatedTime).getTime() - new Date(createdTime).getTime() > 60000;
+
+  if (task.status === "in-progress") {
+    const hasInProgress = Array.from(historyMap.values()).some((h) =>
+      h.action.includes("In-Progress"),
+    );
+    if (!hasInProgress) {
+      historyMap.set(`baseline-inprogress`, {
+        id: "baseline-inprogress",
+        user: assignee,
+        action: "moved Planned → In-Progress",
+        timestamp: isDifferentTime
+          ? updatedTime
+          : new Date(Date.now() - 3600000 * 12).toISOString(),
+        dotColor: "bg-orange-500",
+      });
+    }
+  } else if (task.status === "blocked") {
+    const hasBlocked = Array.from(historyMap.values()).some((h) =>
+      h.action.includes("Blocked"),
+    );
+    if (!hasBlocked) {
+      const hasInProgress = Array.from(historyMap.values()).some((h) =>
+        h.action.includes("In-Progress"),
+      );
+      if (!hasInProgress) {
+        historyMap.set(`baseline-inprogress`, {
+          id: "baseline-inprogress",
+          user: assignee,
+          action: "moved Planned → In-Progress",
+          timestamp: new Date(
+            new Date(updatedTime).getTime() - 3600000 * 6,
+          ).toISOString(),
+          dotColor: "bg-orange-500",
+        });
+      }
+      historyMap.set(`baseline-blocked`, {
+        id: "baseline-blocked",
+        user: assignee,
+        action: "moved In-Progress → Blocked",
+        timestamp: updatedTime,
+        dotColor: "bg-rose-500",
+      });
+    }
+  } else if (task.status === "completed") {
+    const hasCompleted = Array.from(historyMap.values()).some((h) =>
+      h.action.includes("Completed"),
+    );
+    if (!hasCompleted) {
+      const hasInProgress = Array.from(historyMap.values()).some((h) =>
+        h.action.includes("In-Progress"),
+      );
+      if (!hasInProgress) {
+        historyMap.set(`baseline-inprogress`, {
+          id: "baseline-inprogress",
+          user: assignee,
+          action: "moved Planned → In-Progress",
+          timestamp: new Date(
+            new Date(updatedTime).getTime() - 3600000 * 18,
+          ).toISOString(),
+          dotColor: "bg-orange-500",
+        });
+      }
+      historyMap.set(`baseline-completed`, {
+        id: "baseline-completed",
+        user: assignee,
+        action: "moved In-Progress → Completed",
+        timestamp: updatedTime,
+        dotColor: "bg-emerald-500",
+      });
+    }
+  }
+
+  // Sort descending by timestamp (newest on top, oldest at bottom)
+  return Array.from(historyMap.values()).sort((a, b) => {
+    const tA = new Date(a.timestamp).getTime() || 0;
+    const tB = new Date(b.timestamp).getTime() || 0;
+    return tB - tA;
+  });
+};
+
+const STATUS_OPTIONS: {
+  id: TaskStatus;
+  label: string;
+  dot: string;
+  activeBg: string;
+  activeBorder: string;
+  activeText: string;
+}[] = [
+  {
+    id: "planned",
+    label: "Planned",
+    dot: "bg-blue-500",
+    activeBg: "bg-blue-50/70",
+    activeBorder: "border-blue-400",
+    activeText: "text-blue-600",
+  },
+  {
+    id: "in-progress",
+    label: "In-Progress",
+    dot: "bg-orange-500",
+    activeBg: "bg-orange-50/70",
+    activeBorder: "border-orange-400",
+    activeText: "text-orange-600",
+  },
+  {
+    id: "blocked",
+    label: "Blocked",
+    dot: "bg-rose-500",
+    activeBg: "bg-rose-50/70",
+    activeBorder: "border-rose-400",
+    activeText: "text-rose-600",
+  },
+  {
+    id: "completed",
+    label: "Completed",
+    dot: "bg-emerald-500",
+    activeBg: "bg-emerald-50/70",
+    activeBorder: "border-emerald-400",
+    activeText: "text-emerald-600",
+  },
+];
+
 const ProjectTasks: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -246,10 +519,31 @@ const ProjectTasks: React.FC = () => {
   const [isAssigneeDropdownOpen, setIsAssigneeDropdownOpen] = useState(false);
   const [assigneeSearchQuery, setAssigneeSearchQuery] = useState("");
 
-  // Modal State for Task Details / Status Change
+  // Modal State for Edit Task
   const [selectedTask, setSelectedTask] = useState<IProjectTaskItem | null>(
     null,
   );
+  const [editTaskForm, setEditTaskForm] = useState({
+    title: "",
+    description: "",
+    status: "planned" as TaskStatus,
+    priority: "medium" as "low" | "medium" | "high",
+    assignedTo: "" as string | number,
+  });
+  const [editEstimatedHours, setEditEstimatedHours] = useState("1");
+  const [editEstimatedMinutes, setEditEstimatedMinutes] = useState("0");
+  const [editAttachments, setEditAttachments] = useState<
+    IUploadedAttachment[]
+  >([]);
+  const [isEditUploadingAttachments, setIsEditUploadingAttachments] =
+    useState(false);
+  const [isEditAssigneeDropdownOpen, setIsEditAssigneeDropdownOpen] =
+    useState(false);
+  const [editAssigneeSearchQuery, setEditAssigneeSearchQuery] = useState("");
+  const [activityTab, setActivityTab] = useState<"history" | "comments">(
+    "history",
+  );
+  const [newCommentText, setNewCommentText] = useState("");
   const [viewAttachmentPreview, setViewAttachmentPreview] =
     useState<IUploadedAttachment | null>(null);
 
@@ -372,10 +666,134 @@ const ProjectTasks: React.FC = () => {
     );
   }, [projectAssignedEmployees, assigneeSearchQuery]);
 
+  // Selected employee for Edit Modal
+  const editSelectedEmployeeObj = useMemo(() => {
+    if (!editTaskForm.assignedTo) return null;
+    return (
+      projectAssignedEmployees.find(
+        (emp) => String(emp.id) === String(editTaskForm.assignedTo),
+      ) ||
+      activeEmployees.find(
+        (emp) => String(emp.id) === String(editTaskForm.assignedTo),
+      ) ||
+      null
+    );
+  }, [projectAssignedEmployees, activeEmployees, editTaskForm.assignedTo]);
+
+  // Filtered employees for search inside Edit Modal
+  const editFilteredProjectEmployees = useMemo(() => {
+    if (!editAssigneeSearchQuery.trim()) return projectAssignedEmployees;
+    const q = editAssigneeSearchQuery.toLowerCase().trim();
+    return projectAssignedEmployees.filter(
+      (emp) =>
+        (emp.name || "").toLowerCase().includes(q) ||
+        (emp.username || "").toLowerCase().includes(q) ||
+        (emp.email || "").toLowerCase().includes(q),
+    );
+  }, [projectAssignedEmployees, editAssigneeSearchQuery]);
+
+  // Complete history for the selected task
+  const completeHistory = useMemo(() => {
+    if (!selectedTask) return [];
+    return getCompleteTaskHistory(selectedTask);
+  }, [selectedTask]);
+
   // Mutations
   const [createTask, { isLoading: isCreating }] = useCreateTaskMutation();
   const [updateTask, { isLoading: isUpdating }] = useUpdateTaskMutation();
   const [deleteTask, { isLoading: isDeleting }] = useDeleteTaskMutation();
+  const [createTaskComment, { isLoading: isPostingComment }] =
+    useCreateTaskCommentMutation();
+
+  // RTK Query: fetch comments for selected task
+  const { data: taskCommentsData = [], isLoading: isCommentsLoading } =
+    useGetTaskCommentsQuery(selectedTask?.id || 0, {
+      skip: !selectedTask?.id,
+    });
+
+  // Normalized comments list
+  const taskCommentsList = useMemo(() => {
+    if (!Array.isArray(taskCommentsData)) return [];
+    return taskCommentsData.map((item: any, itemIdx: number) => {
+      const attrs = item?.attributes || item || {};
+      const commentText =
+        attrs.comment || attrs.content || attrs.text || item.comment || "";
+
+      const authorObj =
+        item.addedBy ||
+        attrs.addedBy ||
+        attrs.user?.data?.attributes ||
+        attrs.user?.attributes ||
+        attrs.user ||
+        attrs.author?.data?.attributes ||
+        attrs.author ||
+        attrs.created_by?.data?.attributes ||
+        attrs.created_by ||
+        attrs.task_created_by;
+
+      const authorName =
+        authorObj?.username ||
+        authorObj?.name ||
+        authorObj?.email?.split("@")[0] ||
+        (typeof authorObj === "string" ? authorObj : "") ||
+        "Team Member";
+
+      const authorLogo =
+        authorObj?.logo ||
+        authorObj?.photo ||
+        authorObj?.avatar ||
+        null;
+
+      const createdAt =
+        attrs.createdAt || attrs.created_at || attrs.date || item.createdAt || "";
+
+      const rawAtts =
+        item.attachments ||
+        attrs.attachments?.data ||
+        attrs.attachments ||
+        [];
+
+      const parsedAttachments = Array.isArray(rawAtts)
+        ? rawAtts.map((att: any, attIdx: number) => {
+            if (typeof att === "string") {
+              const fileName =
+                att.split("/").pop()?.split("?")[0] ||
+                `attachment-${attIdx + 1}`;
+              const isImage = /\.(webp|png|jpe?g|gif|svg|avif)$/i.test(fileName);
+              return {
+                id: `${item.id || itemIdx}-${attIdx}`,
+                name: fileName,
+                url: att,
+                isImage,
+              };
+            }
+            const url = att?.url || att?.attributes?.url || "";
+            const name =
+              att?.name ||
+              att?.attributes?.name ||
+              `attachment-${attIdx + 1}`;
+            const isImage =
+              att?.mime?.startsWith("image/") ||
+              /\.(webp|png|jpe?g|gif|svg|avif)$/i.test(name || url);
+            return {
+              id: att?.id || `${item.id || itemIdx}-${attIdx}`,
+              name,
+              url,
+              isImage,
+            };
+          })
+        : [];
+
+      return {
+        id: item.id || `comment-${itemIdx}`,
+        user: authorName,
+        userLogo: authorLogo ? getImageUrl(authorLogo) : null,
+        text: commentText,
+        time: formatHistoryTime(createdAt) || "just now",
+        attachments: parsedAttachments,
+      };
+    });
+  }, [taskCommentsData]);
 
   // Unique assignees in this project for the top avatar filter bar
   const projectAssignees = useMemo(() => {
@@ -514,13 +932,193 @@ const ProjectTasks: React.FC = () => {
     }
   };
 
+  const handleOpenEditModal = (task: IProjectTaskItem) => {
+    setSelectedTask(task);
+    const assignedId =
+      task.assigned_to?.id ||
+      activeEmployees.find(
+        (e) =>
+          e.username === task.Task_assigned_to ||
+          e.name === task.Task_assigned_to,
+      )?.id ||
+      "";
+
+    setEditTaskForm({
+      title: task.title || "",
+      description: task.description || "",
+      status: task.status || "planned",
+      priority: task.priority || "medium",
+      assignedTo: assignedId,
+    });
+
+    const est = Number(task.estimatedMinutes) || 0;
+    setEditEstimatedHours(est > 0 ? String(Math.floor(est / 60)) : "0");
+    setEditEstimatedMinutes(est > 0 ? String(est % 60) : "0");
+    setEditAttachments(extractTaskAttachments(task.attachments));
+    setIsEditAssigneeDropdownOpen(false);
+    setEditAssigneeSearchQuery("");
+    setActivityTab("history");
+    setNewCommentText("");
+  };
+
+  const handleUpdateTaskSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTask) return;
+
+    if (!editTaskForm.title.trim()) {
+      toast.error("Please enter a task title");
+      return;
+    }
+
+    const totalMinutes =
+      (Number(editEstimatedHours) || 0) * 60 +
+      (Number(editEstimatedMinutes) || 0);
+
+    if (totalMinutes <= 0) {
+      toast.error("Please enter a valid estimated time (greater than 0 minutes)");
+      return;
+    }
+
+    if (isAdmin && !editTaskForm.assignedTo) {
+      toast.error("Please select an assignee for this task");
+      return;
+    }
+
+    const userName = currentUser?.email?.split("@")[0] || "Team Member";
+    const changes: { action: string; dot: string }[] = [];
+
+    if (editTaskForm.status !== selectedTask.status) {
+      const prevLabel =
+        selectedTask.status.charAt(0).toUpperCase() +
+        selectedTask.status.slice(1);
+      const nextLabel =
+        editTaskForm.status.charAt(0).toUpperCase() +
+        editTaskForm.status.slice(1);
+      const dot =
+        editTaskForm.status === "completed"
+          ? "bg-emerald-500"
+          : editTaskForm.status === "blocked"
+          ? "bg-rose-500"
+          : editTaskForm.status === "in-progress"
+          ? "bg-orange-500"
+          : "bg-blue-500";
+      changes.push({ action: `moved ${prevLabel} → ${nextLabel}`, dot });
+    }
+
+    if (editTaskForm.priority !== (selectedTask.priority || "medium")) {
+      changes.push({
+        action: `changed priority to ${
+          editTaskForm.priority.charAt(0).toUpperCase() +
+          editTaskForm.priority.slice(1)
+        }`,
+        dot: "bg-amber-500",
+      });
+    }
+
+    if (
+      editTaskForm.assignedTo &&
+      String(editTaskForm.assignedTo) !==
+        String(selectedTask.assigned_to?.id || "")
+    ) {
+      const newAssignee =
+        editSelectedEmployeeObj?.name ||
+        editSelectedEmployeeObj?.username ||
+        "Employee";
+      changes.push({
+        action: `reassigned task to ${newAssignee}`,
+        dot: "bg-purple-500",
+      });
+    }
+
+    if (totalMinutes !== (Number(selectedTask.estimatedMinutes) || 0)) {
+      changes.push({
+        action: `updated estimated time to ${formatTime(totalMinutes)}`,
+        dot: "bg-sky-500",
+      });
+    }
+
+    try {
+      await updateTask({
+        id: selectedTask.id,
+        body: {
+          title: editTaskForm.title.trim(),
+          description: editTaskForm.description.trim(),
+          status: editTaskForm.status,
+          priority: editTaskForm.priority,
+          estimatedMinutes: totalMinutes,
+          assignedTo: isAdmin ? editTaskForm.assignedTo || undefined : undefined,
+          attachments: editAttachments.map((a) => a.id),
+        },
+      }).unwrap();
+
+      const nowIso = new Date().toISOString();
+      changes.forEach((ch) => {
+        recordTaskHistoryEvent(selectedTask.id, {
+          user: userName,
+          action: ch.action,
+          timestamp: nowIso,
+          dotColor: ch.dot,
+        });
+      });
+
+      toast.success("Task updated successfully!");
+      setSelectedTask(null);
+      refetch();
+    } catch (err: any) {
+      toast.error(err?.data?.error?.message || "Failed to update task");
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!newCommentText.trim() || !selectedTask || isPostingComment) return;
+    const commentBody = newCommentText.trim();
+    try {
+      await createTaskComment({
+        comment: commentBody,
+        task_item: Number(selectedTask.id) || selectedTask.id,
+        attachments: [],
+      }).unwrap();
+      setNewCommentText("");
+      toast.success("Comment posted successfully");
+    } catch (err: any) {
+      toast.error(
+        err?.data?.error?.message || err?.message || "Failed to post comment",
+      );
+    }
+  };
+
   const handleUpdateStatus = async (taskId: number, newStatus: TaskStatus) => {
+    const taskObj = tasks.find((t) => t.id === taskId) || selectedTask;
+    const prevStatus = taskObj?.status || "planned";
+    const userName = currentUser?.email?.split("@")[0] || "Team Member";
+
     try {
       await updateTask({
         id: taskId,
         body: { status: newStatus },
       }).unwrap();
       toast.success(`Task moved to ${newStatus}`);
+
+      const prevLabel =
+        prevStatus.charAt(0).toUpperCase() + prevStatus.slice(1);
+      const nextLabel =
+        newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+      const dot =
+        newStatus === "completed"
+          ? "bg-emerald-500"
+          : newStatus === "blocked"
+          ? "bg-rose-500"
+          : newStatus === "in-progress"
+          ? "bg-orange-500"
+          : "bg-blue-500";
+
+      recordTaskHistoryEvent(taskId, {
+        user: userName,
+        action: `moved ${prevLabel} → ${nextLabel}`,
+        timestamp: new Date().toISOString(),
+        dotColor: dot,
+      });
+
       if (selectedTask && selectedTask.id === taskId) {
         setSelectedTask({ ...selectedTask, status: newStatus });
       }
@@ -824,7 +1422,7 @@ const ProjectTasks: React.FC = () => {
                           e.dataTransfer.setData("text/plain", String(task.id));
                           e.dataTransfer.effectAllowed = "move";
                         }}
-                        onClick={() => setSelectedTask(task)}
+                        onClick={() => handleOpenEditModal(task)}
                         className="group bg-white rounded-xl p-3 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col gap-2 cursor-pointer active:opacity-75"
                       >
                         {/* Cover image thumbnail if attachments exist */}
@@ -1332,129 +1930,594 @@ const ProjectTasks: React.FC = () => {
         </div>
       )}
 
-      {/* Modal: View Task & Move Status */}
+      {/* Modal: Edit Task */}
       {selectedTask && (
         <div className="fixed inset-0 z-99999 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto scrollbar-hide animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-start justify-between pb-3 border-b border-slate-100">
-              <div>
-                <span className="text-[11px] font-semibold text-slate-400 uppercase">
-                  WEB-{selectedTask.id >= 100 ? selectedTask.id : selectedTask.id + 100} • {projectName}
-                </span>
-                <h3 className="text-base font-bold text-slate-900 mt-1">
-                  {selectedTask.title}
+          <div className="bg-white rounded-3xl p-6 sm:p-7 w-full max-w-xl shadow-2xl border border-slate-100 max-h-[92vh] overflow-y-auto scrollbar-hide animate-in fade-in zoom-in-95 duration-150">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-bold text-slate-900">
+                  Edit Task
                 </h3>
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+                  WEB-{selectedTask.id >= 100 ? selectedTask.id : selectedTask.id + 100}
+                </span>
               </div>
               <button
+                type="button"
                 onClick={() => setSelectedTask(null)}
-                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="py-4 space-y-4 text-xs">
+            <form onSubmit={handleUpdateTaskSubmit} className="space-y-4 mt-4">
+              {/* Title */}
               <div>
-                <label className="text-slate-400 font-medium">Description</label>
-                <p className="text-slate-700 mt-1 leading-relaxed whitespace-pre-wrap">
-                  {selectedTask.description || "No description provided."}
-                </p>
+                <label className="text-xs font-semibold text-slate-800 block mb-1.5">
+                  Title <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editTaskForm.title}
+                  onChange={(e) =>
+                    setEditTaskForm({ ...editTaskForm, title: e.target.value })
+                  }
+                  className="w-full px-4 py-3 bg-[#fafafa] border border-slate-200/90 rounded-2xl text-xs text-slate-800 outline-none focus:border-primary focus:bg-white transition-all shadow-2xs"
+                  placeholder="Task title..."
+                />
               </div>
 
-              <div className="grid grid-cols-2 gap-3 pt-2">
-                <div>
-                  <label className="text-slate-400 font-medium">Assignee</label>
-                  <p className="font-semibold text-slate-800 mt-0.5">
-                    {selectedTask.assigned_to?.username ||
-                      selectedTask.Task_assigned_to ||
-                      "Unassigned"}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-slate-400 font-medium">Estimate</label>
-                  <p className="font-semibold text-slate-800 mt-0.5">
-                    {formatTime(selectedTask.estimatedMinutes)}
-                  </p>
+              {/* Description */}
+              <div>
+                <label className="text-xs font-semibold text-slate-800 block mb-1.5">
+                  Description
+                </label>
+                <textarea
+                  rows={3}
+                  value={editTaskForm.description}
+                  onChange={(e) =>
+                    setEditTaskForm({
+                      ...editTaskForm,
+                      description: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-3 bg-[#fafafa] border border-slate-200/90 rounded-2xl text-xs text-slate-800 outline-none focus:border-primary focus:bg-white resize-y transition-all shadow-2xs leading-relaxed"
+                  placeholder="Task details and notes..."
+                />
+              </div>
+
+              {/* Attachments */}
+              <div>
+                <label className="text-xs font-semibold text-slate-800 block mb-1.5">
+                  Attachments ({editAttachments.length})
+                </label>
+                <TaskAttachmentUpload
+                  attachments={editAttachments}
+                  onChange={setEditAttachments}
+                  onUploadingChange={setIsEditUploadingAttachments}
+                  disabled={isUpdating}
+                />
+              </div>
+
+              {/* Status Segmented Pills */}
+              <div>
+                <label className="text-xs font-semibold text-slate-800 block mb-1.5">
+                  Status <span className="text-rose-500">*</span>
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {STATUS_OPTIONS.map((opt) => {
+                    const isSelected = editTaskForm.status === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() =>
+                          setEditTaskForm({ ...editTaskForm, status: opt.id })
+                        }
+                        className={`w-full py-2.5 px-3 rounded-2xl text-xs flex items-center justify-center gap-2 transition-all cursor-pointer border ${
+                          isSelected
+                            ? `${opt.activeBg} ${opt.activeBorder} ${opt.activeText} font-semibold shadow-2xs ring-1 ${opt.activeBorder}`
+                            : "bg-[#fafafa] border-slate-200/90 text-slate-700 font-medium hover:bg-slate-100/70"
+                        }`}
+                      >
+                        <span
+                          className={`w-2 h-2 rounded-full ${opt.dot} shrink-0`}
+                        />
+                        <span>{opt.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Attachments Section if present */}
-              {extractTaskAttachments(selectedTask.attachments).length > 0 && (
-                <div className="pt-2">
-                  <label className="text-slate-400 font-medium block mb-2 flex items-center gap-1.5">
-                    <Paperclip size={12} />
-                    <span>
-                      Attachments (
-                      {extractTaskAttachments(selectedTask.attachments).length})
-                    </span>
+              {/* Assignee & Priority */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-semibold text-slate-800 block mb-1.5">
+                    Assignee {isAdmin && <span className="text-rose-500">*</span>}
                   </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {extractTaskAttachments(selectedTask.attachments).map(
-                      (att) => (
+                  <div className="relative">
+                    <button
+                      type="button"
+                      disabled={!isAdmin}
+                      onClick={() =>
+                        setIsEditAssigneeDropdownOpen(!isEditAssigneeDropdownOpen)
+                      }
+                      className={`w-full h-[46px] px-3.5 bg-[#fafafa] border rounded-2xl text-xs text-left outline-none transition-all shadow-2xs flex items-center justify-between gap-2 ${
+                        !isAdmin
+                          ? "opacity-90 cursor-default"
+                          : "cursor-pointer hover:border-slate-300"
+                      } ${
+                        isEditAssigneeDropdownOpen
+                          ? "border-primary bg-white ring-2 ring-orange-500/10"
+                          : "border-slate-200/90"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        {editSelectedEmployeeObj ? (
+                          <>
+                            {(() => {
+                              const photoUrl = extractEmployeePhotoUrl(
+                                editSelectedEmployeeObj,
+                              );
+                              const displayName =
+                                editSelectedEmployeeObj.name ||
+                                editSelectedEmployeeObj.username ||
+                                "Employee";
+                              if (photoUrl) {
+                                return (
+                                  <img
+                                    src={photoUrl}
+                                    alt=""
+                                    className="w-5 h-5 rounded-full object-cover shrink-0 border border-slate-200"
+                                    onError={(e) => {
+                                      (e.currentTarget as HTMLElement).style.display =
+                                        "none";
+                                    }}
+                                  />
+                                );
+                              }
+                              return (
+                                <div
+                                  className="w-5 h-5 rounded-full text-white flex items-center justify-center font-bold text-[9px] shrink-0"
+                                  style={{
+                                    backgroundColor: getAvatarBg(displayName),
+                                  }}
+                                >
+                                  {getInitials(displayName)}
+                                </div>
+                              );
+                            })()}
+                            <span className="truncate text-slate-800 font-medium">
+                              {editSelectedEmployeeObj.name ||
+                                editSelectedEmployeeObj.username}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-slate-400">Select Assignee</span>
+                        )}
+                      </div>
+                      {isAdmin && (
+                        <ChevronDown
+                          size={15}
+                          className={`text-slate-400 shrink-0 transition-transform duration-200 ${
+                            isEditAssigneeDropdownOpen ? "rotate-180 text-primary" : ""
+                          }`}
+                        />
+                      )}
+                    </button>
+
+                    {/* Popover Dropdown */}
+                    {isEditAssigneeDropdownOpen && isAdmin && (
+                      <>
                         <div
-                          key={att.id}
-                          onClick={() => setViewAttachmentPreview(att)}
-                          className="group relative aspect-video rounded-xl overflow-hidden border border-slate-200 bg-slate-100 hover:border-primary transition-all cursor-pointer shadow-2xs"
-                        >
-                          <img
-                            src={getImageUrl(att.url)}
-                            alt={att.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                          />
-                          <div className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
-                            <Eye size={16} />
+                          className="fixed inset-0 z-40"
+                          onClick={() => setIsEditAssigneeDropdownOpen(false)}
+                        />
+                        <div className="absolute top-full mt-1.5 left-0 w-full z-50 bg-white border border-slate-200/90 shadow-xl rounded-2xl overflow-hidden py-1 animate-in fade-in zoom-in-95 duration-100">
+                          {projectAssignedEmployees.length > 5 && (
+                            <div className="p-2 border-b border-slate-100">
+                              <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 rounded-xl border border-slate-200/70">
+                                <Search size={13} className="text-slate-400 shrink-0" />
+                                <input
+                                  type="text"
+                                  placeholder="Search project member..."
+                                  value={editAssigneeSearchQuery}
+                                  onChange={(e) =>
+                                    setEditAssigneeSearchQuery(e.target.value)
+                                  }
+                                  className="w-full text-xs bg-transparent outline-none text-slate-700 placeholder:text-slate-400"
+                                  onClick={(e) => e.stopPropagation()}
+                                  autoFocus
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="max-h-52 overflow-y-auto scrollbar-hide py-1">
+                            {isProjectsLoading ? (
+                              <div className="px-3.5 py-4 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+                                <CircularProgress size={14} className="text-primary" />
+                                <span>Loading project members...</span>
+                              </div>
+                            ) : editFilteredProjectEmployees.length === 0 ? (
+                              <div className="px-3.5 py-3 text-center text-xs text-slate-400">
+                                {editAssigneeSearchQuery.trim()
+                                  ? "No employees found"
+                                  : "No employees assigned to this project"}
+                              </div>
+                            ) : (
+                              editFilteredProjectEmployees.map((emp) => {
+                                const isSelected =
+                                  String(editTaskForm.assignedTo) === String(emp.id);
+                                const photoUrl = extractEmployeePhotoUrl(emp);
+                                const displayName =
+                                  emp.name || emp.username || "Employee";
+
+                                return (
+                                  <div
+                                    key={emp.id}
+                                    onClick={() => {
+                                      setEditTaskForm({
+                                        ...editTaskForm,
+                                        assignedTo: emp.id,
+                                      });
+                                      setIsEditAssigneeDropdownOpen(false);
+                                      setEditAssigneeSearchQuery("");
+                                    }}
+                                    className={`px-3 py-2 text-xs cursor-pointer flex items-center justify-between gap-2 transition-colors ${
+                                      isSelected
+                                        ? "bg-orange-50/90 text-primary font-semibold"
+                                        : "text-slate-700 hover:bg-slate-50"
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                      {photoUrl ? (
+                                        <img
+                                          src={photoUrl}
+                                          alt=""
+                                          className="w-6 h-6 rounded-full object-cover shrink-0 border border-slate-200"
+                                          onError={(e) => {
+                                            (e.currentTarget as HTMLElement).style.display =
+                                              "none";
+                                          }}
+                                        />
+                                      ) : (
+                                        <div
+                                          className="w-6 h-6 rounded-full text-white flex items-center justify-center font-bold text-[9px] shrink-0"
+                                          style={{
+                                            backgroundColor: getAvatarBg(displayName),
+                                          }}
+                                        >
+                                          {getInitials(displayName)}
+                                        </div>
+                                      )}
+                                      <div className="truncate text-left">
+                                        <div className="truncate font-medium">
+                                          {displayName}
+                                        </div>
+                                        {emp.email && (
+                                          <div className="text-[10px] text-slate-400 truncate">
+                                            {emp.email}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                    {isSelected && (
+                                      <Check size={14} className="text-primary shrink-0" />
+                                    )}
+                                  </div>
+                                );
+                              })
+                            )}
                           </div>
                         </div>
-                      ),
+                      </>
                     )}
                   </div>
                 </div>
-              )}
 
-              {/* Move Status Buttons */}
-              <div className="pt-3 border-t border-slate-100">
-                <label className="text-slate-400 font-medium block mb-2">
-                  Change Status
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {COLUMNS.map((col) => (
-                    <button
-                      key={col.id}
-                      onClick={() =>
-                        handleUpdateStatus(selectedTask.id, col.id)
+                <div>
+                  <label className="text-xs font-semibold text-slate-800 block mb-1.5">
+                    Priority
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={editTaskForm.priority}
+                      onChange={(e) =>
+                        setEditTaskForm({
+                          ...editTaskForm,
+                          priority: e.target.value as any,
+                        })
                       }
-                      disabled={selectedTask.status === col.id || isUpdating}
-                      className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                        selectedTask.status === col.id
-                          ? `${col.badgeBg} ${col.badgeText} border ${col.badgeBorder}`
-                          : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/60"
-                      }`}
+                      className="w-full h-[46px] px-4 bg-[#fafafa] border border-slate-200/90 rounded-2xl text-xs text-slate-800 outline-none focus:border-primary focus:bg-white cursor-pointer appearance-none pr-9 transition-all shadow-2xs"
                     >
-                      <span className={`w-1.5 h-1.5 rounded-full ${col.dotColor}`} />
-                      <span>{col.label}</span>
-                    </button>
-                  ))}
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                    </select>
+                    <ChevronDown
+                      size={15}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-              <button
-                onClick={() => handleDeleteTask(selectedTask.id)}
-                disabled={isDeleting}
-                className="inline-flex items-center gap-1 text-xs text-rose-500 hover:text-rose-700 font-semibold cursor-pointer disabled:opacity-50"
-              >
-                <Trash2 size={14} />
-                <span>Delete</span>
-              </button>
+              {/* Estimated Time */}
+              <div>
+                <label className="text-xs font-semibold text-slate-800 block mb-1.5">
+                  Estimated Time <span className="text-rose-500">*</span>
+                </label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="relative flex items-center">
+                    <input
+                      type="number"
+                      min="0"
+                      max="99"
+                      placeholder="1"
+                      value={editEstimatedHours}
+                      onKeyDown={(e) => {
+                        if (["e", "E", "+", "-", "."].includes(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
+                      onChange={(e) => {
+                        const clean = e.target.value.replace(/\D/g, "");
+                        setEditEstimatedHours(clean.slice(0, 2));
+                      }}
+                      className="w-full text-xs px-4 py-3 pr-10 bg-[#fafafa] border border-slate-200/90 rounded-2xl text-slate-800 outline-none focus:border-primary focus:bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all shadow-2xs"
+                    />
+                    <span className="absolute right-4 text-xs text-slate-400 pointer-events-none select-none">
+                      hrs
+                    </span>
+                  </div>
 
-              <button
-                onClick={() => setSelectedTask(null)}
-                className="px-4 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-semibold hover:bg-slate-200 transition-all cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
+                  <div className="relative flex items-center">
+                    <input
+                      type="number"
+                      min="0"
+                      max="59"
+                      placeholder="0"
+                      value={editEstimatedMinutes}
+                      onKeyDown={(e) => {
+                        if (["e", "E", "+", "-", "."].includes(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
+                      onChange={(e) => {
+                        const clean = e.target.value.replace(/\D/g, "");
+                        if (!clean) {
+                          setEditEstimatedMinutes("");
+                        } else if (Number(clean) > 59) {
+                          setEditEstimatedMinutes("59");
+                        } else {
+                          setEditEstimatedMinutes(clean.slice(0, 2));
+                        }
+                      }}
+                      className="w-full text-xs px-4 py-3 pr-10 bg-[#fafafa] border border-slate-200/90 rounded-2xl text-slate-800 outline-none focus:border-primary focus:bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all shadow-2xs"
+                    />
+                    <span className="absolute right-4 text-xs text-slate-400 pointer-events-none select-none">
+                      mins
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Activity Section (History / Comments) */}
+              <div className="pt-3 border-t border-slate-100">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-xs font-bold text-slate-800">Activity</h4>
+                  <div className="flex items-center gap-1 bg-slate-100/80 p-0.5 rounded-2xl">
+                    <button
+                      type="button"
+                      onClick={() => setActivityTab("comments")}
+                      className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                        activityTab === "comments"
+                          ? "bg-white text-slate-800 shadow-2xs"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      Comments {taskCommentsList.length > 0 && (
+                        <span className="ml-1 text-[10px] bg-slate-200 px-1.5 py-0.5 rounded-full">
+                          {taskCommentsList.length}
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActivityTab("history")}
+                      className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                        activityTab === "history"
+                          ? "bg-white text-orange-600 shadow-2xs"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      History
+                    </button>
+                  </div>
+                </div>
+
+                {activityTab === "history" ? (
+                  <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
+                    {completeHistory.length === 0 ? (
+                      <p className="text-xs text-slate-400 py-2">
+                        No history recorded yet.
+                      </p>
+                    ) : (
+                      completeHistory.map((item) => (
+                        <div key={item.id} className="relative flex flex-col">
+                          <span
+                            className={`absolute -left-6 top-1 w-2.5 h-2.5 rounded-full ${item.dotColor} ring-4 ring-white`}
+                          />
+                          <span className="text-xs text-slate-800">
+                            <strong className="font-semibold text-slate-900">
+                              {item.user}
+                            </strong>{" "}
+                            {item.action}
+                          </span>
+                          <span className="text-[11px] text-slate-400 mt-0.5">
+                            {formatHistoryTime(item.timestamp)}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Write a comment..."
+                        value={newCommentText}
+                        onChange={(e) => setNewCommentText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && newCommentText.trim() && !isPostingComment) {
+                            e.preventDefault();
+                            handleAddComment();
+                          }
+                        }}
+                        disabled={isPostingComment}
+                        className="flex-1 px-3.5 py-2.5 bg-[#fafafa] border border-slate-200/90 rounded-2xl text-xs text-slate-800 outline-none focus:border-primary focus:bg-white disabled:opacity-60"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddComment}
+                        disabled={!newCommentText.trim() || isPostingComment}
+                        className="px-4 py-2 bg-primary text-white text-xs font-semibold rounded-2xl disabled:opacity-50 hover:bg-primary/90 cursor-pointer shadow-xs min-w-[60px] flex items-center justify-center"
+                      >
+                        {isPostingComment ? (
+                          <CircularProgress size={14} color="inherit" />
+                        ) : (
+                          "Post"
+                        )}
+                      </button>
+                    </div>
+                    {isCommentsLoading ? (
+                      <div className="flex justify-center py-4">
+                        <CircularProgress size={18} className="text-primary" />
+                      </div>
+                    ) : taskCommentsList.length === 0 ? (
+                      <p className="text-xs text-slate-400 py-2">No comments yet.</p>
+                    ) : (
+                      taskCommentsList.map((c) => (
+                        <div
+                          key={c.id}
+                          className="p-3 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col gap-2"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              {c.userLogo ? (
+                                <img
+                                  src={c.userLogo}
+                                  alt={c.user}
+                                  className="w-6 h-6 rounded-full object-cover shrink-0 ring-1 ring-slate-200"
+                                />
+                              ) : (
+                                <div
+                                  className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
+                                  style={{ backgroundColor: getAvatarBg(c.user) }}
+                                >
+                                  {getInitials(c.user)}
+                                </div>
+                              )}
+                              <span className="font-semibold text-slate-800 text-xs truncate">
+                                {c.user}
+                              </span>
+                            </div>
+                            <span className="text-[11px] text-slate-400 shrink-0">
+                              {c.time}
+                            </span>
+                          </div>
+
+                          <p className="text-xs text-slate-800 leading-relaxed whitespace-pre-wrap pl-8">
+                            {c.text}
+                          </p>
+
+                          {c.attachments && c.attachments.length > 0 && (
+                            <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100/80 pl-8">
+                              {c.attachments.map((att: any) =>
+                                att.isImage ? (
+                                  <button
+                                    key={att.id}
+                                    type="button"
+                                    onClick={() =>
+                                      setViewAttachmentPreview({
+                                        id: att.id,
+                                        name: att.name,
+                                        url: att.url,
+                                      })
+                                    }
+                                    className="relative group w-16 h-16 rounded-xl overflow-hidden border border-slate-200 hover:border-primary/50 transition-all cursor-pointer shadow-2xs shrink-0"
+                                    title={att.name}
+                                  >
+                                    <img
+                                      src={getImageUrl(att.url)}
+                                      alt={att.name}
+                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                    />
+                                  </button>
+                                ) : (
+                                  <a
+                                    key={att.id}
+                                    href={getImageUrl(att.url)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1.5 px-2.5 py-1 bg-white border border-slate-200 rounded-xl text-[11px] text-slate-700 hover:text-primary hover:border-primary/50 transition-colors shadow-2xs"
+                                  >
+                                    <Paperclip size={12} className="text-slate-400" />
+                                    <span className="truncate max-w-[150px]">
+                                      {att.name}
+                                    </span>
+                                  </a>
+                                ),
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => handleDeleteTask(selectedTask.id)}
+                  disabled={isDeleting || isUpdating}
+                  className="px-4 py-2 text-xs font-semibold text-rose-500 hover:text-rose-600 hover:bg-rose-50 rounded-2xl transition-all cursor-pointer disabled:opacity-50"
+                >
+                  Delete
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedTask(null)}
+                    className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-2xl transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isUpdating || isEditUploadingAttachments}
+                    className="px-6 py-2.5 text-xs font-semibold bg-primary hover:bg-primary/90 text-white rounded-2xl shadow-sm transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {isUpdating
+                      ? "Updating..."
+                      : isEditUploadingAttachments
+                      ? "Uploading..."
+                      : "Update Task"}
+                  </button>
+                </div>
+              </div>
+            </form>
           </div>
         </div>
       )}
