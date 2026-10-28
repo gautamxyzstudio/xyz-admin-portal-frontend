@@ -6,6 +6,11 @@ import {
   type TaskStatus,
   type ITaskItem,
 } from "../taskApi";
+import { TaskAttachmentUpload } from "./TaskAttachmentUpload";
+import {
+  extractTaskAttachments,
+  type IUploadedAttachment,
+} from "../utils/taskAttachmentUtils";
 
 export const STATUS_CONFIG: Record<
   TaskStatus,
@@ -97,13 +102,16 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   const [status, setStatus] = useState<TaskStatus>("planned");
   const [hours, setHours] = useState<number | string>("");
   const [minutes, setMinutes] = useState<number | string>("");
+  const [attachments, setAttachments] = useState<IUploadedAttachment[]>([]);
+  const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
   const [errors, setErrors] = useState<{ title?: string; time?: string }>({});
   const [isProcessing, setIsProcessing] = useState(false);
 
   const [createTask, { isLoading: isCreating }] = useCreateTaskMutation();
   const [updateTask, { isLoading: isUpdating }] = useUpdateTaskMutation();
 
-  const isSubmitting = isCreating || isUpdating || isProcessing;
+  const isSubmitting =
+    isCreating || isUpdating || isProcessing || isUploadingAttachments;
   const isEditMode = Boolean(taskToEdit);
 
   useEffect(() => {
@@ -113,6 +121,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       setStatus(taskToEdit.status || "planned");
       setHours("");
       setMinutes("");
+      setAttachments(extractTaskAttachments(taskToEdit.attachments));
       setErrors({});
     } else {
       setTitle("");
@@ -120,6 +129,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       setStatus("planned");
       setHours("");
       setMinutes("");
+      setAttachments([]);
       setErrors({});
     }
   }, [taskToEdit, isOpen]);
@@ -147,6 +157,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
     try {
       setIsProcessing(true);
+      const attachmentIds = attachments.map((a) => a.id);
+
       if (isEditMode && taskToEdit) {
         await updateTask({
           id: taskToEdit.id,
@@ -155,6 +167,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
             description: description.trim(),
             status,
             date: taskToEdit.date || todayStr,
+            attachments: attachmentIds,
           },
         }).unwrap();
       } else {
@@ -164,6 +177,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
           status,
           estimatedMinutes: totalMinutes,
           date: todayStr,
+          attachments: attachmentIds,
         }).unwrap();
       }
 
@@ -181,7 +195,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-99999">
-      <div className="bg-white w-full max-w-lg rounded-2xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+      <div className="bg-white w-full max-w-lg rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
         <h2 className="text-base font-bold text-gray-800 mb-4">
           {isEditMode ? "Edit Task" : "Add Today's Task"}
         </h2>
@@ -219,8 +233,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({
               Description
             </label>
             <textarea
-              rows={6}
-              placeholder="Add key objectives, links, or task notes...    (optional)"
+              rows={4}
+              placeholder="Add key objectives, links, or task notes... (optional)"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full min-h-[85px] text-xs px-3.5 py-2.5 border border-gray-200 rounded-xl outline-none focus:border-orange-500 transition resize-y leading-relaxed text-gray-800 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -238,7 +252,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
           {/* Estimated Time */}
           {!isEditMode && (
             <div>
-              <label className="text-xs font-semibold text-gray-600 block mt-4">
+              <label className="text-xs font-semibold text-gray-600 block mt-2">
                 Estimated Time <span className="text-red-500">*</span>
               </label>
               <div className="grid grid-cols-2 gap-3">
@@ -293,7 +307,15 @@ export const TaskModal: React.FC<TaskModalProps> = ({
             </div>
           )}
 
-          <div className="flex items-center justify-end gap-3 mt-5">
+          {/* Attachments Section */}
+          <TaskAttachmentUpload
+            attachments={attachments}
+            onChange={setAttachments}
+            onUploadingChange={setIsUploadingAttachments}
+            disabled={isSubmitting}
+          />
+
+          <div className="flex items-center justify-end gap-3 mt-4">
             <button
               type="button"
               disabled={isSubmitting}

@@ -1,16 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import {
   Search,
   Plus,
   Clock,
   ChevronDown,
-  ChevronsUp,
-  Equal,
   X,
   RotateCcw,
   Trash2,
+  Paperclip,
+  Eye,
 } from "lucide-react";
 import { CircularProgress } from "@mui/material";
 import {
@@ -25,6 +25,11 @@ import { useGetActiveEmployeesQuery } from "../../allTasks/allTaskApi";
 import { useGetTaskBoardProjectsQuery } from "../../taskBoard/taskBoardApi";
 import { getImageUrl } from "../../../utils/utils";
 import { toast } from "react-toastify";
+import { TaskAttachmentUpload } from "./TaskAttachmentUpload";
+import {
+  extractTaskAttachments,
+  type IUploadedAttachment,
+} from "../utils/taskAttachmentUtils";
 
 // Column config matching the mockup
 const COLUMNS: {
@@ -86,10 +91,10 @@ const formatTime = (minutes: number = 0): string => {
 
 // Deterministic avatar background colors
 const AVATAR_COLORS = [
-  "#b45309", // Amber/brown
-  "#2563eb", // Blue
-  "#7c3aed", // Violet/purple
-  "#059669", // Emerald/green
+  "#b45309", // Amber/brown (MN style)
+  "#2563eb", // Blue (AK style)
+  "#7c3aed", // Violet/purple (SP style)
+  "#059669", // Emerald/green (RV style)
   "#e11d48", // Rose
   "#0284c7", // Sky
   "#4f46e5", // Indigo
@@ -112,16 +117,90 @@ const getInitials = (name: string): string => {
   return name.slice(0, 2).toUpperCase();
 };
 
+// Formats timestamp for task card footer
+const formatTaskTimestamp = (
+  task: IProjectTaskItem,
+): { icon: string; text: string } | null => {
+  if (task.status === "completed") {
+    const dateStr = task.updatedAt || task.createdAt;
+    if (!dateStr) return null;
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return null;
+      const formattedDate = date.toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+      });
+      const formattedTime = date
+        .toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        })
+        .toLowerCase();
+      const timeSpent = task.estimatedMinutes
+        ? formatTime(task.estimatedMinutes)
+        : "45m";
+      return {
+        icon: "✓",
+        text: `Completed ${formattedDate}, ${formattedTime} · took ${timeSpent}`,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  if (task.status === "in-progress" || task.status === "blocked") {
+    const dateStr = task.createdAt || task.updatedAt;
+    if (!dateStr) return null;
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return null;
+      const formattedDate = date.toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+      });
+      const formattedTime = date
+        .toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        })
+        .toLowerCase();
+
+      const diffMs = Math.max(0, Date.now() - date.getTime());
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffDays = Math.floor(diffHours / 24);
+      const remainingHours = diffHours % 24;
+
+      let timeAgo = "";
+      if (diffDays > 0) {
+        timeAgo = `${diffDays}d ${remainingHours}h ago`;
+      } else if (diffHours > 0) {
+        timeAgo = `${diffHours}h ago`;
+      } else {
+        timeAgo = "just now";
+      }
+
+      return {
+        icon: "▶",
+        text: `Started ${formattedDate}, ${formattedTime} · ${timeAgo}`,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+};
+
 const ProjectTasks: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const projectName = searchParams.get("project") || "";
-  const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
-  const projectDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Projects list for switcher and fallback
-  const { data: boardProjects = [] } =
-    useGetTaskBoardProjectsQuery();
+  // Projects list for fallback
+  const { data: boardProjects = [] } = useGetTaskBoardProjectsQuery();
 
   // If no project in URL, automatically select the first project
   useEffect(() => {
@@ -130,24 +209,10 @@ const ProjectTasks: React.FC = () => {
     }
   }, [projectName, boardProjects, setSearchParams]);
 
-  // Click outside listener for project dropdown
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        projectDropdownRef.current &&
-        !projectDropdownRef.current.contains(e.target as Node)
-      ) {
-        setIsProjectDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   // Drag and drop state
   const [dragOverCol, setDragOverCol] = useState<TaskStatus | null>(null);
 
-  // State
+  // Filters State
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedAssignee, setSelectedAssignee] = useState<string | null>(null);
   const [selectedPriority, setSelectedPriority] = useState<string>("all");
@@ -164,11 +229,15 @@ const ProjectTasks: React.FC = () => {
     estimatedMinutes: 60,
     assignedTo: "" as string | number,
   });
+  const [attachments, setAttachments] = useState<IUploadedAttachment[]>([]);
+  const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
 
   // Modal State for Task Details / Status Change
   const [selectedTask, setSelectedTask] = useState<IProjectTaskItem | null>(
     null,
   );
+  const [viewAttachmentPreview, setViewAttachmentPreview] =
+    useState<IUploadedAttachment | null>(null);
 
   // RTK Query: fetch tasks for this project
   const {
@@ -201,7 +270,6 @@ const ProjectTasks: React.FC = () => {
         });
       }
     });
-    // Supplement with active team members up to 5 members so avatar filter bar is always rich
     activeEmployees.forEach((emp) => {
       const uname = emp.username || emp.name;
       if (uname && !map.has(uname) && map.size < 5) {
@@ -217,10 +285,10 @@ const ProjectTasks: React.FC = () => {
   // Filter tasks based on search, selected assignee, and priority
   const filteredTasks = useMemo(() => {
     return tasks.filter((t) => {
-      // 1. Search filter (title, description, key, id)
+      // 1. Search filter
       if (searchTerm.trim()) {
         const query = searchTerm.toLowerCase().trim();
-        const keyMatch = `task-${t.id}`.toLowerCase().includes(query);
+        const keyMatch = `web-${t.id >= 100 ? t.id : t.id + 100}`.includes(query) || `task-${t.id}`.includes(query);
         const titleMatch = t.title.toLowerCase().includes(query);
         const descMatch = (t.description || "").toLowerCase().includes(query);
         if (!keyMatch && !titleMatch && !descMatch) return false;
@@ -269,6 +337,7 @@ const ProjectTasks: React.FC = () => {
       estimatedMinutes: 60,
       assignedTo: "",
     });
+    setAttachments([]);
     setIsAddModalOpen(true);
   };
 
@@ -292,10 +361,12 @@ const ProjectTasks: React.FC = () => {
         estimatedMinutes: Number(taskForm.estimatedMinutes) || 60,
         project: projectName,
         assignedTo: taskForm.assignedTo || undefined,
+        attachments: attachments.map((a) => a.id),
       }).unwrap();
 
       toast.success("Task created successfully!");
       setIsAddModalOpen(false);
+      setAttachments([]);
       refetch();
     } catch (err: any) {
       toast.error(
@@ -336,22 +407,34 @@ const ProjectTasks: React.FC = () => {
     }
   };
 
-  // Render Priority Icon
-  const renderPriorityIcon = (priority?: string) => {
+  // Render Priority Indicator icon
+  const renderPriorityIndicator = (priority?: string) => {
     const p = (priority || "medium").toLowerCase();
     if (p === "high") {
-      return <ChevronsUp size={13} className="text-rose-500 stroke-[2.5]" />;
+      return (
+        <span className="text-rose-500 font-bold text-xs select-none" title="High Priority">
+          ▲
+        </span>
+      );
     }
     if (p === "low") {
-      return <ChevronDown size={13} className="text-blue-500 stroke-[2.5]" />;
+      return (
+        <span className="text-blue-500 font-bold text-xs select-none" title="Low Priority">
+          ▼
+        </span>
+      );
     }
-    return <Equal size={13} className="text-amber-500 stroke-[2.5]" />;
+    return (
+      <span className="text-amber-500 font-bold text-xs select-none" title="Medium Priority">
+        ═
+      </span>
+    );
   };
 
   return (
-    <div className="w-full h-full flex flex-col p-6 overflow-hidden min-h-0 gap-5 bg-[#fbfbfb]">
-      {/* 1. Header Section: Breadcrumb + Project Title + Create Task Button */}
-      <div className="flex flex-col gap-1 shrink-0">
+    <div className="w-full h-full flex flex-col p-5 overflow-y-auto min-h-0 gap-3.5 bg-[#fbfbfb]">
+      {/* 1. Header Section: Breadcrumbs + Project Title + Create Task Button */}
+      <div className="flex flex-col gap-0.5 shrink-0">
         {/* Breadcrumb */}
         <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
           <button
@@ -361,77 +444,30 @@ const ProjectTasks: React.FC = () => {
             Projects
           </button>
           <span>/</span>
-          <span className="text-slate-700 font-semibold">{projectName || "Tasks"}</span>
+          <span className="text-slate-700 font-semibold">
+            {projectName || "Tasks"}
+          </span>
         </div>
 
         {/* Title Row */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-0.5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mt-0.5">
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-                {projectName || "Project Tasks"}
-              </h1>
-
-              {/* Project Switcher Dropdown */}
-              <div className="relative" ref={projectDropdownRef}>
-                <button
-                  type="button"
-                  onClick={() => setIsProjectDropdownOpen(!isProjectDropdownOpen)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-                  title="Switch Project"
-                >
-                  <ChevronDown
-                    size={18}
-                    className={`transition-transform duration-200 ${
-                      isProjectDropdownOpen ? "rotate-180 text-primary" : ""
-                    }`}
-                  />
-                </button>
-
-                {isProjectDropdownOpen && (
-                  <div className="absolute left-0 mt-2 w-64 max-h-72 overflow-y-auto bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-1.5 animate-in fade-in duration-100">
-                    <div className="px-3 py-2 text-[11px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">
-                      Switch Project
-                    </div>
-                    {boardProjects.map((p) => (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => {
-                          setSearchParams({ project: p.title });
-                          setIsProjectDropdownOpen(false);
-                        }}
-                        className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer ${
-                          p.title.toLowerCase() === projectName.toLowerCase()
-                            ? "bg-primary-20/40 text-primary"
-                            : "text-slate-700 hover:bg-slate-50"
-                        }`}
-                      >
-                        <span className="truncate">{p.title}</span>
-                        {Number(p.in_progress_tasks_count) > 0 && (
-                          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200/60">
-                            {p.in_progress_tasks_count}
-                          </span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <p className="text-xs text-slate-500 mt-1">
-              Drag cards between columns to change status. Click a card to edit it.
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
+              {projectName || "Project Tasks"}
+            </h1>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Drag cards between columns to change status. Start and completion
+              times are stamped automatically.
             </p>
           </div>
 
           {/* Right Action: Create Task Button + Refresh */}
-          <div className="flex items-center gap-2.5 self-start sm:self-auto">
+          <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
             <button
               onClick={() => handleOpenAddModal("planned")}
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold shadow-xs hover:shadow transition-all active:scale-95 cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold shadow-xs hover:shadow transition-all active:scale-95 cursor-pointer"
             >
-              <Plus size={16} />
+              <Plus size={15} />
               <span>Create Task</span>
             </button>
 
@@ -439,10 +475,10 @@ const ProjectTasks: React.FC = () => {
               onClick={() => refetch()}
               disabled={isFetching}
               title="Refresh Tasks"
-              className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-primary hover:border-primary/50 transition-all shadow-2xs disabled:opacity-50 cursor-pointer"
+              className="p-2 bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-primary hover:border-primary/50 transition-all shadow-2xs disabled:opacity-50 cursor-pointer"
             >
               <RotateCcw
-                size={15}
+                size={14}
                 className={isFetching ? "animate-spin text-primary" : ""}
               />
             </button>
@@ -451,32 +487,32 @@ const ProjectTasks: React.FC = () => {
       </div>
 
       {/* 2. Filter Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shrink-0">
         {/* Left: Search Bar */}
-        <div className="relative w-full sm:w-80">
+        <div className="relative w-full sm:w-72">
           <Search
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-            size={15}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            size={14}
           />
           <input
             type="text"
             placeholder="Search tasks or keys..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-8 py-2 bg-white border border-slate-200/90 rounded-xl text-xs text-slate-800 placeholder:text-slate-400 outline-none focus:border-primary shadow-2xs transition-all"
+            className="w-full pl-8.5 pr-8 py-1.5 bg-white border border-slate-200/90 rounded-xl text-xs text-slate-800 placeholder:text-slate-400 outline-none focus:border-primary shadow-2xs transition-all"
           />
           {searchTerm && (
             <button
               onClick={() => setSearchTerm("")}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
             >
-              <X size={13} />
+              <X size={12} />
             </button>
           )}
         </div>
 
-        {/* Right: Team Avatars & Priority Dropdown */}
-        <div className="flex items-center gap-3 self-end sm:self-auto">
+        {/* Right: Team Avatars + Signed in as + Priority Dropdown */}
+        <div className="flex items-center gap-2.5 self-end sm:self-auto flex-wrap">
           {/* Team Members Avatars */}
           {projectAssignees.length > 0 && (
             <div className="flex items-center -space-x-1.5">
@@ -537,14 +573,14 @@ const ProjectTasks: React.FC = () => {
           <div className="relative">
             <button
               onClick={() => setIsPriorityOpen(!isPriorityOpen)}
-              className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-slate-200/90 rounded-xl text-xs font-medium text-slate-700 hover:bg-slate-50 transition-all cursor-pointer shadow-2xs"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-slate-200/90 rounded-xl text-xs font-medium text-slate-700 hover:bg-slate-50 transition-all cursor-pointer shadow-2xs"
             >
               <span>
                 {selectedPriority === "all"
                   ? "All priorities"
                   : `${selectedPriority.charAt(0).toUpperCase() + selectedPriority.slice(1)} priority`}
               </span>
-              <ChevronDown size={14} className="text-slate-400" />
+              <ChevronDown size={13} className="text-slate-400" />
             </button>
 
             {isPriorityOpen && (
@@ -573,8 +609,8 @@ const ProjectTasks: React.FC = () => {
         </div>
       </div>
 
-      {/* Kanban Board 4 Columns */}
-      <div className="flex-1 min-h-0 overflow-x-auto pb-4">
+      {/* 3. Kanban Board 4 Columns (All on one screen, NO X-axis scroll, smooth Y-axis scroll) */}
+      <div className="flex-1 min-h-0 w-full overflow-y-auto">
         {isLoading ? (
           <div className="w-full h-full flex flex-col items-center justify-center py-28 gap-3">
             <CircularProgress size={36} sx={{ color: "#f17c04" }} />
@@ -583,7 +619,7 @@ const ProjectTasks: React.FC = () => {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 h-full min-w-[1000px]">
+          <div className="grid grid-cols-4 gap-3 h-full w-full min-w-0">
             {columnData.map((col) => (
               <div
                 key={col.id}
@@ -603,31 +639,31 @@ const ProjectTasks: React.FC = () => {
                     handleUpdateStatus(taskId, col.id);
                   }
                 }}
-                className={`bg-[#f8f9fa] border rounded-3xl p-3.5 flex flex-col h-full min-h-[450px] transition-all ${
+                className={`bg-[#f4f5f7] border rounded-2xl p-3 flex flex-col h-full min-h-[480px] min-w-0 transition-all ${
                   dragOverCol === col.id
                     ? "border-primary/50 ring-2 ring-primary/20 bg-orange-50/20"
                     : "border-slate-200/70"
                 }`}
               >
                 {/* Column Header */}
-                <div className="flex items-center justify-between pb-3 px-1 shrink-0">
-                  <div className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${col.dotColor}`} />
-                    <span className="text-sm font-bold text-slate-800">
+                <div className="flex items-center justify-between pb-2.5 px-1 shrink-0">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${col.dotColor}`} />
+                    <span className="text-xs font-bold text-slate-800 truncate">
                       {col.label}
                     </span>
-                    <span className="text-xs text-slate-400 font-medium">
+                    <span className="text-[11px] text-slate-400 font-normal shrink-0">
                       {col.totalTimeFormatted}
                     </span>
                   </div>
 
-                  <span className="min-w-5 h-5 px-1.5 rounded-full bg-white text-slate-600 text-xs font-semibold flex items-center justify-center border border-slate-200/80 shadow-2xs">
+                  <span className="min-w-4.5 h-4.5 px-1 rounded-full bg-white text-slate-600 text-[11px] font-semibold flex items-center justify-center border border-slate-200/80 shadow-2xs shrink-0 ml-1">
                     {col.count}
                   </span>
                 </div>
 
-                {/* Column Tasks List Container */}
-                <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {/* Column Tasks List Container - Smooth vertical scroll with clean scrollbar */}
+                <div className="flex-1 min-h-0 overflow-y-auto space-y-2.5 pr-1 kanban-column-scroll">
                   {col.tasks.map((task) => {
                     const assigneeName =
                       task.assigned_to?.username ||
@@ -636,7 +672,12 @@ const ProjectTasks: React.FC = () => {
                     const photoSrc = task.assigned_to?.photo
                       ? getImageUrl(task.assigned_to.photo)
                       : null;
-                    const taskKey = `WEB-${task.id + 100}`;
+                    const taskKey = `WEB-${task.id >= 100 ? task.id : task.id + 100}`;
+                    const taskAttachments = extractTaskAttachments(
+                      task.attachments,
+                    );
+                    const taskTag = task.project?.title || projectName || "General";
+                    const timestampInfo = formatTaskTimestamp(task);
 
                     return (
                       <div
@@ -647,28 +688,43 @@ const ProjectTasks: React.FC = () => {
                           e.dataTransfer.effectAllowed = "move";
                         }}
                         onClick={() => setSelectedTask(task)}
-                        className="group bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col gap-2.5 cursor-pointer active:opacity-75"
+                        className="group bg-white rounded-xl p-3 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col gap-2 cursor-pointer active:opacity-75"
                       >
+                        {/* Cover image thumbnail if attachments exist */}
+                        {taskAttachments.length > 0 &&
+                          (taskAttachments[0].url || taskAttachments[0].previewUrl) && (
+                            <div className="w-full h-28 rounded-xl overflow-hidden bg-slate-100 border border-slate-100/90 mb-0.5 shrink-0">
+                              <img
+                                src={
+                                  taskAttachments[0].previewUrl ||
+                                  getImageUrl(taskAttachments[0].url)
+                                }
+                                alt={task.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                              />
+                            </div>
+                          )}
+
                         {/* Task Title */}
-                        <h4 className="text-sm font-bold text-slate-900 leading-snug group-hover:text-primary transition-colors">
+                        <h4 className="text-xs font-bold text-slate-900 leading-snug group-hover:text-primary transition-colors line-clamp-2">
                           {task.title}
                         </h4>
 
                         {/* Task Description */}
                         {task.description && (
-                          <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                          <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
                             {task.description}
                           </p>
                         )}
 
                         {/* Tag & Status Row */}
                         <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                          <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200/60">
-                            {projectName || "General"}
+                          <span className="px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200/60 truncate max-w-[110px]">
+                            {taskTag}
                           </span>
 
                           <span
-                            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${col.badgeBg} ${col.badgeText} border ${col.badgeBorder}`}
+                            className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${col.badgeBg} ${col.badgeText} border ${col.badgeBorder} shrink-0`}
                           >
                             <span
                               className={`w-1.5 h-1.5 rounded-full ${col.dotColor} ${
@@ -679,23 +735,34 @@ const ProjectTasks: React.FC = () => {
                           </span>
                         </div>
 
-                        {/* Footer Row: Priority, Task Key, Estimate & Assignee */}
-                        <div className="flex items-center justify-between pt-2 border-t border-slate-100 mt-1">
-                          <div className="flex items-center gap-1.5 text-slate-500">
-                            {renderPriorityIcon(task.priority)}
-                            <span className="text-[11px] font-semibold tracking-tight text-slate-500">
+                        {/* Footer Row: Priority, Task Key, Estimate, Attachments & Assignee */}
+                        <div className="flex items-center justify-between pt-1.5 border-t border-slate-100 mt-0.5">
+                          <div className="flex items-center gap-1 text-slate-500 min-w-0">
+                            {renderPriorityIndicator(task.priority)}
+                            <span className="text-[11px] font-semibold tracking-tight text-slate-600">
                               {taskKey}
                             </span>
-                            <span className="inline-flex items-center gap-1 text-[11px] text-slate-400 font-medium ml-1.5">
-                              <Clock size={11} className="text-slate-400" />
+                            <span className="inline-flex items-center gap-0.5 text-[11px] text-slate-400 font-medium ml-1">
+                              <Clock size={10} className="text-slate-400" />
                               <span>{formatTime(task.estimatedMinutes)}</span>
                             </span>
+
+                            {/* Attachments indicator */}
+                            {taskAttachments.length > 0 && (
+                              <span
+                                className="inline-flex items-center gap-0.5 text-[11px] text-slate-400 font-medium ml-1"
+                                title={`${taskAttachments.length} image attachment(s)`}
+                              >
+                                <Paperclip size={11} className="text-slate-400" />
+                                <span>{taskAttachments.length}</span>
+                              </span>
+                            )}
                           </div>
 
                           {/* Assignee Avatar */}
                           <div
                             title={`Assigned to ${assigneeName}`}
-                            className="w-6 h-6 rounded-full overflow-hidden shrink-0 border border-white shadow-2xs"
+                            className="w-5.5 h-5.5 rounded-full overflow-hidden shrink-0 border border-white shadow-2xs ml-1"
                           >
                             {photoSrc ? (
                               <img
@@ -705,7 +772,7 @@ const ProjectTasks: React.FC = () => {
                               />
                             ) : (
                               <div
-                                className="w-full h-full flex items-center justify-center text-[10px] font-bold text-white"
+                                className="w-full h-full flex items-center justify-center text-[9px] font-bold text-white"
                                 style={{
                                   backgroundColor: getAvatarBg(assigneeName),
                                 }}
@@ -715,6 +782,22 @@ const ProjectTasks: React.FC = () => {
                             )}
                           </div>
                         </div>
+
+                        {/* Started / Completed timestamp line */}
+                        {timestampInfo && (
+                          <div className="flex items-center gap-1 text-[10px] text-slate-400 pt-1 border-t border-slate-100">
+                            <span
+                              className={
+                                task.status === "completed"
+                                  ? "text-emerald-500 font-bold"
+                                  : "text-slate-400 text-[9px]"
+                              }
+                            >
+                              {timestampInfo.icon}
+                            </span>
+                            <span className="truncate">{timestampInfo.text}</span>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -722,10 +805,11 @@ const ProjectTasks: React.FC = () => {
 
                 {/* Add Task Button at bottom of column */}
                 <button
+                  type="button"
                   onClick={() => handleOpenAddModal(col.id)}
-                  className="w-full mt-3 py-2.5 rounded-2xl border border-dashed border-slate-200 hover:border-primary/50 text-slate-500 hover:text-primary text-xs font-semibold flex items-center justify-center gap-1.5 bg-white/70 hover:bg-white transition-all cursor-pointer shrink-0"
+                  className="w-full mt-auto py-2.5 px-3 rounded-2xl bg-[#ebedf0] text-slate-700 border border-transparent hover:border-dashed hover:border-[#ff7300] hover:text-[#ff7300] hover:bg-white text-xs font-medium flex items-center justify-center gap-1.5 transition-all duration-150 cursor-pointer shrink-0 shadow-2xs"
                 >
-                  <Plus size={14} />
+                  <Plus size={14} className="stroke-[2.5]" />
                   <span>Add task</span>
                 </button>
               </div>
@@ -736,8 +820,8 @@ const ProjectTasks: React.FC = () => {
 
       {/* Modal: Create Task */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-99999 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-lg shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="text-base font-bold text-slate-900">
                 Create Task in {projectName}
@@ -844,6 +928,14 @@ const ProjectTasks: React.FC = () => {
                 </select>
               </div>
 
+              {/* Attachments Option */}
+              <TaskAttachmentUpload
+                attachments={attachments}
+                onChange={setAttachments}
+                onUploadingChange={setIsUploadingAttachments}
+                disabled={isCreating}
+              />
+
               <div className="flex items-center justify-end gap-2 pt-3">
                 <button
                   type="button"
@@ -854,10 +946,14 @@ const ProjectTasks: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={isCreating}
+                  disabled={isCreating || isUploadingAttachments}
                   className="px-5 py-2 rounded-xl text-xs font-semibold bg-primary text-white shadow-xs hover:opacity-90 transition-all cursor-pointer disabled:opacity-50"
                 >
-                  {isCreating ? "Creating..." : "Create Task"}
+                  {isCreating
+                    ? "Creating..."
+                    : isUploadingAttachments
+                    ? "Uploading attachments..."
+                    : "Create Task"}
                 </button>
               </div>
             </form>
@@ -868,11 +964,11 @@ const ProjectTasks: React.FC = () => {
       {/* Modal: View Task & Move Status */}
       {selectedTask && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-start justify-between pb-3 border-b border-slate-100">
               <div>
                 <span className="text-[11px] font-semibold text-slate-400 uppercase">
-                  WEB-{selectedTask.id + 100} • {projectName}
+                  WEB-{selectedTask.id >= 100 ? selectedTask.id : selectedTask.id + 100} • {projectName}
                 </span>
                 <h3 className="text-base font-bold text-slate-900 mt-1">
                   {selectedTask.title}
@@ -910,6 +1006,39 @@ const ProjectTasks: React.FC = () => {
                   </p>
                 </div>
               </div>
+
+              {/* Attachments Section if present */}
+              {extractTaskAttachments(selectedTask.attachments).length > 0 && (
+                <div className="pt-2">
+                  <label className="text-slate-400 font-medium block mb-2 flex items-center gap-1.5">
+                    <Paperclip size={12} />
+                    <span>
+                      Attachments (
+                      {extractTaskAttachments(selectedTask.attachments).length})
+                    </span>
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {extractTaskAttachments(selectedTask.attachments).map(
+                      (att) => (
+                        <div
+                          key={att.id}
+                          onClick={() => setViewAttachmentPreview(att)}
+                          className="group relative aspect-video rounded-xl overflow-hidden border border-slate-200 bg-slate-100 hover:border-primary transition-all cursor-pointer shadow-2xs"
+                        >
+                          <img
+                            src={getImageUrl(att.url)}
+                            alt={att.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                          />
+                          <div className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                            <Eye size={16} />
+                          </div>
+                        </div>
+                      ),
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Move Status Buttons */}
               <div className="pt-3 border-t border-slate-100">
@@ -954,6 +1083,49 @@ const ProjectTasks: React.FC = () => {
               >
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lightbox Preview Modal for Task Details */}
+      {viewAttachmentPreview && (
+        <div
+          onClick={() => setViewAttachmentPreview(null)}
+          className="fixed inset-0 z-99999 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative max-w-3xl max-h-[90vh] bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col"
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/70">
+              <span className="text-xs font-bold text-slate-800 truncate max-w-md">
+                {viewAttachmentPreview.name}
+              </span>
+              <button
+                type="button"
+                onClick={() => setViewAttachmentPreview(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-all cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="p-2 flex items-center justify-center overflow-auto max-h-[75vh]">
+              <img
+                src={getImageUrl(viewAttachmentPreview.url)}
+                alt={viewAttachmentPreview.name}
+                className="max-w-full max-h-[70vh] object-contain rounded-lg"
+              />
+            </div>
+            <div className="flex items-center justify-end px-4 py-2.5 border-t border-slate-100 bg-slate-50/50 text-[11px]">
+              <a
+                href={getImageUrl(viewAttachmentPreview.url)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline font-semibold"
+              >
+                Open original in new tab
+              </a>
             </div>
           </div>
         </div>

@@ -10,6 +10,7 @@ import {
   PersonOutline,
   KeyboardArrowDown,
   AssignmentOutlined,
+  AttachFile,
 } from "@mui/icons-material";
 import { CircularProgress } from "@mui/material";
 
@@ -20,6 +21,7 @@ import {
   type ITaskItem,
 } from "../taskApi";
 import { TaskModal, STATUS_CONFIG } from "./AddTaskModal";
+import { extractTaskAttachments } from "../utils/taskAttachmentUtils";
 
 interface StatusSelectProps {
   currentStatus: TaskStatus;
@@ -397,6 +399,7 @@ const TaskListComponents = () => {
           filteredTasks.map((item) => {
             const formattedTime = formatEstimatedTime(item.estimatedMinutes);
             const isItemUpdating = updatingTaskId === item.id;
+            const taskAttachments = extractTaskAttachments(item.attachments);
 
             return (
               <div
@@ -416,6 +419,16 @@ const TaskListComponents = () => {
                       <span className="text-[11px] px-2 py-0.5 rounded-md bg-orange-50 text-orange-600 font-medium flex items-center gap-1">
                         <AccessTime style={{ fontSize: 12 }} />
                         {formattedTime}
+                      </span>
+                    )}
+
+                    {taskAttachments.length > 0 && (
+                      <span
+                        className="text-[11px] px-2 py-0.5 rounded-md bg-blue-50 text-blue-600 font-medium flex items-center gap-1"
+                        title={`${taskAttachments.length} attachment(s)`}
+                      >
+                        <AttachFile style={{ fontSize: 12 }} />
+                        <span>{taskAttachments.length}</span>
                       </span>
                     )}
 

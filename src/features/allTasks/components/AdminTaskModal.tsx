@@ -16,6 +16,11 @@ import {
   useUpdateAdminTaskMutation,
 } from "../allTaskApi";
 import { extractEmployeePhotoUrl } from "../../../utils/utils";
+import { TaskAttachmentUpload } from "../../tasks/components/TaskAttachmentUpload";
+import {
+  extractTaskAttachments,
+  type IUploadedAttachment,
+} from "../../tasks/utils/taskAttachmentUtils";
 
 export const STATUS_CONFIG: Record<
   TaskStatus,
@@ -241,12 +246,14 @@ export const AdminTaskModal: React.FC<AdminTaskModalProps> = ({
   const [status, setStatus] = useState<TaskStatus>("planned");
   const [hours, setHours] = useState<number | string>("");
   const [minutes, setMinutes] = useState<number | string>("");
+  const [attachments, setAttachments] = useState<IUploadedAttachment[]>([]);
+  const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
   const [errors, setErrors] = useState<{ title?: string; time?: string; employee?: string }>({});
 
   const [createAdminTask, { isLoading: isCreating }] = useCreateAdminTaskMutation();
   const [updateAdminTask, { isLoading: isUpdating }] = useUpdateAdminTaskMutation();
 
-  const isSubmitting = isCreating || isUpdating;
+  const isSubmitting = isCreating || isUpdating || isUploadingAttachments;
 
   useEffect(() => {
     if (taskToEdit) {
@@ -257,6 +264,7 @@ export const AdminTaskModal: React.FC<AdminTaskModalProps> = ({
       setHours(Math.floor(est / 60) || "");
       setMinutes(est % 60 || "");
       setTaskDate(taskToEdit.date || todayStr);
+      setAttachments(extractTaskAttachments(taskToEdit.attachments));
       setErrors({});
     } else {
       setTitle("");
@@ -265,6 +273,7 @@ export const AdminTaskModal: React.FC<AdminTaskModalProps> = ({
       setHours("");
       setMinutes("");
       setTaskDate(todayStr);
+      setAttachments([]);
       if (employees.length > 0) {
         setSelectedEmployeeId(employees[0].id);
       }
@@ -299,6 +308,7 @@ export const AdminTaskModal: React.FC<AdminTaskModalProps> = ({
     }
 
     try {
+      const attachmentIds = attachments.map((a) => a.id);
       if (taskToEdit) {
         await updateAdminTask({
           id: taskToEdit.id,
@@ -307,6 +317,7 @@ export const AdminTaskModal: React.FC<AdminTaskModalProps> = ({
             description: description.trim(),
             status,
             estimatedMinutes: totalMinutes,
+            attachments: attachmentIds,
           },
         }).unwrap();
       } else {
@@ -317,6 +328,7 @@ export const AdminTaskModal: React.FC<AdminTaskModalProps> = ({
           date: taskDate,
           estimatedMinutes: totalMinutes,
           employeeId: selectedEmployeeId,
+          attachments: attachmentIds,
         }).unwrap();
       }
       onClose();
@@ -327,7 +339,7 @@ export const AdminTaskModal: React.FC<AdminTaskModalProps> = ({
 
   return createPortal(
     <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-[99999]">
-      <div className="bg-white w-full max-w-lg rounded-2xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+      <div className="bg-white w-full max-w-lg rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-bold text-gray-800">
             {taskToEdit ? "Edit Task" : "Assign Task"}
@@ -542,6 +554,14 @@ export const AdminTaskModal: React.FC<AdminTaskModalProps> = ({
               </span>
             )}
           </div>
+
+          {/* Attachments Section */}
+          <TaskAttachmentUpload
+            attachments={attachments}
+            onChange={setAttachments}
+            onUploadingChange={setIsUploadingAttachments}
+            disabled={isSubmitting}
+          />
 
           <div className="flex items-center justify-end gap-3 mt-2">
             <button

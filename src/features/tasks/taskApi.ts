@@ -13,6 +13,7 @@ export interface ITaskItem {
   estimatedMinutes?: number;
   date: string;
   task_created_by?: string | null;
+  attachments?: any;
 }
 
 export interface IProjectTaskItem {
@@ -36,6 +37,7 @@ export interface IProjectTaskItem {
     photo?: string | null;
   } | null;
   taskHistory?: any[];
+  attachments?: any;
 }
 
 export interface ITaskAssignedToday {
@@ -54,6 +56,7 @@ export interface ICreateTaskPayload {
   project?: number | string;
   assignedTo?: number | string;
   priority?: "low" | "medium" | "high";
+  attachments?: number[];
 }
 
 export interface IUpdateTaskPayload {
@@ -66,6 +69,7 @@ export interface IUpdateTaskPayload {
     date?: string;
     priority?: "low" | "medium" | "high";
     assignedTo?: number | string;
+    attachments?: number[];
   };
 }
 

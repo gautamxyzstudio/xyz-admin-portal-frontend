@@ -13,6 +13,7 @@ export interface ITaskItem {
   estimatedMinutes?: number;
   date: string;
   task_created_by?: string | null;
+  attachments?: any;
 }
 
 export interface IEmployeeTaskContainer {
@@ -47,6 +48,7 @@ export interface ICreateAdminTaskPayload {
   date: string;
   estimatedMinutes?: number;
   employeeId?: number | string;
+  attachments?: number[];
 }
 
 export interface IUpdateAdminTaskPayload {
@@ -57,6 +59,7 @@ export interface IUpdateAdminTaskPayload {
     status?: TaskStatus;
     estimatedMinutes?: number;
     date?: string;
+    attachments?: number[];
   };
 }
 

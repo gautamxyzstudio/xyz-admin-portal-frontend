@@ -18,6 +18,7 @@ import {
   ArrowRight,
   Plus,
   RotateCcw,
+  Paperclip,
 } from "lucide-react";
 import { CircularProgress } from "@mui/material";
 import {
@@ -31,6 +32,11 @@ import {
   CustomDatePicker,
   STATUS_CONFIG,
 } from "./AdminTaskModal";
+import {
+  extractTaskAttachments,
+  type IUploadedAttachment,
+} from "../../tasks/utils/taskAttachmentUtils";
+import { getImageUrl } from "../../../utils/utils";
 
 // Helper function to resolve photo arrays, nested formats, and absolute/relative URLs
 const getValidImageUrl = (photo: any): string | null => {
@@ -499,6 +505,9 @@ export default function AllTasks() {
                                 : task.status === "blocked"
                                 ? AlertCircle
                                 : ListTodo;
+                            const taskAttachments = extractTaskAttachments(
+                              task.attachments
+                            );
 
                             return (
                               <div
@@ -520,10 +529,22 @@ export default function AllTasks() {
                                 </div>
 
                                 <div className="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-slate-200/60">
-                                  <span className="flex items-center gap-1 font-medium text-slate-600">
-                                    <Clock className="w-3.5 h-3.5 text-slate-400" />
-                                    {formatMinutes(task.estimatedMinutes)}
-                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="flex items-center gap-1 font-medium text-slate-600">
+                                      <Clock className="w-3.5 h-3.5 text-slate-400" />
+                                      {formatMinutes(task.estimatedMinutes)}
+                                    </span>
+
+                                    {taskAttachments.length > 0 && (
+                                      <span
+                                        className="flex items-center gap-0.5 text-slate-400 font-medium"
+                                        title={`${taskAttachments.length} attachment(s)`}
+                                      >
+                                        <Paperclip className="w-3 h-3 text-slate-400" />
+                                        <span>{taskAttachments.length}</span>
+                                      </span>
+                                    )}
+                                  </div>
 
                                   <div className="flex items-center gap-0.5">
                                     <button
@@ -595,7 +616,7 @@ export default function AllTasks() {
         createPortal(
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[99999] animate-in fade-in duration-200">
             <div
-              className="bg-white rounded-3xl border border-slate-100 shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200"
+              className="bg-white rounded-3xl border border-slate-100 shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Top Header Banner */}
@@ -653,6 +674,36 @@ export default function AllTasks() {
                     )}
                   </p>
                 </div>
+
+                {/* Attachments Display in View Modal */}
+                {extractTaskAttachments(viewingTask.task.attachments).length > 0 && (
+                  <div className="bg-slate-50/80 border border-slate-200/70 rounded-2xl p-4.5 space-y-2">
+                    <div className="flex items-center gap-1.5 text-slate-500 text-[11px] font-bold uppercase tracking-wider">
+                      <Paperclip className="w-3.5 h-3.5 text-orange-500" />
+                      <span>
+                        Attachments ({extractTaskAttachments(viewingTask.task.attachments).length})
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-1">
+                      {extractTaskAttachments(viewingTask.task.attachments).map((att: IUploadedAttachment) => (
+                        <a
+                          key={att.id}
+                          href={getImageUrl(att.url)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group relative aspect-video rounded-xl overflow-hidden border border-slate-200 bg-white hover:border-orange-500 transition-all block shadow-2xs"
+                          title={att.name}
+                        >
+                          <img
+                            src={getImageUrl(att.url)}
+                            alt={att.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Info Cards Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
