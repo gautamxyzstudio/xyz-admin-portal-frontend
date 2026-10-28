@@ -81,8 +81,26 @@ export interface IUpdateTaskPayload {
   };
 }
 
+export interface ITaskCommentItem {
+  id: number;
+  comment: string;
+  attachments?: string[] | any[];
+  addedBy?: {
+    id: number;
+    username: string;
+    logo?: string | null;
+  } | null;
+  createdAt: string;
+}
+
+export interface ICreateTaskCommentPayload {
+  comment: string;
+  task_item: number | string;
+  attachments?: number[];
+}
+
 export const enhancedTaskApi = baseApi.enhanceEndpoints({
-  addTagTypes: ["Tasks"],
+  addTagTypes: ["Tasks", "TaskComments"],
 });
 
 export const taskApi = enhancedTaskApi.injectEndpoints({
@@ -150,6 +168,39 @@ export const taskApi = enhancedTaskApi.injectEndpoints({
       }),
       invalidatesTags: ["Tasks"],
     }),
+
+    // 6. Create Task Comment
+    createTaskComment: builder.mutation<any, ICreateTaskCommentPayload>({
+      query: (data) => ({
+        url: endpoints.taskComments,
+        method: ApiMethodType.post,
+        body: {
+          data: {
+            comment: data.comment,
+            task_item: Number(data.task_item) || data.task_item,
+            attachments: data.attachments ?? [],
+          },
+        },
+      }),
+      invalidatesTags: ["Tasks", "TaskComments"],
+    }),
+
+    // 7. Get Task Comments
+    getTaskComments: builder.query<ITaskCommentItem[], number | string>({
+      query: (taskId) => ({
+        url: endpoints.taskComments,
+        method: ApiMethodType.get,
+        params: {
+          taskItem: taskId,
+        },
+      }),
+      transformResponse: (response: any) => {
+        if (Array.isArray(response)) return response;
+        if (Array.isArray(response?.data)) return response.data;
+        return [];
+      },
+      providesTags: ["TaskComments"],
+    }),
   }),
 });
 
@@ -161,4 +212,7 @@ export const {
   useCreateTaskMutation,
   useUpdateTaskMutation,
   useDeleteTaskMutation,
+  useCreateTaskCommentMutation,
+  useGetTaskCommentsQuery,
+  useLazyGetTaskCommentsQuery,
 } = taskApi;
