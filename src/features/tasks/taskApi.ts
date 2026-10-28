@@ -14,10 +14,13 @@ export interface ITaskItem {
   date: string;
   task_created_by?: string | null;
   attachments?: any;
+  taskComments?: any[];
+
 }
 
 export interface IProjectTaskItem {
   id: number;
+  taskId?: string;
   title: string;
   description?: string;
   status: TaskStatus;
@@ -38,6 +41,11 @@ export interface IProjectTaskItem {
   } | null;
   taskHistory?: any[];
   attachments?: any;
+  task_history?: any[];
+  taskComments?: any[];
+  task_comments?: any[];
+  comments?: any[];
+
 }
 
 export interface ITaskAssignedToday {
