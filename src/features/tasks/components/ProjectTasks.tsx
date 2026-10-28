@@ -946,7 +946,14 @@ const ProjectTasks: React.FC = () => {
                       min="0"
                       placeholder="1"
                       value={estimatedHours}
-                      onChange={(e) => setEstimatedHours(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (["e", "E", "+", "-", "."].includes(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
+                      onChange={(e) =>
+                        setEstimatedHours(e.target.value.replace(/\D/g, ""))
+                      }
                       className="w-full text-xs px-4 py-3 pr-10 bg-[#fafafa] border border-slate-200/90 rounded-2xl text-slate-800 outline-none focus:border-primary focus:bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all shadow-2xs"
                     />
                     <span className="absolute right-4 text-xs text-slate-400 pointer-events-none select-none">
@@ -961,7 +968,14 @@ const ProjectTasks: React.FC = () => {
                       max="59"
                       placeholder="0"
                       value={estimatedMinutes}
-                      onChange={(e) => setEstimatedMinutes(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (["e", "E", "+", "-", "."].includes(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
+                      onChange={(e) =>
+                        setEstimatedMinutes(e.target.value.replace(/\D/g, ""))
+                      }
                       className="w-full text-xs px-4 py-3 pr-10 bg-[#fafafa] border border-slate-200/90 rounded-2xl text-slate-800 outline-none focus:border-primary focus:bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all shadow-2xs"
                     />
                     <span className="absolute right-4 text-xs text-slate-400 pointer-events-none select-none">
