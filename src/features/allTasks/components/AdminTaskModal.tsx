@@ -174,13 +174,12 @@ export const CustomDatePicker: React.FC<{
                       setIsOpen(false);
                     }
                   }}
-                  className={`w-7 h-7 text-xs flex items-center justify-center rounded-full transition ${
-                    isDisabled
+                  className={`w-7 h-7 text-xs flex items-center justify-center rounded-full transition ${isDisabled
                       ? "text-gray-300 cursor-not-allowed"
                       : isSelected
-                      ? "bg-orange-600 text-white font-bold shadow-xs cursor-pointer"
-                      : "text-gray-700 hover:bg-gray-100 cursor-pointer"
-                  }`}
+                        ? "bg-orange-600 text-white font-bold shadow-xs cursor-pointer"
+                        : "text-gray-700 hover:bg-gray-100 cursor-pointer"
+                    }`}
                 >
                   {day}
                 </button>
@@ -208,11 +207,10 @@ const ModalStatusSelect: React.FC<{
             key={statusKey}
             type="button"
             onClick={() => onChange(statusKey)}
-            className={`py-2 px-2.5 rounded-xl text-xs font-semibold border text-center transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-              isSelected
+            className={`py-2 px-2.5 rounded-xl text-xs font-semibold border text-center transition-all cursor-pointer flex items-center justify-center gap-1.5 ${isSelected
                 ? `${config.bg} ${config.text} ${config.border} shadow-2xs ring-1.5 ring-orange-400/40`
                 : "bg-gray-50/70 border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-            }`}
+              }`}
           >
             <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
             <span>{config.label}</span>
@@ -390,9 +388,8 @@ export const AdminTaskModal: React.FC<AdminTaskModalProps> = ({
                     </span>
                   </div>
                   <ChevronDown
-                    className={`w-4 h-4 text-gray-400 transition-transform duration-200 shrink-0 ${
-                      isEmployeeDropdownOpen ? "rotate-180" : ""
-                    }`}
+                    className={`w-4 h-4 text-gray-400 transition-transform duration-200 shrink-0 ${isEmployeeDropdownOpen ? "rotate-180" : ""
+                      }`}
                   />
                 </div>
 
@@ -421,11 +418,10 @@ export const AdminTaskModal: React.FC<AdminTaskModalProps> = ({
                               setIsEmployeeDropdownOpen(false);
                               if (errors.employee) setErrors((prev) => ({ ...prev, employee: undefined }));
                             }}
-                            className={`px-3.5 py-2 text-xs cursor-pointer hover:bg-orange-50 flex items-center gap-2 transition ${
-                              selectedEmployeeId === emp.id
+                            className={`px-3.5 py-2 text-xs cursor-pointer hover:bg-orange-50 flex items-center gap-2 transition ${selectedEmployeeId === emp.id
                                 ? "bg-orange-50/60 text-orange-600 font-semibold"
                                 : "text-gray-700"
-                            }`}
+                              }`}
                           >
                             {avatarUrl ? (
                               <img
@@ -471,11 +467,10 @@ export const AdminTaskModal: React.FC<AdminTaskModalProps> = ({
                 setTitle(e.target.value);
                 if (errors.title) setErrors((prev) => ({ ...prev, title: undefined }));
               }}
-              className={`w-full text-xs px-3.5 py-2.5 border rounded-xl outline-none transition text-gray-800 placeholder:text-gray-400 ${
-                errors.title
+              className={`w-full text-xs px-3.5 py-2.5 border rounded-xl outline-none transition text-gray-800 placeholder:text-gray-400 ${errors.title
                   ? "border-red-400 focus:border-red-500 bg-red-50/20"
                   : "border-gray-200 bg-gray-50/70 focus:bg-white focus:border-orange-500"
-              }`}
+                }`}
             />
             {errors.title && (
               <span className="text-[11px] text-red-500 font-medium mt-1 block">
@@ -513,6 +508,7 @@ export const AdminTaskModal: React.FC<AdminTaskModalProps> = ({
                 <input
                   type="number"
                   min="0"
+                  max="99"
                   placeholder="0"
                   value={hours}
                   onKeyDown={(e) => {
@@ -521,14 +517,14 @@ export const AdminTaskModal: React.FC<AdminTaskModalProps> = ({
                     }
                   }}
                   onChange={(e) => {
-                    setHours(e.target.value.replace(/\D/g, ""));
+                    const clean = e.target.value.replace(/\D/g, "");
+                    setHours(clean.slice(0, 2));
                     if (errors.time) setErrors((prev) => ({ ...prev, time: undefined }));
                   }}
-                  className={`w-full text-xs px-3.5 py-2.5 pr-10 border rounded-xl outline-none transition bg-gray-50/70 focus:bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
-                    errors.time
+                  className={`w-full text-xs px-3.5 py-2.5 pr-10 border rounded-xl outline-none transition bg-gray-50/70 focus:bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${errors.time
                       ? "border-red-400 focus:border-red-500 bg-red-50/20"
                       : "border-gray-200 focus:border-orange-500"
-                  }`}
+                    }`}
                 />
                 <span className="absolute right-3.5 text-xs text-gray-400 pointer-events-none">hrs</span>
               </div>
@@ -546,14 +542,20 @@ export const AdminTaskModal: React.FC<AdminTaskModalProps> = ({
                     }
                   }}
                   onChange={(e) => {
-                    setMinutes(e.target.value.replace(/\D/g, ""));
+                    const clean = e.target.value.replace(/\D/g, "");
+                    if (!clean) {
+                      setMinutes("");
+                    } else if (Number(clean) > 59) {
+                      setMinutes("59");
+                    } else {
+                      setMinutes(clean.slice(0, 2));
+                    }
                     if (errors.time) setErrors((prev) => ({ ...prev, time: undefined }));
                   }}
-                  className={`w-full text-xs px-3.5 py-2.5 pr-10 border rounded-xl outline-none transition bg-gray-50/70 focus:bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
-                    errors.time
+                  className={`w-full text-xs px-3.5 py-2.5 pr-10 border rounded-xl outline-none transition bg-gray-50/70 focus:bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${errors.time
                       ? "border-red-400 focus:border-red-500 bg-red-50/20"
                       : "border-gray-200 focus:border-orange-500"
-                  }`}
+                    }`}
                 />
                 <span className="absolute right-3.5 text-xs text-gray-400 pointer-events-none">mins</span>
               </div>

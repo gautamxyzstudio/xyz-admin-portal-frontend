@@ -261,6 +261,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                   <input
                     type="number"
                     min="0"
+                    max="99"
                     placeholder="0"
                     value={hours}
                     onKeyDown={(e) => {
@@ -269,7 +270,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                       }
                     }}
                     onChange={(e) => {
-                      setHours(e.target.value.replace(/\D/g, ""));
+                      const clean = e.target.value.replace(/\D/g, "");
+                      setHours(clean.slice(0, 2));
                       if (errors.time) setErrors((prev) => ({ ...prev, time: undefined }));
                     }}
                     className={`w-full text-xs px-3.5 py-2.5 pr-10 border rounded-xl outline-none transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
@@ -296,7 +298,14 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                       }
                     }}
                     onChange={(e) => {
-                      setMinutes(e.target.value.replace(/\D/g, ""));
+                      const clean = e.target.value.replace(/\D/g, "");
+                      if (!clean) {
+                        setMinutes("");
+                      } else if (Number(clean) > 59) {
+                        setMinutes("59");
+                      } else {
+                        setMinutes(clean.slice(0, 2));
+                      }
                       if (errors.time) setErrors((prev) => ({ ...prev, time: undefined }));
                     }}
                     className={`w-full text-xs px-3.5 py-2.5 pr-10 border rounded-xl outline-none transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${

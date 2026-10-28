@@ -11,6 +11,7 @@ import {
   Trash2,
   Paperclip,
   Eye,
+  Check,
 } from "lucide-react";
 import { CircularProgress } from "@mui/material";
 import {
@@ -23,13 +24,16 @@ import {
 } from "../taskApi";
 import { useGetActiveEmployeesQuery } from "../../allTasks/allTaskApi";
 import { useGetTaskBoardProjectsQuery } from "../../taskBoard/taskBoardApi";
-import { getImageUrl } from "../../../utils/utils";
+import { useGetProjectsQuery } from "../../projects/projectsApi";
+import { getImageUrl, extractEmployeePhotoUrl } from "../../../utils/utils";
 import { toast } from "react-toastify";
 import { TaskAttachmentUpload } from "./TaskAttachmentUpload";
 import {
   extractTaskAttachments,
   type IUploadedAttachment,
 } from "../utils/taskAttachmentUtils";
+import { useSelector } from "react-redux";
+import { userInState } from "../../auth/authSlice";
 
 // Column config matching the mockup
 const COLUMNS: {
@@ -199,6 +203,13 @@ const ProjectTasks: React.FC = () => {
   const navigate = useNavigate();
   const projectName = searchParams.get("project") || "";
 
+  // Auth & Permissions
+  const currentUser = useSelector(userInState);
+  const isAdmin =
+    currentUser?.user_type === "Admin" ||
+    currentUser?.user_type === "Hr" ||
+    currentUser?.user_type === "Management";
+
   // Projects list for fallback
   const { data: boardProjects = [] } = useGetTaskBoardProjectsQuery();
 
@@ -232,6 +243,8 @@ const ProjectTasks: React.FC = () => {
   const [estimatedMinutes, setEstimatedMinutes] = useState("0");
   const [attachments, setAttachments] = useState<IUploadedAttachment[]>([]);
   const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
+  const [isAssigneeDropdownOpen, setIsAssigneeDropdownOpen] = useState(false);
+  const [assigneeSearchQuery, setAssigneeSearchQuery] = useState("");
 
   // Modal State for Task Details / Status Change
   const [selectedTask, setSelectedTask] = useState<IProjectTaskItem | null>(
@@ -251,8 +264,113 @@ const ProjectTasks: React.FC = () => {
     { skip: !projectName },
   );
 
-  // RTK Query: employees for assigning tasks
+  // RTK Query: all active employees
   const { data: activeEmployees = [] } = useGetActiveEmployeesQuery();
+
+  // RTK Query: fetch all projects with populated team members
+  const { data: projectsData, isLoading: isProjectsLoading } =
+    useGetProjectsQuery();
+
+  // Normalize projects list from Strapi response
+  const allProjectsList: any[] = useMemo(() => {
+    if (Array.isArray(projectsData?.projects)) return projectsData.projects;
+    if (Array.isArray(projectsData?.data)) return projectsData.data;
+    if (Array.isArray(projectsData)) return projectsData;
+    return [];
+  }, [projectsData]);
+
+  // Find current project object to access its assigned team members
+  const currentProjectObj = useMemo(() => {
+    if (!projectName || allProjectsList.length === 0) return null;
+    return (
+      allProjectsList.find(
+        (p: any) =>
+          (p.title || p.attributes?.title || "").toLowerCase().trim() ===
+          projectName.toLowerCase().trim(),
+      ) || null
+    );
+  }, [allProjectsList, projectName]);
+
+  // Only employees assigned to this specific project
+  const projectAssignedEmployees = useMemo(() => {
+    if (!currentProjectObj) return [];
+
+    const rawUsers: any[] =
+      currentProjectObj?.users_permissions_users ||
+      currentProjectObj?.attributes?.users_permissions_users?.data ||
+      currentProjectObj?.users ||
+      [];
+
+    if (!Array.isArray(rawUsers) || rawUsers.length === 0) {
+      return [];
+    }
+
+    const assignedUserIds = new Set<string>();
+    const assignedUsernames = new Set<string>();
+
+    rawUsers.forEach((u: any) => {
+      const id = u.id;
+      const username = (u.username || u.attributes?.username || "")
+        .toLowerCase()
+        .trim();
+      if (id) assignedUserIds.add(String(id));
+      if (username) assignedUsernames.add(username);
+    });
+
+    // Match with activeEmployees to get full profile photos, names, and contact details
+    const matched = activeEmployees.filter((emp) => {
+      const idMatch = assignedUserIds.has(String(emp.id));
+      const usernameMatch =
+        emp.username &&
+        assignedUsernames.has(emp.username.toLowerCase().trim());
+      return idMatch || usernameMatch;
+    });
+
+    if (matched.length > 0) {
+      return matched;
+    }
+
+    // Fallback directly from rawUsers if activeEmployees does not contain them
+    return rawUsers.map((u: any) => ({
+      id: u.id,
+      username: u.username || u.attributes?.username || `user-${u.id}`,
+      name:
+        u.name ||
+        u.attributes?.name ||
+        u.username ||
+        u.attributes?.username ||
+        "Employee",
+      photo: u.photo || u.attributes?.photo,
+      profile_photo: u.profile_photo || u.attributes?.profile_photo || u.photo,
+      email: u.email || u.attributes?.email,
+    }));
+  }, [currentProjectObj, activeEmployees]);
+
+  // Selected employee object for rich Assignee dropdown
+  const selectedEmployeeObj = useMemo(() => {
+    if (!taskForm.assignedTo) return null;
+    return (
+      projectAssignedEmployees.find(
+        (emp) => String(emp.id) === String(taskForm.assignedTo),
+      ) ||
+      activeEmployees.find(
+        (emp) => String(emp.id) === String(taskForm.assignedTo),
+      ) ||
+      null
+    );
+  }, [projectAssignedEmployees, activeEmployees, taskForm.assignedTo]);
+
+  // Filtered project employees for search inside dropdown
+  const filteredProjectEmployees = useMemo(() => {
+    if (!assigneeSearchQuery.trim()) return projectAssignedEmployees;
+    const q = assigneeSearchQuery.toLowerCase().trim();
+    return projectAssignedEmployees.filter(
+      (emp) =>
+        (emp.name || "").toLowerCase().includes(q) ||
+        (emp.username || "").toLowerCase().includes(q) ||
+        (emp.email || "").toLowerCase().includes(q),
+    );
+  }, [projectAssignedEmployees, assigneeSearchQuery]);
 
   // Mutations
   const [createTask, { isLoading: isCreating }] = useCreateTaskMutation();
@@ -271,7 +389,7 @@ const ProjectTasks: React.FC = () => {
         });
       }
     });
-    activeEmployees.forEach((emp) => {
+    projectAssignedEmployees.forEach((emp) => {
       const uname = emp.username || emp.name;
       if (uname && !map.has(uname) && map.size < 5) {
         map.set(uname, {
@@ -281,7 +399,7 @@ const ProjectTasks: React.FC = () => {
       }
     });
     return Array.from(map.values());
-  }, [tasks, activeEmployees]);
+  }, [tasks, projectAssignedEmployees]);
 
   // Filter tasks based on search, selected assignee, and priority
   const filteredTasks = useMemo(() => {
@@ -340,6 +458,8 @@ const ProjectTasks: React.FC = () => {
     setEstimatedHours("1");
     setEstimatedMinutes("0");
     setAttachments([]);
+    setIsAssigneeDropdownOpen(false);
+    setAssigneeSearchQuery("");
     setIsAddModalOpen(true);
   };
 
@@ -362,6 +482,11 @@ const ProjectTasks: React.FC = () => {
       return;
     }
 
+    if (isAdmin && !taskForm.assignedTo) {
+      toast.error("Please select an assignee for this task");
+      return;
+    }
+
     try {
       const todayStr = new Date().toISOString().split("T")[0];
       await createTask({
@@ -372,7 +497,7 @@ const ProjectTasks: React.FC = () => {
         estimatedMinutes: totalMinutes,
         date: todayStr,
         project: projectName,
-        assignedTo: taskForm.assignedTo || undefined,
+        assignedTo: isAdmin ? taskForm.assignedTo || undefined : undefined,
         attachments: attachments.map((a) => a.id),
       }).unwrap();
 
@@ -879,34 +1004,214 @@ const ProjectTasks: React.FC = () => {
                 />
               </div>
 
-              {/* Row 1: Assignee on left, Priority on right */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-semibold text-slate-800 block mb-1.5">
-                    Assignee
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={taskForm.assignedTo}
-                      onChange={(e) =>
-                        setTaskForm({ ...taskForm, assignedTo: e.target.value })
-                      }
-                      className="w-full px-4 py-3 bg-[#fafafa] border border-slate-200/90 rounded-2xl text-xs text-slate-800 outline-none focus:border-primary focus:bg-white cursor-pointer appearance-none pr-9 transition-all shadow-2xs"
-                    >
-                      <option value="">Assign to me (default)</option>
-                      {activeEmployees.map((emp) => (
-                        <option key={emp.id} value={emp.id}>
-                          {emp.name || emp.username}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown
-                      size={15}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-                    />
+              {/* Row 1: Assignee on left, Priority on right for Admin, or only Priority for Employees */}
+              {isAdmin ? (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-800 block mb-1.5">
+                      Assignee <span className="text-rose-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setIsAssigneeDropdownOpen(!isAssigneeDropdownOpen)
+                        }
+                        className={`w-full h-[46px] px-3.5 bg-[#fafafa] border rounded-2xl text-xs text-left outline-none transition-all shadow-2xs flex items-center justify-between gap-2 cursor-pointer ${
+                          isAssigneeDropdownOpen
+                            ? "border-primary bg-white ring-2 ring-orange-500/10"
+                            : "border-slate-200/90 hover:border-slate-300"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          {selectedEmployeeObj ? (
+                            <>
+                              {(() => {
+                                const photoUrl =
+                                  extractEmployeePhotoUrl(selectedEmployeeObj);
+                                const displayName =
+                                  selectedEmployeeObj.name ||
+                                  selectedEmployeeObj.username ||
+                                  "Employee";
+                                if (photoUrl) {
+                                  return (
+                                    <img
+                                      src={photoUrl}
+                                      alt=""
+                                      className="w-5 h-5 rounded-full object-cover shrink-0 border border-slate-200"
+                                      onError={(e) => {
+                                        (e.currentTarget as HTMLElement).style.display =
+                                          "none";
+                                      }}
+                                    />
+                                  );
+                                }
+                                return (
+                                  <div
+                                    className="w-5 h-5 rounded-full text-white flex items-center justify-center font-bold text-[9px] shrink-0"
+                                    style={{
+                                      backgroundColor: getAvatarBg(displayName),
+                                    }}
+                                  >
+                                    {getInitials(displayName)}
+                                  </div>
+                                );
+                              })()}
+                              <span className="truncate text-slate-800 font-medium">
+                                {selectedEmployeeObj.name ||
+                                  selectedEmployeeObj.username}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-slate-400">Select Assignee</span>
+                          )}
+                        </div>
+                        <ChevronDown
+                          size={15}
+                          className={`text-slate-400 shrink-0 transition-transform duration-200 ${
+                            isAssigneeDropdownOpen ? "rotate-180 text-primary" : ""
+                          }`}
+                        />
+                      </button>
+
+                      {/* Rich Popover Dropdown */}
+                      {isAssigneeDropdownOpen && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-40"
+                            onClick={() => setIsAssigneeDropdownOpen(false)}
+                          />
+                          <div className="absolute top-full mt-1.5 left-0 w-full z-50 bg-white border border-slate-200/90 shadow-xl rounded-2xl overflow-hidden py-1 animate-in fade-in zoom-in-95 duration-100">
+                            {projectAssignedEmployees.length > 5 && (
+                              <div className="p-2 border-b border-slate-100">
+                                <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 rounded-xl border border-slate-200/70">
+                                  <Search size={13} className="text-slate-400 shrink-0" />
+                                  <input
+                                    type="text"
+                                    placeholder="Search project member..."
+                                    value={assigneeSearchQuery}
+                                    onChange={(e) =>
+                                      setAssigneeSearchQuery(e.target.value)
+                                    }
+                                    className="w-full text-xs bg-transparent outline-none text-slate-700 placeholder:text-slate-400"
+                                    onClick={(e) => e.stopPropagation()}
+                                    autoFocus
+                                  />
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="max-h-52 overflow-y-auto scrollbar-hide py-1">
+                              {isProjectsLoading ? (
+                                <div className="px-3.5 py-4 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+                                  <CircularProgress size={14} className="text-primary" />
+                                  <span>Loading project members...</span>
+                                </div>
+                              ) : filteredProjectEmployees.length === 0 ? (
+                                <div className="px-3.5 py-3 text-center text-xs text-slate-400">
+                                  {assigneeSearchQuery.trim()
+                                    ? "No employees found"
+                                    : "No employees assigned to this project"}
+                                </div>
+                              ) : (
+                                filteredProjectEmployees.map((emp) => {
+                                  const isSelected =
+                                    String(taskForm.assignedTo) === String(emp.id);
+                                  const photoUrl = extractEmployeePhotoUrl(emp);
+                                  const displayName =
+                                    emp.name || emp.username || "Employee";
+
+                                  return (
+                                    <div
+                                      key={emp.id}
+                                      onClick={() => {
+                                        setTaskForm({
+                                          ...taskForm,
+                                          assignedTo: emp.id,
+                                        });
+                                        setIsAssigneeDropdownOpen(false);
+                                        setAssigneeSearchQuery("");
+                                      }}
+                                      className={`px-3 py-2 text-xs cursor-pointer flex items-center justify-between gap-2 transition-colors ${
+                                        isSelected
+                                          ? "bg-orange-50/90 text-primary font-semibold"
+                                          : "text-slate-700 hover:bg-slate-50"
+                                      }`}
+                                    >
+                                      <div className="flex items-center gap-2.5 min-w-0">
+                                        {photoUrl ? (
+                                          <img
+                                            src={photoUrl}
+                                            alt=""
+                                            className="w-6 h-6 rounded-full object-cover shrink-0 border border-slate-200"
+                                            onError={(e) => {
+                                              (e.currentTarget as HTMLElement).style.display =
+                                                "none";
+                                            }}
+                                          />
+                                        ) : (
+                                          <div
+                                            className="w-6 h-6 rounded-full text-white flex items-center justify-center font-bold text-[9px] shrink-0"
+                                            style={{
+                                              backgroundColor: getAvatarBg(displayName),
+                                            }}
+                                          >
+                                            {getInitials(displayName)}
+                                          </div>
+                                        )}
+                                        <div className="truncate text-left">
+                                          <div className="truncate font-medium">
+                                            {displayName}
+                                          </div>
+                                          {emp.email && (
+                                            <div className="text-[10px] text-slate-400 truncate">
+                                              {emp.email}
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                      {isSelected && (
+                                        <Check size={14} className="text-primary shrink-0" />
+                                      )}
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-slate-800 block mb-1.5">
+                      Priority
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={taskForm.priority}
+                        onChange={(e) =>
+                          setTaskForm({
+                            ...taskForm,
+                            priority: e.target.value as any,
+                          })
+                        }
+                        className="w-full h-[46px] px-4 bg-[#fafafa] border border-slate-200/90 rounded-2xl text-xs text-slate-800 outline-none focus:border-primary focus:bg-white cursor-pointer appearance-none pr-9 transition-all shadow-2xs"
+                      >
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                      </select>
+                      <ChevronDown
+                        size={15}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                      />
+                    </div>
                   </div>
                 </div>
-
+              ) : (
+                /* For Employee: Assignee is not there, only Priority */
                 <div>
                   <label className="text-xs font-semibold text-slate-800 block mb-1.5">
                     Priority
@@ -920,7 +1225,7 @@ const ProjectTasks: React.FC = () => {
                           priority: e.target.value as any,
                         })
                       }
-                      className="w-full px-4 py-3 bg-[#fafafa] border border-slate-200/90 rounded-2xl text-xs text-slate-800 outline-none focus:border-primary focus:bg-white cursor-pointer appearance-none pr-9 transition-all shadow-2xs"
+                      className="w-full h-[46px] px-4 bg-[#fafafa] border border-slate-200/90 rounded-2xl text-xs text-slate-800 outline-none focus:border-primary focus:bg-white cursor-pointer appearance-none pr-9 transition-all shadow-2xs"
                     >
                       <option value="low">Low</option>
                       <option value="medium">Medium</option>
@@ -932,7 +1237,7 @@ const ProjectTasks: React.FC = () => {
                     />
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Row 2: Estimated Time * with hrs and mins */}
               <div>
@@ -944,6 +1249,7 @@ const ProjectTasks: React.FC = () => {
                     <input
                       type="number"
                       min="0"
+                      max="99"
                       placeholder="1"
                       value={estimatedHours}
                       onKeyDown={(e) => {
@@ -951,9 +1257,10 @@ const ProjectTasks: React.FC = () => {
                           e.preventDefault();
                         }
                       }}
-                      onChange={(e) =>
-                        setEstimatedHours(e.target.value.replace(/\D/g, ""))
-                      }
+                      onChange={(e) => {
+                        const clean = e.target.value.replace(/\D/g, "");
+                        setEstimatedHours(clean.slice(0, 2));
+                      }}
                       className="w-full text-xs px-4 py-3 pr-10 bg-[#fafafa] border border-slate-200/90 rounded-2xl text-slate-800 outline-none focus:border-primary focus:bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all shadow-2xs"
                     />
                     <span className="absolute right-4 text-xs text-slate-400 pointer-events-none select-none">
@@ -973,9 +1280,16 @@ const ProjectTasks: React.FC = () => {
                           e.preventDefault();
                         }
                       }}
-                      onChange={(e) =>
-                        setEstimatedMinutes(e.target.value.replace(/\D/g, ""))
-                      }
+                      onChange={(e) => {
+                        const clean = e.target.value.replace(/\D/g, "");
+                        if (!clean) {
+                          setEstimatedMinutes("");
+                        } else if (Number(clean) > 59) {
+                          setEstimatedMinutes("59");
+                        } else {
+                          setEstimatedMinutes(clean.slice(0, 2));
+                        }
+                      }}
                       className="w-full text-xs px-4 py-3 pr-10 bg-[#fafafa] border border-slate-200/90 rounded-2xl text-slate-800 outline-none focus:border-primary focus:bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all shadow-2xs"
                     />
                     <span className="absolute right-4 text-xs text-slate-400 pointer-events-none select-none">
