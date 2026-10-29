@@ -2159,7 +2159,7 @@ const ProjectTasks: React.FC = () => {
             setIsAddModalOpen(false);
             setIsCreatePriorityDropdownOpen(false);
           }}
-          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+          className="fixed inset-0 z-99 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -2515,7 +2515,7 @@ const ProjectTasks: React.FC = () => {
 
       {/* Modal: Edit Task */}
       {selectedTask && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-99 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 sm:p-7 w-full max-w-xl shadow-2xl border border-slate-100 max-h-[92vh] overflow-y-auto scrollbar-hide animate-in fade-in zoom-in-95 duration-150">
             {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
