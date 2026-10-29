@@ -11,7 +11,7 @@ import {
   RotateCcw,
   Paperclip,
   Check,
-  History,
+  MessageSquare,
 } from "lucide-react";
 import { CircularProgress } from "@mui/material";
 import {
@@ -859,6 +859,17 @@ const ProjectTasks: React.FC = () => {
     });
   }, [taskCommentsData]);
 
+  // Merge server tasks with local optimistic overrides
+  const displayTasks = useMemo(() => {
+    return tasks.map((t) => {
+      const overrideStatus = localTasksOverride[t.id];
+      if (overrideStatus) {
+        return { ...t, status: overrideStatus };
+      }
+      return t;
+    });
+  }, [tasks, localTasksOverride]);
+
   // Unique assignees who actually have tasks assigned to them in this project
   const projectAssignees = useMemo(() => {
     const map = new Map<string, { username: string; photo?: string | null }>();
@@ -1166,8 +1177,9 @@ const ProjectTasks: React.FC = () => {
   };
 
   const handleUpdateStatus = async (taskId: number, newStatus: TaskStatus) => {
-    const taskObj = tasks.find((t) => t.id === taskId) || selectedTask;
-    const prevStatus = taskObj?.status || "planned";
+    const currentTask = tasks.find((t) => t.id === taskId) || selectedTask;
+    const prevStatus = currentTask?.status || "planned";
+    setLocalTasksOverride((prev) => ({ ...prev, [taskId]: newStatus }));
     const userName = currentUser?.email?.split("@")[0] || "Team Member";
 
     try {
@@ -1660,8 +1672,19 @@ const ProjectTasks: React.FC = () => {
                           e.stopPropagation();
                           e.dataTransfer.dropEffect = "move";
                         }}
-                        onClick={() => handleOpenEditModal(task)}
-                        className="group bg-white rounded-xl p-3 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col gap-2 cursor-pointer active:opacity-75"
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          dragCounterMap.current = {};
+                          setDragOverCol(null);
+                          const dataId = Number(e.dataTransfer.getData("text/plain"));
+                          const taskId = dataId || draggedTaskIdRef.current;
+                          if (taskId) {
+                            handleUpdateStatus(taskId, col.id);
+                          }
+                          draggedTaskIdRef.current = null;
+                        }}
+                        className="w-full py-2.5 px-3 rounded-2xl bg-[#ebedf0] text-slate-700 border border-transparent hover:border-dashed hover:border-[#ff7300] hover:text-[#ff7300] hover:bg-white text-xs font-medium flex items-center justify-center gap-1.5 transition-all duration-150 cursor-pointer shadow-2xs"
                       >
                         <Plus size={14} className="stroke-[2.5]" />
                         <span>Add task</span>
@@ -1732,7 +1755,7 @@ const ProjectTasks: React.FC = () => {
                               }
                               draggedTaskIdRef.current = null;
                             }}
-                            onClick={() => setSelectedTask(task)}
+                            onClick={() => handleOpenEditModal(task)}
                             className="group bg-white rounded-xl p-3 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col gap-2 cursor-pointer active:opacity-75 w-full min-w-0 max-w-full select-none"
                           >
                             {/* Cover image thumbnail if attachments exist */}
