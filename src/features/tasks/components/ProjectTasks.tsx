@@ -18,7 +18,6 @@ import {
   useGetProjectTasksQuery,
   useCreateTaskMutation,
   useUpdateTaskMutation,
-  useDeleteTaskMutation,
   useCreateTaskCommentMutation,
   useGetTaskCommentsQuery,
   type IProjectTaskItem,
@@ -27,10 +26,11 @@ import {
 import { useGetActiveEmployeesQuery } from "../../allTasks/allTaskApi";
 import { useGetTaskBoardProjectsQuery } from "../../taskBoard/taskBoardApi";
 import { useGetProjectsQuery } from "../../projects/projectsApi";
-import { userInState } from "../../auth/authSlice";
+import { userInState, userDetailsInState } from "../../auth/authSlice";
 import { getImageUrl, extractEmployeePhotoUrl } from "../../../utils/utils";
 import { toast } from "react-toastify";
 import { TaskAttachmentUpload } from "./TaskAttachmentUpload";
+import { useUploadFileMutation } from "../../../shared/api/sharedApi";
 import {
   extractTaskAttachments,
   type IUploadedAttachment,
@@ -165,7 +165,7 @@ const formatTaskTimestamp = (
     const dateStr = task.updatedAt || task.createdAt;
     if (!dateStr) return null;
     try {
-      const date = new Date(dateStr);
+      const date = parseApiDate(dateStr) || new Date(dateStr);
       if (isNaN(date.getTime())) return null;
       const formattedDate = date.toLocaleDateString("en-GB", {
         day: "numeric",
@@ -231,10 +231,60 @@ const formatTaskTimestamp = (
   }
 };
 
-const formatHistoryTime = (dateStr?: string): string => {
+const parseApiDate = (dateStr?: string | number): Date | null => {
+  if (!dateStr) return null;
+  if (typeof dateStr === "number") return new Date(dateStr);
+  let clean = String(dateStr).trim();
+  if (!clean) return null;
+  if (/^\d+$/.test(clean)) return new Date(Number(clean));
+  if (clean.includes(" ") && !clean.includes("T")) {
+    clean = clean.replace(" ", "T");
+  }
+  // Backend UTC timestamps often lack timezone indicator 'Z'; append 'Z' so
+  // browser parses as UTC and avoids shifting 5.5 hours backwards in IST.
+  if (!clean.endsWith("Z") && !/[+-]\d{2}(:\d{2})?$/.test(clean)) {
+    clean += "Z";
+  }
+  const d = new Date(clean);
+  return isNaN(d.getTime()) ? new Date(dateStr) : d;
+};
+
+const formatRelativeTime = (dateStr?: string | number): string => {
+  if (!dateStr) return "just now";
+  try {
+    const d = parseApiDate(dateStr);
+    if (!d || isNaN(d.getTime())) return "just now";
+    const now = Date.now();
+    const diffMs = now - d.getTime();
+
+    // If within last 45 seconds or small clock offset, show "just now"
+    if (diffMs <= 45 * 1000) {
+      return "just now";
+    }
+
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffDays > 0) {
+      return `${diffDays} ${diffDays === 1 ? "day" : "days"} ago`;
+    }
+    if (diffHours > 0) {
+      return `${diffHours} ${diffHours === 1 ? "hour" : "hours"} ago`;
+    }
+    if (diffMins > 0) {
+      return `${diffMins} ${diffMins === 1 ? "minute" : "minutes"} ago`;
+    }
+    return "just now";
+  } catch {
+    return "just now";
+  }
+};
+
+const formatHistoryTime = (dateStr?: string | number): string => {
   if (!dateStr) return "";
   try {
-    const d = new Date(dateStr);
+    const d = parseApiDate(dateStr) || new Date(dateStr);
     if (isNaN(d.getTime())) return "";
     const datePart = d.toLocaleDateString("en-GB", {
       day: "numeric",
@@ -264,7 +314,9 @@ interface ITaskHistoryRecord {
 const getTaskHistoryStorageKey = (taskId: number | string) =>
   `xyz_project_task_history_${taskId}`;
 
-const getStoredTaskHistory = (taskId: number | string): ITaskHistoryRecord[] => {
+const getStoredTaskHistory = (
+  taskId: number | string,
+): ITaskHistoryRecord[] => {
   try {
     const raw = localStorage.getItem(getTaskHistoryStorageKey(taskId));
     if (raw) {
@@ -305,7 +357,9 @@ const recordTaskHistoryEvent = (
   return updated;
 };
 
-const getCompleteTaskHistory = (task: IProjectTaskItem): ITaskHistoryRecord[] => {
+const getCompleteTaskHistory = (
+  task: IProjectTaskItem,
+): ITaskHistoryRecord[] => {
   const historyMap = new Map<string, ITaskHistoryRecord>();
 
   // 1. Backend task.taskHistory or task.history if present
@@ -327,10 +381,10 @@ const getCompleteTaskHistory = (task: IProjectTaskItem): ITaskHistoryRecord[] =>
         (action.includes("Completed")
           ? "bg-emerald-500"
           : action.includes("Blocked")
-          ? "bg-rose-500"
-          : action.includes("In-Progress")
-          ? "bg-orange-500"
-          : "bg-blue-500");
+            ? "bg-rose-500"
+            : action.includes("In-Progress")
+              ? "bg-orange-500"
+              : "bg-blue-500");
       const key = `${time}-${action}`;
       historyMap.set(key, {
         id: `backend-${idx}`,
@@ -357,9 +411,7 @@ const getCompleteTaskHistory = (task: IProjectTaskItem): ITaskHistoryRecord[] =>
     "Arjun K.";
 
   const assignee =
-    task.assigned_to?.username ||
-    task.Task_assigned_to ||
-    creator;
+    task.assigned_to?.username || task.Task_assigned_to || creator;
 
   // Baseline creation
   const createdTime =
@@ -511,6 +563,7 @@ const ProjectTasks: React.FC = () => {
 
   // Auth & Permissions
   const currentUser = useSelector(userInState);
+  const userDetails = useSelector(userDetailsInState);
   const isAdmin =
     currentUser?.user_type === "Admin" ||
     currentUser?.user_type === "Hr" ||
@@ -578,20 +631,55 @@ const ProjectTasks: React.FC = () => {
   });
   const [editEstimatedHours, setEditEstimatedHours] = useState("1");
   const [editEstimatedMinutes, setEditEstimatedMinutes] = useState("0");
-  const [editAttachments, setEditAttachments] = useState<
-    IUploadedAttachment[]
-  >([]);
+  const [editAttachments, setEditAttachments] = useState<IUploadedAttachment[]>(
+    [],
+  );
   const [isEditUploadingAttachments, setIsEditUploadingAttachments] =
     useState(false);
   const [isEditAssigneeDropdownOpen, setIsEditAssigneeDropdownOpen] =
     useState(false);
   const [editAssigneeSearchQuery, setEditAssigneeSearchQuery] = useState("");
   const [activityTab, setActivityTab] = useState<"history" | "comments">(
-    "history",
+    "comments",
   );
+  const [commentAttachments, setCommentAttachments] = useState<
+    IUploadedAttachment[]
+  >([]);
+  const [isUploadingCommentPhoto, setIsUploadingCommentPhoto] = useState(false);
+  const commentFileInputRef = useRef<HTMLInputElement>(null);
+  const commentComposerRef = useRef<HTMLDivElement>(null);
+  const [isCommentFocused, setIsCommentFocused] = useState(false);
   const [newCommentText, setNewCommentText] = useState("");
+  const newCommentTextRef = useRef(newCommentText);
+  newCommentTextRef.current = newCommentText;
+  const commentAttachmentsRef = useRef(commentAttachments);
+  commentAttachmentsRef.current = commentAttachments;
   const [viewAttachmentPreview, setViewAttachmentPreview] =
     useState<IUploadedAttachment | null>(null);
+
+  const currentUserName =
+    userDetails?.name ||
+    (currentUser as any)?.name ||
+    (currentUser as any)?.username ||
+    currentUser?.email?.split("@")[0] ||
+    "You";
+
+  const currentUserPhoto = useMemo(() => {
+    if (userDetails?.photo) {
+      return getImageUrl(userDetails.photo);
+    }
+    if (userDetails) {
+      const url = extractEmployeePhotoUrl(userDetails);
+      if (url) return url;
+    }
+    return extractEmployeePhotoUrl(currentUser) || "";
+  }, [userDetails, currentUser]);
+
+  const isCommentExpanded =
+    isCommentFocused ||
+    newCommentText.trim().length > 0 ||
+    commentAttachments.length > 0 ||
+    isUploadingCommentPhoto;
 
   // Outside click listener for priority dropdown and quick move
   useEffect(() => {
@@ -606,9 +694,18 @@ const ProjectTasks: React.FC = () => {
       if (openQuickMoveId !== null) {
         setOpenQuickMoveId(null);
       }
+      if (
+        commentComposerRef.current &&
+        !commentComposerRef.current.contains(e.target as Node) &&
+        !newCommentTextRef.current.trim() &&
+        commentAttachmentsRef.current.length === 0
+      ) {
+        setIsCommentFocused(false);
+      }
     };
     document.addEventListener("mousedown", handleGlobalMouseDown);
-    return () => document.removeEventListener("mousedown", handleGlobalMouseDown);
+    return () =>
+      document.removeEventListener("mousedown", handleGlobalMouseDown);
   }, [isPriorityOpen, openQuickMoveId]);
 
   // RTK Query: fetch tasks for this project
@@ -617,10 +714,7 @@ const ProjectTasks: React.FC = () => {
     isLoading,
     isFetching,
     refetch,
-  } = useGetProjectTasksQuery(
-    { project: projectName },
-    { skip: !projectName },
-  );
+  } = useGetProjectTasksQuery({ project: projectName }, { skip: !projectName });
 
   // RTK Query: all active employees (skip for standard employees to avoid 403 Forbidden)
   const { data: activeEmployees = [] } = useGetActiveEmployeesQuery(undefined, {
@@ -765,9 +859,9 @@ const ProjectTasks: React.FC = () => {
   // Mutations
   const [createTask, { isLoading: isCreating }] = useCreateTaskMutation();
   const [updateTask, { isLoading: isUpdating }] = useUpdateTaskMutation();
-  const [deleteTask, { isLoading: isDeleting }] = useDeleteTaskMutation();
   const [createTaskComment, { isLoading: isPostingComment }] =
     useCreateTaskCommentMutation();
+  const [uploadFile] = useUploadFileMutation();
 
   // RTK Query: fetch comments for selected task
   const { data: taskCommentsData = [], isLoading: isCommentsLoading } =
@@ -803,19 +897,17 @@ const ProjectTasks: React.FC = () => {
         "Team Member";
 
       const authorLogo =
-        authorObj?.logo ||
-        authorObj?.photo ||
-        authorObj?.avatar ||
-        null;
+        authorObj?.logo || authorObj?.photo || authorObj?.avatar || null;
 
       const createdAt =
-        attrs.createdAt || attrs.created_at || attrs.date || item.createdAt || "";
+        attrs.createdAt ||
+        attrs.created_at ||
+        attrs.date ||
+        item.createdAt ||
+        "";
 
       const rawAtts =
-        item.attachments ||
-        attrs.attachments?.data ||
-        attrs.attachments ||
-        [];
+        item.attachments || attrs.attachments?.data || attrs.attachments || [];
 
       const parsedAttachments = Array.isArray(rawAtts)
         ? rawAtts.map((att: any, attIdx: number) => {
@@ -823,7 +915,9 @@ const ProjectTasks: React.FC = () => {
               const fileName =
                 att.split("/").pop()?.split("?")[0] ||
                 `attachment-${attIdx + 1}`;
-              const isImage = /\.(webp|png|jpe?g|gif|svg|avif)$/i.test(fileName);
+              const isImage = /\.(webp|png|jpe?g|gif|svg|avif)$/i.test(
+                fileName,
+              );
               return {
                 id: `${item.id || itemIdx}-${attIdx}`,
                 name: fileName,
@@ -833,9 +927,7 @@ const ProjectTasks: React.FC = () => {
             }
             const url = att?.url || att?.attributes?.url || "";
             const name =
-              att?.name ||
-              att?.attributes?.name ||
-              `attachment-${attIdx + 1}`;
+              att?.name || att?.attributes?.name || `attachment-${attIdx + 1}`;
             const isImage =
               att?.mime?.startsWith("image/") ||
               /\.(webp|png|jpe?g|gif|svg|avif)$/i.test(name || url);
@@ -853,7 +945,7 @@ const ProjectTasks: React.FC = () => {
         user: authorName,
         userLogo: authorLogo ? getImageUrl(authorLogo) : null,
         text: commentText,
-        time: formatHistoryTime(createdAt) || "just now",
+        time: formatRelativeTime(createdAt),
         attachments: parsedAttachments,
       };
     });
@@ -983,7 +1075,9 @@ const ProjectTasks: React.FC = () => {
       (Number(estimatedHours) || 0) * 60 + (Number(estimatedMinutes) || 0);
 
     if (totalMinutes <= 0) {
-      toast.error("Please enter a valid estimated time (greater than 0 minutes)");
+      toast.error(
+        "Please enter a valid estimated time (greater than 0 minutes)",
+      );
       return;
     }
 
@@ -1046,8 +1140,10 @@ const ProjectTasks: React.FC = () => {
     setEditAttachments(extractTaskAttachments(task.attachments));
     setIsEditAssigneeDropdownOpen(false);
     setEditAssigneeSearchQuery("");
-    setActivityTab("history");
+    setActivityTab("comments");
     setNewCommentText("");
+    setCommentAttachments([]);
+    setIsCommentFocused(false);
   };
 
   const handleUpdateTaskSubmit = async (e: React.FormEvent) => {
@@ -1064,7 +1160,9 @@ const ProjectTasks: React.FC = () => {
       (Number(editEstimatedMinutes) || 0);
 
     if (totalMinutes <= 0) {
-      toast.error("Please enter a valid estimated time (greater than 0 minutes)");
+      toast.error(
+        "Please enter a valid estimated time (greater than 0 minutes)",
+      );
       return;
     }
 
@@ -1087,10 +1185,10 @@ const ProjectTasks: React.FC = () => {
         editTaskForm.status === "completed"
           ? "bg-emerald-500"
           : editTaskForm.status === "blocked"
-          ? "bg-rose-500"
-          : editTaskForm.status === "in-progress"
-          ? "bg-orange-500"
-          : "bg-blue-500";
+            ? "bg-rose-500"
+            : editTaskForm.status === "in-progress"
+              ? "bg-orange-500"
+              : "bg-blue-500";
       changes.push({ action: `moved ${prevLabel} → ${nextLabel}`, dot });
     }
 
@@ -1135,7 +1233,9 @@ const ProjectTasks: React.FC = () => {
           status: editTaskForm.status,
           priority: editTaskForm.priority,
           estimatedMinutes: totalMinutes,
-          assignedTo: isAdmin ? editTaskForm.assignedTo || undefined : undefined,
+          assignedTo: isAdmin
+            ? editTaskForm.assignedTo || undefined
+            : undefined,
           attachments: editAttachments.map((a) => a.id),
         },
       }).unwrap();
@@ -1158,16 +1258,63 @@ const ProjectTasks: React.FC = () => {
     }
   };
 
+  const handleUploadCommentPhotos = async (files: FileList | File[]) => {
+    const fileList = Array.from(files);
+    const imageFiles = fileList.filter((f) => f.type.startsWith("image/"));
+    if (imageFiles.length === 0) {
+      toast.error("Please select an image file.");
+      return;
+    }
+    setIsUploadingCommentPhoto(true);
+    try {
+      for (const file of imageFiles) {
+        const formData = new FormData();
+        formData.append("files", file);
+        const res: any = await uploadFile(formData).unwrap();
+        const uploadedMedia = Array.isArray(res) ? res[0] : res;
+        if (uploadedMedia?.id) {
+          setCommentAttachments((prev) => [
+            ...prev,
+            {
+              id: uploadedMedia.id,
+              name: uploadedMedia.name || file.name,
+              url: uploadedMedia.url || "",
+              previewUrl: URL.createObjectURL(file),
+              size: uploadedMedia.size || file.size,
+              mime: uploadedMedia.mime || file.type,
+              isUploading: false,
+            },
+          ]);
+        }
+      }
+    } catch (err: any) {
+      console.error("Failed to upload comment photo:", err);
+      toast.error("Failed to upload image");
+    } finally {
+      setIsUploadingCommentPhoto(false);
+    }
+  };
+
   const handleAddComment = async () => {
-    if (!newCommentText.trim() || !selectedTask || isPostingComment) return;
+    if (
+      (!newCommentText.trim() && commentAttachments.length === 0) ||
+      !selectedTask ||
+      isPostingComment ||
+      isUploadingCommentPhoto
+    ) {
+      return;
+    }
     const commentBody = newCommentText.trim();
+    const attachmentIds = commentAttachments.map((a) => a.id);
     try {
       await createTaskComment({
         comment: commentBody,
         task_item: Number(selectedTask.id) || selectedTask.id,
-        attachments: [],
+        attachments: attachmentIds,
       }).unwrap();
       setNewCommentText("");
+      setCommentAttachments([]);
+      setIsCommentFocused(false);
       toast.success("Comment posted successfully");
     } catch (err: any) {
       toast.error(
@@ -1191,16 +1338,15 @@ const ProjectTasks: React.FC = () => {
 
       const prevLabel =
         prevStatus.charAt(0).toUpperCase() + prevStatus.slice(1);
-      const nextLabel =
-        newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+      const nextLabel = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
       const dot =
         newStatus === "completed"
           ? "bg-emerald-500"
           : newStatus === "blocked"
-          ? "bg-rose-500"
-          : newStatus === "in-progress"
-          ? "bg-orange-500"
-          : "bg-blue-500";
+            ? "bg-rose-500"
+            : newStatus === "in-progress"
+              ? "bg-orange-500"
+              : "bg-blue-500";
 
       recordTaskHistoryEvent(taskId, {
         user: userName,
@@ -1228,37 +1374,34 @@ const ProjectTasks: React.FC = () => {
     }
   };
 
-  const handleDeleteTask = async (taskId: number) => {
-    if (!window.confirm("Are you sure you want to delete this task?")) return;
-    try {
-      await deleteTask(taskId).unwrap();
-      toast.success("Task deleted");
-      setSelectedTask(null);
-      refetch();
-    } catch (err: any) {
-      toast.error(err?.data?.error?.message || "Failed to delete task");
-    }
-  };
-
   // Render Priority Indicator icon
   const renderPriorityIndicator = (priority?: string) => {
     const p = (priority || "medium").toLowerCase();
     if (p === "high") {
       return (
-        <span className="text-rose-500 font-bold text-xs select-none" title="High Priority">
+        <span
+          className="text-rose-500 font-bold text-xs select-none"
+          title="High Priority"
+        >
           ▲
         </span>
       );
     }
     if (p === "low") {
       return (
-        <span className="text-blue-500 font-bold text-xs select-none" title="Low Priority">
+        <span
+          className="text-blue-500 font-bold text-xs select-none"
+          title="Low Priority"
+        >
           ▼
         </span>
       );
     }
     return (
-      <span className="text-amber-500 font-bold text-xs select-none" title="Medium Priority">
+      <span
+        className="text-amber-500 font-bold text-xs select-none"
+        title="Medium Priority"
+      >
         ═
       </span>
     );
@@ -1288,8 +1431,8 @@ const ProjectTasks: React.FC = () => {
                 taskForm.priority === "high"
                   ? "bg-rose-500"
                   : taskForm.priority === "low"
-                  ? "bg-blue-500"
-                  : "bg-amber-500"
+                    ? "bg-blue-500"
+                    : "bg-amber-500"
               }`}
             />
             <span className="font-semibold text-slate-800 capitalize">
@@ -1327,7 +1470,9 @@ const ProjectTasks: React.FC = () => {
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
-                      <span className={`w-2 h-2 rounded-full ${opt.dotColor}`} />
+                      <span
+                        className={`w-2 h-2 rounded-full ${opt.dotColor}`}
+                      />
                       <span className="font-medium">{opt.label}</span>
                     </div>
                     {isSelected && (
@@ -1437,9 +1582,7 @@ const ProjectTasks: React.FC = () => {
                   <button
                     key={assignee.username}
                     onClick={() =>
-                      setSelectedAssignee(
-                        isSelected ? null : assignee.username,
-                      )
+                      setSelectedAssignee(isSelected ? null : assignee.username)
                     }
                     title={`Filter by ${assignee.username}`}
                     className={`relative w-7 h-7 rounded-full border-2 transition-all cursor-pointer overflow-hidden ${
@@ -1605,7 +1748,9 @@ const ProjectTasks: React.FC = () => {
                 {/* Column Header */}
                 <div className="flex items-center justify-between pb-2.5 px-1 shrink-0">
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <span className={`w-2 h-2 rounded-full shrink-0 ${col.dotColor}`} />
+                    <span
+                      className={`w-2 h-2 rounded-full shrink-0 ${col.dotColor}`}
+                    />
                     <span className="text-xs font-bold text-slate-800 truncate">
                       {col.label}
                     </span>
@@ -1653,7 +1798,9 @@ const ProjectTasks: React.FC = () => {
                         e.stopPropagation();
                         dragCounterMap.current = {};
                         setDragOverCol(null);
-                        const dataId = Number(e.dataTransfer.getData("text/plain"));
+                        const dataId = Number(
+                          e.dataTransfer.getData("text/plain"),
+                        );
                         const taskId = dataId || draggedTaskIdRef.current;
                         if (taskId) {
                           handleUpdateStatus(taskId, col.id);
@@ -1662,7 +1809,9 @@ const ProjectTasks: React.FC = () => {
                       }}
                     >
                       <p className="text-xs text-slate-400 font-medium pointer-events-none">
-                        {searchTerm.trim() ? "No matching tasks" : "No tasks here"}
+                        {searchTerm.trim()
+                          ? "No matching tasks"
+                          : "No tasks here"}
                       </p>
                       <button
                         type="button"
@@ -1677,7 +1826,9 @@ const ProjectTasks: React.FC = () => {
                           e.stopPropagation();
                           dragCounterMap.current = {};
                           setDragOverCol(null);
-                          const dataId = Number(e.dataTransfer.getData("text/plain"));
+                          const dataId = Number(
+                            e.dataTransfer.getData("text/plain"),
+                          );
                           const taskId = dataId || draggedTaskIdRef.current;
                           if (taskId) {
                             handleUpdateStatus(taskId, col.id);
@@ -1705,10 +1856,10 @@ const ProjectTasks: React.FC = () => {
                         const commentsCount = Array.isArray(task.taskComments)
                           ? task.taskComments.length
                           : Array.isArray(task.task_comments)
-                          ? task.task_comments.length
-                          : Array.isArray(task.comments)
-                          ? task.comments.length
-                          : 0;
+                            ? task.task_comments.length
+                            : Array.isArray(task.comments)
+                              ? task.comments.length
+                              : 0;
                         const taskAttachments = extractTaskAttachments(
                           task.attachments,
                         );
@@ -1722,14 +1873,24 @@ const ProjectTasks: React.FC = () => {
                             draggable
                             onDragStart={(e) => {
                               draggedTaskIdRef.current = task.id;
-                              e.dataTransfer.setData("text/plain", String(task.id));
+                              e.dataTransfer.setData(
+                                "text/plain",
+                                String(task.id),
+                              );
                               e.dataTransfer.effectAllowed = "move";
                               if (e.currentTarget) {
-                                const rect = e.currentTarget.getBoundingClientRect();
+                                const rect =
+                                  e.currentTarget.getBoundingClientRect();
                                 e.dataTransfer.setDragImage(
                                   e.currentTarget,
-                                  Math.min(Math.max(10, e.clientX - rect.left), rect.width / 2),
-                                  Math.min(Math.max(10, e.clientY - rect.top), 30),
+                                  Math.min(
+                                    Math.max(10, e.clientX - rect.left),
+                                    rect.width / 2,
+                                  ),
+                                  Math.min(
+                                    Math.max(10, e.clientY - rect.top),
+                                    30,
+                                  ),
                                 );
                               }
                             }}
@@ -1748,7 +1909,9 @@ const ProjectTasks: React.FC = () => {
                               e.stopPropagation();
                               dragCounterMap.current = {};
                               setDragOverCol(null);
-                              const dataId = Number(e.dataTransfer.getData("text/plain"));
+                              const dataId = Number(
+                                e.dataTransfer.getData("text/plain"),
+                              );
                               const taskId = dataId || draggedTaskIdRef.current;
                               if (taskId && taskId !== task.id) {
                                 handleUpdateStatus(taskId, col.id);
@@ -1760,7 +1923,8 @@ const ProjectTasks: React.FC = () => {
                           >
                             {/* Cover image thumbnail if attachments exist */}
                             {taskAttachments.length > 0 &&
-                              (taskAttachments[0].url || taskAttachments[0].previewUrl) && (
+                              (taskAttachments[0].url ||
+                                taskAttachments[0].previewUrl) && (
                                 <div className="w-full h-28 rounded-xl overflow-hidden bg-slate-100 border border-slate-100/90 mb-0.5 shrink-0">
                                   <img
                                     src={
@@ -1800,7 +1964,9 @@ const ProjectTasks: React.FC = () => {
                                   type="button"
                                   onClick={() =>
                                     setOpenQuickMoveId(
-                                      openQuickMoveId === task.id ? null : task.id,
+                                      openQuickMoveId === task.id
+                                        ? null
+                                        : task.id,
                                     )
                                   }
                                   title="Click to change status"
@@ -1808,11 +1974,16 @@ const ProjectTasks: React.FC = () => {
                                 >
                                   <span
                                     className={`w-1.5 h-1.5 rounded-full ${col.dotColor} ${
-                                      col.id === "in-progress" ? "animate-pulse" : ""
+                                      col.id === "in-progress"
+                                        ? "animate-pulse"
+                                        : ""
                                     }`}
                                   />
                                   <span>{col.label}</span>
-                                  <ChevronDown size={10} className="opacity-60 ml-0.5" />
+                                  <ChevronDown
+                                    size={10}
+                                    className="opacity-60 ml-0.5"
+                                  />
                                 </button>
 
                                 {openQuickMoveId === task.id && (
@@ -1831,10 +2002,15 @@ const ProjectTasks: React.FC = () => {
                                       {COLUMNS.map((targetCol) => (
                                         <button
                                           key={targetCol.id}
-                                          disabled={task.status === targetCol.id}
+                                          disabled={
+                                            task.status === targetCol.id
+                                          }
                                           onClick={() => {
                                             setOpenQuickMoveId(null);
-                                            handleUpdateStatus(task.id, targetCol.id);
+                                            handleUpdateStatus(
+                                              task.id,
+                                              targetCol.id,
+                                            );
                                           }}
                                           className={`w-full text-left px-2.5 py-1.5 text-[11px] font-semibold flex items-center gap-1.5 hover:bg-slate-50 transition-colors ${
                                             task.status === targetCol.id
@@ -1863,7 +2039,9 @@ const ProjectTasks: React.FC = () => {
                                 </span>
                                 <span className="inline-flex items-center gap-0.5 text-[11px] text-slate-400 font-medium ml-1">
                                   <Clock size={10} className="text-slate-400" />
-                                  <span>{formatTime(task.estimatedMinutes)}</span>
+                                  <span>
+                                    {formatTime(task.estimatedMinutes)}
+                                  </span>
                                 </span>
 
                                 {/* Attachments indicator - always show even if 0 */}
@@ -1871,7 +2049,10 @@ const ProjectTasks: React.FC = () => {
                                   className="inline-flex items-center gap-0.5 text-[11px] text-slate-400 font-medium ml-1"
                                   title={`${taskAttachments.length} attachment(s)`}
                                 >
-                                  <Paperclip size={11} className="text-slate-400" />
+                                  <Paperclip
+                                    size={11}
+                                    className="text-slate-400"
+                                  />
                                   <span>{taskAttachments.length}</span>
                                 </span>
 
@@ -1880,7 +2061,10 @@ const ProjectTasks: React.FC = () => {
                                   className="inline-flex items-center gap-0.5 text-[11px] text-slate-400 font-medium ml-1"
                                   title={`${commentsCount} comment(s)`}
                                 >
-                                  <MessageSquare size={11} className="text-slate-400" />
+                                  <MessageSquare
+                                    size={11}
+                                    className="text-slate-400"
+                                  />
                                   <span>{commentsCount}</span>
                                 </span>
                               </div>
@@ -1900,7 +2084,8 @@ const ProjectTasks: React.FC = () => {
                                   <div
                                     className="w-full h-full flex items-center justify-center text-[9px] font-bold text-white"
                                     style={{
-                                      backgroundColor: getAvatarBg(assigneeName),
+                                      backgroundColor:
+                                        getAvatarBg(assigneeName),
                                     }}
                                   >
                                     {getInitials(assigneeName)}
@@ -1921,7 +2106,9 @@ const ProjectTasks: React.FC = () => {
                                 >
                                   {timestampInfo.icon}
                                 </span>
-                                <span className="truncate">{timestampInfo.text}</span>
+                                <span className="truncate">
+                                  {timestampInfo.text}
+                                </span>
                               </div>
                             )}
                           </div>
@@ -1942,7 +2129,9 @@ const ProjectTasks: React.FC = () => {
                           e.stopPropagation();
                           dragCounterMap.current = {};
                           setDragOverCol(null);
-                          const dataId = Number(e.dataTransfer.getData("text/plain"));
+                          const dataId = Number(
+                            e.dataTransfer.getData("text/plain"),
+                          );
                           const taskId = dataId || draggedTaskIdRef.current;
                           if (taskId) {
                             handleUpdateStatus(taskId, col.id);
@@ -1970,7 +2159,7 @@ const ProjectTasks: React.FC = () => {
             setIsAddModalOpen(false);
             setIsCreatePriorityDropdownOpen(false);
           }}
-          className="fixed inset-0 z-99999 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -2061,8 +2250,9 @@ const ProjectTasks: React.FC = () => {
                                       alt=""
                                       className="w-5 h-5 rounded-full object-cover shrink-0 border border-slate-200"
                                       onError={(e) => {
-                                        (e.currentTarget as HTMLElement).style.display =
-                                          "none";
+                                        (
+                                          e.currentTarget as HTMLElement
+                                        ).style.display = "none";
                                       }}
                                     />
                                   );
@@ -2084,13 +2274,17 @@ const ProjectTasks: React.FC = () => {
                               </span>
                             </>
                           ) : (
-                            <span className="text-slate-400">Select Assignee</span>
+                            <span className="text-slate-400">
+                              Select Assignee
+                            </span>
                           )}
                         </div>
                         <ChevronDown
                           size={15}
                           className={`text-slate-400 shrink-0 transition-transform duration-200 ${
-                            isAssigneeDropdownOpen ? "rotate-180 text-primary" : ""
+                            isAssigneeDropdownOpen
+                              ? "rotate-180 text-primary"
+                              : ""
                           }`}
                         />
                       </button>
@@ -2106,7 +2300,10 @@ const ProjectTasks: React.FC = () => {
                             {projectAssignedEmployees.length > 5 && (
                               <div className="p-2 border-b border-slate-100">
                                 <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 rounded-xl border border-slate-200/70">
-                                  <Search size={13} className="text-slate-400 shrink-0" />
+                                  <Search
+                                    size={13}
+                                    className="text-slate-400 shrink-0"
+                                  />
                                   <input
                                     type="text"
                                     placeholder="Search project member..."
@@ -2125,7 +2322,10 @@ const ProjectTasks: React.FC = () => {
                             <div className="max-h-52 overflow-y-auto scrollbar-hide py-1">
                               {isProjectsLoading ? (
                                 <div className="px-3.5 py-4 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
-                                  <CircularProgress size={14} className="text-primary" />
+                                  <CircularProgress
+                                    size={14}
+                                    className="text-primary"
+                                  />
                                   <span>Loading project members...</span>
                                 </div>
                               ) : filteredProjectEmployees.length === 0 ? (
@@ -2137,7 +2337,8 @@ const ProjectTasks: React.FC = () => {
                               ) : (
                                 filteredProjectEmployees.map((emp) => {
                                   const isSelected =
-                                    String(taskForm.assignedTo) === String(emp.id);
+                                    String(taskForm.assignedTo) ===
+                                    String(emp.id);
                                   const photoUrl = extractEmployeePhotoUrl(emp);
                                   const displayName =
                                     emp.name || emp.username || "Employee";
@@ -2166,15 +2367,17 @@ const ProjectTasks: React.FC = () => {
                                             alt=""
                                             className="w-6 h-6 rounded-full object-cover shrink-0 border border-slate-200"
                                             onError={(e) => {
-                                              (e.currentTarget as HTMLElement).style.display =
-                                                "none";
+                                              (
+                                                e.currentTarget as HTMLElement
+                                              ).style.display = "none";
                                             }}
                                           />
                                         ) : (
                                           <div
                                             className="w-6 h-6 rounded-full text-white flex items-center justify-center font-bold text-[9px] shrink-0"
                                             style={{
-                                              backgroundColor: getAvatarBg(displayName),
+                                              backgroundColor:
+                                                getAvatarBg(displayName),
                                             }}
                                           >
                                             {getInitials(displayName)}
@@ -2192,7 +2395,10 @@ const ProjectTasks: React.FC = () => {
                                         </div>
                                       </div>
                                       {isSelected && (
-                                        <Check size={14} className="text-primary shrink-0" />
+                                        <Check
+                                          size={14}
+                                          className="text-primary shrink-0"
+                                        />
                                       )}
                                     </div>
                                   );
@@ -2298,8 +2504,8 @@ const ProjectTasks: React.FC = () => {
                   {isCreating
                     ? "Creating..."
                     : isUploadingAttachments
-                    ? "Uploading attachments..."
-                    : "Create Task"}
+                      ? "Uploading attachments..."
+                      : "Create Task"}
                 </button>
               </div>
             </form>
@@ -2309,7 +2515,7 @@ const ProjectTasks: React.FC = () => {
 
       {/* Modal: Edit Task */}
       {selectedTask && (
-        <div className="fixed inset-0 z-99999 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 sm:p-7 w-full max-w-xl shadow-2xl border border-slate-100 max-h-[92vh] overflow-y-auto scrollbar-hide animate-in fade-in zoom-in-95 duration-150">
             {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -2318,7 +2524,10 @@ const ProjectTasks: React.FC = () => {
                   Edit Task
                 </h3>
                 <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
-                  WEB-{selectedTask.id >= 100 ? selectedTask.id : selectedTask.id + 100}
+                  WEB-
+                  {selectedTask.id >= 100
+                    ? selectedTask.id
+                    : selectedTask.id + 100}
                 </span>
               </div>
               <button
@@ -2411,12 +2620,18 @@ const ProjectTasks: React.FC = () => {
                 </div>
                 <div>
                   <label className="text-slate-400 font-medium">Created</label>
-                  <p className="font-semibold text-slate-800 mt-0.5 truncate" title={selectedTask.createdAt}>
+                  <p
+                    className="font-semibold text-slate-800 mt-0.5 truncate"
+                    title={selectedTask.createdAt}
+                  >
                     {selectedTask.createdAt
-                      ? new Date(selectedTask.createdAt).toLocaleDateString("en-GB", {
-                          day: "numeric",
-                          month: "short",
-                        })
+                      ? new Date(selectedTask.createdAt).toLocaleDateString(
+                          "en-GB",
+                          {
+                            day: "numeric",
+                            month: "short",
+                          },
+                        )
                       : "—"}
                   </p>
                 </div>
@@ -2426,14 +2641,17 @@ const ProjectTasks: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-semibold text-slate-800 block mb-1.5">
-                    Assignee {isAdmin && <span className="text-rose-500">*</span>}
+                    Assignee{" "}
+                    {isAdmin && <span className="text-rose-500">*</span>}
                   </label>
                   <div className="relative">
                     <button
                       type="button"
                       disabled={!isAdmin}
                       onClick={() =>
-                        setIsEditAssigneeDropdownOpen(!isEditAssigneeDropdownOpen)
+                        setIsEditAssigneeDropdownOpen(
+                          !isEditAssigneeDropdownOpen,
+                        )
                       }
                       className={`w-full h-[46px] px-3.5 bg-[#fafafa] border rounded-2xl text-xs text-left outline-none transition-all shadow-2xs flex items-center justify-between gap-2 ${
                         !isAdmin
@@ -2463,8 +2681,9 @@ const ProjectTasks: React.FC = () => {
                                     alt=""
                                     className="w-5 h-5 rounded-full object-cover shrink-0 border border-slate-200"
                                     onError={(e) => {
-                                      (e.currentTarget as HTMLElement).style.display =
-                                        "none";
+                                      (
+                                        e.currentTarget as HTMLElement
+                                      ).style.display = "none";
                                     }}
                                   />
                                 );
@@ -2486,14 +2705,18 @@ const ProjectTasks: React.FC = () => {
                             </span>
                           </>
                         ) : (
-                          <span className="text-slate-400">Select Assignee</span>
+                          <span className="text-slate-400">
+                            Select Assignee
+                          </span>
                         )}
                       </div>
                       {isAdmin && (
                         <ChevronDown
                           size={15}
                           className={`text-slate-400 shrink-0 transition-transform duration-200 ${
-                            isEditAssigneeDropdownOpen ? "rotate-180 text-primary" : ""
+                            isEditAssigneeDropdownOpen
+                              ? "rotate-180 text-primary"
+                              : ""
                           }`}
                         />
                       )}
@@ -2510,7 +2733,10 @@ const ProjectTasks: React.FC = () => {
                           {projectAssignedEmployees.length > 5 && (
                             <div className="p-2 border-b border-slate-100">
                               <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 rounded-xl border border-slate-200/70">
-                                <Search size={13} className="text-slate-400 shrink-0" />
+                                <Search
+                                  size={13}
+                                  className="text-slate-400 shrink-0"
+                                />
                                 <input
                                   type="text"
                                   placeholder="Search project member..."
@@ -2529,7 +2755,10 @@ const ProjectTasks: React.FC = () => {
                           <div className="max-h-52 overflow-y-auto scrollbar-hide py-1">
                             {isProjectsLoading ? (
                               <div className="px-3.5 py-4 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
-                                <CircularProgress size={14} className="text-primary" />
+                                <CircularProgress
+                                  size={14}
+                                  className="text-primary"
+                                />
                                 <span>Loading project members...</span>
                               </div>
                             ) : editFilteredProjectEmployees.length === 0 ? (
@@ -2541,7 +2770,8 @@ const ProjectTasks: React.FC = () => {
                             ) : (
                               editFilteredProjectEmployees.map((emp) => {
                                 const isSelected =
-                                  String(editTaskForm.assignedTo) === String(emp.id);
+                                  String(editTaskForm.assignedTo) ===
+                                  String(emp.id);
                                 const photoUrl = extractEmployeePhotoUrl(emp);
                                 const displayName =
                                   emp.name || emp.username || "Employee";
@@ -2570,15 +2800,17 @@ const ProjectTasks: React.FC = () => {
                                           alt=""
                                           className="w-6 h-6 rounded-full object-cover shrink-0 border border-slate-200"
                                           onError={(e) => {
-                                            (e.currentTarget as HTMLElement).style.display =
-                                              "none";
+                                            (
+                                              e.currentTarget as HTMLElement
+                                            ).style.display = "none";
                                           }}
                                         />
                                       ) : (
                                         <div
                                           className="w-6 h-6 rounded-full text-white flex items-center justify-center font-bold text-[9px] shrink-0"
                                           style={{
-                                            backgroundColor: getAvatarBg(displayName),
+                                            backgroundColor:
+                                              getAvatarBg(displayName),
                                           }}
                                         >
                                           {getInitials(displayName)}
@@ -2596,7 +2828,10 @@ const ProjectTasks: React.FC = () => {
                                       </div>
                                     </div>
                                     {isSelected && (
-                                      <Check size={14} className="text-primary shrink-0" />
+                                      <Check
+                                        size={14}
+                                        className="text-primary shrink-0"
+                                      />
                                     )}
                                   </div>
                                 );
@@ -2696,33 +2931,38 @@ const ProjectTasks: React.FC = () => {
                 </div>
               </div>
 
-              {/* Activity Section (History / Comments) */}
+              {/* Activity Section (Comments / History) */}
               <div className="pt-3 border-t border-slate-100">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="text-xs font-bold text-slate-800">Activity</h4>
-                  <div className="flex items-center gap-1 bg-slate-100/80 p-0.5 rounded-2xl">
+                  <div className="inline-flex items-center p-0.5 rounded-2xl border border-slate-200/80 bg-white">
                     <button
                       type="button"
                       onClick={() => setActivityTab("comments")}
-                      className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer inline-flex items-center gap-1.5 ${
                         activityTab === "comments"
-                          ? "bg-white text-slate-800 shadow-2xs"
-                          : "text-slate-500 hover:text-slate-700"
+                          ? "bg-[#fff7ed] text-[#ff7300] font-bold"
+                          : "text-slate-500 hover:text-slate-700 font-medium"
                       }`}
                     >
-                      Comments {taskCommentsList.length > 0 && (
-                        <span className="ml-1 text-[10px] bg-slate-200 px-1.5 py-0.5 rounded-full">
-                          {taskCommentsList.length}
-                        </span>
-                      )}
+                      <span>Comments</span>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[11px] font-semibold transition-all ${
+                          activityTab === "comments"
+                            ? "bg-white text-[#ff7300] shadow-2xs border border-orange-100"
+                            : "bg-slate-100 text-slate-500"
+                        }`}
+                      >
+                        {taskCommentsList.length}
+                      </span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setActivityTab("history")}
-                      className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer ${
                         activityTab === "history"
-                          ? "bg-white text-orange-600 shadow-2xs"
-                          : "text-slate-500 hover:text-slate-700"
+                          ? "bg-[#fff7ed] text-[#ff7300] font-bold"
+                          : "text-slate-500 hover:text-slate-700 font-medium"
                       }`}
                     >
                       History
@@ -2756,154 +2996,300 @@ const ProjectTasks: React.FC = () => {
                     )}
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        placeholder="Write a comment..."
-                        value={newCommentText}
-                        onChange={(e) => setNewCommentText(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && newCommentText.trim() && !isPostingComment) {
-                            e.preventDefault();
-                            handleAddComment();
-                          }
+                  <div className="space-y-4">
+                    {/* Add comment box matching target mockup */}
+                    <div
+                      ref={commentComposerRef}
+                      className="flex items-start gap-3"
+                    >
+                      {currentUserPhoto ? (
+                        <img
+                          src={currentUserPhoto}
+                          alt={currentUserName}
+                          className="w-8 h-8 rounded-full object-cover shrink-0 ring-1 ring-slate-200"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLElement).style.display =
+                              "none";
+                            const sibling = e.currentTarget
+                              .nextElementSibling as HTMLElement | null;
+                            if (sibling) sibling.style.display = "flex";
+                          }}
+                        />
+                      ) : null}
+                      <div
+                        className="w-8 h-8 rounded-full items-center justify-center text-xs font-bold text-white shrink-0 shadow-2xs"
+                        style={{
+                          backgroundColor: getAvatarBg(currentUserName),
+                          display: currentUserPhoto ? "none" : "flex",
                         }}
-                        disabled={isPostingComment}
-                        className="flex-1 px-3.5 py-2.5 bg-[#fafafa] border border-slate-200/90 rounded-2xl text-xs text-slate-800 outline-none focus:border-primary focus:bg-white disabled:opacity-60"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAddComment}
-                        disabled={!newCommentText.trim() || isPostingComment}
-                        className="px-4 py-2 bg-primary text-white text-xs font-semibold rounded-2xl disabled:opacity-50 hover:bg-primary/90 cursor-pointer shadow-xs min-w-[60px] flex items-center justify-center"
                       >
-                        {isPostingComment ? (
-                          <CircularProgress size={14} color="inherit" />
-                        ) : (
-                          "Post"
+                        {getInitials(currentUserName)}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <textarea
+                          rows={isCommentExpanded ? 3 : 1}
+                          placeholder="Add a comment..."
+                          value={newCommentText}
+                          onFocus={() => setIsCommentFocused(true)}
+                          onClick={() => setIsCommentFocused(true)}
+                          onChange={(e) => setNewCommentText(e.target.value)}
+                          onKeyDown={(e) => {
+                            if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                              e.preventDefault();
+                              handleAddComment();
+                            }
+                          }}
+                          onPaste={(e) => {
+                            const files = e.clipboardData?.files;
+                            if (files && files.length > 0) {
+                              handleUploadCommentPhotos(files);
+                            }
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            const files = e.dataTransfer?.files;
+                            if (files && files.length > 0) {
+                              handleUploadCommentPhotos(files);
+                            }
+                          }}
+                          onDragOver={(e) => e.preventDefault()}
+                          disabled={isPostingComment}
+                          className={`w-full px-3.5 py-2.5 bg-white rounded-2xl text-xs text-slate-800 placeholder:text-slate-400 outline-none leading-relaxed transition-all ${
+                            isCommentExpanded
+                              ? "border border-[#ff7300] focus:ring-2 focus:ring-[#ff7300]/20 resize-y min-h-[72px]"
+                              : "border border-slate-200 hover:border-[#ff7300] resize-none min-h-[42px] cursor-text"
+                          }`}
+                        />
+
+                        {/* Uploaded attachments preview for new comment */}
+                        {commentAttachments.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {commentAttachments.map((att) => (
+                              <div
+                                key={att.id}
+                                className="relative group w-16 h-16 rounded-xl overflow-hidden border border-slate-200 bg-slate-50 shrink-0"
+                              >
+                                <img
+                                  src={att.previewUrl || getImageUrl(att.url)}
+                                  alt={att.name}
+                                  className="w-full h-full object-cover"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setCommentAttachments((prev) =>
+                                      prev.filter((a) => a.id !== att.id),
+                                    )
+                                  }
+                                  className="absolute top-1 right-1 w-5 h-5 bg-black/60 hover:bg-black/80 text-white rounded-full flex items-center justify-center transition-colors cursor-pointer"
+                                  title="Remove photo"
+                                >
+                                  <X size={11} />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
                         )}
-                      </button>
+
+                        {/* Uploading indicator */}
+                        {isUploadingCommentPhoto && (
+                          <div className="flex items-center gap-2 mt-1.5 text-xs text-orange-600 font-medium">
+                            <CircularProgress size={13} color="inherit" />
+                            <span>Uploading photo...</span>
+                          </div>
+                        )}
+
+                        {/* Toolbar row: Only show when clicked/active */}
+                        {isCommentExpanded && (
+                          <div className="flex items-center justify-between mt-2 animate-in fade-in duration-150">
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={handleAddComment}
+                                disabled={
+                                  (!newCommentText.trim() &&
+                                    commentAttachments.length === 0) ||
+                                  isPostingComment ||
+                                  isUploadingCommentPhoto
+                                }
+                                className="px-4 py-1.5 bg-[#ff7300] hover:bg-[#e06600] disabled:opacity-50 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
+                              >
+                                {isPostingComment ? (
+                                  <CircularProgress size={13} color="inherit" />
+                                ) : (
+                                  "Save"
+                                )}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setNewCommentText("");
+                                  setCommentAttachments([]);
+                                  setIsCommentFocused(false);
+                                }}
+                                disabled={isPostingComment}
+                                className="px-3 py-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  commentFileInputRef.current?.click()
+                                }
+                                disabled={
+                                  isPostingComment || isUploadingCommentPhoto
+                                }
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+                              >
+                                <Paperclip
+                                  size={13}
+                                  className="text-slate-600 -rotate-45"
+                                />
+                                <span>Photo</span>
+                              </button>
+                              <input
+                                ref={commentFileInputRef}
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                className="hidden"
+                                onChange={(e) => {
+                                  if (
+                                    e.target.files &&
+                                    e.target.files.length > 0
+                                  ) {
+                                    handleUploadCommentPhotos(e.target.files);
+                                    e.target.value = "";
+                                  }
+                                }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
+
+                    {/* Comments list */}
                     {isCommentsLoading ? (
                       <div className="flex justify-center py-4">
-                        <CircularProgress size={18} className="text-primary" />
+                        <CircularProgress
+                          size={18}
+                          className="text-[#ff7300]"
+                        />
                       </div>
                     ) : taskCommentsList.length === 0 ? (
-                      <p className="text-xs text-slate-400 py-2">No comments yet.</p>
+                      <p className="text-xs text-slate-400 py-2 text-center">
+                        No comments yet.
+                      </p>
                     ) : (
-                      taskCommentsList.map((c) => (
-                        <div
-                          key={c.id}
-                          className="p-3 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col gap-2"
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 min-w-0">
-                              {c.userLogo ? (
-                                <img
-                                  src={c.userLogo}
-                                  alt={c.user}
-                                  className="w-6 h-6 rounded-full object-cover shrink-0 ring-1 ring-slate-200"
-                                />
-                              ) : (
-                                <div
-                                  className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
-                                  style={{ backgroundColor: getAvatarBg(c.user) }}
-                                >
-                                  {getInitials(c.user)}
+                      <div className="space-y-4 pt-2">
+                        {taskCommentsList.map((c) => (
+                          <div key={c.id} className="flex items-start gap-3">
+                            {c.userLogo ? (
+                              <img
+                                src={c.userLogo}
+                                alt={c.user}
+                                className="w-8 h-8 rounded-full object-cover shrink-0 ring-1 ring-slate-200"
+                              />
+                            ) : (
+                              <div
+                                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-2xs"
+                                style={{ backgroundColor: getAvatarBg(c.user) }}
+                              >
+                                {getInitials(c.user)}
+                              </div>
+                            )}
+
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-baseline gap-2">
+                                <span className="font-bold text-slate-900 text-xs truncate">
+                                  {c.user}
+                                </span>
+                                <span className="text-xs text-slate-400 font-normal">
+                                  {c.time}
+                                </span>
+                              </div>
+
+                              {c.text && (
+                                <p className="text-xs text-slate-800 leading-relaxed whitespace-pre-wrap mt-0.5">
+                                  {c.text}
+                                </p>
+                              )}
+
+                              {c.attachments && c.attachments.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                  {c.attachments.map((att: any) =>
+                                    att.isImage ? (
+                                      <button
+                                        key={att.id}
+                                        type="button"
+                                        onClick={() =>
+                                          setViewAttachmentPreview({
+                                            id: att.id,
+                                            name: att.name,
+                                            url: att.url,
+                                          })
+                                        }
+                                        className="relative group w-28 h-20 rounded-xl overflow-hidden border border-slate-200 hover:border-[#ff7300] transition-all cursor-pointer shadow-2xs shrink-0"
+                                        title={att.name}
+                                      >
+                                        <img
+                                          src={getImageUrl(att.url)}
+                                          alt={att.name}
+                                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                        />
+                                      </button>
+                                    ) : (
+                                      <a
+                                        key={att.id}
+                                        href={getImageUrl(att.url)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 hover:text-[#ff7300] transition-colors"
+                                      >
+                                        <Paperclip
+                                          size={12}
+                                          className="text-slate-400"
+                                        />
+                                        <span className="truncate max-w-[150px]">
+                                          {att.name}
+                                        </span>
+                                      </a>
+                                    ),
+                                  )}
                                 </div>
                               )}
-                              <span className="font-semibold text-slate-800 text-xs truncate">
-                                {c.user}
-                              </span>
                             </div>
-                            <span className="text-[11px] text-slate-400 shrink-0">
-                              {c.time}
-                            </span>
                           </div>
-
-                          <p className="text-xs text-slate-800 leading-relaxed whitespace-pre-wrap pl-8">
-                            {c.text}
-                          </p>
-
-                          {c.attachments && c.attachments.length > 0 && (
-                            <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100/80 pl-8">
-                              {c.attachments.map((att: any) =>
-                                att.isImage ? (
-                                  <button
-                                    key={att.id}
-                                    type="button"
-                                    onClick={() =>
-                                      setViewAttachmentPreview({
-                                        id: att.id,
-                                        name: att.name,
-                                        url: att.url,
-                                      })
-                                    }
-                                    className="relative group w-16 h-16 rounded-xl overflow-hidden border border-slate-200 hover:border-primary/50 transition-all cursor-pointer shadow-2xs shrink-0"
-                                    title={att.name}
-                                  >
-                                    <img
-                                      src={getImageUrl(att.url)}
-                                      alt={att.name}
-                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                                    />
-                                  </button>
-                                ) : (
-                                  <a
-                                    key={att.id}
-                                    href={getImageUrl(att.url)}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-1.5 px-2.5 py-1 bg-white border border-slate-200 rounded-xl text-[11px] text-slate-700 hover:text-primary hover:border-primary/50 transition-colors shadow-2xs"
-                                  >
-                                    <Paperclip size={12} className="text-slate-400" />
-                                    <span className="truncate max-w-[150px]">
-                                      {att.name}
-                                    </span>
-                                  </a>
-                                ),
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      ))
+                        ))}
+                      </div>
                     )}
                   </div>
                 )}
               </div>
 
               {/* Footer */}
-              <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => handleDeleteTask(selectedTask.id)}
-                  disabled={isDeleting || isUpdating}
-                  className="px-4 py-2 text-xs font-semibold text-rose-500 hover:text-rose-600 hover:bg-rose-50 rounded-2xl transition-all cursor-pointer disabled:opacity-50"
+                  onClick={() => setSelectedTask(null)}
+                  className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-2xl transition-all cursor-pointer"
                 >
-                  Delete
+                  Cancel
                 </button>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedTask(null)}
-                    className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-2xl transition-all cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isUpdating || isEditUploadingAttachments}
-                    className="px-6 py-2.5 text-xs font-semibold bg-primary hover:bg-primary/90 text-white rounded-2xl shadow-sm transition-all cursor-pointer disabled:opacity-50"
-                  >
-                    {isUpdating
-                      ? "Updating..."
-                      : isEditUploadingAttachments
+                <button
+                  type="submit"
+                  disabled={isUpdating || isEditUploadingAttachments}
+                  className="px-6 py-2.5 text-xs font-semibold bg-primary hover:bg-primary/90 text-white rounded-2xl shadow-sm transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {isUpdating
+                    ? "Updating..."
+                    : isEditUploadingAttachments
                       ? "Uploading..."
                       : "Update Task"}
-                  </button>
-                </div>
+                </button>
               </div>
             </form>
           </div>
@@ -2914,7 +3300,7 @@ const ProjectTasks: React.FC = () => {
       {viewAttachmentPreview && (
         <div
           onClick={() => setViewAttachmentPreview(null)}
-          className="fixed inset-0 z-99999 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+          className="fixed inset-0 z-60 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
         >
           <div
             onClick={(e) => e.stopPropagation()}

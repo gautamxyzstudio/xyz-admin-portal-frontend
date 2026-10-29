@@ -125,3 +125,9 @@ body {
 .kanban-column-scroll::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+
+/* Ensure toast notifications always render on top of all modals and backdrops */
+.Toastify__toast-container {
+  z-index: 9999999 !important;
+}
