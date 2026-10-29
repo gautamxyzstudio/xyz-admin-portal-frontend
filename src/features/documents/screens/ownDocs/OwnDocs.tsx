@@ -1,3 +1,4 @@
+import { formatIstDateTime } from '../../../../utils/istDateUtils';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { useSelector } from "react-redux";
@@ -183,7 +184,7 @@ const OwnDocs: React.FC<OwnDocsProps> = ({ userId, employeeName }) => {
                       • {formatFileSize(file.size)}
                       <img src={Icons.TICK} alt="" />
                       Uploaded{" "}
-                      {new Date(doc.attributes.createdAt).toLocaleString()}
+                      {formatIstDateTime(doc.attributes.createdAt)}
                     </p>
                   </div>
                 </div>

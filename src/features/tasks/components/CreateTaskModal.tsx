@@ -1,9 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React from "react";
+import React, { useState } from "react";
+import TaskOvertimeSection from "./TaskOvertimeSection";
 
 interface Props { [key: string]: any }
 const CreateTaskModal: React.FC<Props> = (props) => {
-  const { Check, ChevronDown, CircularProgress, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, assigneeSearchQuery, attachments, estimatedHours, estimatedMinutes, extractEmployeePhotoUrl, filteredProjectEmployees, getAvatarBg, getInitials, handleCreateTaskSubmit, isAddModalOpen, isAdmin, isAssigneeDropdownOpen, isCreating, isProjectsLoading, isUploadingAttachments, modalTargetStatus, projectAssignedEmployees, projectName, renderCreatePriorityDropdown, selectedEmployeeObj, setAssigneeSearchQuery, setAttachments, setEstimatedHours, setEstimatedMinutes, setIsAddModalOpen, setIsAssigneeDropdownOpen, setIsCreatePriorityDropdownOpen, setIsUploadingAttachments, setModalTargetStatus, setTaskForm, taskForm } = props;
+  const [localEntries, setLocalEntries] = useState<any[]>([]);
+  const { createOvertimeEntries: propEntries, setCreateOvertimeEntries: propSetEntries, Check, ChevronDown, CircularProgress, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, assigneeSearchQuery, attachments, estimatedHours, estimatedMinutes, extractEmployeePhotoUrl, filteredProjectEmployees, getAvatarBg, getInitials, handleCreateTaskSubmit, isAddModalOpen, isAdmin, isAssigneeDropdownOpen, isCreating, isProjectsLoading, isUploadingAttachments, modalTargetStatus, projectAssignedEmployees, projectName, renderCreatePriorityDropdown, selectedEmployeeObj, setAssigneeSearchQuery, setAttachments, setEstimatedHours, setEstimatedMinutes, setIsAddModalOpen, setIsAssigneeDropdownOpen, setIsCreatePriorityDropdownOpen, setIsUploadingAttachments, setModalTargetStatus, setTaskForm, taskForm } = props;
   return (
     <>
 {/* Modal: Create Task (Closes on backdrop click) */}
@@ -123,7 +125,7 @@ const CreateTaskModal: React.FC<Props> = (props) => {
                                 const displayName =
                                   selectedEmployeeObj.name ||
                                   selectedEmployeeObj.username ||
-                                  "Employee";
+                              "Employee";
                                 if (photoUrl) {
                                   return (
                                     <img
@@ -353,6 +355,12 @@ const CreateTaskModal: React.FC<Props> = (props) => {
                   </div>
                 </div>
               </div>
+
+              {/* Overtime Section */}
+              <TaskOvertimeSection
+                entries={propEntries !== undefined ? propEntries : localEntries}
+                onChange={propSetEntries || setLocalEntries}
+              />
 
               {/* Attachments Option */}
               <TaskAttachmentUpload

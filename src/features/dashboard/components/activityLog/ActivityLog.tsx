@@ -1,9 +1,9 @@
+import { formatIstDateTime } from '../../../../utils/istDateUtils';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState } from "react";
 import CustomDataTable from "../../../../shared/components/customDataTable/CustomDataTable";
 import EmptyScreenView from "../../../../shared/components/EmptyScreenView/EmptyScreenView";
-import dayjs from "dayjs";
 import { useLazyGetLatestActivityLogsQuery } from "../../dashboardApi";
 
 interface IActivityLog {
@@ -41,7 +41,7 @@ useEffect(() => {
     headerName: "Created At",
     width: 150,
     renderCell: ({ row }: any) =>
-      dayjs(row.attributes?.createdAt).format("DD/MM/YYYY"), // Date only
+      formatIstDateTime(row.attributes?.createdAt, { numericDate: true, uppercase: true }), // Date only
   },
   {
     field: "title",

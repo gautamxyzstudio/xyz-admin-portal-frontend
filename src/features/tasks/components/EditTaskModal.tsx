@@ -1,9 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
+import TaskOvertimeSection from "./TaskOvertimeSection";
 
 interface Props { [key: string]: any }
 const EditTaskModal: React.FC<Props> = (props) => {
   const { Check, ChevronDown, CircularProgress, Paperclip, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, activityTab, commentAttachments, commentComposerRef, commentFileInputRef, completeHistory, currentUserName, currentUserPhoto, editAssigneeSearchQuery, editAttachments, editEstimatedHours, editEstimatedMinutes, editFilteredProjectEmployees, editSelectedEmployeeObj, editTaskForm, extractEmployeePhotoUrl, formatHistoryTime, getAvatarBg, getImageUrl, getInitials, handleAddComment, handleUpdateTaskSubmit, handleUploadCommentPhotos, isAdmin, isCommentExpanded, isCommentsLoading, isEditAssigneeDropdownOpen, isEditUploadingAttachments, isPostingComment, isProjectsLoading, isUpdating, isUploadingCommentPhoto, newCommentText, projectAssignedEmployees, selectedTask, setActivityTab, setCommentAttachments, setEditAssigneeSearchQuery, setEditAttachments, setEditEstimatedHours, setEditEstimatedMinutes, setEditTaskForm, setIsCommentFocused, setIsEditAssigneeDropdownOpen, setIsEditUploadingAttachments, setNewCommentText, setSelectedTask, setViewAttachmentPreview, taskCommentsList } = props;
+  console.log(completeHistory, "completeHistory")
   return (
     <>
 {/* Modal: Edit Task */}
@@ -397,6 +399,9 @@ const EditTaskModal: React.FC<Props> = (props) => {
                   </div>
                 </div>
               </div>
+
+              {/* Overtime Section */}
+              <TaskOvertimeSection taskId={selectedTask?.id} selectedTask={selectedTask} />
 
               {/* Activity Section (Comments / History) */}
               <div className="pt-3 border-t border-slate-100">

@@ -1,3 +1,4 @@
+import { getIstTodayDateString, formatIstDate } from '../../../utils/istDateUtils';
 import { useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -77,7 +78,7 @@ const getValidImageUrl = (photo: any): string | null => {
 };
 
 export default function AllTasks() {
-  const todayStr = new Date().toISOString().split("T")[0];
+  const todayStr = getIstTodayDateString();
 
   const [isTodayOnly, setIsTodayOnly] = useState<boolean>(true);
 
@@ -628,7 +629,7 @@ export default function AllTasks() {
                   {viewingTask.task.date && (
                     <span className="text-xs text-slate-500 font-medium flex items-center gap-1">
                       <CalendarIcon className="w-3.5 h-3.5 text-slate-400" />
-                      {viewingTask.task.date}
+                      {formatIstDate(viewingTask.task.date, "medium")}
                     </span>
                   )}
                 </div>

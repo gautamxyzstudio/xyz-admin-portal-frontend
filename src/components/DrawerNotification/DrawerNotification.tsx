@@ -1,3 +1,4 @@
+import { formatIstDateTime } from '../../utils/istDateUtils';
 /* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -107,7 +108,7 @@ const DrawerNotification = ({ open, onClose }: Props) => {
                     </div>
                     <p className="text-xs text-gray-500 mt-1">{item.message}</p>
                     <p className="text-[10px] text-gray-400 mt-2">
-                      {new Date(item.createdAt).toLocaleDateString()}
+                      {formatIstDateTime(item.createdAt)}
                     </p>
                   </div>
                 </Link>
@@ -136,7 +137,7 @@ const DrawerNotification = ({ open, onClose }: Props) => {
                     </div>
                     <p className="text-xs text-gray-500 mt-1">{item.message}</p>
                     <p className="text-[10px] text-gray-400 mt-2">
-                      {new Date(item.createdAt).toLocaleDateString()}
+                      {formatIstDateTime(item.createdAt)}
                     </p>
                   </div>
                 </Link>

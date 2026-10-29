@@ -1,6 +1,6 @@
+import { formatIstDateTime } from '../../../../utils/istDateUtils';
 import { useEffect, useMemo, useState } from "react";
 import { Pagination } from "@mui/material";
-import dayjs from "dayjs";
 import CustomDataTable from "../../../../shared/components/customDataTable/CustomDataTable";
 import { useLazyGetAllActivityLogsQuery } from "../../dashboardApi";
 
@@ -45,7 +45,7 @@ const ViewAllActivityLogs = () => {
         headerName: "Created At",
         width: 140,
         renderCell: ({ row }: any) =>
-          dayjs(row.createdAt).format("DD/MM/YYYY"),
+          formatIstDateTime(row.createdAt, { numericDate: true, uppercase: true }),
       },
       {
         field: "title",

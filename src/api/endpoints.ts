@@ -55,6 +55,7 @@ export const endpoints = {
   taskBoard: `${baseUrl}/api/task-board`,
   projectTasks: `${baseUrl}/api/task-items/project`,
   taskComments: `${baseUrl}/api/task-comments`,
+  taskOvertimes: `${baseUrl}/api/task-overtimes`,
 
   // Attendance
   getAttendanceLegacy: `${baseUrl}/api/daily-attendances/?populate=*&sort=id`,

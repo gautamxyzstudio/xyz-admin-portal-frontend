@@ -2,23 +2,23 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import CreateTaskModal from "./CreateTaskModal";
 import EditTaskModal from "./EditTaskModal";
+import ProjectKanbanBoard from "./ProjectKanbanBoard";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {
   Search,
   Plus,
-  Clock,
   ChevronDown,
   X,
   RotateCcw,
   Paperclip,
   Check,
-  MessageSquare,
 } from "lucide-react";
 import { CircularProgress } from "@mui/material";
 import {
   useGetProjectTasksQuery,
   useCreateTaskMutation,
+  useCreateTaskOvertimeMutation,
   useUpdateTaskMutation,
   useCreateTaskCommentMutation,
   useGetTaskCommentsQuery,
@@ -29,7 +29,14 @@ import { useGetActiveEmployeesQuery } from "../../allTasks/allTaskApi";
 import { useGetTaskBoardProjectsQuery } from "../../taskBoard/taskBoardApi";
 import { useGetProjectsQuery } from "../../projects/projectsApi";
 import { userInState, userDetailsInState } from "../../auth/authSlice";
-import { getImageUrl, extractEmployeePhotoUrl } from "../../../utils/utils";
+import {
+  getImageUrl,
+  extractEmployeePhotoUrl,
+  formatTaskCardTimestamp,
+  formatIstRelativeTime,
+  getIstTodayDateString,
+  toIstDayjs,
+} from "../../../utils/utils";
 import { toast } from "react-toastify";
 import { TaskAttachmentUpload } from "./TaskAttachmentUpload";
 import { useUploadFileMutation } from "../../../shared/api/sharedApi";
@@ -159,150 +166,31 @@ const getInitials = (name: string): string => {
   return name.slice(0, 2).toUpperCase();
 };
 
-// Formats timestamp for task card footer
+// Formats timestamp for task card footer using centralized IST utilities
 const formatTaskTimestamp = (
   task: IProjectTaskItem,
 ): { icon: string; text: string } | null => {
-  if (task.status === "completed") {
-    const dateStr = task.updatedAt || task.createdAt;
-    if (!dateStr) return null;
-    try {
-      const date = parseApiDate(dateStr) || new Date(dateStr);
-      if (isNaN(date.getTime())) return null;
-      const formattedDate = date.toLocaleDateString("en-GB", {
-        day: "numeric",
-        month: "short",
-      });
-      const formattedTime = date
-        .toLocaleTimeString("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-          hour12: true,
-        })
-        .toLowerCase();
-      const timeSpent = task.estimatedMinutes
-        ? formatTime(task.estimatedMinutes)
-        : "45m";
-      return {
-        icon: "✓",
-        text: `Completed ${formattedDate}, ${formattedTime} · took ${timeSpent}`,
-      };
-    } catch {
-      return null;
-    }
-  }
-
-  // Show createdAt for all active tasks
-  const dateStr = task.createdAt || task.updatedAt;
-  if (!dateStr) return null;
-  try {
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return null;
-    const formattedDate = date.toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "short",
-    });
-    const formattedTime = date
-      .toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      })
-      .toLowerCase();
-
-    const diffMs = Math.max(0, Date.now() - date.getTime());
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffHours / 24);
-    const remainingHours = diffHours % 24;
-
-    let timeAgo = "";
-    if (diffDays > 0) {
-      timeAgo = `${diffDays}d ${remainingHours}h ago`;
-    } else if (diffHours > 0) {
-      timeAgo = `${diffHours}h ago`;
-    } else {
-      timeAgo = "just now";
-    }
-
-    return {
-      icon: "▶",
-      text: `Created ${formattedDate}, ${formattedTime} · ${timeAgo}`,
-    };
-  } catch {
-    return null;
-  }
-};
-
-const parseApiDate = (dateStr?: string | number): Date | null => {
-  if (!dateStr) return null;
-  if (typeof dateStr === "number") return new Date(dateStr);
-  let clean = String(dateStr).trim();
-  if (!clean) return null;
-  if (/^\d+$/.test(clean)) return new Date(Number(clean));
-  if (clean.includes(" ") && !clean.includes("T")) {
-    clean = clean.replace(" ", "T");
-  }
-  // Backend UTC timestamps often lack timezone indicator 'Z'; append 'Z' so
-  // browser parses as UTC and avoids shifting 5.5 hours backwards in IST.
-  if (!clean.endsWith("Z") && !/[+-]\d{2}(:\d{2})?$/.test(clean)) {
-    clean += "Z";
-  }
-  const d = new Date(clean);
-  return isNaN(d.getTime()) ? new Date(dateStr) : d;
+  return formatTaskCardTimestamp(task, formatTime);
 };
 
 const formatRelativeTime = (dateStr?: string | number): string => {
-  if (!dateStr) return "just now";
-  try {
-    const d = parseApiDate(dateStr);
-    if (!d || isNaN(d.getTime())) return "just now";
-    const now = Date.now();
-    const diffMs = now - d.getTime();
-
-    // If within last 45 seconds or small clock offset, show "just now"
-    if (diffMs <= 45 * 1000) {
-      return "just now";
-    }
-
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffDays > 0) {
-      return `${diffDays} ${diffDays === 1 ? "day" : "days"} ago`;
-    }
-    if (diffHours > 0) {
-      return `${diffHours} ${diffHours === 1 ? "hour" : "hours"} ago`;
-    }
-    if (diffMins > 0) {
-      return `${diffMins} ${diffMins === 1 ? "minute" : "minutes"} ago`;
-    }
-    return "just now";
-  } catch {
-    return "just now";
-  }
+  return formatIstRelativeTime(dateStr);
 };
-
 const formatHistoryTime = (dateStr?: string | number): string => {
   if (!dateStr) return "";
-  try {
-    const d = parseApiDate(dateStr) || new Date(dateStr);
-    if (isNaN(d.getTime())) return "";
-    const datePart = d.toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "short",
-    });
-    const timePart = d
-      .toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      })
-      .toLowerCase();
-    return `${datePart}, ${timePart}`;
-  } catch {
-    return "";
-  }
+
+  const date = new Date(dateStr);
+
+  if (Number.isNaN(date.getTime())) return "";
+
+  return new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
 };
 
 interface ITaskHistoryRecord {
@@ -311,6 +199,13 @@ interface ITaskHistoryRecord {
   action: string;
   timestamp: string;
   dotColor: string;
+}
+
+interface ITaskHistoryEvent {
+  user?: string;
+  action: string;
+  timestamp?: string;
+  dotColor?: string;
 }
 
 const getTaskHistoryStorageKey = (taskId: number | string) =>
@@ -347,12 +242,63 @@ const saveStoredTaskHistory = (
 
 const recordTaskHistoryEvent = (
   taskId: number | string,
-  event: Omit<ITaskHistoryRecord, "id">,
+  event: ITaskHistoryEvent,
+  backendResponse?: any,
 ) => {
   const current = getStoredTaskHistory(taskId);
+
+  // Extract timestamp from backend response taskhistory field if available
+  const backendTaskHistory =
+    backendResponse?.taskhistory ||
+    backendResponse?.taskHistory ||
+    backendResponse?.task_history ||
+    backendResponse?.data?.taskhistory ||
+    backendResponse?.data?.taskHistory ||
+    backendResponse?.data?.task_history ||
+    backendResponse?.data?.attributes?.taskhistory ||
+    backendResponse?.data?.attributes?.taskHistory ||
+    backendResponse?.data?.attributes?.task_history ||
+    backendResponse?.attributes?.taskhistory ||
+    backendResponse?.attributes?.taskHistory ||
+    backendResponse?.attributes?.task_history;
+
+    console.log(backendTaskHistory,`backendTaskHistory`)
+
+  let resolvedTimestamp = event.timestamp;
+
+  if (Array.isArray(backendTaskHistory) && backendTaskHistory.length > 0) {
+    const latest = backendTaskHistory[backendTaskHistory.length - 1];
+    resolvedTimestamp =
+      latest?.createdAt ||
+      latest?.created_at ||
+      latest?.date ||
+      latest?.time ||
+      latest?.updatedAt ||
+      resolvedTimestamp;
+  }
+
+  // Fallback to backend response direct fields or current ISO string
+  if (!resolvedTimestamp) {
+    resolvedTimestamp =
+      backendResponse?.updatedAt ||
+      backendResponse?.createdAt ||
+      backendResponse?.data?.attributes?.updatedAt ||
+      backendResponse?.data?.attributes?.createdAt ||
+      backendResponse?.data?.updatedAt ||
+      backendResponse?.data?.createdAt ||
+      new Date().toISOString();
+  }
+
+  // Ensure timestamp is parsed properly
+  const istD = toIstDayjs(resolvedTimestamp);
+  const finalTimestamp = istD ? istD.toISOString() : (resolvedTimestamp || new Date().toISOString());
+
   const newRecord: ITaskHistoryRecord = {
     id: `${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-    ...event,
+    user: event.user || "Team Member",
+    action: event.action || "updated the task",
+    timestamp: finalTimestamp,
+    dotColor: event.dotColor || "bg-blue-500",
   };
   const updated = [newRecord, ...current];
   saveStoredTaskHistory(taskId, updated);
@@ -364,154 +310,151 @@ const getCompleteTaskHistory = (
 ): ITaskHistoryRecord[] => {
   const historyMap = new Map<string, ITaskHistoryRecord>();
 
+  const rawCreatedAt =
+    task.createdAt ||
+    (task as any).attributes?.createdAt ||
+    "";
+  const createdDayjs = toIstDayjs(rawCreatedAt);
+  const createdTimeEpoch = createdDayjs?.valueOf() || 0;
+  const createdTimeIso = createdDayjs
+    ? createdDayjs.toISOString()
+    : (rawCreatedAt || new Date().toISOString());
+
+  const creator =
+    task.task_created_by ||
+    task.assigned_to?.username ||
+    task.Task_assigned_to ||
+    "Team Member";
+
   // 1. Backend task.taskHistory or task.history if present
   const backendHistory =
     task.taskHistory || (task as any).history || (task as any).activities || [];
+
   if (Array.isArray(backendHistory)) {
     backendHistory.forEach((h: any, idx: number) => {
       const user =
-        h.user?.name ||
-        h.user?.username ||
-        h.username ||
-        h.by ||
-        task.assigned_to?.username ||
-        "Team Member";
-      const action = h.action || h.description || h.text || "updated the task";
-      const time = h.timestamp || h.createdAt || h.date || task.createdAt || "";
-      const dot =
-        h.dotColor ||
-        (action.includes("Completed")
-          ? "bg-emerald-500"
-          : action.includes("Blocked")
-            ? "bg-rose-500"
-            : action.includes("In-Progress")
-              ? "bg-orange-500"
-              : "bg-blue-500");
-      const key = `${time}-${action}`;
-      historyMap.set(key, {
-        id: `backend-${idx}`,
-        user,
-        action,
-        timestamp: time,
-        dotColor: dot,
-      });
+  h.changedBy ||
+  h.user?.name ||
+  h.user?.username ||
+  h.username ||
+  h.by ||
+  creator;
+
+const rawTime =
+  h.createdAt ||
+  h.created_at ||
+  h.date ||
+  rawCreatedAt ||
+  "";
+
+const hIso = rawTime;
+
+let action = h.action || h.description || h.text;
+
+if (h.oldStatus === null && h.newStatus) {
+  action = "created the task";
+} else if (h.oldStatus && h.newStatus) {
+  action = `moved ${h.oldStatus} → ${h.newStatus}`;
+} else if (!action) {
+  action = idx === 0 ? "created the task" : "updated the task";
+}
+
+const status = String(h.newStatus || "").toLowerCase();
+
+const dot =
+  h.dotColor ||
+  (status === "completed"
+    ? "bg-emerald-500"
+    : status === "blocked"
+      ? "bg-rose-500"
+      : status === "in-progress"
+        ? "bg-orange-500"
+        : "bg-blue-500");
+
+const key = `${h.id ?? idx}-${hIso}-${action}`;
+
+historyMap.set(key, {
+  id: `backend-${h.id ?? idx}`,
+  user,
+  action,
+  timestamp: hIso,
+  dotColor: dot,
+});
     });
   }
 
   // 2. Local storage history
   const localHistory = getStoredTaskHistory(task.id);
   localHistory.forEach((h) => {
-    const key = `${h.timestamp}-${h.action}`;
-    historyMap.set(key, h);
+    const hDayjs = toIstDayjs(h.timestamp);
+    const hEpoch = hDayjs?.valueOf() || 0;
+    const hIso = hDayjs ? hDayjs.toISOString() : h.timestamp;
+
+    // Filter out duplicate generic "updated the task" if it happened at creation time
+    const isNearCreation =
+      createdTimeEpoch > 0 && hEpoch > 0
+        ? Math.abs(hEpoch - createdTimeEpoch) < 120000
+        : false;
+
+    if (isNearCreation && h.action === "updated the task") {
+      return;
+    }
+
+    const key = `${hIso}-${h.action}`;
+    historyMap.set(key, {
+      ...h,
+      timestamp: hIso,
+    });
   });
 
-  // 3. Baseline events
-  const creator =
-    task.task_created_by ||
-    task.assigned_to?.username ||
-    task.Task_assigned_to ||
-    "Arjun K.";
+  // 3. Baseline creation event
+  // If no "created the task" event exists anywhere in history, add one
+  const hasCreationEvent = Array.from(historyMap.values()).some((h) =>
+    h.action.toLowerCase().includes("created the task"),
+  );
 
-  const assignee =
-    task.assigned_to?.username || task.Task_assigned_to || creator;
-
-  // Baseline creation
-  const createdTime =
-    task.createdAt || new Date(Date.now() - 86400000 * 2).toISOString();
-  if (
-    !Array.from(historyMap.values()).some((h) =>
-      h.action.includes("created the task"),
-    )
-  ) {
-    historyMap.set(`baseline-create`, {
+  if (!hasCreationEvent) {
+    historyMap.set("baseline-create", {
       id: "baseline-create",
       user: creator,
       action: "created the task",
-      timestamp: createdTime,
+      timestamp: createdTimeIso,
       dotColor: "bg-blue-500",
     });
   }
 
-  // Baseline status transitions
-  const updatedTime = task.updatedAt || createdTime;
-  const isDifferentTime =
-    new Date(updatedTime).getTime() - new Date(createdTime).getTime() > 60000;
+  // 4. Deduplicate: Keep at most ONE "created the task" entry
+  let foundCreation = false;
+  for (const [key, val] of Array.from(historyMap.entries())) {
+    if (val.action.toLowerCase().includes("created the task")) {
+      if (!foundCreation) {
+        foundCreation = true;
+      } else {
+        historyMap.delete(key);
+      }
+    }
+  }
 
-  if (task.status === "in-progress") {
-    const hasInProgress = Array.from(historyMap.values()).some((h) =>
-      h.action.includes("In-Progress"),
-    );
-    if (!hasInProgress) {
-      historyMap.set(`baseline-inprogress`, {
-        id: "baseline-inprogress",
-        user: assignee,
-        action: "moved Planned → In-Progress",
-        timestamp: isDifferentTime
-          ? updatedTime
-          : new Date(Date.now() - 3600000 * 12).toISOString(),
-        dotColor: "bg-orange-500",
-      });
-    }
-  } else if (task.status === "blocked") {
-    const hasBlocked = Array.from(historyMap.values()).some((h) =>
-      h.action.includes("Blocked"),
-    );
-    if (!hasBlocked) {
-      const hasInProgress = Array.from(historyMap.values()).some((h) =>
-        h.action.includes("In-Progress"),
-      );
-      if (!hasInProgress) {
-        historyMap.set(`baseline-inprogress`, {
-          id: "baseline-inprogress",
-          user: assignee,
-          action: "moved Planned → In-Progress",
-          timestamp: new Date(
-            new Date(updatedTime).getTime() - 3600000 * 6,
-          ).toISOString(),
-          dotColor: "bg-orange-500",
-        });
+  // 5. Remove any duplicate generic "updated the task" entry that shares the creation time
+  const creationEntry = Array.from(historyMap.values()).find((h) =>
+    h.action.toLowerCase().includes("created the task"),
+  );
+  if (creationEntry) {
+    const cEpoch = toIstDayjs(creationEntry.timestamp)?.valueOf() || 0;
+    for (const [key, val] of historyMap.entries()) {
+      if (val.id !== creationEntry.id && val.action === "updated the task") {
+        const valEpoch = toIstDayjs(val.timestamp)?.valueOf() || 0;
+        if (cEpoch > 0 && valEpoch > 0 && Math.abs(valEpoch - cEpoch) < 120000) {
+          historyMap.delete(key);
+        }
       }
-      historyMap.set(`baseline-blocked`, {
-        id: "baseline-blocked",
-        user: assignee,
-        action: "moved In-Progress → Blocked",
-        timestamp: updatedTime,
-        dotColor: "bg-rose-500",
-      });
-    }
-  } else if (task.status === "completed") {
-    const hasCompleted = Array.from(historyMap.values()).some((h) =>
-      h.action.includes("Completed"),
-    );
-    if (!hasCompleted) {
-      const hasInProgress = Array.from(historyMap.values()).some((h) =>
-        h.action.includes("In-Progress"),
-      );
-      if (!hasInProgress) {
-        historyMap.set(`baseline-inprogress`, {
-          id: "baseline-inprogress",
-          user: assignee,
-          action: "moved Planned → In-Progress",
-          timestamp: new Date(
-            new Date(updatedTime).getTime() - 3600000 * 18,
-          ).toISOString(),
-          dotColor: "bg-orange-500",
-        });
-      }
-      historyMap.set(`baseline-completed`, {
-        id: "baseline-completed",
-        user: assignee,
-        action: "moved In-Progress → Completed",
-        timestamp: updatedTime,
-        dotColor: "bg-emerald-500",
-      });
     }
   }
 
   // Sort descending by timestamp (newest on top, oldest at bottom)
   return Array.from(historyMap.values()).sort((a, b) => {
-    const tA = new Date(a.timestamp).getTime() || 0;
-    const tB = new Date(b.timestamp).getTime() || 0;
+    const tA = toIstDayjs(a.timestamp)?.valueOf() || 0;
+    const tB = toIstDayjs(b.timestamp)?.valueOf() || 0;
     return tB - tA;
   });
 };
@@ -590,7 +533,6 @@ const ProjectTasks: React.FC = () => {
   const [localTasksOverride, setLocalTasksOverride] = useState<
     Record<number, TaskStatus>
   >({});
-  const [openQuickMoveId, setOpenQuickMoveId] = useState<number | null>(null);
 
   // Priority dropdown ref for outside click
   const priorityDropdownRef = useRef<HTMLDivElement>(null);
@@ -693,9 +635,6 @@ const ProjectTasks: React.FC = () => {
       ) {
         setIsPriorityOpen(false);
       }
-      if (openQuickMoveId !== null) {
-        setOpenQuickMoveId(null);
-      }
       if (
         commentComposerRef.current &&
         !commentComposerRef.current.contains(e.target as Node) &&
@@ -708,7 +647,7 @@ const ProjectTasks: React.FC = () => {
     document.addEventListener("mousedown", handleGlobalMouseDown);
     return () =>
       document.removeEventListener("mousedown", handleGlobalMouseDown);
-  }, [isPriorityOpen, openQuickMoveId]);
+  }, [isPriorityOpen]);
 
   // RTK Query: fetch tasks for this project
   const {
@@ -860,6 +799,8 @@ const ProjectTasks: React.FC = () => {
 
   // Mutations
   const [createTask, { isLoading: isCreating }] = useCreateTaskMutation();
+  const [createTaskOvertime] = useCreateTaskOvertimeMutation();
+  const [createOvertimeEntries, setCreateOvertimeEntries] = useState<any[]>([]);
   const [updateTask, { isLoading: isUpdating }] = useUpdateTaskMutation();
   const [createTaskComment, { isLoading: isPostingComment }] =
     useCreateTaskCommentMutation();
@@ -1089,9 +1030,9 @@ const ProjectTasks: React.FC = () => {
     }
 
     try {
-      const todayStr = new Date().toISOString().split("T")[0];
+      const todayStr = getIstTodayDateString();
 
-      await createTask({
+      const createdTaskRes = await createTask({
         title: taskForm.title.trim(),
         description: taskForm.description.trim(),
         status: modalTargetStatus,
@@ -1102,6 +1043,23 @@ const ProjectTasks: React.FC = () => {
         assignedTo: isAdmin ? taskForm.assignedTo || undefined : undefined,
         attachments: attachments.map((a) => a.id),
       }).unwrap();
+
+      const createdTaskId = createdTaskRes?.id || createdTaskRes?.data?.id;
+      if (createdTaskId && createOvertimeEntries.length > 0) {
+        for (const ot of createOvertimeEntries) {
+          try {
+            await createTaskOvertime({
+              date: ot.date,
+              timeInMinutes: String(ot.totalMinutes),
+              workInfo: ot.note || ot.workInfo || "",
+              task_item: Number(createdTaskId),
+            }).unwrap();
+          } catch (otErr) {
+            console.error("Failed to post overtime for newly created task:", otErr);
+          }
+        }
+        setCreateOvertimeEntries([]);
+      }
 
       toast.success("Task created successfully!");
       setIsAddModalOpen(false);
@@ -1241,12 +1199,10 @@ const ProjectTasks: React.FC = () => {
         },
       }).unwrap();
 
-      const nowIso = new Date().toISOString();
       changes.forEach((ch) => {
         recordTaskHistoryEvent(selectedTask.id, {
           user: userName,
           action: ch.action,
-          timestamp: nowIso,
           dotColor: ch.dot,
         });
       });
@@ -1486,7 +1442,7 @@ const ProjectTasks: React.FC = () => {
   );
 
   return (
-    <div className="w-full h-full flex flex-col p-5 overflow-y-auto min-h-0 gap-3.5 bg-[#fbfbfb]">
+    <div className="w-full min-h-screen flex flex-col p-5 overflow-y-auto min-h-0 gap-3.5 bg-[#fbfbfb] scrollbar-hide [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
       {/* 1. Header Section: Breadcrumbs + Project Title + Create Task Button */}
       <div className="flex flex-col gap-0.5 shrink-0">
         {/* Breadcrumb */}
@@ -1510,7 +1466,7 @@ const ProjectTasks: React.FC = () => {
               {projectName || "Project Tasks"}
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
-              Drag and drop cards between columns to change status.
+              Drag and drop cards between columns to change status. 
             </p>
           </div>
 
@@ -1664,485 +1620,31 @@ const ProjectTasks: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. Kanban Board 4 Columns (Responsive min-width with smooth horizontal & vertical scroll) */}
-      <div className="flex-1 min-h-0 w-full overflow-x-auto overflow-y-hidden pb-1 kanban-board-scroll">
-        {isLoading ? (
-          <div className="w-full h-full flex flex-col items-center justify-center py-28 gap-3">
-            <CircularProgress size={36} sx={{ color: "#f17c04" }} />
-            <p className="text-xs text-slate-500 font-medium">
-              Loading {projectName} tasks...
-            </p>
-          </div>
-        ) : searchTerm.trim() && filteredTasks.length === 0 ? (
-          <div className="w-full h-full min-h-[380px] flex flex-col items-center justify-center bg-white rounded-3xl border border-slate-200/80 p-8 shadow-xs text-center">
-            <div className="w-14 h-14 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center text-primary mb-3 shadow-2xs">
-              <Search size={24} className="stroke-[2]" />
-            </div>
-            <h3 className="text-base font-bold text-slate-800">
-              No tasks found
-            </h3>
-            <p className="text-xs text-slate-400 mt-1 max-w-sm leading-relaxed">
-              We couldn't find any tasks matching "{searchTerm}".
-            </p>
-            <button
-              type="button"
-              onClick={() => setSearchTerm("")}
-              className="mt-4 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-all cursor-pointer shadow-2xs"
-            >
-              Clear search
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-4 gap-3.5 h-full w-full min-w-[1020px]">
-            {columnData.map((col) => (
-              <div
-                key={col.id}
-                onDragEnter={(e) => {
-                  e.preventDefault();
-                  dragCounterMap.current[col.id] =
-                    (dragCounterMap.current[col.id] || 0) + 1;
-                  if (dragOverCol !== col.id) {
-                    setDragOverCol(col.id);
-                  }
-                }}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  e.dataTransfer.dropEffect = "move";
-                }}
-                onDragLeave={(e) => {
-                  e.preventDefault();
-                  dragCounterMap.current[col.id] = Math.max(
-                    0,
-                    (dragCounterMap.current[col.id] || 1) - 1,
-                  );
-                  if (dragCounterMap.current[col.id] === 0) {
-                    if (dragOverCol === col.id) {
-                      setDragOverCol(null);
-                    }
-                  }
-                }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  dragCounterMap.current = {};
-                  setDragOverCol(null);
-                  const dataId = Number(e.dataTransfer.getData("text/plain"));
-                  const taskId = dataId || draggedTaskIdRef.current;
-                  if (taskId) {
-                    handleUpdateStatus(taskId, col.id);
-                  }
-                  draggedTaskIdRef.current = null;
-                }}
-                className={`bg-[#f4f5f7] border rounded-2xl p-3 flex flex-col h-full min-h-[480px] min-w-[240px] transition-all ${dragOverCol === col.id
-                    ? "border-primary/50 ring-2 ring-primary/20 bg-orange-50/20"
-                    : "border-slate-200/70"
-                  }`}
-              >
-                {/* Column Header */}
-                <div className="flex items-center justify-between pb-2.5 px-1 shrink-0">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span
-                      className={`w-2 h-2 rounded-full shrink-0 ${col.dotColor}`}
-                    />
-                    <span className="text-xs font-bold text-slate-800 truncate">
-                      {col.label}
-                    </span>
-                    <span className="text-[11px] text-slate-400 font-normal shrink-0">
-                      {col.totalTimeFormatted}
-                    </span>
-                  </div>
+      {/* 3. Kanban Board 4 Columns */}
+      <ProjectKanbanBoard
+        isLoading={isLoading}
+        projectName={projectName}
+        searchTerm={searchTerm}
+        filteredTasks={filteredTasks}
+        setSearchTerm={setSearchTerm}
+        columnData={columnData}
+        dragCounterMap={dragCounterMap}
+        dragOverCol={dragOverCol}
+        setDragOverCol={setDragOverCol}
+        draggedTaskIdRef={draggedTaskIdRef}
+        handleUpdateStatus={handleUpdateStatus}
+        handleOpenAddModal={handleOpenAddModal}
+        handleOpenEditModal={handleOpenEditModal}
+        getImageUrl={getImageUrl}
+        extractTaskAttachments={extractTaskAttachments}
+        formatTaskTimestamp={formatTaskTimestamp}
+        renderPriorityIndicator={renderPriorityIndicator}
+        formatTime={formatTime}
+        getAvatarBg={getAvatarBg}
+        getInitials={getInitials}
+      />
 
-                  <span className="min-w-4.5 h-4.5 px-1 rounded-full bg-white text-slate-600 text-[11px] font-semibold flex items-center justify-center border border-slate-200/80 shadow-2xs shrink-0 ml-1">
-                    {col.count}
-                  </span>
-                </div>
-
-                {/* Column Tasks List Container - Smooth vertical scroll with clean scrollbar */}
-                <div
-                  className="flex-1 min-h-0 overflow-y-auto space-y-2.5 pr-1 kanban-column-scroll"
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.dataTransfer.dropEffect = "move";
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    dragCounterMap.current = {};
-                    setDragOverCol(null);
-                    const dataId = Number(e.dataTransfer.getData("text/plain"));
-                    const taskId = dataId || draggedTaskIdRef.current;
-                    if (taskId) {
-                      handleUpdateStatus(taskId, col.id);
-                    }
-                    draggedTaskIdRef.current = null;
-                  }}
-                >
-                  {col.tasks.length === 0 ? (
-                    <div
-                      className="flex flex-col items-center justify-center pt-8 pb-4 gap-3 w-full"
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.dataTransfer.dropEffect = "move";
-                      }}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        dragCounterMap.current = {};
-                        setDragOverCol(null);
-                        const dataId = Number(
-                          e.dataTransfer.getData("text/plain"),
-                        );
-                        const taskId = dataId || draggedTaskIdRef.current;
-                        if (taskId) {
-                          handleUpdateStatus(taskId, col.id);
-                        }
-                        draggedTaskIdRef.current = null;
-                      }}
-                    >
-                      <p className="text-xs text-slate-400 font-medium pointer-events-none">
-                        {searchTerm.trim()
-                          ? "No matching tasks"
-                          : "No tasks here"}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => handleOpenAddModal(col.id)}
-                        onDragOver={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          e.dataTransfer.dropEffect = "move";
-                        }}
-                        onDrop={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          dragCounterMap.current = {};
-                          setDragOverCol(null);
-                          const dataId = Number(
-                            e.dataTransfer.getData("text/plain"),
-                          );
-                          const taskId = dataId || draggedTaskIdRef.current;
-                          if (taskId) {
-                            handleUpdateStatus(taskId, col.id);
-                          }
-                          draggedTaskIdRef.current = null;
-                        }}
-                        className="w-full py-2.5 px-3 rounded-2xl bg-[#ebedf0] text-slate-700 border border-transparent hover:border-dashed hover:border-[#ff7300] hover:text-[#ff7300] hover:bg-white text-xs font-medium flex items-center justify-center gap-1.5 transition-all duration-150 cursor-pointer shadow-2xs"
-                      >
-                        <Plus size={14} className="stroke-[2.5]" />
-                        <span>Add task</span>
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      {col.tasks.map((task) => {
-                        const assigneeName =
-                          task.assigned_to?.username ||
-                          task.Task_assigned_to ||
-                          "Unassigned";
-                        const photoSrc = task.assigned_to?.photo
-                          ? getImageUrl(task.assigned_to.photo)
-                          : null;
-                        const taskKey =
-                          task.taskId || (task.id ? `TSK-${task.id}` : "");
-                        const commentsCount = Array.isArray(task.taskComments)
-                          ? task.taskComments.length
-                          : Array.isArray(task.task_comments)
-                            ? task.task_comments.length
-                            : Array.isArray(task.comments)
-                              ? task.comments.length
-                              : 0;
-                        const taskAttachments = extractTaskAttachments(
-                          task.attachments,
-                        );
-                        const taskTag =
-                          task.project?.title || projectName || "General";
-                        const timestampInfo = formatTaskTimestamp(task);
-
-                        return (
-                          <div
-                            key={task.id}
-                            draggable
-                            onDragStart={(e) => {
-                              draggedTaskIdRef.current = task.id;
-                              e.dataTransfer.setData(
-                                "text/plain",
-                                String(task.id),
-                              );
-                              e.dataTransfer.effectAllowed = "move";
-                              if (e.currentTarget) {
-                                const rect =
-                                  e.currentTarget.getBoundingClientRect();
-                                e.dataTransfer.setDragImage(
-                                  e.currentTarget,
-                                  Math.min(
-                                    Math.max(10, e.clientX - rect.left),
-                                    rect.width / 2,
-                                  ),
-                                  Math.min(
-                                    Math.max(10, e.clientY - rect.top),
-                                    30,
-                                  ),
-                                );
-                              }
-                            }}
-                            onDragEnd={() => {
-                              draggedTaskIdRef.current = null;
-                              setDragOverCol(null);
-                              dragCounterMap.current = {};
-                            }}
-                            onDragOver={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              e.dataTransfer.dropEffect = "move";
-                            }}
-                            onDrop={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              dragCounterMap.current = {};
-                              setDragOverCol(null);
-                              const dataId = Number(
-                                e.dataTransfer.getData("text/plain"),
-                              );
-                              const taskId = dataId || draggedTaskIdRef.current;
-                              if (taskId && taskId !== task.id) {
-                                handleUpdateStatus(taskId, col.id);
-                              }
-                              draggedTaskIdRef.current = null;
-                            }}
-                            onClick={() => handleOpenEditModal(task)}
-                            className="group bg-white rounded-xl p-3 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col gap-2 cursor-pointer active:opacity-75 w-full min-w-0 max-w-full select-none"
-                          >
-                            {/* Cover image thumbnail if attachments exist */}
-                            {taskAttachments.length > 0 &&
-                              (taskAttachments[0].url ||
-                                taskAttachments[0].previewUrl) && (
-                                <div className="w-full h-28 rounded-xl overflow-hidden bg-slate-100 border border-slate-100/90 mb-0.5 shrink-0">
-                                  <img
-                                    src={
-                                      taskAttachments[0].previewUrl ||
-                                      getImageUrl(taskAttachments[0].url)
-                                    }
-                                    alt={task.title}
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                                  />
-                                </div>
-                              )}
-
-                            {/* Task Title */}
-                            <h4 className="text-xs font-bold text-slate-900 leading-snug group-hover:text-primary transition-colors line-clamp-2">
-                              {task.title}
-                            </h4>
-
-                            {/* Task Description */}
-                            {task.description && (
-                              <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
-                                {task.description}
-                              </p>
-                            )}
-
-                            {/* Tag & Status Row */}
-                            <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                              <span className="px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200/60 truncate max-w-[110px]">
-                                {taskTag}
-                              </span>
-
-                              {/* Clickable 1-Click Move Badge */}
-                              <div
-                                className="relative inline-block"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setOpenQuickMoveId(
-                                      openQuickMoveId === task.id
-                                        ? null
-                                        : task.id,
-                                    )
-                                  }
-                                  title="Click to change status"
-                                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${col.badgeBg} ${col.badgeText} border ${col.badgeBorder} shrink-0 hover:brightness-95 transition-all cursor-pointer`}
-                                >
-                                  <span
-                                    className={`w-1.5 h-1.5 rounded-full ${col.dotColor} ${col.id === "in-progress" ? "animate-pulse" : ""
-                                      }`}
-                                  />
-                                  <span>{col.label}</span>
-                                  <ChevronDown
-                                    size={10}
-                                    className="opacity-60 ml-0.5"
-                                  />
-                                </button>
-
-                                {openQuickMoveId === task.id && (
-                                  <>
-                                    <div
-                                      className="fixed inset-0 z-40 cursor-default"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setOpenQuickMoveId(null);
-                                      }}
-                                    />
-                                    <div className="absolute left-0 mt-1 w-32 bg-white border border-slate-200 rounded-xl shadow-xl z-50 py-1 text-xs animate-in fade-in zoom-in-95 duration-100">
-                                      <p className="px-2.5 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                        Move to
-                                      </p>
-                                      {COLUMNS.map((targetCol) => (
-                                        <button
-                                          key={targetCol.id}
-                                          disabled={
-                                            task.status === targetCol.id
-                                          }
-                                          onClick={() => {
-                                            setOpenQuickMoveId(null);
-                                            handleUpdateStatus(
-                                              task.id,
-                                              targetCol.id,
-                                            );
-                                          }}
-                                          className={`w-full text-left px-2.5 py-1.5 text-[11px] font-semibold flex items-center gap-1.5 hover:bg-slate-50 transition-colors ${task.status === targetCol.id
-                                              ? "opacity-40 cursor-default bg-slate-50/50"
-                                              : "cursor-pointer text-slate-700"
-                                            }`}
-                                        >
-                                          <span
-                                            className={`w-1.5 h-1.5 rounded-full ${targetCol.dotColor}`}
-                                          />
-                                          <span>{targetCol.label}</span>
-                                        </button>
-                                      ))}
-                                    </div>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Footer Row: Priority, Task Key, Estimate, Attachments & Comments */}
-                            <div className="flex items-center justify-between pt-1.5 border-t border-slate-100 mt-0.5">
-                              <div className="flex items-center gap-1 text-slate-500 min-w-0">
-                                {renderPriorityIndicator(task.priority)}
-                                <span className="text-[11px] font-semibold tracking-tight text-slate-600">
-                                  {taskKey}
-                                </span>
-                                <span className="inline-flex items-center gap-0.5 text-[11px] text-slate-400 font-medium ml-1">
-                                  <Clock size={10} className="text-slate-400" />
-                                  <span>
-                                    {formatTime(task.estimatedMinutes)}
-                                  </span>
-                                </span>
-
-                                {/* Attachments indicator - always show even if 0 */}
-                                <span
-                                  className="inline-flex items-center gap-0.5 text-[11px] text-slate-400 font-medium ml-1"
-                                  title={`${taskAttachments.length} attachment(s)`}
-                                >
-                                  <Paperclip
-                                    size={11}
-                                    className="text-slate-400"
-                                  />
-                                  <span>{taskAttachments.length}</span>
-                                </span>
-
-                                {/* Comments indicator - always show even if 0 */}
-                                <span
-                                  className="inline-flex items-center gap-0.5 text-[11px] text-slate-400 font-medium ml-1"
-                                  title={`${commentsCount} comment(s)`}
-                                >
-                                  <MessageSquare
-                                    size={11}
-                                    className="text-slate-400"
-                                  />
-                                  <span>{commentsCount}</span>
-                                </span>
-                              </div>
-
-                              {/* Assignee Avatar */}
-                              <div
-                                title={`Assigned to ${assigneeName}`}
-                                className="w-5.5 h-5.5 rounded-full overflow-hidden shrink-0 border border-white shadow-2xs ml-1"
-                              >
-                                {photoSrc ? (
-                                  <img
-                                    src={photoSrc}
-                                    alt={assigneeName}
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <div
-                                    className="w-full h-full flex items-center justify-center text-[9px] font-bold text-white"
-                                    style={{
-                                      backgroundColor:
-                                        getAvatarBg(assigneeName),
-                                    }}
-                                  >
-                                    {getInitials(assigneeName)}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Created / Completed timestamp line */}
-                            {timestampInfo && (
-                              <div className="flex items-center gap-1 text-[10px] text-slate-400 pt-1 border-t border-slate-100">
-                                <span
-                                  className={
-                                    task.status === "completed"
-                                      ? "text-emerald-500 font-bold"
-                                      : "text-slate-400 text-[9px]"
-                                  }
-                                >
-                                  {timestampInfo.icon}
-                                </span>
-                                <span className="truncate">
-                                  {timestampInfo.text}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-
-                      {/* Add Task Button directly below cards */}
-                      <button
-                        type="button"
-                        onClick={() => handleOpenAddModal(col.id)}
-                        onDragOver={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          e.dataTransfer.dropEffect = "move";
-                        }}
-                        onDrop={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          dragCounterMap.current = {};
-                          setDragOverCol(null);
-                          const dataId = Number(
-                            e.dataTransfer.getData("text/plain"),
-                          );
-                          const taskId = dataId || draggedTaskIdRef.current;
-                          if (taskId) {
-                            handleUpdateStatus(taskId, col.id);
-                          }
-                          draggedTaskIdRef.current = null;
-                        }}
-                        className="w-full py-2.5 px-3 rounded-2xl bg-[#ebedf0] text-slate-700 border border-transparent hover:border-dashed hover:border-[#ff7300] hover:text-[#ff7300] hover:bg-white text-xs font-medium flex items-center justify-center gap-1.5 transition-all duration-150 cursor-pointer shrink-0 shadow-2xs"
-                      >
-                        <Plus size={14} className="stroke-[2.5]" />
-                        <span>Add task</span>
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <CreateTaskModal {...{ Check, ChevronDown, CircularProgress, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, assigneeSearchQuery, attachments, estimatedHours, estimatedMinutes, extractEmployeePhotoUrl, filteredProjectEmployees, getAvatarBg, getInitials, handleCreateTaskSubmit, isAddModalOpen, isAdmin, isAssigneeDropdownOpen, isCreating, isProjectsLoading, isUploadingAttachments, modalTargetStatus, projectAssignedEmployees, projectName, renderCreatePriorityDropdown, selectedEmployeeObj, setAssigneeSearchQuery, setAttachments, setEstimatedHours, setEstimatedMinutes, setIsAddModalOpen, setIsAssigneeDropdownOpen, setIsCreatePriorityDropdownOpen, setIsUploadingAttachments, setModalTargetStatus, setTaskForm, taskForm }} />
+      <CreateTaskModal {...{ createOvertimeEntries, setCreateOvertimeEntries, Check, ChevronDown, CircularProgress, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, assigneeSearchQuery, attachments, estimatedHours, estimatedMinutes, extractEmployeePhotoUrl, filteredProjectEmployees, getAvatarBg, getInitials, handleCreateTaskSubmit, isAddModalOpen, isAdmin, isAssigneeDropdownOpen, isCreating, isProjectsLoading, isUploadingAttachments, modalTargetStatus, projectAssignedEmployees, projectName, renderCreatePriorityDropdown, selectedEmployeeObj, setAssigneeSearchQuery, setAttachments, setEstimatedHours, setEstimatedMinutes, setIsAddModalOpen, setIsAssigneeDropdownOpen, setIsCreatePriorityDropdownOpen, setIsUploadingAttachments, setModalTargetStatus, setTaskForm, taskForm }} />
 
       <EditTaskModal {...{ Check, ChevronDown, CircularProgress, Paperclip, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, activityTab, attachments, commentAttachments, commentComposerRef, commentFileInputRef, completeHistory, currentUserName, currentUserPhoto, editAssigneeSearchQuery, editAttachments, editEstimatedHours, editEstimatedMinutes, editFilteredProjectEmployees, editSelectedEmployeeObj, editTaskForm, extractEmployeePhotoUrl, formatHistoryTime, getAvatarBg, getImageUrl, getInitials, handleAddComment, handleUpdateTaskSubmit, handleUploadCommentPhotos, isAdmin, isCommentExpanded, isCommentsLoading, isEditAssigneeDropdownOpen, isEditUploadingAttachments, isPostingComment, isProjectsLoading, isUpdating, isUploadingCommentPhoto, newCommentText, projectAssignedEmployees, selectedTask, setActivityTab, setCommentAttachments, setEditAssigneeSearchQuery, setEditAttachments, setEditEstimatedHours, setEditEstimatedMinutes, setEditTaskForm, setIsCommentFocused, setIsEditAssigneeDropdownOpen, setIsEditUploadingAttachments, setNewCommentText, setSelectedTask, setViewAttachmentPreview, taskCommentsList }} />
 

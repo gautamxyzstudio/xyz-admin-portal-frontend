@@ -93,6 +93,27 @@ export interface ITaskCommentItem {
   createdAt: string;
 }
 
+
+export interface ICreateTaskOvertimePayload {
+  date: string;
+  timeInMinutes: string;
+  workInfo: string;
+  task_item: number;
+}
+
+export interface ITaskOvertimeItem {
+  id: number;
+  date?: string;
+  timeInMinutes: string | number;
+  workInfo?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  user?: {
+    username?: string;
+    photo?: string | null;
+  } | null;
+}
+
 export interface ICreateTaskCommentPayload {
   comment: string;
   task_item: number | string;
@@ -100,7 +121,7 @@ export interface ICreateTaskCommentPayload {
 }
 
 export const enhancedTaskApi = baseApi.enhanceEndpoints({
-  addTagTypes: ["Tasks", "TaskComments"],
+  addTagTypes: ["Tasks", "TaskComments", "TaskOvertimes"],
 });
 
 export const taskApi = enhancedTaskApi.injectEndpoints({
@@ -147,7 +168,7 @@ export const taskApi = enhancedTaskApi.injectEndpoints({
         method: ApiMethodType.post,
         body: { data },
       }),
-      invalidatesTags: ["Tasks"],
+      invalidatesTags: ["Tasks", "TaskOvertimes"],
     }),
 
     // 4. Update Task
@@ -201,6 +222,37 @@ export const taskApi = enhancedTaskApi.injectEndpoints({
       },
       providesTags: ["TaskComments"],
     }),
+    // 8. Create Task Overtime
+    createTaskOvertime: builder.mutation<ITaskOvertimeItem, ICreateTaskOvertimePayload>({
+      query: (data) => ({
+        url: endpoints.taskOvertimes,
+        method: ApiMethodType.post,
+        body: {
+          date: data.date,
+          timeInMinutes: String(data.timeInMinutes),
+          workInfo: data.workInfo || "",
+          task_item: Number(data.task_item),
+        },
+      }),
+      invalidatesTags: ["Tasks", "TaskOvertimes"],
+    }),
+
+    // 9. Get Task Overtimes
+    getTaskOvertimes: builder.query<ITaskOvertimeItem[], number | string>({
+      query: (taskId) => ({
+        url: endpoints.taskOvertimes,
+        method: ApiMethodType.get,
+        params: {
+          taskItem: taskId,
+        },
+      }),
+      transformResponse: (response: any): ITaskOvertimeItem[] => {
+        if (Array.isArray(response)) return response;
+        if (Array.isArray(response?.data)) return response.data;
+        return [];
+      },
+      providesTags: ["TaskOvertimes"],
+    }),
   }),
 });
 
@@ -215,4 +267,7 @@ export const {
   useCreateTaskCommentMutation,
   useGetTaskCommentsQuery,
   useLazyGetTaskCommentsQuery,
+  useCreateTaskOvertimeMutation,
+  useGetTaskOvertimesQuery,
+  useLazyGetTaskOvertimesQuery,
 } = taskApi;

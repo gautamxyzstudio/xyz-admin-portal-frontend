@@ -1,3 +1,4 @@
+import { formatIstDateTime } from '../../../../../utils/istDateUtils';
 import LinearGradient from "../../../../../components/LinearGradient/LinearGradient";
 import type { IDocumentResponse } from "../../../documents.types";
 
@@ -26,14 +27,7 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
 
    
 
-  const formatDate = (dateString: string) =>
-    new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  const formatDate = (dateString: string) => formatIstDateTime(dateString, { uppercase: true });
 
   const fileUrl = `${file.url}`;
 

@@ -1,3 +1,6 @@
+import { formatIstDate } from "./istDateUtils";
+export * from "./istDateUtils";
+
 export const getImageUrl = (url?: string | null): string => {
   if (!url || typeof url !== "string") return "";
   const trimmed = url.trim();
@@ -188,12 +191,8 @@ export const convertTo12HourFormat = (time: string): string => {
 
 export const formatDateToReadable = (dateString: string): string => {
   if (!dateString) return "N/A";
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+  const formatted = formatIstDate(dateString, "medium");
+  return formatted || "N/A";
 };
 
 export const getWeekDates = (): {
@@ -225,13 +224,6 @@ export const getString = (value: string | undefined) => value ?? "";
 export const getError = (error: { message?: string } | undefined) =>
   error?.message ?? "";
 
-// export const formatDateTo = (date: Date): string => {
-//   const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Months are zero-indexed
-//   const day = date.getDate().toString().padStart(2, '0');
-//   const year = date.getFullYear();
-//   return `${month}/${day}/${year}`;
-// };
-
 export const getLeaveStatusColor = (
   status: "pending" | "approved" | "declined" | "partially_approved" | "Partially Approved" | string
 ) => {
@@ -255,4 +247,4 @@ export const secondsToHoursMinutes = (totalSeconds: number) => {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   return `${hours}hrs ${minutes}min`;
-}
+};
