@@ -45,39 +45,39 @@ const COLUMNS: {
   badgeText: string;
   badgeBorder: string;
 }[] = [
-  {
-    id: "planned",
-    label: "Planned",
-    dotColor: "bg-blue-500",
-    badgeBg: "bg-blue-50",
-    badgeText: "text-blue-600",
-    badgeBorder: "border-blue-200/60",
-  },
-  {
-    id: "in-progress",
-    label: "In-Progress",
-    dotColor: "bg-amber-500",
-    badgeBg: "bg-amber-50",
-    badgeText: "text-amber-700",
-    badgeBorder: "border-amber-200/60",
-  },
-  {
-    id: "blocked",
-    label: "Blocked",
-    dotColor: "bg-rose-500",
-    badgeBg: "bg-rose-50",
-    badgeText: "text-rose-600",
-    badgeBorder: "border-rose-200/60",
-  },
-  {
-    id: "completed",
-    label: "Completed",
-    dotColor: "bg-emerald-500",
-    badgeBg: "bg-emerald-50",
-    badgeText: "text-emerald-700",
-    badgeBorder: "border-emerald-200/60",
-  },
-];
+    {
+      id: "planned",
+      label: "Planned",
+      dotColor: "bg-blue-500",
+      badgeBg: "bg-blue-50",
+      badgeText: "text-blue-600",
+      badgeBorder: "border-blue-200/60",
+    },
+    {
+      id: "in-progress",
+      label: "In-Progress",
+      dotColor: "bg-amber-500",
+      badgeBg: "bg-amber-50",
+      badgeText: "text-amber-700",
+      badgeBorder: "border-amber-200/60",
+    },
+    {
+      id: "blocked",
+      label: "Blocked",
+      dotColor: "bg-rose-500",
+      badgeBg: "bg-rose-50",
+      badgeText: "text-rose-600",
+      badgeBorder: "border-rose-200/60",
+    },
+    {
+      id: "completed",
+      label: "Completed",
+      dotColor: "bg-emerald-500",
+      badgeBg: "bg-emerald-50",
+      badgeText: "text-emerald-700",
+      badgeBorder: "border-emerald-200/60",
+    },
+  ];
 
 // Priority options with color indicators
 const PRIORITY_OPTIONS: {
@@ -88,31 +88,31 @@ const PRIORITY_OPTIONS: {
   badgeText: string;
   badgeBorder: string;
 }[] = [
-  {
-    id: "low",
-    label: "Low",
-    dotColor: "bg-blue-500",
-    badgeBg: "bg-blue-50",
-    badgeText: "text-blue-600",
-    badgeBorder: "border-blue-200/60",
-  },
-  {
-    id: "medium",
-    label: "Medium",
-    dotColor: "bg-amber-500",
-    badgeBg: "bg-amber-50",
-    badgeText: "text-amber-600",
-    badgeBorder: "border-amber-200/60",
-  },
-  {
-    id: "high",
-    label: "High",
-    dotColor: "bg-rose-500",
-    badgeBg: "bg-rose-50",
-    badgeText: "text-rose-600",
-    badgeBorder: "border-rose-200/60",
-  },
-];
+    {
+      id: "low",
+      label: "Low",
+      dotColor: "bg-blue-500",
+      badgeBg: "bg-blue-50",
+      badgeText: "text-blue-600",
+      badgeBorder: "border-blue-200/60",
+    },
+    {
+      id: "medium",
+      label: "Medium",
+      dotColor: "bg-amber-500",
+      badgeBg: "bg-amber-50",
+      badgeText: "text-amber-600",
+      badgeBorder: "border-amber-200/60",
+    },
+    {
+      id: "high",
+      label: "High",
+      dotColor: "bg-rose-500",
+      badgeBg: "bg-rose-50",
+      badgeText: "text-rose-600",
+      badgeBorder: "border-rose-200/60",
+    },
+  ];
 
 // Helper to format minutes into "3h 15m" or "45m"
 const formatTime = (minutes: number = 0): string => {
@@ -522,39 +522,39 @@ const STATUS_OPTIONS: {
   activeBorder: string;
   activeText: string;
 }[] = [
-  {
-    id: "planned",
-    label: "Planned",
-    dot: "bg-blue-500",
-    activeBg: "bg-blue-50/70",
-    activeBorder: "border-blue-400",
-    activeText: "text-blue-600",
-  },
-  {
-    id: "in-progress",
-    label: "In-Progress",
-    dot: "bg-orange-500",
-    activeBg: "bg-orange-50/70",
-    activeBorder: "border-orange-400",
-    activeText: "text-orange-600",
-  },
-  {
-    id: "blocked",
-    label: "Blocked",
-    dot: "bg-rose-500",
-    activeBg: "bg-rose-50/70",
-    activeBorder: "border-rose-400",
-    activeText: "text-rose-600",
-  },
-  {
-    id: "completed",
-    label: "Completed",
-    dot: "bg-emerald-500",
-    activeBg: "bg-emerald-50/70",
-    activeBorder: "border-emerald-400",
-    activeText: "text-emerald-600",
-  },
-];
+    {
+      id: "planned",
+      label: "Planned",
+      dot: "bg-blue-500",
+      activeBg: "bg-blue-50/70",
+      activeBorder: "border-blue-400",
+      activeText: "text-blue-600",
+    },
+    {
+      id: "in-progress",
+      label: "In-Progress",
+      dot: "bg-orange-500",
+      activeBg: "bg-orange-50/70",
+      activeBorder: "border-orange-400",
+      activeText: "text-orange-600",
+    },
+    {
+      id: "blocked",
+      label: "Blocked",
+      dot: "bg-rose-500",
+      activeBg: "bg-rose-50/70",
+      activeBorder: "border-rose-400",
+      activeText: "text-rose-600",
+    },
+    {
+      id: "completed",
+      label: "Completed",
+      dot: "bg-emerald-500",
+      activeBg: "bg-emerald-50/70",
+      activeBorder: "border-emerald-400",
+      activeText: "text-emerald-600",
+    },
+  ];
 
 const ProjectTasks: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -911,33 +911,33 @@ const ProjectTasks: React.FC = () => {
 
       const parsedAttachments = Array.isArray(rawAtts)
         ? rawAtts.map((att: any, attIdx: number) => {
-            if (typeof att === "string") {
-              const fileName =
-                att.split("/").pop()?.split("?")[0] ||
-                `attachment-${attIdx + 1}`;
-              const isImage = /\.(webp|png|jpe?g|gif|svg|avif)$/i.test(
-                fileName,
-              );
-              return {
-                id: `${item.id || itemIdx}-${attIdx}`,
-                name: fileName,
-                url: att,
-                isImage,
-              };
-            }
-            const url = att?.url || att?.attributes?.url || "";
-            const name =
-              att?.name || att?.attributes?.name || `attachment-${attIdx + 1}`;
-            const isImage =
-              att?.mime?.startsWith("image/") ||
-              /\.(webp|png|jpe?g|gif|svg|avif)$/i.test(name || url);
+          if (typeof att === "string") {
+            const fileName =
+              att.split("/").pop()?.split("?")[0] ||
+              `attachment-${attIdx + 1}`;
+            const isImage = /\.(webp|png|jpe?g|gif|svg|avif)$/i.test(fileName);
             return {
-              id: att?.id || `${item.id || itemIdx}-${attIdx}`,
-              name,
-              url,
+              id: `${item.id || itemIdx}-${attIdx}`,
+              name: fileName,
+              url: att,
               isImage,
             };
-          })
+          }
+          const url = att?.url || att?.attributes?.url || "";
+          const name =
+            att?.name ||
+            att?.attributes?.name ||
+            `attachment-${attIdx + 1}`;
+          const isImage =
+            att?.mime?.startsWith("image/") ||
+            /\.(webp|png|jpe?g|gif|svg|avif)$/i.test(name || url);
+          return {
+            id: att?.id || `${item.id || itemIdx}-${attIdx}`,
+            name,
+            url,
+            isImage,
+          };
+        })
         : [];
 
       return {
@@ -1109,8 +1109,8 @@ const ProjectTasks: React.FC = () => {
     } catch (err: any) {
       toast.error(
         err?.data?.error?.message ||
-          err?.message ||
-          "Failed to create task. Make sure project exists and user is assigned.",
+        err?.message ||
+        "Failed to create task. Make sure project exists and user is assigned.",
       );
     }
   };
@@ -1194,18 +1194,17 @@ const ProjectTasks: React.FC = () => {
 
     if (editTaskForm.priority !== (selectedTask.priority || "medium")) {
       changes.push({
-        action: `changed priority to ${
-          editTaskForm.priority.charAt(0).toUpperCase() +
+        action: `changed priority to ${editTaskForm.priority.charAt(0).toUpperCase() +
           editTaskForm.priority.slice(1)
-        }`,
+          }`,
         dot: "bg-amber-500",
       });
     }
 
     if (
-      editTaskForm.assignedTo &&
+      isAdmin && editTaskForm.assignedTo &&
       String(editTaskForm.assignedTo) !==
-        String(selectedTask.assigned_to?.id || "")
+      String(selectedTask.assigned_to?.id || "")
     ) {
       const newAssignee =
         editSelectedEmployeeObj?.name ||
@@ -1419,21 +1418,19 @@ const ProjectTasks: React.FC = () => {
           onClick={() =>
             setIsCreatePriorityDropdownOpen(!isCreatePriorityDropdownOpen)
           }
-          className={`w-full h-[46px] px-3.5 bg-[#fafafa] border rounded-2xl text-xs text-left outline-none transition-all shadow-2xs flex items-center justify-between gap-2 cursor-pointer ${
-            isCreatePriorityDropdownOpen
+          className={`w-full h-[46px] px-3.5 bg-[#fafafa] border rounded-2xl text-xs text-left outline-none transition-all shadow-2xs flex items-center justify-between gap-2 cursor-pointer ${isCreatePriorityDropdownOpen
               ? "border-primary bg-white ring-2 ring-orange-500/10"
               : "border-slate-200/90 hover:border-slate-300"
-          }`}
+            }`}
         >
           <div className="flex items-center gap-2">
             <span
-              className={`w-2 h-2 rounded-full ${
-                taskForm.priority === "high"
+              className={`w-2 h-2 rounded-full ${taskForm.priority === "high"
                   ? "bg-rose-500"
                   : taskForm.priority === "low"
                     ? "bg-blue-500"
                     : "bg-amber-500"
-              }`}
+                }`}
             />
             <span className="font-semibold text-slate-800 capitalize">
               {taskForm.priority || "Medium"}
@@ -1441,9 +1438,8 @@ const ProjectTasks: React.FC = () => {
           </div>
           <ChevronDown
             size={15}
-            className={`text-slate-400 shrink-0 transition-transform duration-200 ${
-              isCreatePriorityDropdownOpen ? "rotate-180 text-primary" : ""
-            }`}
+            className={`text-slate-400 shrink-0 transition-transform duration-200 ${isCreatePriorityDropdownOpen ? "rotate-180 text-primary" : ""
+              }`}
           />
         </button>
 
@@ -1463,11 +1459,10 @@ const ProjectTasks: React.FC = () => {
                       setTaskForm({ ...taskForm, priority: opt.id });
                       setIsCreatePriorityDropdownOpen(false);
                     }}
-                    className={`px-3.5 py-2.5 text-xs cursor-pointer flex items-center justify-between gap-2 transition-colors ${
-                      isSelected
+                    className={`px-3.5 py-2.5 text-xs cursor-pointer flex items-center justify-between gap-2 transition-colors ${isSelected
                         ? "bg-orange-50/90 text-primary font-semibold"
                         : "text-slate-700 hover:bg-slate-50"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-2.5">
                       <span
@@ -1585,11 +1580,10 @@ const ProjectTasks: React.FC = () => {
                       setSelectedAssignee(isSelected ? null : assignee.username)
                     }
                     title={`Filter by ${assignee.username}`}
-                    className={`relative w-7 h-7 rounded-full border-2 transition-all cursor-pointer overflow-hidden ${
-                      isSelected
+                    className={`relative w-7 h-7 rounded-full border-2 transition-all cursor-pointer overflow-hidden ${isSelected
                         ? "border-primary ring-2 ring-primary/40 z-10 scale-110"
                         : "border-white hover:scale-105 hover:z-10 shadow-2xs"
-                    }`}
+                      }`}
                   >
                     {photoSrc ? (
                       <img
@@ -1651,11 +1645,10 @@ const ProjectTasks: React.FC = () => {
                         setSelectedPriority(p);
                         setIsPriorityOpen(false);
                       }}
-                      className={`w-full text-left px-3 py-1.5 hover:bg-slate-50 transition-colors cursor-pointer ${
-                        selectedPriority === p
+                      className={`w-full text-left px-3 py-1.5 hover:bg-slate-50 transition-colors cursor-pointer ${selectedPriority === p
                           ? "font-bold text-primary bg-primary-20/20"
                           : "text-slate-600"
-                      }`}
+                        }`}
                     >
                       {p === "all"
                         ? "All priorities"
@@ -1739,11 +1732,10 @@ const ProjectTasks: React.FC = () => {
                   }
                   draggedTaskIdRef.current = null;
                 }}
-                className={`bg-[#f4f5f7] border rounded-2xl p-3 flex flex-col h-full min-h-[480px] min-w-[240px] transition-all ${
-                  dragOverCol === col.id
+                className={`bg-[#f4f5f7] border rounded-2xl p-3 flex flex-col h-full min-h-[480px] min-w-[240px] transition-all ${dragOverCol === col.id
                     ? "border-primary/50 ring-2 ring-primary/20 bg-orange-50/20"
                     : "border-slate-200/70"
-                }`}
+                  }`}
               >
                 {/* Column Header */}
                 <div className="flex items-center justify-between pb-2.5 px-1 shrink-0">
@@ -1973,11 +1965,8 @@ const ProjectTasks: React.FC = () => {
                                   className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${col.badgeBg} ${col.badgeText} border ${col.badgeBorder} shrink-0 hover:brightness-95 transition-all cursor-pointer`}
                                 >
                                   <span
-                                    className={`w-1.5 h-1.5 rounded-full ${col.dotColor} ${
-                                      col.id === "in-progress"
-                                        ? "animate-pulse"
-                                        : ""
-                                    }`}
+                                    className={`w-1.5 h-1.5 rounded-full ${col.dotColor} ${col.id === "in-progress" ? "animate-pulse" : ""
+                                      }`}
                                   />
                                   <span>{col.label}</span>
                                   <ChevronDown
@@ -2012,11 +2001,10 @@ const ProjectTasks: React.FC = () => {
                                               targetCol.id,
                                             );
                                           }}
-                                          className={`w-full text-left px-2.5 py-1.5 text-[11px] font-semibold flex items-center gap-1.5 hover:bg-slate-50 transition-colors ${
-                                            task.status === targetCol.id
+                                          className={`w-full text-left px-2.5 py-1.5 text-[11px] font-semibold flex items-center gap-1.5 hover:bg-slate-50 transition-colors ${task.status === targetCol.id
                                               ? "opacity-40 cursor-default bg-slate-50/50"
                                               : "cursor-pointer text-slate-700"
-                                          }`}
+                                            }`}
                                         >
                                           <span
                                             className={`w-1.5 h-1.5 rounded-full ${targetCol.dotColor}`}
@@ -2189,7 +2177,7 @@ const ProjectTasks: React.FC = () => {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Fix Core Web Vitals on /work"
+                  placeholder="Task Title"
                   value={taskForm.title}
                   onChange={(e) =>
                     setTaskForm({ ...taskForm, title: e.target.value })
@@ -2205,13 +2193,41 @@ const ProjectTasks: React.FC = () => {
                 <textarea
                   required
                   rows={3}
-                  placeholder="Details and acceptance criteria..."
+                  placeholder="Description"
                   value={taskForm.description}
                   onChange={(e) =>
                     setTaskForm({ ...taskForm, description: e.target.value })
                   }
                   className="w-full px-4 py-3 bg-[#fafafa] border border-slate-200/90 rounded-2xl text-xs text-slate-800 outline-none focus:border-primary focus:bg-white resize-none transition-all shadow-2xs"
                 />
+              </div>
+
+              {/* Status Segmented Pills */}
+              <div>
+                <label className="text-xs font-semibold text-slate-800 block mb-1.5">
+                  Status <span className="text-rose-500">*</span>
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {STATUS_OPTIONS.map((opt) => {
+                    const isSelected = modalTargetStatus === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setModalTargetStatus(opt.id)}
+                        className={`w-full py-2.5 px-3 rounded-2xl text-xs flex items-center justify-center gap-2 transition-all cursor-pointer border ${isSelected
+                            ? `${opt.activeBg} ${opt.activeBorder} ${opt.activeText} font-semibold shadow-2xs ring-1 ${opt.activeBorder}`
+                            : "bg-[#fafafa] border-slate-200/90 text-slate-700 font-medium hover:bg-slate-100/70"
+                          }`}
+                      >
+                        <span
+                          className={`w-2 h-2 rounded-full ${opt.dot} shrink-0`}
+                        />
+                        <span>{opt.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Assignee & Priority */}
@@ -2227,11 +2243,10 @@ const ProjectTasks: React.FC = () => {
                         onClick={() =>
                           setIsAssigneeDropdownOpen(!isAssigneeDropdownOpen)
                         }
-                        className={`w-full h-[46px] px-3.5 bg-[#fafafa] border rounded-2xl text-xs text-left outline-none transition-all shadow-2xs flex items-center justify-between gap-2 cursor-pointer ${
-                          isAssigneeDropdownOpen
+                        className={`w-full h-[46px] px-3.5 bg-[#fafafa] border rounded-2xl text-xs text-left outline-none transition-all shadow-2xs flex items-center justify-between gap-2 cursor-pointer ${isAssigneeDropdownOpen
                             ? "border-primary bg-white ring-2 ring-orange-500/10"
                             : "border-slate-200/90 hover:border-slate-300"
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center gap-2 min-w-0">
                           {selectedEmployeeObj ? (
@@ -2281,11 +2296,8 @@ const ProjectTasks: React.FC = () => {
                         </div>
                         <ChevronDown
                           size={15}
-                          className={`text-slate-400 shrink-0 transition-transform duration-200 ${
-                            isAssigneeDropdownOpen
-                              ? "rotate-180 text-primary"
-                              : ""
-                          }`}
+                          className={`text-slate-400 shrink-0 transition-transform duration-200 ${isAssigneeDropdownOpen ? "rotate-180 text-primary" : ""
+                            }`}
                         />
                       </button>
 
@@ -2354,11 +2366,10 @@ const ProjectTasks: React.FC = () => {
                                         setIsAssigneeDropdownOpen(false);
                                         setAssigneeSearchQuery("");
                                       }}
-                                      className={`px-3 py-2 text-xs cursor-pointer flex items-center justify-between gap-2 transition-colors ${
-                                        isSelected
+                                      className={`px-3 py-2 text-xs cursor-pointer flex items-center justify-between gap-2 transition-colors ${isSelected
                                           ? "bg-orange-50/90 text-primary font-semibold"
                                           : "text-slate-700 hover:bg-slate-50"
-                                      }`}
+                                        }`}
                                     >
                                       <div className="flex items-center gap-2.5 min-w-0">
                                         {photoUrl ? (
@@ -2523,11 +2534,8 @@ const ProjectTasks: React.FC = () => {
                 <h3 className="text-base sm:text-lg font-bold text-slate-900">
                   Edit Task
                 </h3>
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
-                  WEB-
-                  {selectedTask.id >= 100
-                    ? selectedTask.id
-                    : selectedTask.id + 100}
+                <span className="text-xs font-semibold text-slate-400">
+                  {selectedTask.taskId || `#${selectedTask.id}`}
                 </span>
               </div>
               <button
@@ -2604,11 +2612,10 @@ const ProjectTasks: React.FC = () => {
                         onClick={() =>
                           setEditTaskForm({ ...editTaskForm, status: opt.id })
                         }
-                        className={`w-full py-2.5 px-3 rounded-2xl text-xs flex items-center justify-center gap-2 transition-all cursor-pointer border ${
-                          isSelected
+                        className={`w-full py-2.5 px-3 rounded-2xl text-xs flex items-center justify-center gap-2 transition-all cursor-pointer border ${isSelected
                             ? `${opt.activeBg} ${opt.activeBorder} ${opt.activeText} font-semibold shadow-2xs ring-1 ${opt.activeBorder}`
                             : "bg-[#fafafa] border-slate-200/90 text-slate-700 font-medium hover:bg-slate-100/70"
-                        }`}
+                          }`}
                       >
                         <span
                           className={`w-2 h-2 rounded-full ${opt.dot} shrink-0`}
@@ -2618,232 +2625,213 @@ const ProjectTasks: React.FC = () => {
                     );
                   })}
                 </div>
-                <div>
-                  <label className="text-slate-400 font-medium">Created</label>
-                  <p
-                    className="font-semibold text-slate-800 mt-0.5 truncate"
-                    title={selectedTask.createdAt}
-                  >
-                    {selectedTask.createdAt
-                      ? new Date(selectedTask.createdAt).toLocaleDateString(
-                          "en-GB",
-                          {
-                            day: "numeric",
-                            month: "short",
-                          },
-                        )
-                      : "—"}
-                  </p>
-                </div>
               </div>
 
               {/* Assignee & Priority */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-semibold text-slate-800 block mb-1.5">
-                    Assignee{" "}
-                    {isAdmin && <span className="text-rose-500">*</span>}
-                  </label>
-                  <div className="relative">
-                    <button
-                      type="button"
-                      disabled={!isAdmin}
-                      onClick={() =>
-                        setIsEditAssigneeDropdownOpen(
-                          !isEditAssigneeDropdownOpen,
-                        )
-                      }
-                      className={`w-full h-[46px] px-3.5 bg-[#fafafa] border rounded-2xl text-xs text-left outline-none transition-all shadow-2xs flex items-center justify-between gap-2 ${
-                        !isAdmin
-                          ? "opacity-90 cursor-default"
-                          : "cursor-pointer hover:border-slate-300"
-                      } ${
-                        isEditAssigneeDropdownOpen
-                          ? "border-primary bg-white ring-2 ring-orange-500/10"
-                          : "border-slate-200/90"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        {editSelectedEmployeeObj ? (
-                          <>
-                            {(() => {
-                              const photoUrl = extractEmployeePhotoUrl(
-                                editSelectedEmployeeObj,
-                              );
-                              const displayName =
-                                editSelectedEmployeeObj.name ||
-                                editSelectedEmployeeObj.username ||
-                                "Employee";
-                              if (photoUrl) {
-                                return (
-                                  <img
-                                    src={photoUrl}
-                                    alt=""
-                                    className="w-5 h-5 rounded-full object-cover shrink-0 border border-slate-200"
-                                    onError={(e) => {
-                                      (
-                                        e.currentTarget as HTMLElement
-                                      ).style.display = "none";
-                                    }}
-                                  />
-                                );
-                              }
-                              return (
-                                <div
-                                  className="w-5 h-5 rounded-full text-white flex items-center justify-center font-bold text-[9px] shrink-0"
-                                  style={{
-                                    backgroundColor: getAvatarBg(displayName),
-                                  }}
-                                >
-                                  {getInitials(displayName)}
-                                </div>
-                              );
-                            })()}
-                            <span className="truncate text-slate-800 font-medium">
-                              {editSelectedEmployeeObj.name ||
-                                editSelectedEmployeeObj.username}
-                            </span>
-                          </>
-                        ) : (
-                          <span className="text-slate-400">
-                            Select Assignee
-                          </span>
-                        )}
-                      </div>
-                      {isAdmin && (
-                        <ChevronDown
-                          size={15}
-                          className={`text-slate-400 shrink-0 transition-transform duration-200 ${
-                            isEditAssigneeDropdownOpen
-                              ? "rotate-180 text-primary"
-                              : ""
+              {isAdmin ? (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-800 block mb-1.5">
+                      Assignee <span className="text-rose-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setIsEditAssigneeDropdownOpen(!isEditAssigneeDropdownOpen)
+                        }
+                        className={`w-full h-[46px] px-3.5 bg-[#fafafa] border rounded-2xl text-xs text-left outline-none transition-all shadow-2xs flex items-center justify-between gap-2 cursor-pointer hover:border-slate-300 ${isEditAssigneeDropdownOpen
+                            ? "border-primary bg-white ring-2 ring-orange-500/10"
+                            : "border-slate-200/90"
                           }`}
-                        />
-                      )}
-                    </button>
-
-                    {/* Popover Dropdown */}
-                    {isEditAssigneeDropdownOpen && isAdmin && (
-                      <>
-                        <div
-                          className="fixed inset-0 z-40"
-                          onClick={() => setIsEditAssigneeDropdownOpen(false)}
-                        />
-                        <div className="absolute top-full mt-1.5 left-0 w-full z-50 bg-white border border-slate-200/90 shadow-xl rounded-2xl overflow-hidden py-1 animate-in fade-in zoom-in-95 duration-100">
-                          {projectAssignedEmployees.length > 5 && (
-                            <div className="p-2 border-b border-slate-100">
-                              <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 rounded-xl border border-slate-200/70">
-                                <Search
-                                  size={13}
-                                  className="text-slate-400 shrink-0"
-                                />
-                                <input
-                                  type="text"
-                                  placeholder="Search project member..."
-                                  value={editAssigneeSearchQuery}
-                                  onChange={(e) =>
-                                    setEditAssigneeSearchQuery(e.target.value)
-                                  }
-                                  className="w-full text-xs bg-transparent outline-none text-slate-700 placeholder:text-slate-400"
-                                  onClick={(e) => e.stopPropagation()}
-                                  autoFocus
-                                />
-                              </div>
-                            </div>
-                          )}
-
-                          <div className="max-h-52 overflow-y-auto scrollbar-hide py-1">
-                            {isProjectsLoading ? (
-                              <div className="px-3.5 py-4 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
-                                <CircularProgress
-                                  size={14}
-                                  className="text-primary"
-                                />
-                                <span>Loading project members...</span>
-                              </div>
-                            ) : editFilteredProjectEmployees.length === 0 ? (
-                              <div className="px-3.5 py-3 text-center text-xs text-slate-400">
-                                {editAssigneeSearchQuery.trim()
-                                  ? "No employees found"
-                                  : "No employees assigned to this project"}
-                              </div>
-                            ) : (
-                              editFilteredProjectEmployees.map((emp) => {
-                                const isSelected =
-                                  String(editTaskForm.assignedTo) ===
-                                  String(emp.id);
-                                const photoUrl = extractEmployeePhotoUrl(emp);
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          {editSelectedEmployeeObj ? (
+                            <>
+                              {(() => {
+                                const photoUrl = extractEmployeePhotoUrl(
+                                  editSelectedEmployeeObj,
+                                );
                                 const displayName =
-                                  emp.name || emp.username || "Employee";
-
+                                  editSelectedEmployeeObj.name ||
+                                  editSelectedEmployeeObj.username ||
+                                  "Employee";
+                                if (photoUrl) {
+                                  return (
+                                    <img
+                                      src={photoUrl}
+                                      alt=""
+                                      className="w-5 h-5 rounded-full object-cover shrink-0 border border-slate-200"
+                                      onError={(e) => {
+                                        (e.currentTarget as HTMLElement).style.display =
+                                          "none";
+                                      }}
+                                    />
+                                  );
+                                }
                                 return (
                                   <div
-                                    key={emp.id}
-                                    onClick={() => {
-                                      setEditTaskForm({
-                                        ...editTaskForm,
-                                        assignedTo: emp.id,
-                                      });
-                                      setIsEditAssigneeDropdownOpen(false);
-                                      setEditAssigneeSearchQuery("");
+                                    className="w-5 h-5 rounded-full text-white flex items-center justify-center font-bold text-[9px] shrink-0"
+                                    style={{
+                                      backgroundColor: getAvatarBg(displayName),
                                     }}
-                                    className={`px-3 py-2 text-xs cursor-pointer flex items-center justify-between gap-2 transition-colors ${
-                                      isSelected
-                                        ? "bg-orange-50/90 text-primary font-semibold"
-                                        : "text-slate-700 hover:bg-slate-50"
-                                    }`}
                                   >
-                                    <div className="flex items-center gap-2.5 min-w-0">
-                                      {photoUrl ? (
-                                        <img
-                                          src={photoUrl}
-                                          alt=""
-                                          className="w-6 h-6 rounded-full object-cover shrink-0 border border-slate-200"
-                                          onError={(e) => {
-                                            (
-                                              e.currentTarget as HTMLElement
-                                            ).style.display = "none";
-                                          }}
-                                        />
-                                      ) : (
-                                        <div
-                                          className="w-6 h-6 rounded-full text-white flex items-center justify-center font-bold text-[9px] shrink-0"
-                                          style={{
-                                            backgroundColor:
-                                              getAvatarBg(displayName),
-                                          }}
-                                        >
-                                          {getInitials(displayName)}
-                                        </div>
-                                      )}
-                                      <div className="truncate text-left">
-                                        <div className="truncate font-medium">
-                                          {displayName}
-                                        </div>
-                                        {emp.email && (
-                                          <div className="text-[10px] text-slate-400 truncate">
-                                            {emp.email}
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                    {isSelected && (
-                                      <Check
-                                        size={14}
-                                        className="text-primary shrink-0"
-                                      />
-                                    )}
+                                    {getInitials(displayName)}
                                   </div>
                                 );
-                              })
-                            )}
-                          </div>
+                              })()}
+                              <span className="truncate text-slate-800 font-medium">
+                                {editSelectedEmployeeObj.name ||
+                                  editSelectedEmployeeObj.username}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-slate-400">Select Assignee</span>
+                          )}
                         </div>
-                      </>
-                    )}
+                        <ChevronDown
+                          size={15}
+                          className={`text-slate-400 shrink-0 transition-transform duration-200 ${isEditAssigneeDropdownOpen ? "rotate-180 text-primary" : ""
+                            }`}
+                        />
+                      </button>
+
+                      {/* Popover Dropdown */}
+                      {isEditAssigneeDropdownOpen && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-40"
+                            onClick={() => setIsEditAssigneeDropdownOpen(false)}
+                          />
+                          <div className="absolute top-full mt-1.5 left-0 w-full z-50 bg-white border border-slate-200/90 shadow-xl rounded-2xl overflow-hidden py-1 animate-in fade-in zoom-in-95 duration-100">
+                            {projectAssignedEmployees.length > 5 && (
+                              <div className="p-2 border-b border-slate-100">
+                                <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 rounded-xl border border-slate-200/70">
+                                  <Search size={13} className="text-slate-400 shrink-0" />
+                                  <input
+                                    type="text"
+                                    placeholder="Search project member..."
+                                    value={editAssigneeSearchQuery}
+                                    onChange={(e) =>
+                                      setEditAssigneeSearchQuery(e.target.value)
+                                    }
+                                    className="w-full text-xs bg-transparent outline-none text-slate-700 placeholder:text-slate-400"
+                                    onClick={(e) => e.stopPropagation()}
+                                    autoFocus
+                                  />
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="max-h-52 overflow-y-auto scrollbar-hide py-1">
+                              {isProjectsLoading ? (
+                                <div className="px-3.5 py-4 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+                                  <CircularProgress size={14} className="text-primary" />
+                                  <span>Loading project members...</span>
+                                </div>
+                              ) : editFilteredProjectEmployees.length === 0 ? (
+                                <div className="px-3.5 py-3 text-center text-xs text-slate-400">
+                                  {editAssigneeSearchQuery.trim()
+                                    ? "No employees found"
+                                    : "No employees assigned to this project"}
+                                </div>
+                              ) : (
+                                editFilteredProjectEmployees.map((emp) => {
+                                  const isSelected =
+                                    String(editTaskForm.assignedTo) === String(emp.id);
+                                  const photoUrl = extractEmployeePhotoUrl(emp);
+                                  const displayName =
+                                    emp.name || emp.username || "Employee";
+
+                                  return (
+                                    <div
+                                      key={emp.id}
+                                      onClick={() => {
+                                        setEditTaskForm({
+                                          ...editTaskForm,
+                                          assignedTo: emp.id,
+                                        });
+                                        setIsEditAssigneeDropdownOpen(false);
+                                        setEditAssigneeSearchQuery("");
+                                      }}
+                                      className={`px-3 py-2 text-xs cursor-pointer flex items-center justify-between gap-2 transition-colors ${isSelected
+                                          ? "bg-orange-50/90 text-primary font-semibold"
+                                          : "text-slate-700 hover:bg-slate-50"
+                                        }`}
+                                    >
+                                      <div className="flex items-center gap-2.5 min-w-0">
+                                        {photoUrl ? (
+                                          <img
+                                            src={photoUrl}
+                                            alt=""
+                                            className="w-6 h-6 rounded-full object-cover shrink-0 border border-slate-200"
+                                            onError={(e) => {
+                                              (e.currentTarget as HTMLElement).style.display =
+                                                "none";
+                                            }}
+                                          />
+                                        ) : (
+                                          <div
+                                            className="w-6 h-6 rounded-full text-white flex items-center justify-center font-bold text-[9px] shrink-0"
+                                            style={{
+                                              backgroundColor: getAvatarBg(displayName),
+                                            }}
+                                          >
+                                            {getInitials(displayName)}
+                                          </div>
+                                        )}
+                                        <div className="truncate text-left">
+                                          <div className="truncate font-medium">
+                                            {displayName}
+                                          </div>
+                                          {emp.email && (
+                                            <div className="text-[10px] text-slate-400 truncate">
+                                              {emp.email}
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                      {isSelected && (
+                                        <Check size={14} className="text-primary shrink-0" />
+                                      )}
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-slate-800 block mb-1.5">
+                      Priority
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={editTaskForm.priority}
+                        onChange={(e) =>
+                          setEditTaskForm({
+                            ...editTaskForm,
+                            priority: e.target.value as any,
+                          })
+                        }
+                        className="w-full h-[46px] px-4 bg-[#fafafa] border border-slate-200/90 rounded-2xl text-xs text-slate-800 outline-none focus:border-primary focus:bg-white cursor-pointer appearance-none pr-9 transition-all shadow-2xs"
+                      >
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                      </select>
+                      <ChevronDown
+                        size={15}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                      />
+                    </div>
                   </div>
                 </div>
-
+              ) : (
                 <div>
                   <label className="text-xs font-semibold text-slate-800 block mb-1.5">
                     Priority
@@ -2869,7 +2857,7 @@ const ProjectTasks: React.FC = () => {
                     />
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Estimated Time */}
               <div>
@@ -2939,11 +2927,10 @@ const ProjectTasks: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setActivityTab("comments")}
-                      className={`px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer inline-flex items-center gap-1.5 ${
-                        activityTab === "comments"
-                          ? "bg-[#fff7ed] text-[#ff7300] font-bold"
-                          : "text-slate-500 hover:text-slate-700 font-medium"
-                      }`}
+                      className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer ${activityTab === "comments"
+                          ? "bg-white text-slate-800 shadow-2xs"
+                          : "text-slate-500 hover:text-slate-700"
+                        }`}
                     >
                       <span>Comments</span>
                       <span
@@ -2959,11 +2946,10 @@ const ProjectTasks: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setActivityTab("history")}
-                      className={`px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer ${
-                        activityTab === "history"
-                          ? "bg-[#fff7ed] text-[#ff7300] font-bold"
-                          : "text-slate-500 hover:text-slate-700 font-medium"
-                      }`}
+                      className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer ${activityTab === "history"
+                          ? "bg-white text-orange-600 shadow-2xs"
+                          : "text-slate-500 hover:text-slate-700"
+                        }`}
                     >
                       History
                     </button>
@@ -2971,29 +2957,31 @@ const ProjectTasks: React.FC = () => {
                 </div>
 
                 {activityTab === "history" ? (
-                  <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
-                    {completeHistory.length === 0 ? (
-                      <p className="text-xs text-slate-400 py-2">
-                        No history recorded yet.
-                      </p>
-                    ) : (
-                      completeHistory.map((item) => (
-                        <div key={item.id} className="relative flex flex-col">
-                          <span
-                            className={`absolute -left-6 top-1 w-2.5 h-2.5 rounded-full ${item.dotColor} ring-4 ring-white`}
-                          />
-                          <span className="text-xs text-slate-800">
-                            <strong className="font-semibold text-slate-900">
-                              {item.user}
-                            </strong>{" "}
-                            {item.action}
-                          </span>
-                          <span className="text-[11px] text-slate-400 mt-0.5">
-                            {formatHistoryTime(item.timestamp)}
-                          </span>
-                        </div>
-                      ))
-                    )}
+                  <div className="max-h-60 overflow-y-auto scrollbar-hide [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 py-1">
+                      {completeHistory.length === 0 ? (
+                        <p className="text-xs text-slate-400 py-2">
+                          No history recorded yet.
+                        </p>
+                      ) : (
+                        completeHistory.map((item) => (
+                          <div key={item.id} className="relative flex flex-col">
+                            <span
+                              className={`absolute -left-6 top-1 w-2.5 h-2.5 rounded-full ${item.dotColor} ring-4 ring-white`}
+                            />
+                            <span className="text-xs text-slate-800">
+                              <strong className="font-semibold text-slate-900">
+                                {item.user}
+                              </strong>{" "}
+                              {item.action}
+                            </span>
+                            <span className="text-[11px] text-slate-400 mt-0.5">
+                              {formatHistoryTime(item.timestamp)}
+                            </span>
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -3184,84 +3172,81 @@ const ProjectTasks: React.FC = () => {
                         No comments yet.
                       </p>
                     ) : (
-                      <div className="space-y-4 pt-2">
+                      <div className="max-h-60 overflow-y-auto space-y-2.5 scrollbar-hide [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                         {taskCommentsList.map((c) => (
-                          <div key={c.id} className="flex items-start gap-3">
-                            {c.userLogo ? (
-                              <img
-                                src={c.userLogo}
-                                alt={c.user}
-                                className="w-8 h-8 rounded-full object-cover shrink-0 ring-1 ring-slate-200"
-                              />
-                            ) : (
-                              <div
-                                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-2xs"
-                                style={{ backgroundColor: getAvatarBg(c.user) }}
-                              >
-                                {getInitials(c.user)}
-                              </div>
-                            )}
-
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-baseline gap-2">
-                                <span className="font-bold text-slate-900 text-xs truncate">
+                          <div
+                            key={c.id}
+                            className="p-3 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col gap-2"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                {c.userLogo ? (
+                                  <img
+                                    src={c.userLogo}
+                                    alt={c.user}
+                                    className="w-6 h-6 rounded-full object-cover shrink-0 ring-1 ring-slate-200"
+                                  />
+                                ) : (
+                                  <div
+                                    className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
+                                    style={{ backgroundColor: getAvatarBg(c.user) }}
+                                  >
+                                    {getInitials(c.user)}
+                                  </div>
+                                )}
+                                <span className="font-semibold text-slate-800 text-xs truncate">
                                   {c.user}
                                 </span>
-                                <span className="text-xs text-slate-400 font-normal">
-                                  {c.time}
-                                </span>
                               </div>
-
-                              {c.text && (
-                                <p className="text-xs text-slate-800 leading-relaxed whitespace-pre-wrap mt-0.5">
-                                  {c.text}
-                                </p>
-                              )}
-
-                              {c.attachments && c.attachments.length > 0 && (
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                  {c.attachments.map((att: any) =>
-                                    att.isImage ? (
-                                      <button
-                                        key={att.id}
-                                        type="button"
-                                        onClick={() =>
-                                          setViewAttachmentPreview({
-                                            id: att.id,
-                                            name: att.name,
-                                            url: att.url,
-                                          })
-                                        }
-                                        className="relative group w-28 h-20 rounded-xl overflow-hidden border border-slate-200 hover:border-[#ff7300] transition-all cursor-pointer shadow-2xs shrink-0"
-                                        title={att.name}
-                                      >
-                                        <img
-                                          src={getImageUrl(att.url)}
-                                          alt={att.name}
-                                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                                        />
-                                      </button>
-                                    ) : (
-                                      <a
-                                        key={att.id}
-                                        href={getImageUrl(att.url)}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 hover:text-[#ff7300] transition-colors"
-                                      >
-                                        <Paperclip
-                                          size={12}
-                                          className="text-slate-400"
-                                        />
-                                        <span className="truncate max-w-[150px]">
-                                          {att.name}
-                                        </span>
-                                      </a>
-                                    ),
-                                  )}
-                                </div>
-                              )}
+                              <span className="text-[11px] text-slate-400 shrink-0">
+                                {c.time}
+                              </span>
                             </div>
+
+                            <p className="text-xs text-slate-800 leading-relaxed whitespace-pre-wrap pl-8">
+                              {c.text}
+                            </p>
+
+                            {c.attachments && c.attachments.length > 0 && (
+                              <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100/80 pl-8">
+                                {c.attachments.map((att: any) =>
+                                  att.isImage ? (
+                                    <button
+                                      key={att.id}
+                                      type="button"
+                                      onClick={() =>
+                                        setViewAttachmentPreview({
+                                          id: att.id,
+                                          name: att.name,
+                                          url: att.url,
+                                        })
+                                      }
+                                      className="relative group w-16 h-16 rounded-xl overflow-hidden border border-slate-200 hover:border-primary/50 transition-all cursor-pointer shadow-2xs shrink-0"
+                                      title={att.name}
+                                    >
+                                      <img
+                                        src={getImageUrl(att.url)}
+                                        alt={att.name}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                      />
+                                    </button>
+                                  ) : (
+                                    <a
+                                      key={att.id}
+                                      href={getImageUrl(att.url)}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-1.5 px-2.5 py-1 bg-white border border-slate-200 rounded-xl text-[11px] text-slate-700 hover:text-primary hover:border-primary/50 transition-colors shadow-2xs"
+                                    >
+                                      <Paperclip size={12} className="text-slate-400" />
+                                      <span className="truncate max-w-[150px]">
+                                        {att.name}
+                                      </span>
+                                    </a>
+                                  ),
+                                )}
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -3279,17 +3264,27 @@ const ProjectTasks: React.FC = () => {
                 >
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  disabled={isUpdating || isEditUploadingAttachments}
-                  className="px-6 py-2.5 text-xs font-semibold bg-primary hover:bg-primary/90 text-white rounded-2xl shadow-sm transition-all cursor-pointer disabled:opacity-50"
-                >
-                  {isUpdating
-                    ? "Updating..."
-                    : isEditUploadingAttachments
-                      ? "Uploading..."
-                      : "Update Task"}
-                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedTask(null)}
+                    className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-2xl transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isUpdating || isEditUploadingAttachments}
+                    className="px-6 py-2.5 text-xs font-semibold bg-primary hover:bg-primary/90 text-white rounded-2xl shadow-sm transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {isUpdating
+                      ? "Updating..."
+                      : isEditUploadingAttachments
+                        ? "Uploading..."
+                        : "Update Task"}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
