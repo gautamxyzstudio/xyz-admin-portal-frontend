@@ -1,11 +1,60 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import TaskOvertimeSection from "./TaskOvertimeSection";
 
 interface Props { [key: string]: any }
 const EditTaskModal: React.FC<Props> = (props) => {
   const { Check, ChevronDown, CircularProgress, Paperclip, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, activityTab, commentAttachments, commentComposerRef, commentFileInputRef, completeHistory, currentUserName, currentUserPhoto, editAssigneeSearchQuery, editAttachments, editEstimatedHours, editEstimatedMinutes, editFilteredProjectEmployees, editSelectedEmployeeObj, editTaskForm, extractEmployeePhotoUrl, formatHistoryTime, getAvatarBg, getImageUrl, getInitials, handleAddComment, handleUpdateTaskSubmit, handleUploadCommentPhotos, isAdmin, isCommentExpanded, isCommentsLoading, isEditAssigneeDropdownOpen, isEditUploadingAttachments, isPostingComment, isProjectsLoading, isUpdating, isUploadingCommentPhoto, newCommentText, projectAssignedEmployees, selectedTask, setActivityTab, setCommentAttachments, setEditAssigneeSearchQuery, setEditAttachments, setEditEstimatedHours, setEditEstimatedMinutes, setEditTaskForm, setIsCommentFocused, setIsEditAssigneeDropdownOpen, setIsEditUploadingAttachments, setNewCommentText, setSelectedTask, setViewAttachmentPreview, taskCommentsList } = props;
   console.log(completeHistory, "completeHistory")
+  const commentsContainerRef = useRef<HTMLDivElement>(null);
+  const commentsEndRef = useRef<HTMLDivElement>(null);
+  const prevCommentsCountRef = useRef<number>(taskCommentsList?.length || 0);
+  const prevTaskIdRef = useRef<any>(selectedTask?.id);
+
+  const scrollToBottom = (smooth = true) => {
+    if (commentsContainerRef.current) {
+      commentsContainerRef.current.scrollTo({
+        top: commentsContainerRef.current.scrollHeight,
+        behavior: smooth ? "smooth" : "auto",
+      });
+    }
+    commentsEndRef.current?.scrollIntoView({
+      behavior: smooth ? "smooth" : "auto",
+      block: "nearest",
+    });
+  };
+
+  // Auto-scroll when new comments are added so the latest comment is always visible
+  useEffect(() => {
+    const currentCount = taskCommentsList?.length || 0;
+    if (currentCount > prevCommentsCountRef.current) {
+      const timer = setTimeout(() => {
+        scrollToBottom(true);
+      }, 80);
+      return () => clearTimeout(timer);
+    }
+    prevCommentsCountRef.current = currentCount;
+  }, [taskCommentsList?.length]);
+
+  // Auto-scroll to bottom on task select or when switching to comments tab
+  useEffect(() => {
+    if (selectedTask?.id !== prevTaskIdRef.current) {
+      prevTaskIdRef.current = selectedTask?.id;
+      prevCommentsCountRef.current = taskCommentsList?.length || 0;
+    }
+    if (activityTab === "comments" && (taskCommentsList?.length || 0) > 0) {
+      const timer = setTimeout(() => {
+        scrollToBottom(false);
+      }, 120);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedTask?.id, activityTab]);
+
+  const handleSubmitComment = async () => {
+    await handleAddComment();
+    setTimeout(() => scrollToBottom(true), 150);
+    setTimeout(() => scrollToBottom(true), 400);
+  };
   return (
     <>
 {/* Modal: Edit Task */}
@@ -509,8 +558,7 @@ const EditTaskModal: React.FC<Props> = (props) => {
                           onKeyDown={(e) => {
                             if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
                               e.preventDefault();
-                              handleAddComment();
-                            }
+                              handleSubmitComment(); }
                           }}
                           onPaste={(e) => {
                             const files = e.clipboardData?.files;
@@ -545,7 +593,9 @@ const EditTaskModal: React.FC<Props> = (props) => {
                                 <img
                                   src={att.previewUrl || getImageUrl(att.url)}
                                   alt={att.name}
-                                  className="w-full h-full object-cover"
+                                  className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                  onClick={() => setViewAttachmentPreview?.({ id: att.id, name: att.name, url: att.previewUrl || att.url })}
+                                  title="Click to preview"
                                 />
                                 <button
                                   type="button"
@@ -578,7 +628,7 @@ const EditTaskModal: React.FC<Props> = (props) => {
                             <div className="flex items-center gap-2">
                               <button
                                 type="button"
-                                onClick={handleAddComment}
+                                onClick={handleSubmitComment}
                                 disabled={
                                   (!newCommentText.trim() &&
                                     commentAttachments.length === 0) ||
@@ -656,7 +706,7 @@ const EditTaskModal: React.FC<Props> = (props) => {
                         No comments yet.
                       </p>
                     ) : (
-                      <div className="max-h-60 overflow-y-auto space-y-2.5 scrollbar-hide [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                      <div ref={commentsContainerRef} className="max-h-[170px] overflow-y-auto space-y-2.5 scrollbar-hide [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
                         {taskCommentsList.map((c: any) => (
                           <div
                             key={c.id}
@@ -733,6 +783,7 @@ const EditTaskModal: React.FC<Props> = (props) => {
                             )}
                           </div>
                         ))}
+                        <div ref={commentsEndRef} />
                       </div>
                     )}
                   </div>

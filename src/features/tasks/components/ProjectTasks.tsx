@@ -18,7 +18,6 @@ import { CircularProgress } from "@mui/material";
 import {
   useGetProjectTasksQuery,
   useCreateTaskMutation,
-  useCreateTaskOvertimeMutation,
   useUpdateTaskMutation,
   useCreateTaskCommentMutation,
   useGetTaskCommentsQuery,
@@ -799,8 +798,6 @@ const ProjectTasks: React.FC = () => {
 
   // Mutations
   const [createTask, { isLoading: isCreating }] = useCreateTaskMutation();
-  const [createTaskOvertime] = useCreateTaskOvertimeMutation();
-  const [createOvertimeEntries, setCreateOvertimeEntries] = useState<any[]>([]);
   const [updateTask, { isLoading: isUpdating }] = useUpdateTaskMutation();
   const [createTaskComment, { isLoading: isPostingComment }] =
     useCreateTaskCommentMutation();
@@ -1032,7 +1029,7 @@ const ProjectTasks: React.FC = () => {
     try {
       const todayStr = getIstTodayDateString();
 
-      const createdTaskRes = await createTask({
+      await createTask({
         title: taskForm.title.trim(),
         description: taskForm.description.trim(),
         status: modalTargetStatus,
@@ -1043,23 +1040,6 @@ const ProjectTasks: React.FC = () => {
         assignedTo: isAdmin ? taskForm.assignedTo || undefined : undefined,
         attachments: attachments.map((a) => a.id),
       }).unwrap();
-
-      const createdTaskId = createdTaskRes?.id || createdTaskRes?.data?.id;
-      if (createdTaskId && createOvertimeEntries.length > 0) {
-        for (const ot of createOvertimeEntries) {
-          try {
-            await createTaskOvertime({
-              date: ot.date,
-              timeInMinutes: String(ot.totalMinutes),
-              workInfo: ot.note || ot.workInfo || "",
-              task_item: Number(createdTaskId),
-            }).unwrap();
-          } catch (otErr) {
-            console.error("Failed to post overtime for newly created task:", otErr);
-          }
-        }
-        setCreateOvertimeEntries([]);
-      }
 
       toast.success("Task created successfully!");
       setIsAddModalOpen(false);
@@ -1644,7 +1624,7 @@ const ProjectTasks: React.FC = () => {
         getInitials={getInitials}
       />
 
-      <CreateTaskModal {...{ createOvertimeEntries, setCreateOvertimeEntries, Check, ChevronDown, CircularProgress, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, assigneeSearchQuery, attachments, estimatedHours, estimatedMinutes, extractEmployeePhotoUrl, filteredProjectEmployees, getAvatarBg, getInitials, handleCreateTaskSubmit, isAddModalOpen, isAdmin, isAssigneeDropdownOpen, isCreating, isProjectsLoading, isUploadingAttachments, modalTargetStatus, projectAssignedEmployees, projectName, renderCreatePriorityDropdown, selectedEmployeeObj, setAssigneeSearchQuery, setAttachments, setEstimatedHours, setEstimatedMinutes, setIsAddModalOpen, setIsAssigneeDropdownOpen, setIsCreatePriorityDropdownOpen, setIsUploadingAttachments, setModalTargetStatus, setTaskForm, taskForm }} />
+      <CreateTaskModal {...{ Check, ChevronDown, CircularProgress, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, assigneeSearchQuery, attachments, estimatedHours, estimatedMinutes, extractEmployeePhotoUrl, filteredProjectEmployees, getAvatarBg, getInitials, handleCreateTaskSubmit, isAddModalOpen, isAdmin, isAssigneeDropdownOpen, isCreating, isProjectsLoading, isUploadingAttachments, modalTargetStatus, projectAssignedEmployees, projectName, renderCreatePriorityDropdown, selectedEmployeeObj, setAssigneeSearchQuery, setAttachments, setEstimatedHours, setEstimatedMinutes, setIsAddModalOpen, setIsAssigneeDropdownOpen, setIsCreatePriorityDropdownOpen, setIsUploadingAttachments, setModalTargetStatus, setTaskForm, taskForm }} />
 
       <EditTaskModal {...{ Check, ChevronDown, CircularProgress, Paperclip, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, activityTab, attachments, commentAttachments, commentComposerRef, commentFileInputRef, completeHistory, currentUserName, currentUserPhoto, editAssigneeSearchQuery, editAttachments, editEstimatedHours, editEstimatedMinutes, editFilteredProjectEmployees, editSelectedEmployeeObj, editTaskForm, extractEmployeePhotoUrl, formatHistoryTime, getAvatarBg, getImageUrl, getInitials, handleAddComment, handleUpdateTaskSubmit, handleUploadCommentPhotos, isAdmin, isCommentExpanded, isCommentsLoading, isEditAssigneeDropdownOpen, isEditUploadingAttachments, isPostingComment, isProjectsLoading, isUpdating, isUploadingCommentPhoto, newCommentText, projectAssignedEmployees, selectedTask, setActivityTab, setCommentAttachments, setEditAssigneeSearchQuery, setEditAttachments, setEditEstimatedHours, setEditEstimatedMinutes, setEditTaskForm, setIsCommentFocused, setIsEditAssigneeDropdownOpen, setIsEditUploadingAttachments, setNewCommentText, setSelectedTask, setViewAttachmentPreview, taskCommentsList }} />
 
@@ -1652,14 +1632,15 @@ const ProjectTasks: React.FC = () => {
       {viewAttachmentPreview && (
         <div
           onClick={() => setViewAttachmentPreview(null)}
-          className="fixed inset-0 z-60 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+          className="fixed inset-0 z-9999 bg-black/25 backdrop-blur-[2px] flex items-center justify-center p-4 animate-in fade-in duration-150"
+          style={{ zIndex: 9999 }}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative max-w-3xl max-h-[90vh] bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col"
+            className="relative w-full max-w-lg max-h-[85vh] bg-white rounded-2xl overflow-hidden shadow-2xl border border-slate-200/80 flex flex-col animate-in zoom-in-95 duration-150"
           >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/70">
-              <span className="text-xs font-bold text-slate-800 truncate max-w-md">
+            <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-slate-100 bg-slate-50/80">
+              <span className="text-xs font-bold text-slate-800 truncate max-w-[320px]">
                 {viewAttachmentPreview.name}
               </span>
               <button
@@ -1667,17 +1648,17 @@ const ProjectTasks: React.FC = () => {
                 onClick={() => setViewAttachmentPreview(null)}
                 className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-all cursor-pointer"
               >
-                <X size={16} />
+                <X size={15} />
               </button>
             </div>
-            <div className="p-2 flex items-center justify-center overflow-auto max-h-[75vh]">
+            <div className="p-2.5 flex items-center justify-center overflow-y-auto overflow-x-hidden max-h-[58vh] bg-slate-50/40 scrollbar-hide [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
               <img
                 src={getImageUrl(viewAttachmentPreview.url)}
                 alt={viewAttachmentPreview.name}
-                className="max-w-full max-h-[70vh] object-contain rounded-lg"
+                className="max-w-full max-h-[55vh] object-contain rounded-xl shadow-2xs"
               />
             </div>
-            <div className="flex items-center justify-end px-4 py-2.5 border-t border-slate-100 bg-slate-50/50 text-[11px]">
+            <div className="flex items-center justify-end px-3.5 py-2 border-t border-slate-100 bg-slate-50/50 text-[11px]">
               <a
                 href={getImageUrl(viewAttachmentPreview.url)}
                 target="_blank"

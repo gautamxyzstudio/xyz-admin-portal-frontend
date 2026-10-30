@@ -343,11 +343,12 @@ export const TaskAttachmentUpload: React.FC<TaskAttachmentUploadProps> = ({
       {previewImage && (
         <div
           onClick={() => setPreviewImage(null)}
-          className="fixed inset-0 z-99999 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+          className="fixed inset-0 z-9999 bg-black/25 backdrop-blur-[2px] flex items-center justify-center p-4 animate-in fade-in duration-150"
+          style={{ zIndex: 9999 }}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative max-w-3xl max-h-[90vh] bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col"
+            className="relative w-full max-w-lg max-h-[85vh] bg-white rounded-2xl overflow-hidden shadow-2xl border border-slate-200/80 flex flex-col animate-in zoom-in-95 duration-150"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/70">
@@ -364,11 +365,11 @@ export const TaskAttachmentUpload: React.FC<TaskAttachmentUploadProps> = ({
             </div>
 
             {/* Image display */}
-            <div className="p-2 flex items-center justify-center overflow-auto max-h-[75vh]">
+            <div className="p-2.5 flex items-center justify-center overflow-y-auto overflow-x-hidden max-h-[58vh] bg-slate-50/40 scrollbar-hide [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
               <img
                 src={previewImage.previewUrl || getImageUrl(previewImage.url)}
                 alt={previewImage.name}
-                className="max-w-full max-h-[70vh] object-contain rounded-lg"
+                className="max-w-full max-h-[55vh] object-contain rounded-xl shadow-2xs"
               />
             </div>
 
