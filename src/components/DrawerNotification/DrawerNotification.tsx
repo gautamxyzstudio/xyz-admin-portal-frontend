@@ -102,6 +102,7 @@ const DrawerNotification = ({ open, onClose }: Props) => {
                     <div className="flex justify-between items-start">
                       <p
                         className={`text-sm ${!item.isRead ? "font-bold text-primary" : "text-gray-700"}`}
+                        
                       >
                         {item.title}
                       </p>
