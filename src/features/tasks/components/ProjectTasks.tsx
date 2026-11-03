@@ -1197,6 +1197,27 @@ const ProjectTasks: React.FC = () => {
     setIsCommentFocused(false);
   };
 
+  // Auto-open task modal if taskId or task is passed in URL query params (e.g. from notification click)
+  const openedFromUrlRef = useRef<string | null>(null);
+  useEffect(() => {
+    const targetTaskId = searchParams.get("taskId") || searchParams.get("task");
+    if (!targetTaskId) {
+      openedFromUrlRef.current = null;
+      return;
+    }
+    if (tasks.length === 0 || openedFromUrlRef.current === targetTaskId) return;
+
+    const matched = tasks.find(
+      (t) =>
+        String(t.id) === targetTaskId ||
+        (t.taskId && t.taskId.toLowerCase() === targetTaskId.toLowerCase())
+    );
+    if (matched) {
+      openedFromUrlRef.current = targetTaskId;
+      handleOpenEditModal(matched);
+    }
+  }, [searchParams, tasks]);
+
   const handleUpdateTaskSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTask) return;
@@ -1500,7 +1521,7 @@ const ProjectTasks: React.FC = () => {
   );
 
   return (
-    <div className="w-full min-h-screen flex flex-col p-5 overflow-y-auto min-h-0 gap-3.5 bg-[#fbfbfb] scrollbar-hide [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+    <div className="w-full h-full flex flex-col p-5 overflow-y-auto min-h-0 gap-3.5 bg-[#fbfbfb] scrollbar-hide [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
       {/* 1. Header Section: Breadcrumbs + Project Title + Create Task Button */}
       <div className="flex flex-col gap-0.5 shrink-0">
         {/* Breadcrumb */}

@@ -43,7 +43,7 @@ const TopBar = () => {
     }
   };
 
-  return (
+  return (                                        
     <CustomBox customClasses="w-full rounded-xl p-3.5 flex items-center justify-between sticky top-0 shadow z-99">
       <p className="text-black-50 ml-2.5 font-semibold">Dashboard</p>
 

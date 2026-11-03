@@ -16,9 +16,15 @@ const TaskBoard: React.FC = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [failedLogos, setFailedLogos] = useState<Record<number, boolean>>({});
+  const [loadedLogos, setLoadedLogos] = useState<Record<number, boolean>>({});
+
+  const handleLogoLoad = (id: number) => {
+    setLoadedLogos((prev) => (prev[id] ? prev : { ...prev, [id]: true }));
+  };
 
   const handleLogoError = (id: number) => {
     setFailedLogos((prev) => (prev[id] ? prev : { ...prev, [id]: true }));
+    setLoadedLogos((prev) => (prev[id] ? prev : { ...prev, [id]: true }));
   };
 
   // Fetch projects from /api/task-board
@@ -169,14 +175,28 @@ const TaskBoard: React.FC = () => {
                   {/* Left Section: Logo + (Project Name & In-Progress below it) */}
                   <div className="flex items-center gap-3.5 min-w-0 flex-1">
                     {/* Project Logo / Avatar */}
-                    <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center p-2 shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
+                    <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center p-2 shrink-0 group-hover:scale-105 transition-transform overflow-hidden relative">
                       {hasValidLogo ? (
-                        <img
-                          src={logoSrc}
-                          alt={project.title}
-                          className="w-full h-full object-contain"
-                          onError={() => handleLogoError(project.id)}
-                        />
+                        <>
+                          {/* Slide-up Loading Shimmer while logo image is downloading */}
+                          {!loadedLogos[project.id] && (
+                            <div className="absolute inset-0 bg-slate-100 flex items-center justify-center overflow-hidden z-1">
+                              <span className="text-slate-300 font-bold text-sm select-none">
+                                {project.title.charAt(0).toUpperCase()}
+                              </span>
+                              <div className="logo-shimmer-slide" />
+                            </div>
+                          )}
+                          <img
+                            src={logoSrc}
+                            alt={project.title}
+                            className={`w-full h-full object-contain transition-opacity duration-300 ${
+                              loadedLogos[project.id] ? "opacity-100" : "opacity-0"
+                            }`}
+                            onLoad={() => handleLogoLoad(project.id)}
+                            onError={() => handleLogoError(project.id)}
+                          />
+                        </>
                       ) : (
                         <div className="w-full h-full rounded-lg bg-primary-20 flex items-center justify-center text-primary font-bold text-base">
                           {project.title.charAt(0).toUpperCase()}
