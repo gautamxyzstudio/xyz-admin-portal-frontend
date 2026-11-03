@@ -3,7 +3,7 @@ import React from "react";
 
 interface Props { [key: string]: any }
 const CreateTaskModal: React.FC<Props> = (props) => {
-  const { Check, ChevronDown, CircularProgress, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, assigneeSearchQuery, attachments, estimatedHours, estimatedMinutes, extractEmployeePhotoUrl, filteredProjectEmployees, getAvatarBg, getInitials, handleCreateTaskSubmit, isAddModalOpen, isAdmin, isAssigneeDropdownOpen, isCreating, isProjectsLoading, isUploadingAttachments, modalTargetStatus, projectAssignedEmployees, projectName, renderCreatePriorityDropdown, selectedEmployeeObj, setAssigneeSearchQuery, setAttachments, setEstimatedHours, setEstimatedMinutes, setIsAddModalOpen, setIsAssigneeDropdownOpen, setIsCreatePriorityDropdownOpen, setIsUploadingAttachments, setModalTargetStatus, setTaskForm, taskForm } = props;
+  const { isCreateUnassigned, setIsCreateUnassigned, Check, ChevronDown, CircularProgress, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, assigneeSearchQuery, attachments, estimatedHours, estimatedMinutes, extractEmployeePhotoUrl, filteredProjectEmployees, getAvatarBg, getInitials, handleCreateTaskSubmit, isAddModalOpen, isAdmin, isAssigneeDropdownOpen, isCreating, isProjectsLoading, isUploadingAttachments, modalTargetStatus, projectAssignedEmployees, projectName, renderCreatePriorityDropdown, selectedEmployeeObj, setAssigneeSearchQuery, setAttachments, setEstimatedHours, setEstimatedMinutes, setIsAddModalOpen, setIsAssigneeDropdownOpen, setIsCreatePriorityDropdownOpen, setIsUploadingAttachments, setModalTargetStatus, setTaskForm, taskForm } = props;
   return (
     <>
 {/* Modal: Create Task (Closes on backdrop click) */}
@@ -97,25 +97,58 @@ const CreateTaskModal: React.FC<Props> = (props) => {
               </div>
 
               {/* Assignee & Priority */}
-              {isAdmin ? (
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-slate-800 block mb-1.5">
-                      Assignee <span className="text-rose-500">*</span>
-                    </label>
+                    {isAdmin ? (
+                      <label className="text-xs font-semibold text-slate-800 block mb-1.5">
+                        Assignee <span className="text-rose-500">*</span>
+                      </label>
+                    ) : (
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-semibold text-slate-800">
+                          Assignee {!isCreateUnassigned && <span className="text-rose-500">*</span>}
+                        </label>
+                        <label className="inline-flex items-center gap-1.5 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(isCreateUnassigned)}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              setIsCreateUnassigned?.(checked);
+                              if (checked) {
+                                setTaskForm({ ...taskForm, assignedTo: "" });
+                                setIsAssigneeDropdownOpen(false);
+                                setAssigneeSearchQuery("");
+                              }
+                            }}
+                            className="checkbox checkbox-xs rounded border-slate-300 text-primary focus:ring-0 cursor-pointer accent-orange-500"
+                          />
+                          <span className="text-[11px] font-medium text-slate-600 hover:text-slate-800 transition-colors">
+                            Don't assign
+                          </span>
+                        </label>
+                      </div>
+                    )}
                     <div className="relative">
                       <button
                         type="button"
-                        onClick={() =>
-                          setIsAssigneeDropdownOpen(!isAssigneeDropdownOpen)
-                        }
-                        className={`w-full h-[46px] px-3.5 bg-[#fafafa] border rounded-2xl text-xs text-left outline-none transition-all shadow-2xs flex items-center justify-between gap-2 cursor-pointer ${isAssigneeDropdownOpen
-                            ? "border-primary bg-white ring-2 ring-orange-500/10"
-                            : "border-slate-200/90 hover:border-slate-300"
-                          }`}
+                        disabled={!isAdmin && Boolean(isCreateUnassigned)}
+                        onClick={() => {
+                          if (!isAdmin && isCreateUnassigned) return;
+                          setIsAssigneeDropdownOpen(!isAssigneeDropdownOpen);
+                        }}
+                        className={`w-full h-[46px] px-3.5 border rounded-2xl text-xs text-left outline-none transition-all shadow-2xs flex items-center justify-between gap-2 ${
+                          !isAdmin && isCreateUnassigned
+                            ? "bg-slate-100/70 border-slate-200 text-slate-400 cursor-not-allowed opacity-75"
+                            : isAssigneeDropdownOpen
+                              ? "border-primary bg-white ring-2 ring-orange-500/10 cursor-pointer"
+                              : "bg-[#fafafa] border-slate-200/90 hover:border-slate-300 cursor-pointer"
+                        }`}
                       >
                         <div className="flex items-center gap-2 min-w-0">
-                          {selectedEmployeeObj ? (
+                          {!isAdmin && isCreateUnassigned ? (
+                            <span className="text-slate-400 italic">Unassigned</span>
+                          ) : selectedEmployeeObj ? (
                             <>
                               {(() => {
                                 const photoUrl =
@@ -162,7 +195,7 @@ const CreateTaskModal: React.FC<Props> = (props) => {
                         </div>
                         <ChevronDown
                           size={15}
-                          className={`text-slate-400 shrink-0 transition-transform duration-200 ${isAssigneeDropdownOpen ? "rotate-180 text-primary" : ""
+                          className={`text-slate-400 shrink-0 transition-transform duration-200 ${isAssigneeDropdownOpen ? "rotate-180 text-primary" : ""} ${!isAdmin && isCreateUnassigned ? "opacity-30" : ""}
                             }`}
                         />
                       </button>
@@ -210,7 +243,7 @@ const CreateTaskModal: React.FC<Props> = (props) => {
                                 <div className="px-3.5 py-3 text-center text-xs text-slate-400">
                                   {assigneeSearchQuery.trim()
                                     ? "No employees found"
-                                    : "No employees assigned to this project"}
+                                    : "No employees available"}
                                 </div>
                               ) : (
                                 filteredProjectEmployees.map((emp: any) => {
@@ -229,6 +262,7 @@ const CreateTaskModal: React.FC<Props> = (props) => {
                                           ...taskForm,
                                           assignedTo: emp.id,
                                         });
+                                        setIsCreateUnassigned?.(false);
                                         setIsAssigneeDropdownOpen(false);
                                         setAssigneeSearchQuery("");
                                       }}
@@ -290,9 +324,6 @@ const CreateTaskModal: React.FC<Props> = (props) => {
 
                   {renderCreatePriorityDropdown()}
                 </div>
-              ) : (
-                renderCreatePriorityDropdown()
-              )}
 
               {/* Estimated Time (Hours & Minutes) */}
               <div>

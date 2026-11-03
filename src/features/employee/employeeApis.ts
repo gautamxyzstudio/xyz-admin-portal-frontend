@@ -116,9 +116,13 @@ export const employeeApis = enhancedEmployeeApi.injectEndpoints({
         transformResponse: (response: any[]) => {
           return response.map((employee: any) => {
             const photo = employee?.user_detial?.Photo?.[0];
+            const photoUrl = photo?.url ? getImageUrl(photo.url) : "";
             return {
               id: employee?.id ?? 0,
-              name: employee?.user_detial?.name ?? "",
+              username: employee?.username ?? "",
+              name: employee?.user_detial?.name || employee?.username || "Employee",
+              photo: photoUrl,
+              profile_photo: photoUrl,
               designation: employee?.user_detial?.designation ?? "",
               empCode: employee?.user_detial?.empCode ?? "",
               phoneNumber: employee?.user_detial?.phoneNumber ?? "",

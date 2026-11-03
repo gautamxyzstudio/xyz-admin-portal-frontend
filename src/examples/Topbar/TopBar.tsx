@@ -24,7 +24,7 @@ const TopBar = () => {
   const [openDrawer, setOpenDrawer] = useState(false);
   const [openChangePasswordModal, setOpenChangePasswordModal] = useState(false);
   const { data } = useNotificationsQuery(undefined, {
-    pollingInterval: 5000,
+    pollingInterval: 15000,
   });
 
   const unread = data?.filter((n: any) => !n.isRead).length;

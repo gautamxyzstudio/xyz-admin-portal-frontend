@@ -4,8 +4,7 @@ import TaskOvertimeSection from "./TaskOvertimeSection";
 
 interface Props { [key: string]: any }
 const EditTaskModal: React.FC<Props> = (props) => {
-  const { Check, ChevronDown, CircularProgress, Paperclip, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, activityTab, commentAttachments, commentComposerRef, commentFileInputRef, completeHistory, currentUserName, currentUserPhoto, editAssigneeSearchQuery, editAttachments, editEstimatedHours, editEstimatedMinutes, editFilteredProjectEmployees, editSelectedEmployeeObj, editTaskForm, extractEmployeePhotoUrl, formatHistoryTime, getAvatarBg, getImageUrl, getInitials, handleAddComment, handleUpdateTaskSubmit, handleUploadCommentPhotos, isAdmin, isCommentExpanded, isCommentsLoading, isEditAssigneeDropdownOpen, isEditUploadingAttachments, isPostingComment, isProjectsLoading, isUpdating, isUploadingCommentPhoto, newCommentText, projectAssignedEmployees, selectedTask, setActivityTab, setCommentAttachments, setEditAssigneeSearchQuery, setEditAttachments, setEditEstimatedHours, setEditEstimatedMinutes, setEditTaskForm, setIsCommentFocused, setIsEditAssigneeDropdownOpen, setIsEditUploadingAttachments, setNewCommentText, setSelectedTask, setViewAttachmentPreview, taskCommentsList } = props;
-  console.log(completeHistory, "completeHistory")
+  const { isEditUnassigned, setIsEditUnassigned, Check, ChevronDown, CircularProgress, Paperclip, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, activityTab, commentAttachments, commentComposerRef, commentFileInputRef, completeHistory, currentUserName, currentUserPhoto, editAssigneeSearchQuery, editAttachments, editEstimatedHours, editEstimatedMinutes, editFilteredProjectEmployees, editSelectedEmployeeObj, editTaskForm, extractEmployeePhotoUrl, formatHistoryTime, getAvatarBg, getImageUrl, getInitials, handleAddComment, handleUpdateTaskSubmit, handleUploadCommentPhotos, isAdmin, isCommentExpanded, isCommentsLoading, isEditAssigneeDropdownOpen, isEditUploadingAttachments, isPostingComment, isProjectsLoading, isUpdating, isUploadingCommentPhoto, newCommentText, projectAssignedEmployees, selectedTask, setActivityTab, setCommentAttachments, setEditAssigneeSearchQuery, setEditAttachments, setEditEstimatedHours, setEditEstimatedMinutes, setEditTaskForm, setIsCommentFocused, setIsEditAssigneeDropdownOpen, setIsEditUploadingAttachments, setNewCommentText, setSelectedTask, setViewAttachmentPreview, taskCommentsList } = props;
   const commentsContainerRef = useRef<HTMLDivElement>(null);
   const commentsEndRef = useRef<HTMLDivElement>(null);
   const prevCommentsCountRef = useRef<number>(taskCommentsList?.length || 0);
@@ -158,25 +157,58 @@ const EditTaskModal: React.FC<Props> = (props) => {
               </div>
 
               {/* Assignee & Priority */}
-              {isAdmin ? (
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-slate-800 block mb-1.5">
-                      Assignee <span className="text-rose-500">*</span>
-                    </label>
+                    {isAdmin ? (
+                      <label className="text-xs font-semibold text-slate-800 block mb-1.5">
+                        Assignee <span className="text-rose-500">*</span>
+                      </label>
+                    ) : (
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-semibold text-slate-800">
+                          Assignee {!isEditUnassigned && <span className="text-rose-500">*</span>}
+                        </label>
+                        <label className="inline-flex items-center gap-1.5 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(isEditUnassigned)}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              setIsEditUnassigned?.(checked);
+                              if (checked) {
+                                setEditTaskForm({ ...editTaskForm, assignedTo: "" });
+                                setIsEditAssigneeDropdownOpen(false);
+                                setEditAssigneeSearchQuery("");
+                              }
+                            }}
+                            className="checkbox checkbox-xs rounded border-slate-300 text-primary focus:ring-0 cursor-pointer accent-orange-500"
+                          />
+                          <span className="text-[11px] font-medium text-slate-600 hover:text-slate-800 transition-colors">
+                            Don't assign
+                          </span>
+                        </label>
+                      </div>
+                    )}
                     <div className="relative">
                       <button
                         type="button"
-                        onClick={() =>
-                          setIsEditAssigneeDropdownOpen(!isEditAssigneeDropdownOpen)
-                        }
-                        className={`w-full h-[46px] px-3.5 bg-[#fafafa] border rounded-2xl text-xs text-left outline-none transition-all shadow-2xs flex items-center justify-between gap-2 cursor-pointer hover:border-slate-300 ${isEditAssigneeDropdownOpen
-                            ? "border-primary bg-white ring-2 ring-orange-500/10"
-                            : "border-slate-200/90"
-                          }`}
+                        disabled={!isAdmin && Boolean(isEditUnassigned)}
+                        onClick={() => {
+                          if (!isAdmin && isEditUnassigned) return;
+                          setIsEditAssigneeDropdownOpen(!isEditAssigneeDropdownOpen);
+                        }}
+                        className={`w-full h-[46px] px-3.5 border rounded-2xl text-xs text-left outline-none transition-all shadow-2xs flex items-center justify-between gap-2 ${
+                          !isAdmin && isEditUnassigned
+                            ? "bg-slate-100/70 border-slate-200 text-slate-400 cursor-not-allowed opacity-75"
+                            : isEditAssigneeDropdownOpen
+                              ? "border-primary bg-white ring-2 ring-orange-500/10 cursor-pointer"
+                              : "bg-[#fafafa] border-slate-200/90 hover:border-slate-300 cursor-pointer"
+                        }`}
                       >
                         <div className="flex items-center gap-2 min-w-0">
-                          {editSelectedEmployeeObj ? (
+                          {!isAdmin && isEditUnassigned ? (
+                            <span className="text-slate-400 italic">Unassigned</span>
+                          ) : editSelectedEmployeeObj ? (
                             <>
                               {(() => {
                                 const photoUrl = extractEmployeePhotoUrl(
@@ -221,7 +253,7 @@ const EditTaskModal: React.FC<Props> = (props) => {
                         </div>
                         <ChevronDown
                           size={15}
-                          className={`text-slate-400 shrink-0 transition-transform duration-200 ${isEditAssigneeDropdownOpen ? "rotate-180 text-primary" : ""
+                          className={`text-slate-400 shrink-0 transition-transform duration-200 ${isEditAssigneeDropdownOpen ? "rotate-180 text-primary" : ""} ${!isAdmin && isEditUnassigned ? "opacity-30" : ""}
                             }`}
                         />
                       </button>
@@ -263,7 +295,7 @@ const EditTaskModal: React.FC<Props> = (props) => {
                                 <div className="px-3.5 py-3 text-center text-xs text-slate-400">
                                   {editAssigneeSearchQuery.trim()
                                     ? "No employees found"
-                                    : "No employees assigned to this project"}
+                                    : "No employees available"}
                                 </div>
                               ) : (
                                 editFilteredProjectEmployees.map((emp: any) => {
@@ -281,6 +313,7 @@ const EditTaskModal: React.FC<Props> = (props) => {
                                           ...editTaskForm,
                                           assignedTo: emp.id,
                                         });
+                                        setIsEditUnassigned?.(false);
                                         setIsEditAssigneeDropdownOpen(false);
                                         setEditAssigneeSearchQuery("");
                                       }}
@@ -361,33 +394,6 @@ const EditTaskModal: React.FC<Props> = (props) => {
                     </div>
                   </div>
                 </div>
-              ) : (
-                <div>
-                  <label className="text-xs font-semibold text-slate-800 block mb-1.5">
-                    Priority
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={editTaskForm.priority}
-                      onChange={(e) =>
-                        setEditTaskForm({
-                          ...editTaskForm,
-                          priority: e.target.value as any,
-                        })
-                      }
-                      className="w-full h-[46px] px-4 bg-[#fafafa] border border-slate-200/90 rounded-2xl text-xs text-slate-800 outline-none focus:border-primary focus:bg-white cursor-pointer appearance-none pr-9 transition-all shadow-2xs"
-                    >
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
-                    </select>
-                    <ChevronDown
-                      size={15}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-                    />
-                  </div>
-                </div>
-              )}
 
               {/* Estimated Time */}
               <div>

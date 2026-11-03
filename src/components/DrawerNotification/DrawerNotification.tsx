@@ -21,7 +21,7 @@ type Props = {
 const DrawerNotification = ({ open, onClose }: Props) => {
   const [notifications, setNotifications] = useState<any>("");
   const { data, isLoading } = useNotificationsQuery(undefined, {
-    pollingInterval: 60000,
+    pollingInterval: 15000,
   });
   const user = useSelector(userInState);
 

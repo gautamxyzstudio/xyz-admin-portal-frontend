@@ -261,7 +261,7 @@ const recordTaskHistoryEvent = (
     backendResponse?.attributes?.taskHistory ||
     backendResponse?.attributes?.task_history;
 
-    console.log(backendTaskHistory,`backendTaskHistory`)
+  console.log(backendTaskHistory, `backendTaskHistory`)
 
   let resolvedTimestamp = event.timestamp;
 
@@ -304,11 +304,24 @@ const recordTaskHistoryEvent = (
   return updated;
 };
 
+const formatStatusLabel = (s: string) => {
+  if (!s) return "";
+  const clean = String(s).trim().toLowerCase();
+  if (clean === "in-progress") return "In-progress";
+  return clean.charAt(0).toUpperCase() + clean.slice(1);
+};
+
+const normalizeMoveAction = (act: string) => {
+  return (act || "")
+    .toLowerCase()
+    .replace(/->/g, "→")
+    .replace(/\s+/g, " ")
+    .trim();
+};
+
 const getCompleteTaskHistory = (
   task: IProjectTaskItem,
 ): ITaskHistoryRecord[] => {
-  const historyMap = new Map<string, ITaskHistoryRecord>();
-
   const rawCreatedAt =
     task.createdAt ||
     (task as any).attributes?.createdAt ||
@@ -329,67 +342,84 @@ const getCompleteTaskHistory = (
   const backendHistory =
     task.taskHistory || (task as any).history || (task as any).activities || [];
 
+  const backendRecords: ITaskHistoryRecord[] = [];
+
   if (Array.isArray(backendHistory)) {
     backendHistory.forEach((h: any, idx: number) => {
       const user =
-  h.changedBy ||
-  h.user?.name ||
-  h.user?.username ||
-  h.username ||
-  h.by ||
-  creator;
+        h.changedBy ||
+        h.user?.name ||
+        h.user?.username ||
+        h.username ||
+        h.by ||
+        creator;
 
-const rawTime =
-  h.createdAt ||
-  h.created_at ||
-  h.date ||
-  rawCreatedAt ||
-  "";
+      const rawTime =
+        h.createdAt ||
+        h.created_at ||
+        h.date ||
+        rawCreatedAt ||
+        "";
 
-const hIso = rawTime;
+      const hIso = rawTime;
 
-let action = h.action || h.description || h.text;
+      let action = h.action || h.description || h.text;
 
-if (h.oldStatus === null && h.newStatus) {
-  action = "created the task";
-} else if (h.oldStatus && h.newStatus) {
-  action = `moved ${h.oldStatus} → ${h.newStatus}`;
-} else if (!action) {
-  action = idx === 0 ? "created the task" : "updated the task";
-}
+      if (h.oldStatus === null && h.newStatus) {
+        action = "created the task";
+      } else if (h.oldStatus && h.newStatus) {
+        action = `moved ${formatStatusLabel(h.oldStatus)} → ${formatStatusLabel(h.newStatus)}`;
+      } else if (!action) {
+        action = idx === 0 ? "created the task" : "updated the task";
+      }
 
-const status = String(h.newStatus || "").toLowerCase();
+      const status = String(h.newStatus || "").toLowerCase();
 
-const dot =
-  h.dotColor ||
-  (status === "completed"
-    ? "bg-emerald-500"
-    : status === "blocked"
-      ? "bg-rose-500"
-      : status === "in-progress"
-        ? "bg-orange-500"
-        : "bg-blue-500");
+      const dot =
+        h.dotColor ||
+        (status === "completed"
+          ? "bg-emerald-500"
+          : status === "blocked"
+            ? "bg-rose-500"
+            : status === "in-progress"
+              ? "bg-orange-500"
+              : "bg-blue-500");
 
-const key = `${h.id ?? idx}-${hIso}-${action}`;
-
-historyMap.set(key, {
-  id: `backend-${h.id ?? idx}`,
-  user,
-  action,
-  timestamp: hIso,
-  dotColor: dot,
-});
+      backendRecords.push({
+        id: `backend-${h.id ?? idx}`,
+        user,
+        action,
+        timestamp: hIso,
+        dotColor: dot,
+      });
     });
   }
 
-  // 2. Local storage history
+  // 2. Local storage history (filter out duplicate move events or generic updates)
   const localHistory = getStoredTaskHistory(task.id);
+  const uniqueLocalRecords: ITaskHistoryRecord[] = [];
+
   localHistory.forEach((h) => {
     const hDayjs = toIstDayjs(h.timestamp);
     const hEpoch = hDayjs?.valueOf() || 0;
     const hIso = hDayjs ? hDayjs.toISOString() : h.timestamp;
+    const hNorm = normalizeMoveAction(h.action);
 
-    // Filter out duplicate generic "updated the task" if it happened at creation time
+    // If this local record is a move event and backend already has ANY record for this transition
+    if (hNorm.startsWith("moved ")) {
+      const isDuplicateOfBackend = backendRecords.some((b) => {
+        const bNorm = normalizeMoveAction(b.action);
+        if (bNorm !== hNorm) return false;
+        const bEpoch = toIstDayjs(b.timestamp)?.valueOf() || 0;
+        return Math.abs(hEpoch - bEpoch) < 600000 || (!hEpoch && !bEpoch);
+      });
+
+      if (isDuplicateOfBackend) {
+        return; // drop duplicate local record
+      }
+    }
+
+    // Filter out duplicate generic "updated the task" if it happened near creation time
     const isNearCreation =
       createdTimeEpoch > 0 && hEpoch > 0
         ? Math.abs(hEpoch - createdTimeEpoch) < 120000
@@ -399,21 +429,27 @@ historyMap.set(key, {
       return;
     }
 
-    const key = `${hIso}-${h.action}`;
-    historyMap.set(key, {
+    uniqueLocalRecords.push({
       ...h,
       timestamp: hIso,
     });
   });
 
-  // 3. Baseline creation event
-  // If no "created the task" event exists anywhere in history, add one
-  const hasCreationEvent = Array.from(historyMap.values()).some((h) =>
+  // If duplicate move events were filtered out, sync back to localStorage to clean it up permanently
+  if (uniqueLocalRecords.length !== localHistory.length) {
+    saveStoredTaskHistory(task.id, uniqueLocalRecords);
+  }
+
+  // 3. Combine backend and local records
+  const allEvents = [...backendRecords, ...uniqueLocalRecords];
+
+  // 4. Baseline creation event if not present
+  const hasCreationEvent = allEvents.some((h) =>
     h.action.toLowerCase().includes("created the task"),
   );
 
   if (!hasCreationEvent) {
-    historyMap.set("baseline-create", {
+    allEvents.push({
       id: "baseline-create",
       user: creator,
       action: "created the task",
@@ -422,40 +458,43 @@ historyMap.set(key, {
     });
   }
 
-  // 4. Deduplicate: Keep at most ONE "created the task" entry
-  let foundCreation = false;
-  for (const [key, val] of Array.from(historyMap.entries())) {
-    if (val.action.toLowerCase().includes("created the task")) {
-      if (!foundCreation) {
-        foundCreation = true;
-      } else {
-        historyMap.delete(key);
-      }
-    }
-  }
-
-  // 5. Remove any duplicate generic "updated the task" entry that shares the creation time
-  const creationEntry = Array.from(historyMap.values()).find((h) =>
-    h.action.toLowerCase().includes("created the task"),
-  );
-  if (creationEntry) {
-    const cEpoch = toIstDayjs(creationEntry.timestamp)?.valueOf() || 0;
-    for (const [key, val] of historyMap.entries()) {
-      if (val.id !== creationEntry.id && val.action === "updated the task") {
-        const valEpoch = toIstDayjs(val.timestamp)?.valueOf() || 0;
-        if (cEpoch > 0 && valEpoch > 0 && Math.abs(valEpoch - cEpoch) < 120000) {
-          historyMap.delete(key);
-        }
-      }
-    }
-  }
-
-  // Sort descending by timestamp (newest on top, oldest at bottom)
-  return Array.from(historyMap.values()).sort((a, b) => {
+  // 5. Final deduplication:
+  // - Ensure at most ONE "created the task" event
+  // - Ensure no duplicate identical actions (e.g. two "moved X -> Y" within 5 minutes)
+  const sorted = allEvents.sort((a, b) => {
     const tA = toIstDayjs(a.timestamp)?.valueOf() || 0;
     const tB = toIstDayjs(b.timestamp)?.valueOf() || 0;
-    return tB - tA;
+    return tB - tA; // newest on top
   });
+
+  const finalRecords: ITaskHistoryRecord[] = [];
+  let foundCreation = false;
+
+  for (const item of sorted) {
+    const norm = normalizeMoveAction(item.action);
+    const itemEpoch = toIstDayjs(item.timestamp)?.valueOf() || 0;
+
+    if (norm.includes("created the task")) {
+      if (foundCreation) continue; // skip extra creation events
+      foundCreation = true;
+      finalRecords.push(item);
+      continue;
+    }
+
+    // Check if an identical action was already added within 5 minutes
+    const isDupe = finalRecords.some((existing) => {
+      const existingNorm = normalizeMoveAction(existing.action);
+      if (existingNorm !== norm) return false;
+      const existingEpoch = toIstDayjs(existing.timestamp)?.valueOf() || 0;
+      return Math.abs(itemEpoch - existingEpoch) < 300000;
+    });
+
+    if (!isDupe) {
+      finalRecords.push(item);
+    }
+  }
+
+  return finalRecords;
 };
 
 const STATUS_OPTIONS: {
@@ -543,6 +582,8 @@ const ProjectTasks: React.FC = () => {
   const [isPriorityOpen, setIsPriorityOpen] = useState(false);
 
   // Modal State for Add Task
+  const [isCreateUnassigned, setIsCreateUnassigned] = useState(true);
+  const [isEditUnassigned, setIsEditUnassigned] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [modalTargetStatus, setModalTargetStatus] =
     useState<TaskStatus>("planned");
@@ -648,22 +689,39 @@ const ProjectTasks: React.FC = () => {
       document.removeEventListener("mousedown", handleGlobalMouseDown);
   }, [isPriorityOpen]);
 
-  // RTK Query: fetch tasks for this project
+  // RTK Query: fetch tasks & employees for this project from /api/task-items/project
   const {
-    data: tasks = [],
+    data: projectTasksResponse,
     isLoading,
     isFetching,
     refetch,
   } = useGetProjectTasksQuery({ project: projectName }, { skip: !projectName });
 
-  // RTK Query: all active employees (skip for standard employees to avoid 403 Forbidden)
+  // Normalized tasks list
+  const tasks: IProjectTaskItem[] = useMemo(() => {
+    if (Array.isArray(projectTasksResponse?.tasks)) return projectTasksResponse.tasks;
+    if (Array.isArray(projectTasksResponse)) return projectTasksResponse;
+    return [];
+  }, [projectTasksResponse]);
+
+  // Project employees returned directly by the /api/task-items/project endpoint
+  const projectEndpointEmployees: any[] = useMemo(() => {
+    if (Array.isArray(projectTasksResponse?.employees)) {
+      return projectTasksResponse.employees;
+    }
+    return [];
+  }, [projectTasksResponse]);
+
+  // RTK Query: all active employees (Only for Admin/HR, skip for Employee to avoid 403)
   const { data: activeEmployees = [] } = useGetActiveEmployeesQuery(undefined, {
     skip: !isAdmin,
   });
 
-  // RTK Query: fetch all projects with populated team members
+  // RTK Query: fetch all projects with populated team members (Only for Admin/HR, skip for Employee to avoid 403 Forbidden)
   const { data: projectsData, isLoading: isProjectsLoading } =
-    useGetProjectsQuery();
+    useGetProjectsQuery(undefined, {
+      skip: !isAdmin,
+    });
 
   // Normalize projects list from Strapi response
   const allProjectsList: any[] = useMemo(() => {
@@ -685,58 +743,105 @@ const ProjectTasks: React.FC = () => {
     );
   }, [allProjectsList, projectName]);
 
-  // Only employees assigned to this specific project
+  // Employees available for task assignment in this project
   const projectAssignedEmployees = useMemo(() => {
-    if (!currentProjectObj) return [];
+    const map = new Map<string, any>();
 
+    const formatEmp = (emp: any) => {
+      const id = emp.id;
+      const username = emp.username || emp.name || `user-${id}`;
+      const name = emp.name || emp.username || "Employee";
+      const photo =
+        emp.photo ||
+        emp.profile_photo ||
+        emp.image ||
+        extractEmployeePhotoUrl(emp);
+      const email = emp.email || "";
+      return {
+        id,
+        username,
+        name,
+        photo,
+        profile_photo: photo,
+        image: photo,
+        email,
+      };
+    };
+
+    // 1. Employees returned directly from /api/task-items/project (Primary source!)
+    projectEndpointEmployees.forEach((emp: any) => {
+      const key = String(emp.id);
+      if (!map.has(key)) {
+        map.set(key, formatEmp(emp));
+      }
+    });
+
+    // 2. If HR/Admin loaded project users from /api/projects?populate=*
     const rawUsers: any[] =
       currentProjectObj?.users_permissions_users ||
       currentProjectObj?.attributes?.users_permissions_users?.data ||
       currentProjectObj?.users ||
       [];
 
-    if (!Array.isArray(rawUsers) || rawUsers.length === 0) {
-      return [];
+    if (Array.isArray(rawUsers) && rawUsers.length > 0) {
+      rawUsers.forEach((u: any) => {
+        const uId = String(u.id);
+        if (!map.has(uId)) {
+          map.set(uId, formatEmp(u));
+        }
+      });
     }
 
-    const assignedUserIds = new Set<string>();
-    const assignedUsernames = new Set<string>();
-
-    rawUsers.forEach((u: any) => {
-      const id = u.id;
-      const username = (u.username || u.attributes?.username || "")
-        .toLowerCase()
-        .trim();
-      if (id) assignedUserIds.add(String(id));
-      if (username) assignedUsernames.add(username);
-    });
-
-    const matched = activeEmployees.filter((emp) => {
-      const idMatch = assignedUserIds.has(String(emp.id));
-      const usernameMatch =
-        emp.username &&
-        assignedUsernames.has(emp.username.toLowerCase().trim());
-      return idMatch || usernameMatch;
-    });
-
-    if (matched.length > 0) {
-      return matched;
+    // 3. If Admin/HR, also allow any activeEmployees
+    if (isAdmin && Array.isArray(activeEmployees)) {
+      activeEmployees.forEach((emp: any) => {
+        const key = String(emp.id);
+        if (!map.has(key)) {
+          map.set(key, formatEmp(emp));
+        }
+      });
     }
 
-    return rawUsers.map((u: any) => ({
-      id: u.id,
-      username: u.username || u.attributes?.username || `user-${u.id}`,
-      name:
-        u.name ||
-        u.attributes?.name ||
-        u.username ||
-        u.attributes?.username ||
-        "Employee",
-      photo: u.photo || u.attributes?.photo,
-      profile_photo: u.profile_photo || u.attributes?.profile_photo || u.photo,
-      email: u.email || u.attributes?.email,
-    }));
-  }, [currentProjectObj, activeEmployees]);
+    // 4. Any assignees already present in project tasks
+    tasks.forEach((t) => {
+      if (t.assigned_to?.id && !map.has(String(t.assigned_to.id))) {
+        map.set(String(t.assigned_to.id), {
+          id: t.assigned_to.id,
+          username: t.assigned_to.username,
+          name: t.assigned_to.username,
+          photo: t.assigned_to.photo,
+          profile_photo: t.assigned_to.photo,
+          image: t.assigned_to.photo,
+          email: "",
+        });
+      }
+    });
+
+    // 5. Current logged-in user so self-assignment is always possible
+    if (currentUser?.id && !map.has(String(currentUser.id))) {
+      map.set(String(currentUser.id), {
+        id: currentUser.id,
+        username: (currentUser as any)?.username || currentUserName || "You",
+        name: userDetails?.name || (currentUser as any)?.username || currentUserName || "You",
+        photo: currentUserPhoto,
+        profile_photo: currentUserPhoto,
+        image: currentUserPhoto,
+        email: currentUser.email || "",
+      });
+    }
+
+    return Array.from(map.values());
+  }, [
+    projectEndpointEmployees,
+    currentProjectObj,
+    isAdmin,
+    activeEmployees,
+    tasks,
+    currentUser,
+    userDetails,
+    currentUserPhoto,
+    currentUserName,
+  ]);
 
   // Selected employee object for rich Assignee dropdown
   const selectedEmployeeObj = useMemo(() => {
@@ -991,6 +1096,7 @@ const ProjectTasks: React.FC = () => {
       priority: "medium",
       assignedTo: "",
     });
+    setIsCreateUnassigned(true);
     setEstimatedHours("1");
     setEstimatedMinutes("0");
     setAttachments([]);
@@ -1025,6 +1131,10 @@ const ProjectTasks: React.FC = () => {
       toast.error("Please select an assignee for this task");
       return;
     }
+    if (!isAdmin && !isCreateUnassigned && !taskForm.assignedTo) {
+      toast.error("Please select an assignee or check 'Don't assign'");
+      return;
+    }
 
     try {
       const todayStr = getIstTodayDateString();
@@ -1037,7 +1147,7 @@ const ProjectTasks: React.FC = () => {
         estimatedMinutes: totalMinutes,
         date: todayStr,
         project: projectName,
-        assignedTo: isAdmin ? taskForm.assignedTo || undefined : undefined,
+        assignedTo: taskForm.assignedTo ? taskForm.assignedTo : undefined,
         attachments: attachments.map((a) => a.id),
       }).unwrap();
 
@@ -1073,6 +1183,7 @@ const ProjectTasks: React.FC = () => {
       priority: task.priority || "medium",
       assignedTo: assignedId,
     });
+    setIsEditUnassigned(!assignedId);
 
     const est = Number(task.estimatedMinutes) || 0;
     setEditEstimatedHours(est > 0 ? String(Math.floor(est / 60)) : "0");
@@ -1110,27 +1221,15 @@ const ProjectTasks: React.FC = () => {
       toast.error("Please select an assignee for this task");
       return;
     }
+    if (!isAdmin && !isEditUnassigned && !editTaskForm.assignedTo) {
+      toast.error("Please select an assignee or check 'Don't assign'");
+      return;
+    }
 
     const userName = currentUser?.email?.split("@")[0] || "Team Member";
     const changes: { action: string; dot: string }[] = [];
 
-    if (editTaskForm.status !== selectedTask.status) {
-      const prevLabel =
-        selectedTask.status.charAt(0).toUpperCase() +
-        selectedTask.status.slice(1);
-      const nextLabel =
-        editTaskForm.status.charAt(0).toUpperCase() +
-        editTaskForm.status.slice(1);
-      const dot =
-        editTaskForm.status === "completed"
-          ? "bg-emerald-500"
-          : editTaskForm.status === "blocked"
-            ? "bg-rose-500"
-            : editTaskForm.status === "in-progress"
-              ? "bg-orange-500"
-              : "bg-blue-500";
-      changes.push({ action: `moved ${prevLabel} → ${nextLabel}`, dot });
-    }
+    // Note: Status transitions are automatically logged to taskHistory by Strapi backend
 
     if (editTaskForm.priority !== (selectedTask.priority || "medium")) {
       changes.push({
@@ -1142,7 +1241,7 @@ const ProjectTasks: React.FC = () => {
     }
 
     if (
-      isAdmin && editTaskForm.assignedTo &&
+      editTaskForm.assignedTo &&
       String(editTaskForm.assignedTo) !==
       String(selectedTask.assigned_to?.id || "")
     ) {
@@ -1172,9 +1271,7 @@ const ProjectTasks: React.FC = () => {
           status: editTaskForm.status,
           priority: editTaskForm.priority,
           estimatedMinutes: totalMinutes,
-          assignedTo: isAdmin
-            ? editTaskForm.assignedTo || undefined
-            : undefined,
+          assignedTo: editTaskForm.assignedTo ? editTaskForm.assignedTo : null,
           attachments: editAttachments.map((a) => a.id),
         },
       }).unwrap();
@@ -1262,9 +1359,7 @@ const ProjectTasks: React.FC = () => {
 
   const handleUpdateStatus = async (taskId: number, newStatus: TaskStatus) => {
     const currentTask = tasks.find((t) => t.id === taskId) || selectedTask;
-    const prevStatus = currentTask?.status || "planned";
     setLocalTasksOverride((prev) => ({ ...prev, [taskId]: newStatus }));
-    const userName = currentUser?.email?.split("@")[0] || "Team Member";
 
     try {
       await updateTask({
@@ -1273,24 +1368,7 @@ const ProjectTasks: React.FC = () => {
       }).unwrap();
       toast.success(`Task moved to ${newStatus}`);
 
-      const prevLabel =
-        prevStatus.charAt(0).toUpperCase() + prevStatus.slice(1);
-      const nextLabel = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
-      const dot =
-        newStatus === "completed"
-          ? "bg-emerald-500"
-          : newStatus === "blocked"
-            ? "bg-rose-500"
-            : newStatus === "in-progress"
-              ? "bg-orange-500"
-              : "bg-blue-500";
-
-      recordTaskHistoryEvent(taskId, {
-        user: userName,
-        action: `moved ${prevLabel} → ${nextLabel}`,
-        timestamp: new Date().toISOString(),
-        dotColor: dot,
-      });
+      // Note: Status transitions on drag-and-drop are automatically recorded in taskHistory by the backend on updateTask
 
       if (selectedTask && selectedTask.id === taskId) {
         setSelectedTask({ ...selectedTask, status: newStatus });
@@ -1357,17 +1435,17 @@ const ProjectTasks: React.FC = () => {
             setIsCreatePriorityDropdownOpen(!isCreatePriorityDropdownOpen)
           }
           className={`w-full h-[46px] px-3.5 bg-[#fafafa] border rounded-2xl text-xs text-left outline-none transition-all shadow-2xs flex items-center justify-between gap-2 cursor-pointer ${isCreatePriorityDropdownOpen
-              ? "border-primary bg-white ring-2 ring-orange-500/10"
-              : "border-slate-200/90 hover:border-slate-300"
+            ? "border-primary bg-white ring-2 ring-orange-500/10"
+            : "border-slate-200/90 hover:border-slate-300"
             }`}
         >
           <div className="flex items-center gap-2">
             <span
               className={`w-2 h-2 rounded-full ${taskForm.priority === "high"
-                  ? "bg-rose-500"
-                  : taskForm.priority === "low"
-                    ? "bg-blue-500"
-                    : "bg-amber-500"
+                ? "bg-rose-500"
+                : taskForm.priority === "low"
+                  ? "bg-blue-500"
+                  : "bg-amber-500"
                 }`}
             />
             <span className="font-semibold text-slate-800 capitalize">
@@ -1398,8 +1476,8 @@ const ProjectTasks: React.FC = () => {
                       setIsCreatePriorityDropdownOpen(false);
                     }}
                     className={`px-3.5 py-2.5 text-xs cursor-pointer flex items-center justify-between gap-2 transition-colors ${isSelected
-                        ? "bg-orange-50/90 text-primary font-semibold"
-                        : "text-slate-700 hover:bg-slate-50"
+                      ? "bg-orange-50/90 text-primary font-semibold"
+                      : "text-slate-700 hover:bg-slate-50"
                       }`}
                   >
                     <div className="flex items-center gap-2.5">
@@ -1446,7 +1524,7 @@ const ProjectTasks: React.FC = () => {
               {projectName || "Project Tasks"}
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
-              Drag and drop cards between columns to change status. 
+              Drag and drop cards between columns to change status.
             </p>
           </div>
 
@@ -1519,8 +1597,8 @@ const ProjectTasks: React.FC = () => {
                     }
                     title={`Filter by ${assignee.username}`}
                     className={`relative w-7 h-7 rounded-full border-2 transition-all cursor-pointer overflow-hidden ${isSelected
-                        ? "border-primary ring-2 ring-primary/40 z-10 scale-110"
-                        : "border-white hover:scale-105 hover:z-10 shadow-2xs"
+                      ? "border-primary ring-2 ring-primary/40 z-10 scale-110"
+                      : "border-white hover:scale-105 hover:z-10 shadow-2xs"
                       }`}
                   >
                     {photoSrc ? (
@@ -1584,8 +1662,8 @@ const ProjectTasks: React.FC = () => {
                         setIsPriorityOpen(false);
                       }}
                       className={`w-full text-left px-3 py-1.5 hover:bg-slate-50 transition-colors cursor-pointer ${selectedPriority === p
-                          ? "font-bold text-primary bg-primary-20/20"
-                          : "text-slate-600"
+                        ? "font-bold text-primary bg-primary-20/20"
+                        : "text-slate-600"
                         }`}
                     >
                       {p === "all"
@@ -1624,9 +1702,11 @@ const ProjectTasks: React.FC = () => {
         getInitials={getInitials}
       />
 
-      <CreateTaskModal {...{ Check, ChevronDown, CircularProgress, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, assigneeSearchQuery, attachments, estimatedHours, estimatedMinutes, extractEmployeePhotoUrl, filteredProjectEmployees, getAvatarBg, getInitials, handleCreateTaskSubmit, isAddModalOpen, isAdmin, isAssigneeDropdownOpen, isCreating, isProjectsLoading, isUploadingAttachments, modalTargetStatus, projectAssignedEmployees, projectName, renderCreatePriorityDropdown, selectedEmployeeObj, setAssigneeSearchQuery, setAttachments, setEstimatedHours, setEstimatedMinutes, setIsAddModalOpen, setIsAssigneeDropdownOpen, setIsCreatePriorityDropdownOpen, setIsUploadingAttachments, setModalTargetStatus, setTaskForm, taskForm }} />
+      <CreateTaskModal {...{
+        isCreateUnassigned, setIsCreateUnassigned, Check, ChevronDown, CircularProgress, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, assigneeSearchQuery, attachments, estimatedHours, estimatedMinutes, extractEmployeePhotoUrl, filteredProjectEmployees, getAvatarBg, getInitials, handleCreateTaskSubmit, isAddModalOpen, isAdmin, isAssigneeDropdownOpen, isCreating, isProjectsLoading, isUploadingAttachments, modalTargetStatus, projectAssignedEmployees, projectName, renderCreatePriorityDropdown, selectedEmployeeObj, setAssigneeSearchQuery, setAttachments, setEstimatedHours, setEstimatedMinutes, setIsAddModalOpen, setIsAssigneeDropdownOpen, setIsCreatePriorityDropdownOpen, setIsUploadingAttachments, setModalTargetStatus, setTaskForm, taskForm
+      }} />
 
-      <EditTaskModal {...{ Check, ChevronDown, CircularProgress, Paperclip, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, activityTab, attachments, commentAttachments, commentComposerRef, commentFileInputRef, completeHistory, currentUserName, currentUserPhoto, editAssigneeSearchQuery, editAttachments, editEstimatedHours, editEstimatedMinutes, editFilteredProjectEmployees, editSelectedEmployeeObj, editTaskForm, extractEmployeePhotoUrl, formatHistoryTime, getAvatarBg, getImageUrl, getInitials, handleAddComment, handleUpdateTaskSubmit, handleUploadCommentPhotos, isAdmin, isCommentExpanded, isCommentsLoading, isEditAssigneeDropdownOpen, isEditUploadingAttachments, isPostingComment, isProjectsLoading, isUpdating, isUploadingCommentPhoto, newCommentText, projectAssignedEmployees, selectedTask, setActivityTab, setCommentAttachments, setEditAssigneeSearchQuery, setEditAttachments, setEditEstimatedHours, setEditEstimatedMinutes, setEditTaskForm, setIsCommentFocused, setIsEditAssigneeDropdownOpen, setIsEditUploadingAttachments, setNewCommentText, setSelectedTask, setViewAttachmentPreview, taskCommentsList }} />
+      <EditTaskModal {...{ isEditUnassigned, setIsEditUnassigned, Check, ChevronDown, CircularProgress, Paperclip, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, activityTab, attachments, commentAttachments, commentComposerRef, commentFileInputRef, completeHistory, currentUserName, currentUserPhoto, editAssigneeSearchQuery, editAttachments, editEstimatedHours, editEstimatedMinutes, editFilteredProjectEmployees, editSelectedEmployeeObj, editTaskForm, extractEmployeePhotoUrl, formatHistoryTime, getAvatarBg, getImageUrl, getInitials, handleAddComment, handleUpdateTaskSubmit, handleUploadCommentPhotos, isAdmin, isCommentExpanded, isCommentsLoading, isEditAssigneeDropdownOpen, isEditUploadingAttachments, isPostingComment, isProjectsLoading, isUpdating, isUploadingCommentPhoto, newCommentText, projectAssignedEmployees, selectedTask, setActivityTab, setCommentAttachments, setEditAssigneeSearchQuery, setEditAttachments, setEditEstimatedHours, setEditEstimatedMinutes, setEditTaskForm, setIsCommentFocused, setIsEditAssigneeDropdownOpen, setIsEditUploadingAttachments, setNewCommentText, setSelectedTask, setViewAttachmentPreview, taskCommentsList }} />
 
       {/* Lightbox Preview Modal for Task Details (Closes on backdrop click) */}
       {viewAttachmentPreview && (

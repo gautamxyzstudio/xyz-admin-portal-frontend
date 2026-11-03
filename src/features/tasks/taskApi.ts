@@ -18,6 +18,19 @@ export interface ITaskItem {
 
 }
 
+export interface IProjectEmployee {
+  id: number;
+  username: string;
+  name?: string;
+  photo?: string | null;
+  [key: string]: any;
+}
+
+export interface IProjectTasksResponse {
+  tasks: IProjectTaskItem[];
+  employees: IProjectEmployee[];
+}
+
 export interface IProjectTaskItem {
   id: number;
   taskId?: string;
@@ -62,7 +75,7 @@ export interface ICreateTaskPayload {
   date?: string;
   estimatedMinutes?: number;
   project?: number | string;
-  assignedTo?: number | string;
+  assignedTo?: number | string | null;
   priority?: "low" | "medium" | "high";
   attachments?: number[];
 }
@@ -76,7 +89,7 @@ export interface IUpdateTaskPayload {
     estimatedMinutes?: number;
     date?: string;
     priority?: "low" | "medium" | "high";
-    assignedTo?: number | string;
+    assignedTo?: number | string | null;
     attachments?: number[];
   };
 }
@@ -141,7 +154,7 @@ export const taskApi = enhancedTaskApi.injectEndpoints({
 
     // 2. Get Project Tasks
     getProjectTasks: builder.query<
-      IProjectTaskItem[],
+      IProjectTasksResponse,
       { project: string; status?: string }
     >({
       query: ({ project, status }) => {
@@ -153,10 +166,27 @@ export const taskApi = enhancedTaskApi.injectEndpoints({
           params,
         };
       },
-      transformResponse: (response: any): IProjectTaskItem[] => {
-        if (Array.isArray(response)) return response;
-        if (Array.isArray(response?.data)) return response.data;
-        return [];
+      transformResponse: (response: any): IProjectTasksResponse => {
+        let tasksList: IProjectTaskItem[] = [];
+        let employeesList: IProjectEmployee[] = [];
+
+        if (response && typeof response === "object" && !Array.isArray(response)) {
+          if (Array.isArray(response.tasks)) {
+            tasksList = response.tasks;
+          } else if (Array.isArray(response.data)) {
+            tasksList = response.data;
+          }
+          if (Array.isArray(response.employees)) {
+            employeesList = response.employees;
+          }
+        } else if (Array.isArray(response)) {
+          tasksList = response;
+        }
+
+        return {
+          tasks: tasksList,
+          employees: employeesList,
+        };
       },
       providesTags: ["Tasks"],
     }),
