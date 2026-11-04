@@ -638,6 +638,7 @@ const ProjectTasks: React.FC = () => {
   const [selectedAssignee, setSelectedAssignee] = useState<string | null>(null);
   const [selectedPriority, setSelectedPriority] = useState<string>("all");
   const [isPriorityOpen, setIsPriorityOpen] = useState(false);
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
 
   // Modal State for Add Task
   const [isCreateUnassigned, setIsCreateUnassigned] = useState(true);
@@ -751,9 +752,16 @@ const ProjectTasks: React.FC = () => {
   const {
     data: projectTasksResponse,
     isLoading,
-    isFetching,
     refetch,
-  } = useGetProjectTasksQuery({ project: projectName }, { skip: !projectName });
+  } = useGetProjectTasksQuery(
+    { project: projectName },
+    {
+      skip: !projectName,
+      pollingInterval: 4000,
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+    },
+  );
 
   // Normalized tasks list
   const tasks: IProjectTaskItem[] = useMemo(() => {
@@ -928,11 +936,34 @@ const ProjectTasks: React.FC = () => {
     useCreateTaskCommentMutation();
   const [uploadFile] = useUploadFileMutation();
 
-  // RTK Query: fetch comments for selected task
-  const { data: taskCommentsData = [], isLoading: isCommentsLoading } =
-    useGetTaskCommentsQuery(selectedTask?.id || 0, {
-      skip: !selectedTask?.id,
-    });
+  // RTK Query: fetch comments for selected task with real-time polling
+  const {
+    data: taskCommentsData = [],
+    isLoading: isCommentsLoading,
+    refetch: refetchComments,
+  } = useGetTaskCommentsQuery(selectedTask?.id || 0, {
+    skip: !selectedTask?.id,
+    pollingInterval: 3000,
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+  });
+
+  // Keep selectedTask in sync with latest polled tasks data (e.g. if another employee updates status, commentCount, history)
+  useEffect(() => {
+    if (selectedTask?.id) {
+      const latestTask = tasks.find((t) => t.id === selectedTask.id);
+      if (
+        latestTask &&
+        (latestTask.updatedAt !== selectedTask.updatedAt ||
+          latestTask.status !== selectedTask.status ||
+          latestTask.commentCount !== selectedTask.commentCount ||
+          (latestTask.taskHistory?.length || 0) !==
+            (selectedTask.taskHistory?.length || 0))
+      ) {
+        setSelectedTask(latestTask);
+      }
+    }
+  }, [tasks, selectedTask]);
 
   // Normalized comments list
   const taskCommentsList = useMemo(() => {
@@ -1653,14 +1684,24 @@ const ProjectTasks: React.FC = () => {
             </button>
 
             <button
-              onClick={() => refetch()}
-              disabled={isFetching}
+              onClick={async () => {
+                setIsManualRefreshing(true);
+                try {
+                  await refetch();
+                  if (selectedTask?.id) {
+                    await refetchComments();
+                  }
+                } finally {
+                  setIsManualRefreshing(false);
+                }
+              }}
+              disabled={isManualRefreshing}
               title="Refresh Tasks"
               className="p-2 bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-primary hover:border-primary/50 transition-all shadow-2xs disabled:opacity-50 cursor-pointer"
             >
               <RotateCcw
                 size={14}
-                className={isFetching ? "animate-spin text-primary" : ""}
+                className={isManualRefreshing ? "animate-spin text-primary" : ""}
               />
             </button>
           </div>
