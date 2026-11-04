@@ -434,9 +434,11 @@ export const TaskOvertimeSection: React.FC<TaskOvertimeSectionProps> = ({
               <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600">
                 <span className="flex items-center gap-1.5">
                   <span>Member Time Breakdown</span>
-                  <span className="px-1.5 py-0.2 bg-slate-200/80 text-slate-700 rounded-full text-[10px] font-bold">
-                    {displayBreakdown.length}
-                  </span>
+                  {displayBreakdown.length > 1 && (
+                    <span className="px-1.5 py-0.2 bg-slate-200/80 text-slate-700 rounded-full text-[10px] font-bold">
+                      {displayBreakdown.length}
+                    </span>
+                  )}
                 </span>
                 <span
                   className={`text-[10px] ${
@@ -578,7 +580,9 @@ export const TaskOvertimeSection: React.FC<TaskOvertimeSectionProps> = ({
                               </span>
                             ) : null}
                           </div>
-                          {trackedSeconds > 0 && emp.totalTimeSpent > 0 ? (
+                          {displayBreakdown.length > 1 &&
+                          trackedSeconds > 0 &&
+                          emp.totalTimeSpent > 0 ? (
                             <span className="text-[9px] text-slate-400">
                               {Math.round(
                                 (emp.totalTimeSpent / trackedSeconds) * 100
