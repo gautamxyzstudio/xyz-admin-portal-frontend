@@ -1,47 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useRef, useEffect } from "react";
+import React from "react";
 
 interface Props { [key: string]: any }
 const CreateTaskModal: React.FC<Props> = (props) => {
   const { isCreateUnassigned, setIsCreateUnassigned, Check, ChevronDown, CircularProgress, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, assigneeSearchQuery, attachments, estimatedHours, estimatedMinutes, extractEmployeePhotoUrl, filteredProjectEmployees, getAvatarBg, getInitials, handleCreateTaskSubmit, isAddModalOpen, isAdmin, isAssigneeDropdownOpen, isCreating, isProjectsLoading, isUploadingAttachments, modalTargetStatus, projectAssignedEmployees, projectName, renderCreatePriorityDropdown, selectedEmployeeObj, setAssigneeSearchQuery, setAttachments, setEstimatedHours, setEstimatedMinutes, setIsAddModalOpen, setIsAssigneeDropdownOpen, setIsCreatePriorityDropdownOpen, setIsUploadingAttachments, setModalTargetStatus, setTaskForm, taskForm } = props;
-  const modalRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!isAddModalOpen) return;
-    const handleOutsideClick = (e: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-        setIsAddModalOpen(false);
-        setIsCreatePriorityDropdownOpen?.(false);
-      }
-    };
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setIsAddModalOpen(false);
-        setIsCreatePriorityDropdownOpen?.(false);
-      }
-    };
-    document.addEventListener("mousedown", handleOutsideClick);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", handleOutsideClick);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isAddModalOpen, setIsAddModalOpen, setIsCreatePriorityDropdownOpen]);
   return (
     <>
-{/* Modal: Create Task (Closes on backdrop click) */}
+{/* Modal: Create Task (Does not close on outside click) */}
       {isAddModalOpen && (
         <div
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setIsAddModalOpen(false);
-              setIsCreatePriorityDropdownOpen?.(false);
-            }
-          }}
           className="fixed inset-0 z-99 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
         >
           <div
-            ref={modalRef}
             onClick={(e) => e.stopPropagation()}
             className="bg-white rounded-3xl p-6 w-full max-w-lg shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto scrollbar-hide animate-in zoom-in-95 duration-150"
           >
@@ -278,7 +248,7 @@ const CreateTaskModal: React.FC<Props> = (props) => {
                                     String(emp.id);
                                   const photoUrl = extractEmployeePhotoUrl(emp);
                                   const displayName =
-                                    emp.name || emp.username || "Employee";
+                                    emp.name || "Employee";
 
                                   return (
                                     <div
@@ -324,11 +294,6 @@ const CreateTaskModal: React.FC<Props> = (props) => {
                                           <div className="truncate font-medium">
                                             {displayName}
                                           </div>
-                                          {emp.email && (
-                                            <div className="text-[10px] text-slate-400 truncate">
-                                              {emp.email}
-                                            </div>
-                                          )}
                                         </div>
                                       </div>
                                       {isSelected && (

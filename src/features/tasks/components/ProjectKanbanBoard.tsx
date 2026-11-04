@@ -33,7 +33,12 @@ export interface ProjectKanbanBoardProps {
   dragOverCol: TaskStatus | null;
   setDragOverCol: (col: TaskStatus | null) => void;
   draggedTaskIdRef: React.MutableRefObject<number | null>;
-  handleUpdateStatus: (taskId: number, newStatus: TaskStatus) => void;
+  handleReorderTasks: (
+    sourceTaskId: number,
+    targetTaskId: number | null,
+    targetStatus: TaskStatus,
+    position?: "before" | "after",
+  ) => void;
   handleOpenAddModal: (status: TaskStatus) => void;
   handleOpenEditModal: (task: IProjectTaskItem) => void;
   getImageUrl: (url?: string | null) => string;
@@ -41,11 +46,44 @@ export interface ProjectKanbanBoardProps {
   formatTaskTimestamp: (
     task: IProjectTaskItem,
   ) => { icon: string; text: string } | null;
-  renderPriorityIndicator: (priority?: string) => React.ReactNode;
+  renderPriorityIndicator?: (priority?: string) => React.ReactNode;
   formatTime: (minutes?: number) => string;
   getAvatarBg: (name: string) => string;
   getInitials: (name: string) => string;
 }
+
+
+const getPriorityBadgeConfig = (priority?: string) => {
+  const p = (priority || "medium").toLowerCase().trim();
+  if (p === "high") {
+    return {
+      label: "High",
+      leftBorder: "border-l-[3.5px] border-l-rose-500",
+      dotColor: "bg-rose-500",
+      badgeBg: "bg-rose-50",
+      badgeText: "text-rose-600",
+      badgeBorder: "border-rose-200/80",
+    };
+  }
+  if (p === "low") {
+    return {
+      label: "Low",
+      leftBorder: "border-l-[3.5px] border-l-blue-400",
+      dotColor: "bg-blue-500",
+      badgeBg: "bg-blue-50",
+      badgeText: "text-blue-600",
+      badgeBorder: "border-blue-200/80",
+    };
+  }
+  return {
+    label: "Medium",
+    leftBorder: "border-l-[3.5px] border-l-amber-500",
+    dotColor: "bg-amber-500",
+    badgeBg: "bg-amber-50",
+    badgeText: "text-amber-700",
+    badgeBorder: "border-amber-200/80",
+  };
+};
 
 const ProjectKanbanBoard: React.FC<ProjectKanbanBoardProps> = ({
   isLoading,
@@ -58,17 +96,22 @@ const ProjectKanbanBoard: React.FC<ProjectKanbanBoardProps> = ({
   dragOverCol,
   setDragOverCol,
   draggedTaskIdRef,
-  handleUpdateStatus,
+  handleReorderTasks,
   handleOpenAddModal,
   handleOpenEditModal,
   getImageUrl,
   extractTaskAttachments,
   formatTaskTimestamp,
-  renderPriorityIndicator,
   formatTime,
   getAvatarBg,
   getInitials,
 }) => {
+  const [draggedTaskId, setDraggedTaskId] = React.useState<number | null>(null);
+  const [dropTarget, setDropTarget] = React.useState<{
+    taskId: number;
+    position: "before" | "after";
+  } | null>(null);
+
   return (
     <div className="flex-1 w-full overflow-x-auto pb-4 scrollbar-hide [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden kanban-board-scroll">
       {isLoading ? (
@@ -130,10 +173,12 @@ const ProjectKanbanBoard: React.FC<ProjectKanbanBoardProps> = ({
                 e.stopPropagation();
                 dragCounterMap.current = {};
                 setDragOverCol(null);
+                setDropTarget(null);
+                setDraggedTaskId(null);
                 const dataId = Number(e.dataTransfer.getData("text/plain"));
                 const taskId = dataId || draggedTaskIdRef.current;
                 if (taskId) {
-                  handleUpdateStatus(taskId, col.id);
+                  handleReorderTasks(taskId, null, col.id, "after");
                 }
                 draggedTaskIdRef.current = null;
               }}
@@ -169,16 +214,21 @@ const ProjectKanbanBoard: React.FC<ProjectKanbanBoardProps> = ({
                   e.preventDefault();
                   e.stopPropagation();
                   e.dataTransfer.dropEffect = "move";
+                  if (dropTarget !== null) {
+                    setDropTarget(null);
+                  }
                 }}
                 onDrop={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   dragCounterMap.current = {};
                   setDragOverCol(null);
+                  setDropTarget(null);
+                  setDraggedTaskId(null);
                   const dataId = Number(e.dataTransfer.getData("text/plain"));
                   const taskId = dataId || draggedTaskIdRef.current;
                   if (taskId) {
-                    handleUpdateStatus(taskId, col.id);
+                    handleReorderTasks(taskId, null, col.id, "after");
                   }
                   draggedTaskIdRef.current = null;
                 }}
@@ -196,12 +246,14 @@ const ProjectKanbanBoard: React.FC<ProjectKanbanBoardProps> = ({
                       e.stopPropagation();
                       dragCounterMap.current = {};
                       setDragOverCol(null);
+                      setDropTarget(null);
+                      setDraggedTaskId(null);
                       const dataId = Number(
                         e.dataTransfer.getData("text/plain"),
                       );
                       const taskId = dataId || draggedTaskIdRef.current;
                       if (taskId) {
-                        handleUpdateStatus(taskId, col.id);
+                        handleReorderTasks(taskId, null, col.id, "after");
                       }
                       draggedTaskIdRef.current = null;
                     }}
@@ -222,12 +274,14 @@ const ProjectKanbanBoard: React.FC<ProjectKanbanBoardProps> = ({
                         e.stopPropagation();
                         dragCounterMap.current = {};
                         setDragOverCol(null);
+                        setDropTarget(null);
+                        setDraggedTaskId(null);
                         const dataId = Number(
                           e.dataTransfer.getData("text/plain"),
                         );
                         const taskId = dataId || draggedTaskIdRef.current;
                         if (taskId) {
-                          handleUpdateStatus(taskId, col.id);
+                          handleReorderTasks(taskId, null, col.id, "after");
                         }
                         draggedTaskIdRef.current = null;
                       }}
@@ -263,60 +317,118 @@ const ProjectKanbanBoard: React.FC<ProjectKanbanBoardProps> = ({
                         task.project?.title || projectName || "General";
                       const timestampInfo = formatTaskTimestamp ? formatTaskTimestamp(task) : formatTaskCardTimestamp(task, formatTime);
 
+                      const isTargetBefore =
+                        dropTarget?.taskId === task.id &&
+                        dropTarget?.position === "before" &&
+                        draggedTaskId !== task.id;
+                      const isTargetAfter =
+                        dropTarget?.taskId === task.id &&
+                        dropTarget?.position === "after" &&
+                        draggedTaskId !== task.id;
+                      const isDraggingThis = draggedTaskId === task.id;
+
                       return (
-                        <div
-                          key={task.id}
-                          draggable
-                          onDragStart={(e) => {
-                            draggedTaskIdRef.current = task.id;
-                            e.dataTransfer.setData(
-                              "text/plain",
-                              String(task.id),
-                            );
-                            e.dataTransfer.effectAllowed = "move";
-                            if (e.currentTarget) {
+                        <React.Fragment key={task.id}>
+                          {isTargetBefore && (
+                            <div className="w-full h-1 bg-[#ff7300] rounded-full shadow-xs animate-pulse transition-all" />
+                          )}
+                          <div
+                            draggable
+                            onDragStart={(e) => {
+                              draggedTaskIdRef.current = task.id;
+                              setDraggedTaskId(task.id);
+                              e.dataTransfer.setData(
+                                "text/plain",
+                                String(task.id),
+                              );
+                              e.dataTransfer.effectAllowed = "move";
+                              if (e.currentTarget) {
+                                const rect =
+                                  e.currentTarget.getBoundingClientRect();
+                                e.dataTransfer.setDragImage(
+                                  e.currentTarget,
+                                  Math.min(
+                                    Math.max(10, e.clientX - rect.left),
+                                    rect.width / 2,
+                                  ),
+                                  Math.min(
+                                    Math.max(10, e.clientY - rect.top),
+                                    30,
+                                  ),
+                                );
+                              }
+                            }}
+                            onDragEnd={() => {
+                              draggedTaskIdRef.current = null;
+                              setDraggedTaskId(null);
+                              setDropTarget(null);
+                              setDragOverCol(null);
+                              dragCounterMap.current = {};
+                            }}
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              e.dataTransfer.dropEffect = "move";
                               const rect =
                                 e.currentTarget.getBoundingClientRect();
-                              e.dataTransfer.setDragImage(
-                                e.currentTarget,
-                                Math.min(
-                                  Math.max(10, e.clientX - rect.left),
-                                  rect.width / 2,
-                                ),
-                                Math.min(
-                                  Math.max(10, e.clientY - rect.top),
-                                  30,
-                                ),
+                              const position: "before" | "after" =
+                                e.clientY < rect.top + rect.height / 2
+                                  ? "before"
+                                  : "after";
+                              if (
+                                !dropTarget ||
+                                dropTarget.taskId !== task.id ||
+                                dropTarget.position !== position
+                              ) {
+                                setDropTarget({ taskId: task.id, position });
+                              }
+                            }}
+                            onDragLeave={(e) => {
+                              e.preventDefault();
+                              if (
+                                !e.currentTarget.contains(
+                                  e.relatedTarget as Node,
+                                )
+                              ) {
+                                if (dropTarget?.taskId === task.id) {
+                                  setDropTarget(null);
+                                }
+                              }
+                            }}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const rect =
+                                e.currentTarget.getBoundingClientRect();
+                              const position: "before" | "after" =
+                                e.clientY < rect.top + rect.height / 2
+                                  ? "before"
+                                  : "after";
+                              const dataId = Number(
+                                e.dataTransfer.getData("text/plain"),
                               );
-                            }
-                          }}
-                          onDragEnd={() => {
-                            draggedTaskIdRef.current = null;
-                            setDragOverCol(null);
-                            dragCounterMap.current = {};
-                          }}
-                          onDragOver={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            e.dataTransfer.dropEffect = "move";
-                          }}
-                          onDrop={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            dragCounterMap.current = {};
-                            setDragOverCol(null);
-                            const dataId = Number(
-                              e.dataTransfer.getData("text/plain"),
-                            );
-                            const taskId = dataId || draggedTaskIdRef.current;
-                            if (taskId && taskId !== task.id) {
-                              handleUpdateStatus(taskId, col.id);
-                            }
-                            draggedTaskIdRef.current = null;
-                          }}
-                          onClick={() => handleOpenEditModal(task)}
-                          className="group bg-white rounded-xl p-3 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col gap-2 cursor-pointer active:opacity-75 w-full min-w-0 max-w-full select-none"
-                        >
+                              const taskId = dataId || draggedTaskIdRef.current;
+                              setDropTarget(null);
+                              setDraggedTaskId(null);
+                              draggedTaskIdRef.current = null;
+                              dragCounterMap.current = {};
+                              setDragOverCol(null);
+                              if (taskId && taskId !== task.id) {
+                                handleReorderTasks(
+                                  taskId,
+                                  task.id,
+                                  col.id,
+                                  position,
+                                );
+                              }
+                            }}
+                            onClick={() => handleOpenEditModal(task)}
+                            className={`bg-white rounded-xl p-3 border border-slate-200/80 ${getPriorityBadgeConfig(task.priority).leftBorder} shadow-xs flex flex-col gap-2 cursor-pointer w-full min-w-0 max-w-full select-none transition-all duration-150 ${
+                              isDraggingThis
+                                ? "opacity-35 scale-[0.98] border-dashed border-[#ff7300] bg-orange-50/20"
+                                : ""
+                            }`}
+                          >
                           {/* Cover image thumbnail if attachments exist */}
                           {taskAttachments.length > 0 &&
                             (taskAttachments[0].url ||
@@ -328,13 +440,13 @@ const ProjectKanbanBoard: React.FC<ProjectKanbanBoardProps> = ({
                                     getImageUrl(taskAttachments[0].url)
                                   }
                                   alt={task.title}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                  className="w-full h-full object-cover"
                                 />
                               </div>
                             )}
 
                           {/* Task Title */}
-                          <h4 className="text-xs font-bold text-slate-900 leading-snug group-hover:text-primary transition-colors line-clamp-2">
+                          <h4 className="text-xs font-bold text-slate-900 leading-snug line-clamp-2">
                             {task.title}
                           </h4>
 
@@ -345,13 +457,16 @@ const ProjectKanbanBoard: React.FC<ProjectKanbanBoardProps> = ({
                             </p>
                           )}
 
-                          {/* Tag & Status Row */}
-                          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                            <span className="px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200/60 truncate max-w-[110px]">
+                          {/* Tag, Status & Priority Row - Clean single-line layout without awkward wrapping */}
+                          <div className="flex items-center gap-1.5 flex-nowrap w-full min-w-0 pt-0.5">
+                            <span
+                              title={taskTag}
+                              className="px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200/60 truncate max-w-[75px] shrink"
+                            >
                               {taskTag}
                             </span>
 
-                            {/* Simple Status Badge (No Dropdown) */}
+                            {/* Simple Status Badge */}
                             <span
                               className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${col.badgeBg} ${col.badgeText} border ${col.badgeBorder} shrink-0`}
                             >
@@ -364,12 +479,25 @@ const ProjectKanbanBoard: React.FC<ProjectKanbanBoardProps> = ({
                               />
                               <span>{col.label}</span>
                             </span>
+
+                            {/* Priority Badge - Placed right next to status badge, strictly on the same line */}
+                            {(() => {
+                              const prio = getPriorityBadgeConfig(task.priority);
+                              return (
+                                <span
+                                  title={`Priority: ${prio.label}`}
+                                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${prio.badgeBg} ${prio.badgeText} border ${prio.badgeBorder} shrink-0`}
+                                >
+                                  <span className={`w-1.5 h-1.5 rounded-full ${prio.dotColor}`} />
+                                  <span>{prio.label}</span>
+                                </span>
+                              );
+                            })()}
                           </div>
 
-                          {/* Footer Row: Priority, Task Key, Estimate, Attachments & Comments */}
+                          {/* Footer Row: Task Key, Estimate, Attachments & Comments */}
                           <div className="flex items-center justify-between pt-1.5 border-t border-slate-100 mt-0.5">
-                            <div className="flex items-center gap-1 text-slate-500 min-w-0">
-                              {renderPriorityIndicator(task.priority)}
+                            <div className="flex items-center gap-1.5 text-slate-500 min-w-0">
                               <span className="text-[11px] font-semibold tracking-tight text-slate-600">
                                 {taskKey}
                               </span>
@@ -447,7 +575,11 @@ const ProjectKanbanBoard: React.FC<ProjectKanbanBoardProps> = ({
                               </span>
                             </div>
                           )}
-                        </div>
+                          </div>
+                          {isTargetAfter && (
+                            <div className="w-full h-1 bg-[#ff7300] rounded-full shadow-xs animate-pulse transition-all" />
+                          )}
+                        </React.Fragment>
                       );
                     })}
 
@@ -465,12 +597,14 @@ const ProjectKanbanBoard: React.FC<ProjectKanbanBoardProps> = ({
                         e.stopPropagation();
                         dragCounterMap.current = {};
                         setDragOverCol(null);
+                        setDropTarget(null);
+                        setDraggedTaskId(null);
                         const dataId = Number(
                           e.dataTransfer.getData("text/plain"),
                         );
                         const taskId = dataId || draggedTaskIdRef.current;
                         if (taskId) {
-                          handleUpdateStatus(taskId, col.id);
+                          handleReorderTasks(taskId, null, col.id, "after");
                         }
                         draggedTaskIdRef.current = null;
                       }}

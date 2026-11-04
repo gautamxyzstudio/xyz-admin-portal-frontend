@@ -19,7 +19,7 @@ import {
 } from "../projectsApi";
 import type { ProjectPayload } from "../projects.types";
 import { useSelector } from "react-redux";
-import { userInState } from "../../auth/authSlice";
+import { userInState, userDetailsInState } from "../../auth/authSlice";
 import { employeeListInState } from "../../employee/employeeSlice";
 import { useGetEmployeeListQuery } from "../../employee/employeeApis";
 import { useUploadFileMutation } from "../../../shared/api/sharedApi";
@@ -28,13 +28,31 @@ import { Icons } from "../../../assets/myAssets/exporter";
 const Projects = () => {
   // ===== API =====
   const user = useSelector(userInState);
+  const userDetails = useSelector(userDetailsInState);
   const employeeList = useSelector(employeeListInState);
 
-  const { isLoading: isEmployeeListLoading } = useGetEmployeeListQuery({
-    user_type: user ? user.user_type : "",
-  });
+  const userRole = (
+    user?.user_type ||
+    userDetails?.role ||
+    ""
+  ).toLowerCase();
+  const isAdmin =
+    userRole === "admin" ||
+    userRole === "hr" ||
+    userRole === "management";
 
-  const { data: projects, isLoading, refetch } = useGetProjectsQuery();
+  const { isLoading: isEmployeeListLoading } = useGetEmployeeListQuery(
+    {
+      user_type: user ? user.user_type : "",
+    },
+    {
+      skip: !isAdmin,
+    }
+  );
+
+  const { data: projects, isLoading, refetch } = useGetProjectsQuery(undefined, {
+    skip: !isAdmin,
+  });
 
   const [addProject] = useAddProjectMutation();
   const [updateProject] = useUpdateProjectMutation();

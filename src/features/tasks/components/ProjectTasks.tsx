@@ -24,9 +24,7 @@ import {
   type IProjectTaskItem,
   type TaskStatus,
 } from "../taskApi";
-import { useGetActiveEmployeesQuery } from "../../allTasks/allTaskApi";
 import { useGetTaskBoardProjectsQuery } from "../../taskBoard/taskBoardApi";
-import { useGetProjectsQuery } from "../../projects/projectsApi";
 import { userInState, userDetailsInState } from "../../auth/authSlice";
 import {
   getImageUrl,
@@ -539,6 +537,50 @@ const STATUS_OPTIONS: {
     },
   ];
 
+type ColumnOrders = Record<TaskStatus, number[]>;
+
+const getColumnOrdersStorageKey = (proj: string) =>
+  `xyz_kanban_order_${(proj || "default").trim().toLowerCase().replace(/\s+/g, "_")}`;
+
+const loadColumnOrders = (proj: string): ColumnOrders => {
+  if (!proj) {
+    return { planned: [], "in-progress": [], blocked: [], completed: [] };
+  }
+  try {
+    const raw = localStorage.getItem(getColumnOrdersStorageKey(proj));
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object") {
+        return {
+          planned: Array.isArray(parsed.planned) ? parsed.planned.map(Number) : [],
+          "in-progress": Array.isArray(parsed["in-progress"])
+            ? parsed["in-progress"].map(Number)
+            : [],
+          blocked: Array.isArray(parsed.blocked) ? parsed.blocked.map(Number) : [],
+          completed: Array.isArray(parsed.completed)
+            ? parsed.completed.map(Number)
+            : [],
+        };
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return { planned: [], "in-progress": [], blocked: [], completed: [] };
+};
+
+const saveColumnOrders = (proj: string, orders: ColumnOrders) => {
+  if (!proj) return;
+  try {
+    localStorage.setItem(
+      getColumnOrdersStorageKey(proj),
+      JSON.stringify(orders),
+    );
+  } catch {
+    // ignore
+  }
+};
+
 const ProjectTasks: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -547,10 +589,15 @@ const ProjectTasks: React.FC = () => {
   // Auth & Permissions
   const currentUser = useSelector(userInState);
   const userDetails = useSelector(userDetailsInState);
+  const userRole = (
+    currentUser?.user_type ||
+    userDetails?.role ||
+    ""
+  ).toLowerCase();
   const isAdmin =
-    currentUser?.user_type === "Admin" ||
-    currentUser?.user_type === "Hr" ||
-    currentUser?.user_type === "Management";
+    userRole === "admin" ||
+    userRole === "hr" ||
+    userRole === "management";
 
   // Projects list for fallback
   const { data: boardProjects = [] } = useGetTaskBoardProjectsQuery();
@@ -571,6 +618,17 @@ const ProjectTasks: React.FC = () => {
   const [localTasksOverride, setLocalTasksOverride] = useState<
     Record<number, TaskStatus>
   >({});
+
+  // Kanban column task orders state (persisted per project)
+  const [columnOrders, setColumnOrders] = useState<ColumnOrders>(() =>
+    loadColumnOrders(projectName),
+  );
+
+  useEffect(() => {
+    if (projectName) {
+      setColumnOrders(loadColumnOrders(projectName));
+    }
+  }, [projectName]);
 
   // Priority dropdown ref for outside click
   const priorityDropdownRef = useRef<HTMLDivElement>(null);
@@ -712,40 +770,33 @@ const ProjectTasks: React.FC = () => {
     return [];
   }, [projectTasksResponse]);
 
-  // RTK Query: all active employees (Only for Admin/HR, skip for Employee to avoid 403)
-  const { data: activeEmployees = [] } = useGetActiveEmployeesQuery(undefined, {
-    skip: !isAdmin,
-  });
-
-  // RTK Query: fetch all projects with populated team members (Only for Admin/HR, skip for Employee to avoid 403 Forbidden)
-  const { data: projectsData, isLoading: isProjectsLoading } =
-    useGetProjectsQuery(undefined, {
-      skip: !isAdmin,
-    });
-
-  // Normalize projects list from Strapi response
-  const allProjectsList: any[] = useMemo(() => {
-    if (Array.isArray(projectsData?.projects)) return projectsData.projects;
-    if (Array.isArray(projectsData?.data)) return projectsData.data;
-    if (Array.isArray(projectsData)) return projectsData;
-    return [];
-  }, [projectsData]);
-
-  // Find current project object to access its assigned team members
-  const currentProjectObj = useMemo(() => {
-    if (!projectName || allProjectsList.length === 0) return null;
-    return (
-      allProjectsList.find(
-        (p: any) =>
-          (p.title || p.attributes?.title || "").toLowerCase().trim() ===
-          projectName.toLowerCase().trim(),
-      ) || null
-    );
-  }, [allProjectsList, projectName]);
+  const isProjectsLoading = false;
 
   // Employees available for task assignment in this project
   const projectAssignedEmployees = useMemo(() => {
     const map = new Map<string, any>();
+
+    const isHrOrAdmin = (emp: any) => {
+      const role = (
+        emp?.role?.name ||
+        emp?.role ||
+        emp?.user_type ||
+        emp?.designation ||
+        ""
+      ).toLowerCase();
+      const uname = (emp?.username || emp?.name || "").toLowerCase();
+      const mail = (emp?.email || "").toLowerCase();
+      return (
+        role === "hr" ||
+        role === "admin" ||
+        role === "management" ||
+        uname.includes("testhr") ||
+        uname === "hr" ||
+        uname === "admin" ||
+        mail.includes("testhr") ||
+        mail.includes("hr@")
+      );
+    };
 
     const formatEmp = (emp: any) => {
       const id = emp.id;
@@ -765,46 +816,24 @@ const ProjectTasks: React.FC = () => {
         profile_photo: photo,
         image: photo,
         email,
+        role: emp.role,
+        user_type: emp.user_type,
       };
     };
 
     // 1. Employees returned directly from /api/task-items/project (Primary source!)
     projectEndpointEmployees.forEach((emp: any) => {
+      if (isHrOrAdmin(emp)) return;
       const key = String(emp.id);
       if (!map.has(key)) {
         map.set(key, formatEmp(emp));
       }
     });
 
-    // 2. If HR/Admin loaded project users from /api/projects?populate=*
-    const rawUsers: any[] =
-      currentProjectObj?.users_permissions_users ||
-      currentProjectObj?.attributes?.users_permissions_users?.data ||
-      currentProjectObj?.users ||
-      [];
-
-    if (Array.isArray(rawUsers) && rawUsers.length > 0) {
-      rawUsers.forEach((u: any) => {
-        const uId = String(u.id);
-        if (!map.has(uId)) {
-          map.set(uId, formatEmp(u));
-        }
-      });
-    }
-
-    // 3. If Admin/HR, also allow any activeEmployees
-    if (isAdmin && Array.isArray(activeEmployees)) {
-      activeEmployees.forEach((emp: any) => {
-        const key = String(emp.id);
-        if (!map.has(key)) {
-          map.set(key, formatEmp(emp));
-        }
-      });
-    }
-
-    // 4. Any assignees already present in project tasks
+    // 2. Any assignees already present in project tasks
     tasks.forEach((t) => {
       if (t.assigned_to?.id && !map.has(String(t.assigned_to.id))) {
+        if (isHrOrAdmin(t.assigned_to)) return;
         map.set(String(t.assigned_to.id), {
           id: t.assigned_to.id,
           username: t.assigned_to.username,
@@ -817,8 +846,8 @@ const ProjectTasks: React.FC = () => {
       }
     });
 
-    // 5. Current logged-in user so self-assignment is always possible
-    if (currentUser?.id && !map.has(String(currentUser.id))) {
+    // 3. Current logged-in user: ONLY self-assignment for regular employees (never HR or Admin)
+    if (!isAdmin && currentUser?.id && !map.has(String(currentUser.id))) {
       map.set(String(currentUser.id), {
         id: currentUser.id,
         username: (currentUser as any)?.username || currentUserName || "You",
@@ -830,17 +859,15 @@ const ProjectTasks: React.FC = () => {
       });
     }
 
-    return Array.from(map.values());
+    return Array.from(map.values()).filter((emp) => !isHrOrAdmin(emp));
   }, [
     projectEndpointEmployees,
-    currentProjectObj,
-    isAdmin,
-    activeEmployees,
     tasks,
     currentUser,
     userDetails,
     currentUserPhoto,
     currentUserName,
+    isAdmin,
   ]);
 
   // Selected employee object for rich Assignee dropdown
@@ -849,17 +876,14 @@ const ProjectTasks: React.FC = () => {
     return (
       projectAssignedEmployees.find(
         (emp) => String(emp.id) === String(taskForm.assignedTo),
-      ) ||
-      activeEmployees.find(
-        (emp) => String(emp.id) === String(taskForm.assignedTo),
-      ) ||
-      null
+      ) || null
     );
-  }, [projectAssignedEmployees, activeEmployees, taskForm.assignedTo]);
+  }, [projectAssignedEmployees, taskForm.assignedTo]);
 
   // Filtered project employees for search inside dropdown
   const filteredProjectEmployees = useMemo(() => {
     if (!assigneeSearchQuery.trim()) return projectAssignedEmployees;
+  
     const q = assigneeSearchQuery.toLowerCase().trim();
     return projectAssignedEmployees.filter(
       (emp) =>
@@ -875,13 +899,9 @@ const ProjectTasks: React.FC = () => {
     return (
       projectAssignedEmployees.find(
         (emp) => String(emp.id) === String(editTaskForm.assignedTo),
-      ) ||
-      activeEmployees.find(
-        (emp) => String(emp.id) === String(editTaskForm.assignedTo),
-      ) ||
-      null
+      ) || null
     );
-  }, [projectAssignedEmployees, activeEmployees, editTaskForm.assignedTo]);
+  }, [projectAssignedEmployees, editTaskForm.assignedTo]);
 
   // Filtered employees for search inside Edit Modal
   const editFilteredProjectEmployees = useMemo(() => {
@@ -1019,11 +1039,6 @@ const ProjectTasks: React.FC = () => {
             (e) =>
               (e.username || e.name)?.toLowerCase().trim() ===
               username.toLowerCase().trim(),
-          ) ||
-          activeEmployees.find(
-            (e) =>
-              (e.username || e.name)?.toLowerCase().trim() ===
-              username.toLowerCase().trim(),
           );
         const photo =
           t.assigned_to?.photo ||
@@ -1037,7 +1052,7 @@ const ProjectTasks: React.FC = () => {
       }
     });
     return Array.from(map.values());
-  }, [displayTasks, projectAssignedEmployees, activeEmployees]);
+  }, [displayTasks, projectAssignedEmployees]);
 
   // Filter tasks based on search, selected assignee, and priority
   const filteredTasks = useMemo(() => {
@@ -1078,14 +1093,26 @@ const ProjectTasks: React.FC = () => {
         (sum, t) => sum + (Number(t.estimatedMinutes) || 0),
         0,
       );
+
+      const orderList = columnOrders[col.id] || [];
+      const orderMap = new Map<number, number>();
+      orderList.forEach((id, idx) => orderMap.set(id, idx));
+
+      const sortedColTasks = [...colTasks].sort((a, b) => {
+        const aIdx = orderMap.has(a.id) ? orderMap.get(a.id)! : 999999;
+        const bIdx = orderMap.has(b.id) ? orderMap.get(b.id)! : 999999;
+        if (aIdx !== bIdx) return aIdx - bIdx;
+        return 0;
+      });
+
       return {
         ...col,
-        tasks: colTasks,
+        tasks: sortedColTasks,
         totalTimeFormatted: formatTime(totalMinutes),
-        count: colTasks.length,
+        count: sortedColTasks.length,
       };
     });
-  }, [filteredTasks]);
+  }, [filteredTasks, columnOrders]);
 
   // Handlers
   const handleOpenAddModal = (status: TaskStatus) => {
@@ -1169,7 +1196,7 @@ const ProjectTasks: React.FC = () => {
     setSelectedTask(task);
     const assignedId =
       task.assigned_to?.id ||
-      activeEmployees.find(
+      projectAssignedEmployees.find(
         (e) =>
           e.username === task.Task_assigned_to ||
           e.name === task.Task_assigned_to,
@@ -1378,35 +1405,100 @@ const ProjectTasks: React.FC = () => {
     }
   };
 
-  const handleUpdateStatus = async (taskId: number, newStatus: TaskStatus) => {
-    const currentTask = tasks.find((t) => t.id === taskId) || selectedTask;
-    setLocalTasksOverride((prev) => ({ ...prev, [taskId]: newStatus }));
+  const handleReorderTasks = async (
+    sourceTaskId: number,
+    targetTaskId: number | null,
+    targetStatus: TaskStatus,
+    position: "before" | "after" = "after",
+  ) => {
+    const sourceTask = displayTasks.find((t) => t.id === sourceTaskId);
+    if (!sourceTask) return;
 
-    try {
-      await updateTask({
-        id: taskId,
-        body: { status: newStatus },
-      }).unwrap();
-      toast.success(`Task moved to ${newStatus}`);
+    const sourceStatus = sourceTask.status;
+    const isStatusChange = sourceStatus !== targetStatus;
 
-      // Note: Status transitions on drag-and-drop are automatically recorded in taskHistory by the backend on updateTask
+    // Snapshot of previous orders for potential rollback
+    const prevOrders: ColumnOrders = {
+      planned: [...(columnOrders.planned || [])],
+      "in-progress": [...(columnOrders["in-progress"] || [])],
+      blocked: [...(columnOrders.blocked || [])],
+      completed: [...(columnOrders.completed || [])],
+    };
 
-      if (selectedTask && selectedTask.id === taskId) {
-        setSelectedTask({ ...selectedTask, status: newStatus });
+    // All tasks that belong to the target column (including sourceTask if moving)
+    const allTargetTasks = displayTasks.filter(
+      (t) => (t.id === sourceTaskId ? targetStatus : t.status) === targetStatus,
+    );
+
+    // Build target column order
+    const targetOrderList: number[] = [];
+
+    // 1. Keep tasks that already exist in target column order (excluding sourceTask)
+    (prevOrders[targetStatus] || []).forEach((id) => {
+      if (id !== sourceTaskId && allTargetTasks.some((t) => t.id === id)) {
+        targetOrderList.push(id);
       }
-      refetch();
-    } catch (err: any) {
-      setLocalTasksOverride((prev) => {
-        const next = { ...prev };
-        delete next[taskId];
-        return next;
-      });
-      if (selectedTask && selectedTask.id === taskId && currentTask) {
-        setSelectedTask({ ...selectedTask, status: currentTask.status });
+    });
+
+    // 2. Add any tasks currently in target column not yet in targetOrderList
+    allTargetTasks.forEach((t) => {
+      if (t.id !== sourceTaskId && !targetOrderList.includes(t.id)) {
+        targetOrderList.push(t.id);
       }
-      toast.error(
-        err?.data?.error?.message || err?.message || "Failed to update status",
-      );
+    });
+
+    // 3. Insert sourceTaskId at requested position
+    if (targetTaskId && targetOrderList.includes(targetTaskId)) {
+      const targetIdx = targetOrderList.indexOf(targetTaskId);
+      const insertIdx = position === "before" ? targetIdx : targetIdx + 1;
+      targetOrderList.splice(insertIdx, 0, sourceTaskId);
+    } else {
+      if (position === "before") {
+        targetOrderList.unshift(sourceTaskId);
+      } else {
+        targetOrderList.push(sourceTaskId);
+      }
+    }
+
+    // 4. Update source column order if status changed
+    const newSourceOrderList = isStatusChange
+      ? (prevOrders[sourceStatus] || []).filter((id) => id !== sourceTaskId)
+      : targetOrderList;
+
+    const nextOrders: ColumnOrders = {
+      ...prevOrders,
+      [sourceStatus]: newSourceOrderList,
+      [targetStatus]: targetOrderList,
+    };
+
+    // Immediate state & local storage update
+    setColumnOrders(nextOrders);
+    saveColumnOrders(projectName, nextOrders);
+
+    if (isStatusChange) {
+      setLocalTasksOverride((prev) => ({ ...prev, [sourceTaskId]: targetStatus }));
+      try {
+        await updateTask({
+          id: sourceTaskId,
+          body: { status: targetStatus },
+        }).unwrap();
+        toast.success(`Task moved to ${targetStatus}`);
+        if (selectedTask && selectedTask.id === sourceTaskId) {
+          setSelectedTask({ ...selectedTask, status: targetStatus });
+        }
+        refetch();
+      } catch (err: any) {
+        setLocalTasksOverride((prev) => {
+          const next = { ...prev };
+          delete next[sourceTaskId];
+          return next;
+        });
+        setColumnOrders(prevOrders);
+        saveColumnOrders(projectName, prevOrders);
+        toast.error(
+          err?.data?.error?.message || err?.message || "Failed to update status",
+        );
+      }
     }
   };
 
@@ -1521,7 +1613,7 @@ const ProjectTasks: React.FC = () => {
   );
 
   return (
-    <div className="w-full h-full flex flex-col p-5 overflow-y-auto min-h-0 gap-3.5 bg-[#fbfbfb] scrollbar-hide [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+    <div className="w-full min-h-screen flex flex-col p-5 overflow-y-auto min-h-0 gap-3.5 bg-[#fbfbfb] scrollbar-hide [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
       {/* 1. Header Section: Breadcrumbs + Project Title + Create Task Button */}
       <div className="flex flex-col gap-0.5 shrink-0">
         {/* Breadcrumb */}
@@ -1711,7 +1803,7 @@ const ProjectTasks: React.FC = () => {
         dragOverCol={dragOverCol}
         setDragOverCol={setDragOverCol}
         draggedTaskIdRef={draggedTaskIdRef}
-        handleUpdateStatus={handleUpdateStatus}
+        handleReorderTasks={handleReorderTasks}
         handleOpenAddModal={handleOpenAddModal}
         handleOpenEditModal={handleOpenEditModal}
         getImageUrl={getImageUrl}
