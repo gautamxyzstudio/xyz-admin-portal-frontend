@@ -6,10 +6,18 @@ export interface IWorkLogTask {
   total_time_taken: number;
 }
 
+export interface ICurrentTask {
+  work_log_id: number;
+  project_name: string;
+  work_log_title: string;
+  started_at: string;
+}
+
 export interface IEmployeeWorkLog {
   employee_id: number;
   employee_username: string;
   photo_url: string | null;
+  current_task?: ICurrentTask | null;
   work_logs: IWorkLogTask[];
 }
 

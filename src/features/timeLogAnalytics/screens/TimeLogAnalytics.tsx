@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { ChevronRight, Clock, ChevronDown, Briefcase } from "lucide-react";
 import { useLazyGetTimeLogsQuery } from "../timeLogApi";
+import { type ICurrentTask } from "../timeLog.types";
 import { secondsToHoursMinutes } from "../../../utils/utils";
 import dayjs, { Dayjs } from "dayjs";
 import PickerInput from "../../../shared/components/pickerInput/PickerInput";
@@ -22,6 +23,7 @@ interface WorkLog {
   avatar?: string;
   totalTime: string;
   currentTask: string;
+  currentTaskObj?: ICurrentTask | null;
   workDate: string;
   rawSeconds: number;
   tasks: any[];
@@ -82,6 +84,12 @@ const TimeLogAnalytics: React.FC = () => {
         const defaultDate = startDate
           ? startDate.format("YYYY-MM-DD")
           : dayjs().format("YYYY-MM-DD");
+        const todayStr = dayjs().format("YYYY-MM-DD");
+        const isViewingToday =
+          !startDate ||
+          !endDate ||
+          (!dayjs().isBefore(startDate, "day") &&
+            !dayjs().isAfter(endDate, "day"));
 
         employeesData.forEach((emp: any) => {
           const empName = emp.employee_username || "Unknown";
@@ -92,8 +100,85 @@ const TimeLogAnalytics: React.FC = () => {
             emp.email ||
             `${empName.toLowerCase().replace(/\s+/g, "")}@xyz.com`;
           const logs = emp.work_logs || [];
+          const currentTask: ICurrentTask | null = emp.current_task || null;
 
-          if (logs.length === 0) {
+          // Group by date
+          const dateMap: Record<string, any[]> = {};
+          logs.forEach((log: any) => {
+            const d = log.date || defaultDate;
+            if (!dateMap[d]) dateMap[d] = [];
+
+            const isThisRunning = Boolean(
+              currentTask &&
+                (Number(log.work_log_id) === Number(currentTask.work_log_id) ||
+                  (log.work_log_title &&
+                    currentTask.work_log_title &&
+                    log.work_log_title === currentTask.work_log_title))
+            );
+
+            dateMap[d].push({
+              id: log.work_log_id,
+              work_log_id: log.work_log_id,
+              task_title: log.work_log_title || "Untitled Task",
+              work_log_title: log.work_log_title || "Untitled Task",
+              project_name: log.project_name || "General",
+              project: { title: log.project_name || "General" },
+              total_time_taken: Number(log.total_time_taken) || 0,
+              time_spent: Number(log.total_time_taken) || 0,
+              date: d,
+              isRunning: isThisRunning,
+              is_running: isThisRunning,
+            });
+          });
+
+          // If employee has an active current_task and viewing today's date
+          if (currentTask && isViewingToday) {
+            const currentTaskDate = currentTask.started_at
+              ? dayjs(currentTask.started_at).format("YYYY-MM-DD")
+              : todayStr;
+
+            if (!dateMap[currentTaskDate]) {
+              dateMap[currentTaskDate] = [];
+            }
+
+            const existingTask = dateMap[currentTaskDate].find(
+              (t: any) =>
+                Number(t.work_log_id) === Number(currentTask.work_log_id) ||
+                Number(t.id) === Number(currentTask.work_log_id) ||
+                (currentTask.work_log_title &&
+                  t.work_log_title === currentTask.work_log_title)
+            );
+
+            if (existingTask) {
+              existingTask.isRunning = true;
+              existingTask.is_running = true;
+            } else {
+              // Active current task not yet in work_logs
+              const elapsedSec = currentTask.started_at
+                ? Math.max(
+                    dayjs().diff(dayjs(currentTask.started_at), "second"),
+                    60
+                  )
+                : 60;
+
+              dateMap[currentTaskDate].push({
+                id: currentTask.work_log_id,
+                work_log_id: currentTask.work_log_id,
+                task_title: currentTask.work_log_title || "Untitled Task",
+                work_log_title: currentTask.work_log_title || "Untitled Task",
+                project_name: currentTask.project_name || "General",
+                project: { title: currentTask.project_name || "General" },
+                total_time_taken: elapsedSec,
+                time_spent: elapsedSec,
+                date: currentTaskDate,
+                isRunning: true,
+                is_running: true,
+                started_at: currentTask.started_at,
+              });
+            }
+          }
+
+          if (Object.keys(dateMap).length === 0) {
             formatted.push({
               id: `emp-${emp.employee_id}-${defaultDate}`,
               employeeId: emp.employee_id,
@@ -103,32 +188,15 @@ const TimeLogAnalytics: React.FC = () => {
               totalTime: "0 mins",
               rawSeconds: 0,
               currentTask: "No tasks logged",
+              currentTaskObj: null,
               workDate: defaultDate,
               tasks: [],
             });
           } else {
-            // Group by date
-            const dateMap: Record<string, any[]> = {};
-            logs.forEach((log: any) => {
-              const d = log.date || defaultDate;
-              if (!dateMap[d]) dateMap[d] = [];
-              dateMap[d].push({
-                id: log.work_log_id,
-                work_log_id: log.work_log_id,
-                task_title: log.work_log_title || "Untitled Task",
-                work_log_title: log.work_log_title || "Untitled Task",
-                project_name: log.project_name || "General",
-                project: { title: log.project_name || "General" },
-                total_time_taken: Number(log.total_time_taken) || 0,
-                time_spent: Number(log.total_time_taken) || 0,
-                date: d,
-              });
-            });
-
             Object.entries(dateMap).forEach(([dateStr, taskList]) => {
               const dayTotalSeconds = taskList.reduce(
                 (acc, t) => acc + (t.total_time_taken || 0),
-                0,
+                0
               );
               formatted.push({
                 id: `emp-${emp.employee_id}-${dateStr}`,
@@ -141,7 +209,11 @@ const TimeLogAnalytics: React.FC = () => {
                     ? secondsToHoursMinutes(dayTotalSeconds)
                     : "0 mins",
                 rawSeconds: dayTotalSeconds,
-                currentTask: taskList[0]?.work_log_title || "No tasks logged",
+                currentTask:
+                  currentTask?.work_log_title ||
+                  taskList[taskList.length - 1]?.work_log_title ||
+                  "No tasks logged",
+                currentTaskObj: currentTask,
                 workDate: dateStr,
                 tasks: taskList,
               });
@@ -537,10 +609,6 @@ const TimeLogAnalytics: React.FC = () => {
                               <div className="ml-2 sm:ml-4 border-l-2 border-dashed border-indigo-200 pl-4 sm:pl-6 pb-2 space-y-3">
                                 {(() => {
                                   let cumulativeSec = 0;
-                                  const isToday = dayjs(log.workDate).isSame(
-                                    dayjs(),
-                                    "day",
-                                  );
                                   const enrichedTasks = log.tasks.map(
                                     (task: any, idx: number) => {
                                       const taskSeconds =
@@ -563,11 +631,24 @@ const TimeLogAnalytics: React.FC = () => {
                                         Math.round(widthPercent);
 
                                       const isRunning = Boolean(
-                                        task.is_running === true ||
-                                          (isToday &&
-                                            idx === log.tasks.length - 1 &&
-                                            task.is_running !== false &&
-                                            task.status !== "completed"),
+                                        task.isRunning === true ||
+                                          (log.currentTaskObj &&
+                                            (Number(task.work_log_id) ===
+                                              Number(
+                                                log.currentTaskObj.work_log_id,
+                                              ) ||
+                                              Number(task.id) ===
+                                                Number(
+                                                  log.currentTaskObj
+                                                    .work_log_id,
+                                                ) ||
+                                              (task.work_log_title &&
+                                                log.currentTaskObj
+                                                  .work_log_title &&
+                                                task.work_log_title ===
+                                                  log.currentTaskObj
+                                                    .work_log_title))) ||
+                                          task.is_running === true,
                                       );
 
                                       return {
@@ -808,7 +889,11 @@ const TimeLogAnalytics: React.FC = () => {
         <div
           className="fixed z-9999 w-72 p-3.5 bg-white rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.18)] border border-slate-100 pointer-events-none transition-all duration-150"
           style={{
-            left: `${popupPos.x}px`,
+            left: `${
+              typeof window !== "undefined"
+                ? Math.max(150, Math.min(popupPos.x, window.innerWidth - 155))
+                : popupPos.x
+            }px`,
             top: `${popupPos.y}px`,
             transform: "translate(-50%, -100%)",
           }}
@@ -832,22 +917,9 @@ const TimeLogAnalytics: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex justify-between items-center mb-2.5 pb-2 border-b border-gray-100">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
-              <Clock size={12} className="text-gray-400" />
-              <span>Total: {hoveredLog.totalTime}</span>
-            </div>
-            {hoveredTask && hoveredLog.rawSeconds > 0 && (
-              <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
-                {Math.round(
-                  ((hoveredTask.total_time_taken ||
-                    hoveredTask.time_spent ||
-                    0) /
-                    hoveredLog.rawSeconds) *
-                    100,
-                )}% of day
-              </span>
-            )}
+          <div className="flex items-center gap-1.5 mb-2.5 pb-2 border-b border-gray-100 text-xs font-bold text-slate-700">
+            <Clock size={12} className="text-gray-400" />
+            <span>Total: {hoveredLog.totalTime}</span>
           </div>
 
           {hoveredTask ? (
@@ -874,7 +946,9 @@ const TimeLogAnalytics: React.FC = () => {
                   <span>Timeline Span:</span>
                   <span>
                     {secondsToHoursMinutes(hoveredTask.startSec || 0)} →{" "}
-                    {secondsToHoursMinutes(hoveredTask.endSec || 0)}
+                    {hoveredTask.isRunning
+                      ? "Running"
+                      : secondsToHoursMinutes(hoveredTask.endSec || 0)}
                   </span>
                 </div>
               )}
