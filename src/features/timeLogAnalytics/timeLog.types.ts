@@ -1,10 +1,28 @@
-export interface TimeLogAnalyticsResponse {
-  userId: string;      
-  count: number; 
-  endDate: string;
-startDate: string;          
-  work_logs: WorkLog[];
+export interface IWorkLogTask {
+  work_log_id: number;
+  date: string;
+  project_name: string;
+  work_log_title: string;
+  total_time_taken: number;
 }
+
+export interface IEmployeeWorkLog {
+  employee_id: number;
+  employee_username: string;
+  photo_url: string | null;
+  work_logs: IWorkLogTask[];
+}
+
+export interface TimeLogAnalyticsResponse {
+  employees?: IEmployeeWorkLog[];
+  // Legacy support
+  userId?: string;
+  count?: number;
+  endDate?: string;
+  startDate?: string;
+  work_logs?: WorkLog[];
+}
+
 export interface WorkLog {
   id: number;
   tasks: Task[];
@@ -12,9 +30,10 @@ export interface WorkLog {
   updatedAt: string;
   active_task_id: number | null;
   total_time_taken: number;
-  work_date: string;       
+  work_date: string;
   user: User;
 }
+
 export interface Task {
   status: "in-progress" | "completed";
   project: Project | null;
@@ -27,14 +46,17 @@ export interface Task {
   work_sessions: WorkSession[];
   last_started_at: string | null;
 }
+
 export interface Project {
   id: number;
   title: string;
 }
+
 export interface WorkSession {
   start: string;
   end: string | null;
 }
+
 export interface User {
   id: number;
   username: string;
