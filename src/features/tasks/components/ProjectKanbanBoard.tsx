@@ -303,13 +303,20 @@ const ProjectKanbanBoard: React.FC<ProjectKanbanBoardProps> = ({
                         : null;
                       const taskKey =
                         task.taskId || (task.id ? `TSK-${task.id}` : "");
-                      const commentsCount = Array.isArray(task.taskComments)
-                        ? task.taskComments.length
-                        : Array.isArray(task.task_comments)
-                          ? task.task_comments.length
-                          : Array.isArray(task.comments)
-                            ? task.comments.length
-                            : 0;
+                      const commentsCount =
+                        typeof task.commentCount === "number"
+                          ? task.commentCount
+                          : typeof task.commentsCount === "number"
+                            ? task.commentsCount
+                            : typeof (task as any).comment_count === "number"
+                              ? (task as any).comment_count
+                              : Array.isArray(task.taskComments)
+                                ? task.taskComments.length
+                                : Array.isArray(task.task_comments)
+                                  ? task.task_comments.length
+                                  : Array.isArray(task.comments)
+                                    ? task.comments.length
+                                    : Number(task.commentCount) || 0;
                       const taskAttachments = extractTaskAttachments(
                         task.attachments,
                       );

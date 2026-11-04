@@ -57,6 +57,8 @@ export interface IProjectTaskItem {
   task_history?: any[];
   taskComments?: any[];
   task_comments?: any[];
+  commentCount?: number;
+  commentsCount?: number;
   comments?: any[];
 
 }

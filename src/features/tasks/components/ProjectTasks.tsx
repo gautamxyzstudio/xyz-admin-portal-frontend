@@ -1398,6 +1398,7 @@ const ProjectTasks: React.FC = () => {
       setCommentAttachments([]);
       setIsCommentFocused(false);
       toast.success("Comment posted successfully");
+      refetch();
     } catch (err: any) {
       toast.error(
         err?.data?.error?.message || err?.message || "Failed to post comment",
