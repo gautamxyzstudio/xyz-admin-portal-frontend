@@ -765,11 +765,6 @@ const TimeLogAnalytics: React.FC = () => {
                                                   />
                                                 </div>
 
-                                                {/* Percentage */}
-                                                <span className="text-[11px] font-bold text-slate-500 min-w-[34px] text-right">
-                                                  {task.percentage}%
-                                                </span>
-
                                                 {/* Duration */}
                                                 <div className="flex items-center gap-1 min-w-[85px] justify-end">
                                                   <Clock
