@@ -1,4 +1,4 @@
-const baseUrl = import.meta.env.VITE_API_BASE_URL;
+export const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
 export const endpoints = {
   // Authentication
@@ -56,6 +56,7 @@ export const endpoints = {
   projectTasks: `${baseUrl}/api/task-items/project`,
   taskComments: `${baseUrl}/api/task-comments`,
   taskOvertimes: `${baseUrl}/api/task-overtimes`,
+  taskTimeSummary: (id: string | number) => `${baseUrl}/api/task-items/${id}/time-summary`,
 
   // Attendance
   getAttendanceLegacy: `${baseUrl}/api/daily-attendances/?populate=*&sort=id`,

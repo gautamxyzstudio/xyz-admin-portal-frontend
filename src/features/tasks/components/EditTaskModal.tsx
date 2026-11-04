@@ -461,7 +461,11 @@ const EditTaskModal: React.FC<Props> = (props) => {
               </div>
 
               {/* Overtime Section */}
-              <TaskOvertimeSection taskId={selectedTask?.id} selectedTask={selectedTask} />
+              <TaskOvertimeSection
+                taskId={selectedTask?.id}
+                selectedTask={selectedTask}
+                currentStatus={editTaskForm.status}
+              />
 
               {/* Activity Section (Comments / History) */}
               <div className="pt-3 border-t border-slate-100">

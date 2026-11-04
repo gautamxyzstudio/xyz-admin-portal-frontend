@@ -109,6 +109,20 @@ export interface ITaskCommentItem {
 }
 
 
+export interface ITaskEmployeeTimeBreakdown {
+  employeeId: number;
+  employeeName: string;
+  photo?: string | null;
+  totalTimeSpent: number; // in seconds
+}
+
+export interface ITaskTimeSummaryResponse {
+  taskItemId: number;
+  totalTimeSpent: number; // in seconds
+  employeeCount: number;
+  employeeBreakdown: ITaskEmployeeTimeBreakdown[];
+}
+
 export interface ICreateTaskOvertimePayload {
   date: string;
   timeInMinutes: string;
@@ -269,6 +283,74 @@ export const taskApi = enhancedTaskApi.injectEndpoints({
       invalidatesTags: ["Tasks", "TaskOvertimes"],
     }),
 
+    // 10. Get Task Time Summary
+    getTaskTimeSummary: builder.query<ITaskTimeSummaryResponse, number | string>({
+      query: (taskId) => ({
+        url: endpoints.taskTimeSummary(taskId),
+        method: ApiMethodType.get,
+      }),
+      transformResponse: (response: any): ITaskTimeSummaryResponse => {
+        const data =
+          response?.data?.attributes ||
+          response?.data ||
+          response ||
+          {};
+        const rawBreakdown =
+          data.employeeBreakdown ||
+          data.employee_breakdown ||
+          data.breakdown ||
+          data.employees ||
+          [];
+
+        return {
+          taskItemId: Number(
+            data.taskItemId || data.task_item_id || data.id || 0
+          ),
+          totalTimeSpent: Number(
+            data.totalTimeSpent ??
+              data.total_time_spent ??
+              data.timeSpent ??
+              data.time_spent ??
+              data.totalTime ??
+              0
+          ),
+          employeeCount: Number(
+            data.employeeCount ??
+              data.employee_count ??
+              (Array.isArray(rawBreakdown) ? rawBreakdown.length : 0)
+          ),
+          employeeBreakdown: Array.isArray(rawBreakdown)
+            ? rawBreakdown.map((emp: any) => ({
+                employeeId: Number(
+                  emp.employeeId || emp.employee_id || emp.id || 0
+                ),
+                employeeName: String(
+                  emp.employeeName ||
+                    emp.employee_name ||
+                    emp.name ||
+                    emp.username ||
+                    "Employee"
+                ).trim(),
+                photo:
+                  emp.photo ||
+                  emp.profile_photo ||
+                  emp.avatar ||
+                  emp.image ||
+                  null,
+                totalTimeSpent: Number(
+                  emp.totalTimeSpent ??
+                    emp.total_time_spent ??
+                    emp.timeSpent ??
+                    emp.time_spent ??
+                    0
+                ),
+              }))
+            : [],
+        };
+      },
+      providesTags: ["Tasks"],
+    }),
+
     // 9. Get Task Overtimes
     getTaskOvertimes: builder.query<ITaskOvertimeItem[], number | string>({
       query: (taskId) => ({
@@ -302,4 +384,6 @@ export const {
   useCreateTaskOvertimeMutation,
   useGetTaskOvertimesQuery,
   useLazyGetTaskOvertimesQuery,
+  useGetTaskTimeSummaryQuery,
+  useLazyGetTaskTimeSummaryQuery,
 } = taskApi;

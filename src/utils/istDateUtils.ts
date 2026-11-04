@@ -21,6 +21,7 @@ export { dayjs };
 export const toIstDayjs = (
   dateInput?: string | number | Date | null | dayjs.Dayjs
 ): dayjs.Dayjs | null => {
+  if (dateInput === undefined) return dayjs().tz(IST_TIMEZONE);
   if (!dateInput) return null;
   if (dayjs.isDayjs(dateInput)) return dateInput.tz(IST_TIMEZONE);
 
