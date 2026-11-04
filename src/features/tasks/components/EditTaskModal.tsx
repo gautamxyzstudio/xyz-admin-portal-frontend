@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useRef, useEffect } from "react";
 import TaskOvertimeSection from "./TaskOvertimeSection";
+import TaskDueDatePicker from "./TaskDueDatePicker";
 
 interface Props { [key: string]: any }
 const EditTaskModal: React.FC<Props> = (props) => {
@@ -458,6 +459,23 @@ const EditTaskModal: React.FC<Props> = (props) => {
                     </span>
                   </div>
                 </div>
+              </div>
+
+              {/* Due Date (Optional) */}
+              <div>
+                <label className="text-xs font-semibold text-slate-800 block mb-1.5">
+                  Due Date <span className="text-[11px] font-normal text-slate-400">(Optional)</span>
+                </label>
+                <TaskDueDatePicker
+                  value={editTaskForm.dueDate || ""}
+                  onChange={(dateStr) =>
+                    setEditTaskForm({
+                      ...editTaskForm,
+                      dueDate: dateStr,
+                    })
+                  }
+                  disabled={isUpdating}
+                />
               </div>
 
               {/* Overtime Section */}

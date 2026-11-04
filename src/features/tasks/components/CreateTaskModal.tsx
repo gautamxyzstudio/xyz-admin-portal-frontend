@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
+import TaskDueDatePicker from "./TaskDueDatePicker";
 
 interface Props { [key: string]: any }
 const CreateTaskModal: React.FC<Props> = (props) => {
@@ -374,6 +375,20 @@ const CreateTaskModal: React.FC<Props> = (props) => {
                     </span>
                   </div>
                 </div>
+              </div>
+
+              {/* Due Date (Optional) */}
+              <div>
+                <label className="text-xs font-semibold text-slate-800 block mb-1.5">
+                  Due Date <span className="text-[11px] font-normal text-slate-400">(Optional)</span>
+                </label>
+                <TaskDueDatePicker
+                  value={taskForm.dueDate || ""}
+                  onChange={(dateStr) =>
+                    setTaskForm({ ...taskForm, dueDate: dateStr })
+                  }
+                  disabled={isCreating}
+                />
               </div>
 
               {/* Attachments Option */}

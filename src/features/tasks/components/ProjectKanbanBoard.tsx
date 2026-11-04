@@ -1,6 +1,7 @@
 import { formatTaskCardTimestamp } from "../../../utils/istDateUtils";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
+import dayjs from "dayjs";
 import { CircularProgress } from "@mui/material";
 import {
   Search,
@@ -8,6 +9,7 @@ import {
   Clock,
   Paperclip,
   MessageSquare,
+  Calendar,
 } from "lucide-react";
 import type { IProjectTaskItem, TaskStatus } from "../taskApi";
 import type { IUploadedAttachment } from "../utils/taskAttachmentUtils";
@@ -464,8 +466,8 @@ const ProjectKanbanBoard: React.FC<ProjectKanbanBoardProps> = ({
                             </p>
                           )}
 
-                          {/* Tag, Status & Priority Row - Clean single-line layout without awkward wrapping */}
-                          <div className="flex items-center gap-1.5 flex-nowrap w-full min-w-0 pt-0.5">
+                          {/* Tag, Status, Priority & Due Date Row */}
+                          <div className="flex items-center gap-1.5 flex-wrap w-full min-w-0 pt-0.5">
                             <span
                               title={taskTag}
                               className="px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200/60 truncate max-w-[75px] shrink"
@@ -497,6 +499,48 @@ const ProjectKanbanBoard: React.FC<ProjectKanbanBoardProps> = ({
                                 >
                                   <span className={`w-1.5 h-1.5 rounded-full ${prio.dotColor}`} />
                                   <span>{prio.label}</span>
+                                </span>
+                              );
+                            })()}
+
+                            {/* Due Date Badge - turns red if overdue / due today */}
+                            {task.dueDate && (() => {
+                              const dueStr = task.dueDate.split("T")[0];
+                              const isOverdue =
+                                task.status !== "completed" &&
+                                dayjs(dueStr).isBefore(dayjs(), "day");
+                              const isDueToday =
+                                task.status !== "completed" &&
+                                dayjs(dueStr).isSame(dayjs(), "day");
+
+                              return (
+                                <span
+                                  title={`Due Date: ${dayjs(dueStr).format("DD MMM YYYY")}${
+                                    isOverdue
+                                      ? " (Overdue!)"
+                                      : isDueToday
+                                        ? " (Due Today!)"
+                                        : ""
+                                  }`}
+                                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold border shrink-0 ${
+                                    isOverdue
+                                      ? "bg-rose-50 text-rose-600 border-rose-200 font-bold"
+                                      : isDueToday
+                                        ? "bg-amber-50 text-amber-700 border-amber-200 font-semibold"
+                                        : "bg-slate-50 text-slate-600 border-slate-200"
+                                  }`}
+                                >
+                                  <Calendar
+                                    size={10}
+                                    className={
+                                      isOverdue
+                                        ? "text-rose-500"
+                                        : isDueToday
+                                          ? "text-amber-500"
+                                          : "text-slate-400"
+                                    }
+                                  />
+                                  <span>{dayjs(dueStr).format("D MMM")}</span>
                                 </span>
                               );
                             })()}

@@ -651,6 +651,7 @@ const ProjectTasks: React.FC = () => {
     description: "",
     priority: "medium" as "low" | "medium" | "high",
     assignedTo: "" as string | number,
+    dueDate: "",
   });
   const [estimatedHours, setEstimatedHours] = useState("1");
   const [estimatedMinutes, setEstimatedMinutes] = useState("0");
@@ -671,6 +672,7 @@ const ProjectTasks: React.FC = () => {
     status: "planned" as TaskStatus,
     priority: "medium" as "low" | "medium" | "high",
     assignedTo: "" as string | number,
+    dueDate: "",
   });
   const [editEstimatedHours, setEditEstimatedHours] = useState("1");
   const [editEstimatedMinutes, setEditEstimatedMinutes] = useState("0");
@@ -1153,6 +1155,7 @@ const ProjectTasks: React.FC = () => {
       description: "",
       priority: "medium",
       assignedTo: "",
+      dueDate: "",
     });
     setIsCreateUnassigned(true);
     setEstimatedHours("1");
@@ -1207,6 +1210,7 @@ const ProjectTasks: React.FC = () => {
         project: projectName,
         assignedTo: taskForm.assignedTo ? taskForm.assignedTo : undefined,
         attachments: attachments.map((a) => a.id),
+        dueDate: taskForm.dueDate ? taskForm.dueDate : null,
       }).unwrap();
 
       toast.success("Task created successfully!");
@@ -1240,6 +1244,7 @@ const ProjectTasks: React.FC = () => {
       status: task.status || "planned",
       priority: task.priority || "medium",
       assignedTo: assignedId,
+      dueDate: task.dueDate ? (task.dueDate.split("T")[0] || task.dueDate) : "",
     });
     setIsEditUnassigned(!assignedId);
 
@@ -1352,6 +1357,7 @@ const ProjectTasks: React.FC = () => {
           estimatedMinutes: totalMinutes,
           assignedTo: editTaskForm.assignedTo ? editTaskForm.assignedTo : null,
           attachments: editAttachments.map((a) => a.id),
+          dueDate: editTaskForm.dueDate ? editTaskForm.dueDate : null,
         },
       }).unwrap();
 

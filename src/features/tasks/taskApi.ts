@@ -39,6 +39,7 @@ export interface IProjectTaskItem {
   status: TaskStatus;
   estimatedMinutes?: number;
   priority?: "low" | "medium" | "high";
+  dueDate?: string | null;
   createdAt?: string;
   updatedAt?: string;
   project?: {
@@ -79,6 +80,7 @@ export interface ICreateTaskPayload {
   project?: number | string;
   assignedTo?: number | string | null;
   priority?: "low" | "medium" | "high";
+  dueDate?: string | null;
   attachments?: number[];
 }
 
@@ -91,6 +93,7 @@ export interface IUpdateTaskPayload {
     estimatedMinutes?: number;
     date?: string;
     priority?: "low" | "medium" | "high";
+  dueDate?: string | null;
     assignedTo?: number | string | null;
     attachments?: number[];
   };
