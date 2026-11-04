@@ -8,6 +8,7 @@ import dayjs, { Dayjs } from "dayjs";
 import PickerInput from "../../../shared/components/pickerInput/PickerInput";
 import type { SxProps, Theme } from "@mui/material";
 import { ImSearch } from "react-icons/im";
+import { FaRunning } from "react-icons/fa";
 import ActivityIndicator from "../../../shared/components/activityIndicator/ActivityIndicator";
 import CustomButton from "../../../components/CustomButton/CustomButton";
 import { FiDownload } from "react-icons/fi";
@@ -476,42 +477,53 @@ const TimeLogAnalytics: React.FC = () => {
                           {/* Daily Activity Map */}
                           <td className="px-4 rounded-r-xl">
                             {log.tasks.length > 0 && log.rawSeconds > 0 ? (
-                              <div className="flex gap-1 h-6 w-full bg-slate-100/70 p-0.5 rounded-lg overflow-hidden">
-                                {log.tasks.map((t: any, i: number) => {
-                                  const taskSeconds =
-                                    t.total_time_taken || t.time_spent || 0;
-                                  const widthPercent = Math.max(
-                                    (taskSeconds / (log.rawSeconds || 1)) * 100,
-                                    2,
-                                  );
-                                  const colorClass =
-                                    TASK_COLORS[i % TASK_COLORS.length];
+                              <div className="flex gap-1 h-6 w-full bg-slate-100/70 p-0.5 rounded-[3px] overflow-hidden">
+                                {(() => {
+                                  let topCumulative = 0;
+                                  return log.tasks.map((t: any, i: number) => {
+                                    const taskSeconds =
+                                      t.total_time_taken || t.time_spent || 0;
+                                    const startSec = topCumulative;
+                                    const endSec = startSec + taskSeconds;
+                                    topCumulative = endSec;
 
-                                  return (
-                                    <div
-                                      key={i}
-                                      onMouseEnter={(e) => {
-                                        const rect =
-                                          e.currentTarget.getBoundingClientRect();
-                                        setPopupPos({
-                                          x: rect.left + rect.width / 2,
-                                          y: rect.top - 10,
-                                        });
-                                        setHoveredLog(log);
-                                        setHoveredTask(t);
-                                      }}
-                                      onMouseLeave={() => {
-                                        setHoveredLog(null);
-                                        setHoveredTask(null);
-                                      }}
-                                      style={{ width: `${widthPercent}%` }}
-                                      className={`h-full rounded-sm transition-all duration-150 cursor-pointer ${colorClass}`}
-                                    />
-                                  );
-                                })}
+                                    const widthPercent = Math.max(
+                                      (taskSeconds / (log.rawSeconds || 1)) * 100,
+                                      2,
+                                    );
+                                    const colorClass =
+                                      TASK_COLORS[i % TASK_COLORS.length];
+
+                                    return (
+                                      <div
+                                        key={i}
+                                        onMouseEnter={(e) => {
+                                          const rect =
+                                            e.currentTarget.getBoundingClientRect();
+                                          setPopupPos({
+                                            x: rect.left + rect.width / 2,
+                                            y: rect.top - 10,
+                                          });
+                                          setHoveredLog(log);
+                                          setHoveredTask({
+                                            ...t,
+                                            startSec,
+                                            endSec,
+                                          });
+                                        }}
+                                        onMouseLeave={() => {
+                                          setHoveredLog(null);
+                                          setHoveredTask(null);
+                                        }}
+                                        style={{ width: `${widthPercent}%` }}
+                                        className={`h-full rounded-[3px] transition-all duration-150 cursor-pointer ${colorClass}`}
+                                      />
+                                    );
+                                  });
+                                })()}
                               </div>
                             ) : (
-                              <div className="h-6 w-full bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-center text-[10px] font-medium text-slate-400">
+                              <div className="h-6 w-full bg-slate-50 border border-slate-100 rounded-[3px] flex items-center justify-center text-[10px] font-medium text-slate-400">
                                 0 mins / No tasks logged
                               </div>
                             )}
@@ -523,109 +535,265 @@ const TimeLogAnalytics: React.FC = () => {
                           <tr className="bg-slate-50/70">
                             <td colSpan={3} className="p-3 sm:p-5 pt-0">
                               <div className="ml-2 sm:ml-4 border-l-2 border-dashed border-indigo-200 pl-4 sm:pl-6 pb-2 space-y-3">
-                                <div className="flex items-center justify-between pt-3 pb-1 border-b border-slate-200/60">
-                                  <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                                    <Briefcase
-                                      size={13}
-                                      className="text-indigo-500"
-                                    />
-                                    Project & Task Breakdown
-                                  </p>
-                                  <span className="text-[11px] font-bold text-slate-400">
-                                    {log.tasks.length}{" "}
-                                    {log.tasks.length === 1 ? "Task" : "Tasks"}
-                                  </span>
-                                </div>
+                                {(() => {
+                                  let cumulativeSec = 0;
+                                  const isToday = dayjs(log.workDate).isSame(
+                                    dayjs(),
+                                    "day",
+                                  );
+                                  const enrichedTasks = log.tasks.map(
+                                    (task: any, idx: number) => {
+                                      const taskSeconds =
+                                        task.total_time_taken ||
+                                        task.time_spent ||
+                                        0;
+                                      const startSec = cumulativeSec;
+                                      const endSec = startSec + taskSeconds;
+                                      cumulativeSec = endSec;
 
-                                {log.tasks.length > 0 ? (
-                                  log.tasks.map((task: any, idx: number) => {
-                                    const taskSeconds =
-                                      task.total_time_taken ||
-                                      task.time_spent ||
-                                      0;
-                                    const percentage =
-                                      log.rawSeconds > 0
-                                        ? Math.round(
-                                            (taskSeconds / log.rawSeconds) *
-                                              100,
-                                          )
-                                        : 0;
-                                    const colorClass =
-                                      TASK_COLORS[idx % TASK_COLORS.length];
-                                    const textBadgeClass =
-                                      TASK_TEXT_COLORS[
-                                        idx % TASK_TEXT_COLORS.length
-                                      ];
+                                      const startPercent =
+                                        log.rawSeconds > 0
+                                          ? (startSec / log.rawSeconds) * 100
+                                          : 0;
+                                      const widthPercent =
+                                        log.rawSeconds > 0
+                                          ? (taskSeconds / log.rawSeconds) * 100
+                                          : 0;
+                                      const percentage =
+                                        Math.round(widthPercent);
 
-                                    return (
-                                      <div
-                                        key={task.id || idx}
-                                        className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-100 shadow-xs hover:border-indigo-100 transition-colors"
-                                      >
-                                        {/* Left: Task Info */}
-                                        <div className="flex items-start sm:items-center gap-3 md:w-[45%] min-w-0">
-                                          <div
-                                            className={`p-2 rounded-lg shrink-0 ${textBadgeClass}`}
-                                          >
-                                            <Briefcase size={15} />
-                                          </div>
-                                          <div className="min-w-0 flex-1">
-                                            <p
-                                              className="text-xs font-bold text-slate-800 truncate"
-                                              title={
-                                                task.work_log_title ||
-                                                task.task_title
-                                              }
-                                            >
-                                              {task.work_log_title ||
-                                                task.task_title ||
-                                                "Untitled Task"}
-                                            </p>
-                                            <div className="flex items-center gap-2 mt-0.5">
-                                              <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-sm">
-                                                {task.project_name ||
-                                                  task.project?.title ||
-                                                  "General"}
-                                              </span>
-                                            </div>
-                                          </div>
+                                      const isRunning = Boolean(
+                                        task.is_running === true ||
+                                          (isToday &&
+                                            idx === log.tasks.length - 1 &&
+                                            task.is_running !== false &&
+                                            task.status !== "completed"),
+                                      );
+
+                                      return {
+                                        ...task,
+                                        taskSeconds,
+                                        startSec,
+                                        endSec,
+                                        startPercent,
+                                        widthPercent,
+                                        percentage,
+                                        idx,
+                                        isRunning,
+                                      };
+                                    },
+                                  );
+
+                                  return (
+                                    <>
+                                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-3 pb-2 border-b border-slate-200/60">
+                                        <div className="flex items-center gap-2">
+                                          <Briefcase
+                                            size={14}
+                                            className="text-indigo-500"
+                                          />
+                                          <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                                            Project & Task Breakdown (Sequential Day Timeline)
+                                          </p>
                                         </div>
-
-                                        {/* Right: Progress bar & Time */}
-                                        <div className="md:w-[50%] flex items-center gap-3">
-                                          <div className="flex-1 bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                                            <div
-                                              className={`h-full rounded-full transition-all duration-500 ${
-                                                colorClass.split(" ")[0]
-                                              }`}
-                                              style={{
-                                                width: `${Math.max(percentage, 2)}%`,
-                                              }}
-                                            />
-                                          </div>
-                                          <span className="text-[11px] font-semibold text-slate-400 min-w-[36px] text-right">
-                                            {percentage}%
+                                        <div className="flex items-center gap-2 text-xs">
+                                          <span className="text-[10px] font-semibold text-slate-400">
+                                            Timeline Progression:
                                           </span>
-                                          <div className="flex items-center gap-1 min-w-[70px] justify-end">
-                                            <Clock
-                                              size={12}
-                                              className="text-gray-400"
-                                            />
-                                            <span className="text-xs font-extrabold text-slate-700">
-                                              {secondsToHoursMinutes(
-                                                taskSeconds,
-                                              )}
-                                            </span>
-                                          </div>
+                                          <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-[10px] border border-indigo-100/60">
+                                            0hrs 0min → {secondsToHoursMinutes(log.rawSeconds)}
+                                          </span>
+                                          <span className="text-[11px] font-bold text-slate-400 ml-1">
+                                            ({log.tasks.length}{" "}
+                                            {log.tasks.length === 1
+                                              ? "Task"
+                                              : "Tasks"}
+                                            )
+                                          </span>
                                         </div>
                                       </div>
-                                    );
-                                  })
-                                ) : (
-                                  <p className="text-xs text-gray-400 italic py-2">
-                                    No task logs found for this date.
-                                  </p>
-                                )}
+
+                                      {enrichedTasks.length > 0 ? (
+                                        enrichedTasks.map((task: any) => {
+                                          const colorClass =
+                                            TASK_COLORS[
+                                              task.idx % TASK_COLORS.length
+                                            ];
+                                          const textBadgeClass =
+                                            TASK_TEXT_COLORS[
+                                              task.idx % TASK_TEXT_COLORS.length
+                                            ];
+
+                                          return (
+                                            <div
+                                              key={task.id || task.idx}
+                                              className={`flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-3.5 rounded-[10px] border transition-all ${
+                                                task.isRunning
+                                                  ? "border-emerald-300 ring-2 ring-emerald-50 shadow-xs"
+                                                  : "border-slate-100 shadow-xs hover:border-indigo-100"
+                                              }`}
+                                            >
+                                              {/* Left: Task Info */}
+                                              <div className="flex items-start sm:items-center gap-3 md:w-[42%] min-w-0">
+                                                <div
+                                                  className={`p-2 rounded-lg shrink-0 ${textBadgeClass}`}
+                                                >
+                                                  <Briefcase size={15} />
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                  <p
+                                                    className="text-xs font-bold text-slate-800 truncate"
+                                                    title={
+                                                      task.work_log_title ||
+                                                      task.task_title
+                                                    }
+                                                  >
+                                                    {task.work_log_title ||
+                                                      task.task_title ||
+                                                      "Untitled Task"}
+                                                  </p>
+                                                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                                    <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-[3px]">
+                                                      {task.project_name ||
+                                                        task.project?.title ||
+                                                        "General"}
+                                                    </span>
+                                                    {task.isRunning && (
+                                                      <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-300 px-2 py-0.5 rounded-[3px] shadow-2xs">
+                                                        <FaRunning size={11} className="text-emerald-600" />
+                                                        Running
+                                                      </span>
+                                                    )}
+                                                    <span className="text-[10px] font-bold text-slate-400">
+                                                      #{task.idx + 1}
+                                                    </span>
+                                                  </div>
+                                                </div>
+                                              </div>
+
+                                              {/* Right: Sequential Timeline Bar & Time */}
+                                              <div className="md:w-[56%] flex items-center gap-3">
+                                                {/* Start → Stop Time Span */}
+                                                <span
+                                                  className={`text-[10px] font-bold px-2 py-0.5 rounded-[3px] whitespace-nowrap border ${
+                                                    task.isRunning
+                                                      ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+                                                      : "text-slate-500 bg-slate-50 border-slate-200/80"
+                                                  }`}
+                                                  title={
+                                                    task.isRunning
+                                                      ? "Currently in progress"
+                                                      : "Timeline progression in the worked day"
+                                                  }
+                                                >
+                                                  {task.isRunning ? (
+                                                    <span className="inline-flex items-center gap-1">
+                                                      <FaRunning size={10} className="text-emerald-600" />
+                                                      {secondsToHoursMinutes(
+                                                        task.startSec,
+                                                      )}{" "}
+                                                      → Running
+                                                    </span>
+                                                  ) : (
+                                                    `${secondsToHoursMinutes(
+                                                      task.startSec,
+                                                    )} → ${secondsToHoursMinutes(
+                                                      task.endSec,
+                                                    )}`
+                                                  )}
+                                                </span>
+
+                                                {/* Sequential Progress Track */}
+                                                <div
+                                                  onMouseEnter={(e) => {
+                                                    const rect =
+                                                      e.currentTarget.getBoundingClientRect();
+                                                    setPopupPos({
+                                                      x:
+                                                        rect.left +
+                                                        rect.width / 2,
+                                                      y: rect.top - 10,
+                                                    });
+                                                    setHoveredLog(log);
+                                                    setHoveredTask(task);
+                                                  }}
+                                                  onMouseLeave={() => {
+                                                    setHoveredLog(null);
+                                                    setHoveredTask(null);
+                                                  }}
+                                                  className="relative flex-1 bg-slate-100 rounded-[3px] h-3.5 overflow-hidden cursor-pointer"
+                                                >
+                                                  {/* Faint preview of all day segments in background */}
+                                                  <div className="absolute inset-0 flex gap-0.5 opacity-20 pointer-events-none">
+                                                    {enrichedTasks.map(
+                                                      (
+                                                        t: any,
+                                                        ti: number,
+                                                      ) => (
+                                                        <div
+                                                          key={ti}
+                                                          style={{
+                                                            width: `${t.widthPercent}%`,
+                                                          }}
+                                                          className={`h-full rounded-[3px] ${
+                                                            TASK_COLORS[
+                                                              ti %
+                                                                TASK_COLORS.length
+                                                            ].split(" ")[0]
+                                                          }`}
+                                                        />
+                                                      ),
+                                                    )}
+                                                  </div>
+
+                                                  {/* Active task segment positioned sequentially */}
+                                                  <div
+                                                    className={`absolute top-0 bottom-0 rounded-[3px] transition-all duration-500 shadow-xs ${
+                                                      colorClass.split(" ")[0]
+                                                    } ${
+                                                      task.isRunning
+                                                        ? "ring-1 ring-emerald-400"
+                                                        : ""
+                                                    }`}
+                                                    style={{
+                                                      left: `${task.startPercent}%`,
+                                                      width: `${Math.max(
+                                                        task.widthPercent,
+                                                        1.5,
+                                                      )}%`,
+                                                    }}
+                                                  />
+                                                </div>
+
+                                                {/* Percentage */}
+                                                <span className="text-[11px] font-bold text-slate-500 min-w-[34px] text-right">
+                                                  {task.percentage}%
+                                                </span>
+
+                                                {/* Duration */}
+                                                <div className="flex items-center gap-1 min-w-[85px] justify-end">
+                                                  <Clock
+                                                    size={12}
+                                                    className="text-gray-400"
+                                                  />
+                                                  <span className="text-xs font-extrabold text-slate-700">
+                                                    {secondsToHoursMinutes(
+                                                      task.taskSeconds,
+                                                    )}
+                                                  </span>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          );
+                                        })
+                                      ) : (
+                                        <p className="text-xs text-gray-400 italic py-2">
+                                          No task logs found for this date.
+                                        </p>
+                                      )}
+                                    </>
+                                  );
+                                })()}
                               </div>
                             </td>
                           </tr>
@@ -706,6 +874,15 @@ const TimeLogAnalytics: React.FC = () => {
               <p className="text-[11px] font-semibold text-slate-800 line-clamp-2">
                 {hoveredTask.work_log_title || hoveredTask.task_title}
               </p>
+              {hoveredTask.endSec !== undefined && (
+                <div className="text-[10px] font-bold text-indigo-500 pt-1.5 mt-1 border-t border-indigo-100 flex items-center justify-between">
+                  <span>Timeline Span:</span>
+                  <span>
+                    {secondsToHoursMinutes(hoveredTask.startSec || 0)} →{" "}
+                    {secondsToHoursMinutes(hoveredTask.endSec || 0)}
+                  </span>
+                </div>
+              )}
             </div>
           ) : (
             <div className="bg-slate-50 border border-slate-100 p-2 rounded-xl text-center">
