@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useRef, useState, useEffect } from "react";
+import { confirmDelete } from "../../../utils/confirmDelete";
 import {
   Paperclip,
   Image as ImageIcon,
@@ -146,8 +147,9 @@ export const TaskAttachmentUpload: React.FC<TaskAttachmentUploadProps> = ({
     }
   };
 
-  const handleRemove = (id: number) => {
+  const handleRemove = async (id: number) => {
     if (disabled) return;
+    if (!(await confirmDelete({ title: "Remove attachment?", itemName: "this attachment", confirmButtonText: "Yes, Remove" }))) return;
     const itemToRemove = attachments.find((a) => a.id === id);
     if (itemToRemove?.previewUrl) {
       URL.revokeObjectURL(itemToRemove.previewUrl);

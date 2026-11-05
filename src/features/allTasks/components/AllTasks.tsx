@@ -22,6 +22,7 @@ import {
   Paperclip,
 } from "lucide-react";
 import { CircularProgress } from "@mui/material";
+import { confirmDelete } from "../../../utils/confirmDelete";
 import {
   type ITaskItem,
   useGetAllTasksQuery,
@@ -140,6 +141,7 @@ export default function AllTasks() {
   };
 
   const handleDeleteTask = async (taskId: string | number) => {
+    if (!(await confirmDelete({ itemName: "this task" }))) return;
     try {
       setDeletingTaskId(taskId);
       await deleteAdminTask(taskId).unwrap();

@@ -2,6 +2,7 @@
 import type { IDocumentResponse } from "../../../documents.types";
 import { useDeleteDocumentMutation } from "../../../documentsApi";
 import { toast } from "react-toastify";
+import { confirmDelete } from "../../../../../utils/confirmDelete";
 
 interface Props {
   document: IDocumentResponse;
@@ -15,6 +16,7 @@ const DocumentCard = ({ document, onPreview, canDelete }: Props) => {
   const attrs = document.attributes.document.data.attributes;
 
   const handleDelete = async () => {
+    if (!(await confirmDelete({ itemName: "this document" }))) return;
     try {
       await deleteDocument(document.id).unwrap();
       toast.success("Document deleted");

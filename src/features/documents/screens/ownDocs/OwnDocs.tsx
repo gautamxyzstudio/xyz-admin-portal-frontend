@@ -7,6 +7,7 @@ import {
   useDeleteDocumentMutation,
   useGetDocumentsByUserQuery,
 } from "../../documentsApi";
+import { confirmDelete } from "../../../../utils/confirmDelete";
 import ActivityIndicator from "../../../../shared/components/activityIndicator/ActivityIndicator";
 import {
   UploadDialog,
@@ -73,6 +74,7 @@ const OwnDocs: React.FC<OwnDocsProps> = ({ userId, employeeName }) => {
   //   }
   // };
   const handleDelete = async (fileId: number) => {
+    if (!(await confirmDelete({ itemName: "this document" }))) return;
     setDeletingId(fileId);
 
     try {

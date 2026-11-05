@@ -14,6 +14,7 @@ import {
 import type { IBlogResponse } from "../../types";
 import { useLoadingWrapper } from "../../../../wrappers/loadingWrapper/LoadingWrapper.context";
 import { toast } from "react-toastify";
+import { confirmDelete } from "../../../../utils/confirmDelete";
 import { useCallback, useEffect, useState } from "react";
 
 const useBlogListData = () => {
@@ -79,7 +80,7 @@ const BlogList = () => {
   const onPressEdit = (id: number) => navigate(`/blog/edit_blog/${id}`);
 
   const handleDelete = async (id: number) => {
-    if (window.confirm("Do you want to delete?") && id) {
+    if (id && (await confirmDelete({ itemName: "this blog" }))) {
       try {
         setIsLoading(true);
         await deleteBlog(id).unwrap();

@@ -2,6 +2,7 @@
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { confirmDelete } from "../../../../utils/confirmDelete";
 import type { GridColDef } from "@mui/x-data-grid";
 import EmployeeTableRow from "../../components/employeeTableRow/EmployeeTableRow";
 import {
@@ -98,6 +99,7 @@ const EmployeeList = () => {
   // console.log("Employee List Data:", filteredEmployeeList);
 
   const deleteUserHandler = async (id: string, detailsId: string) => {
+    if (!(await confirmDelete({ itemName: "this employee" }))) return;
     try {
       setIsLoading(true);
       const response = await deleteUser({ id }).unwrap();

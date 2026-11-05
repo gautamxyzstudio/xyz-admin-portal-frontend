@@ -18,6 +18,7 @@ import {
   useUpdateProjectMutation,
 } from "../projectsApi";
 import type { ProjectPayload } from "../projects.types";
+import { confirmDelete } from "../../../utils/confirmDelete";
 import { useSelector } from "react-redux";
 import { userInState, userDetailsInState } from "../../auth/authSlice";
 import { employeeListInState } from "../../employee/employeeSlice";
@@ -180,6 +181,7 @@ const Projects = () => {
   };
 
   const handleDeleteProject = async (id: number) => {
+    if (!(await confirmDelete({ itemName: "this project" }))) return;
     try {
       await deleteProject(id).unwrap();
       refetch();

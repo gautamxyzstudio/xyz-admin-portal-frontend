@@ -100,8 +100,17 @@ body {
 }
 
 .swal-rounded-popup {
-  border-radius: 20px !important;  
+  border-radius: 20px !important;
   padding: 20px !important;
+}
+
+/* Keep confirmation boxes above MUI dialogs and custom modals */
+.swal-top-container {
+  z-index: 999999 !important;
+}
+
+.swal-cancel-button {
+  color: #374151 !important;
 }
 
 
