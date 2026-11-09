@@ -53,6 +53,7 @@ export const endpoints = {
   updateTask: (id: string | number) => `${baseUrl}/api/task-items/${id}`,
   getAllTasks: `${baseUrl}/api/task-assigneds`,
   taskBoard: `${baseUrl}/api/task-board`,
+  taskBoardEmployees: `${baseUrl}/api/task-board/employees`,
   projectTasks: `${baseUrl}/api/task-items/project`,
   taskComments: `${baseUrl}/api/task-comments`,
   taskOvertimes: `${baseUrl}/api/task-overtimes`,

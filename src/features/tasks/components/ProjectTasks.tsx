@@ -808,6 +808,10 @@ const ProjectTasks: React.FC = () => {
       );
     };
 
+    // HR / Admin / Management can assign tasks to anyone in the project
+    // (including other HR & Management). Regular employees still can't.
+    const hideUser = (emp: any) => !isAdmin && isHrOrAdmin(emp);
+
     const formatEmp = (emp: any) => {
       const id = emp.id;
       const username = emp.username || emp.name || `user-${id}`;
@@ -833,7 +837,7 @@ const ProjectTasks: React.FC = () => {
 
     // 1. Employees returned directly from /api/task-items/project (Primary source!)
     projectEndpointEmployees.forEach((emp: any) => {
-      if (isHrOrAdmin(emp)) return;
+      if (hideUser(emp)) return;
       const key = String(emp.id);
       if (!map.has(key)) {
         map.set(key, formatEmp(emp));
@@ -843,7 +847,7 @@ const ProjectTasks: React.FC = () => {
     // 2. Any assignees already present in project tasks
     tasks.forEach((t) => {
       if (t.assigned_to?.id && !map.has(String(t.assigned_to.id))) {
-        if (isHrOrAdmin(t.assigned_to)) return;
+        if (hideUser(t.assigned_to)) return;
         map.set(String(t.assigned_to.id), {
           id: t.assigned_to.id,
           username: t.assigned_to.username,
@@ -869,7 +873,7 @@ const ProjectTasks: React.FC = () => {
       });
     }
 
-    return Array.from(map.values()).filter((emp) => !isHrOrAdmin(emp));
+    return Array.from(map.values()).filter((emp) => !hideUser(emp));
   }, [
     projectEndpointEmployees,
     tasks,

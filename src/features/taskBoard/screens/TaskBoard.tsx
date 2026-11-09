@@ -1,19 +1,39 @@
 import React, { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Search,
   FolderKanban,
   RotateCcw,
   X,
   ChevronRight,
+  Users,
 } from "lucide-react";
 import { CircularProgress } from "@mui/material";
 import { useGetTaskBoardProjectsQuery } from "../taskBoardApi";
 import { getImageUrl } from "../../../utils/utils";
 import type { ITaskBoardProject } from "../taskBoard.types";
+import EmployeeTaskBoard from "../components/EmployeeTaskBoard";
+import MyTasks from "../components/MyTasks";
+import { useSelector } from "react-redux";
+import { userInState, userDetailsInState } from "../../auth/authSlice";
 
 const TaskBoard: React.FC = () => {
   const navigate = useNavigate();
+  const currentUser = useSelector(userInState);
+  const userDetails = useSelector(userDetailsInState);
+  const userRole = (currentUser?.user_type || userDetails?.role || "").toLowerCase();
+  const showMyTasks = userRole === "hr";
+  const [searchParams, setSearchParams] = useSearchParams();
+  const view: "projects" | "employees" =
+    searchParams.get("view") === "employees" ? "employees" : "projects";
+  const setView = (v: "projects" | "employees") => {
+    const next = new URLSearchParams(searchParams);
+    if (v === "projects") next.delete("view");
+    else next.set("view", v);
+    setSearchParams(next, { replace: true });
+    setSearchTerm("");
+  };
+  const [employeeRefreshKey, setEmployeeRefreshKey] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [failedLogos, setFailedLogos] = useState<Record<number, boolean>>({});
   const [loadedLogos, setLoadedLogos] = useState<Record<number, boolean>>({});
@@ -34,7 +54,12 @@ const TaskBoard: React.FC = () => {
     isFetching,
     error,
     refetch,
-  } = useGetTaskBoardProjectsQuery();
+  } = useGetTaskBoardProjectsQuery(undefined, {
+    pollingInterval: 30_000, // pick up changes made by other people
+    refetchOnFocus: true, // coming back to the browser tab
+    refetchOnReconnect: true,
+    refetchOnMountOrArgChange: true, // coming back from a project board
+  });
 
   // Filter projects by search term
   const filteredProjects = useMemo(() => {
@@ -52,7 +77,7 @@ const TaskBoard: React.FC = () => {
             <h1 className="text-2xl font-bold text-black-80 tracking-tight">
               Task Board
             </h1>
-            {!isLoading && (
+            {view === "projects" && !isLoading && (
               <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-primary-20 text-primary">
                 {filteredProjects.length}{" "}
                 {filteredProjects.length === 1 ? "Project" : "Projects"}
@@ -60,8 +85,28 @@ const TaskBoard: React.FC = () => {
             )}
           </div>
           <p className="text-sm text-black-50 mt-1">
-            Select a project to view and manage tasks
+            {view === "projects"
+              ? "Select a project to view and manage tasks"
+              : "See who is working on what — status, priority and time spent per employee"}
           </p>
+          <div className="mt-3 inline-flex bg-white border border-black-20 rounded-xl p-1 shadow-xs">
+            <button
+              onClick={() => setView("projects")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                view === "projects" ? "bg-primary text-white" : "text-black-50 hover:text-black-80"
+              }`}
+            >
+              <FolderKanban size={14} /> Projects
+            </button>
+            <button
+              onClick={() => setView("employees")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                view === "employees" ? "bg-primary text-white" : "text-black-50 hover:text-black-80"
+              }`}
+            >
+              <Users size={14} /> Employees
+            </button>
+          </div>
         </div>
 
         {/* Action Controls - Fixed */}
@@ -74,7 +119,11 @@ const TaskBoard: React.FC = () => {
             />
             <input
               type="text"
-              placeholder="Search projects..."
+              placeholder={
+                view === "projects"
+                  ? "Search projects..."
+                  : "Search employee, task or project..."
+              }
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-9 py-2.5 bg-white border border-black-20 rounded-xl text-xs text-black-80 placeholder:text-black-50 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-xs"
@@ -92,9 +141,13 @@ const TaskBoard: React.FC = () => {
 
           {/* Refresh Button */}
           <button
-            onClick={() => refetch()}
-            disabled={isFetching}
-            title="Refresh Projects"
+            onClick={() =>
+              view === "projects"
+                ? refetch()
+                : setEmployeeRefreshKey((k) => k + 1)
+            }
+            disabled={view === "projects" && isFetching}
+            title={view === "projects" ? "Refresh Projects" : "Refresh Employees"}
             className="p-2.5 bg-white border border-black-20 rounded-xl text-black-50 hover:text-primary hover:border-primary transition-all shadow-xs disabled:opacity-50 cursor-pointer"
           >
             <RotateCcw
@@ -105,8 +158,14 @@ const TaskBoard: React.FC = () => {
         </div>
       </div>
 
-      {/* Projects Grid Content - Scrollable Only */}
-      <div className="flex-1 min-h-0 overflow-y-auto pr-1 pb-6 scrollbar-hide [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {view === "employees" ? (
+        <div className="flex-1 min-h-0 overflow-y-auto pr-1 pb-6 scrollbar-hide [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <EmployeeTaskBoard searchTerm={searchTerm} refreshKey={employeeRefreshKey} />
+        </div>
+      ) : (
+      /* Projects Grid Content - Scrollable Only */
+      <div className="flex-1 min-h-0 overflow-y-auto pr-1 pb-6 scrollbar-hide [scrollbar-width:none] [&::-webkit-scrollbar]:hidden flex flex-col gap-5">
+        {showMyTasks && <MyTasks />}
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-28 gap-3">
             <CircularProgress size={36} sx={{ color: "#f17c04" }} />
@@ -156,29 +215,32 @@ const TaskBoard: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredProjects.map((project: ITaskBoardProject) => {
-              const inProgressCount =
-                Number(project.in_progress_tasks_count) || 0;
-              const logoSrc = project.logo_url
-                ? getImageUrl(project.logo_url)
-                : null;
-
+              const inProgress = Number(project.in_progress_tasks_count) || 0;
+              const planned = Number(project.planned_tasks_count) || 0;
+              const blocked = Number(project.blocked_tasks_count) || 0;
+              const completed = Number(project.completed_tasks_count) || 0;
+              const total = inProgress + planned + blocked + completed;
+              const donePct = total ? Math.round((completed / total) * 100) : 0;
+              const logoSrc = project.logo_url ? getImageUrl(project.logo_url) : null;
               const hasValidLogo = logoSrc && !failedLogos[project.id];
+
+              const stats: { label: string; value: number; color: string }[] = [
+                { label: "Planned", value: planned, color: "text-sky-600" },
+                { label: "In Progress", value: inProgress, color: "text-amber-600" },
+                { label: "Blocked", value: blocked, color: "text-red-600" },
+              ];
 
               return (
                 <div
                   key={project.id}
-                  onClick={() =>
-                    navigate(`/tasks?project=${encodeURIComponent(project.title)}`)
-                  }
-                  className="group bg-white rounded-2xl p-4 border border-gray-100 shadow-xs hover:shadow-md hover:border-primary/40 transition-all duration-200 flex items-center justify-between gap-3.5 cursor-pointer min-h-[82px]"
+                  onClick={() => navigate(`/tasks?project=${encodeURIComponent(project.title)}`)}
+                  className="group bg-white rounded-2xl border border-gray-100 shadow-xs hover:shadow-md hover:border-primary/40 transition-all duration-200 cursor-pointer flex flex-col"
                 >
-                  {/* Left Section: Logo + (Project Name & In-Progress below it) */}
-                  <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                    {/* Project Logo / Avatar */}
-                    <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center p-2 shrink-0 group-hover:scale-105 transition-transform overflow-hidden relative">
+                  {/* Top: logo + title */}
+                  <div className="flex items-center gap-3 p-4 pb-3">
+                    <div className="w-11 h-11 rounded-xl bg-gray-50 flex items-center justify-center p-1.5 shrink-0 overflow-hidden relative">
                       {hasValidLogo ? (
                         <>
-                          {/* Slide-up Loading Shimmer while logo image is downloading */}
                           {!loadedLogos[project.id] && (
                             <div className="absolute inset-0 bg-slate-100 flex items-center justify-center overflow-hidden z-1">
                               <span className="text-slate-300 font-bold text-sm select-none">
@@ -203,42 +265,51 @@ const TaskBoard: React.FC = () => {
                         </div>
                       )}
                     </div>
-
-                    {/* Right side of logo: Full Title on top, In-Progress status below */}
-                    <div className="min-w-0 flex-1 flex flex-col justify-center">
+                    <div className="min-w-0 flex-1">
                       <h4
                         title={project.title}
-                        className="text-sm font-semibold text-gray-900 group-hover:text-primary transition-colors leading-snug break-words"
+                        className="text-sm font-semibold text-gray-900 group-hover:text-primary transition-colors truncate"
                       >
                         {project.title}
                       </h4>
+                      <p className="text-[11px] text-black-50 mt-0.5">
+                        {total} task{total === 1 ? "" : "s"} · {completed} done
+                      </p>
+                    </div>
+                    <ChevronRight
+                      size={18}
+                      className="text-gray-300 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0"
+                    />
+                  </div>
 
-                      {/* In-Progress Task Status below project name */}
-                      <div className="mt-1.5 flex items-center">
-                        <span
-                          title={`${inProgressCount} in-progress task${
-                            inProgressCount === 1 ? "" : "s"
-                          }`}
-                          className="inline-flex items-center gap-1.5 text-xs text-gray-400"
-                        >
-                          <span className="w-1.5 h-1.5 rounded-full bg-gray-300 shrink-0" />
-                          <span>{inProgressCount} in progress</span>
-                        </span>
-                      </div>
+                  {/* Progress bar */}
+                  <div className="px-4">
+                    <div className="h-1 rounded-full bg-gray-100 overflow-hidden" title={`${donePct}% completed`}>
+                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${donePct}%` }} />
                     </div>
                   </div>
 
-                  {/* Subtle navigation indicator on hover */}
-                  <ChevronRight
-                    size={18}
-                    className="text-gray-300 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0 ml-1"
-                  />
+                  {/* Status counts */}
+                  <div className="grid grid-cols-3 mt-3 border-t border-gray-100">
+                    {stats.map((s, i) => (
+                      <div
+                        key={s.label}
+                        className={`py-2.5 text-center ${i > 0 ? "border-l border-gray-100" : ""}`}
+                      >
+                        <p className={`text-base font-bold leading-none ${s.value ? s.color : "text-gray-300"}`}>
+                          {s.value}
+                        </p>
+                        <p className="text-[10px] text-black-50 mt-1">{s.label}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               );
             })}
           </div>
         )}
       </div>
+      )}
     </div>
   );
 };

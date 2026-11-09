@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { configureStore, type Store } from '@reduxjs/toolkit';
+import { setupListeners } from '@reduxjs/toolkit/query';
 import { persistStore, persistReducer } from 'redux-persist';
 import { useDispatch, useSelector, type TypedUseSelectorHook } from 'react-redux';
 import storage from 'redux-persist/lib/storage';
@@ -21,6 +22,8 @@ const store: Store = configureStore({
 });
 
 export const persistor = persistStore(store);
+// lets queries with refetchOnFocus / refetchOnReconnect refresh automatically
+setupListeners(store.dispatch);
 export default store;
 export type AppDispatch = typeof store.dispatch;
 export type RootState = ReturnType<typeof combineReducer>;
