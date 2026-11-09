@@ -7,6 +7,7 @@ import {
   X,
   ChevronRight,
   Users,
+  ClipboardList,
 } from "lucide-react";
 import { CircularProgress } from "@mui/material";
 import { useGetTaskBoardProjectsQuery } from "../taskBoardApi";
@@ -23,6 +24,7 @@ const TaskBoard: React.FC = () => {
   const userDetails = useSelector(userDetailsInState);
   const userRole = (currentUser?.user_type || userDetails?.role || "").toLowerCase();
   const showMyTasks = userRole === "hr";
+  const isElevated = ["admin", "hr", "management"].includes(userRole);
   const [searchParams, setSearchParams] = useSearchParams();
   const view: "projects" | "employees" =
     searchParams.get("view") === "employees" ? "employees" : "projects";
@@ -87,7 +89,9 @@ const TaskBoard: React.FC = () => {
           <p className="text-sm text-black-50 mt-1">
             {view === "projects"
               ? "Select a project to view and manage tasks"
-              : "See who is working on what — status, priority and time spent per employee"}
+              : isElevated
+                ? "See who is working on what — status, priority and time spent per employee"
+                : "Your tasks — status, priority and time spent"}
           </p>
           <div className="mt-3 inline-flex bg-white border border-black-20 rounded-xl p-1 shadow-xs">
             <button
@@ -104,7 +108,15 @@ const TaskBoard: React.FC = () => {
                 view === "employees" ? "bg-primary text-white" : "text-black-50 hover:text-black-80"
               }`}
             >
-              <Users size={14} /> Employees
+              {isElevated ? (
+                <>
+                  <Users size={14} /> Employees
+                </>
+              ) : (
+                <>
+                  <ClipboardList size={14} /> My Tasks
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -122,7 +134,9 @@ const TaskBoard: React.FC = () => {
               placeholder={
                 view === "projects"
                   ? "Search projects..."
-                  : "Search employee, task or project..."
+                  : isElevated
+                    ? "Search employee, task or project..."
+                    : "Search task or project..."
               }
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -160,7 +174,11 @@ const TaskBoard: React.FC = () => {
 
       {view === "employees" ? (
         <div className="flex-1 min-h-0 overflow-y-auto pr-1 pb-6 scrollbar-hide [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <EmployeeTaskBoard searchTerm={searchTerm} refreshKey={employeeRefreshKey} />
+          <EmployeeTaskBoard
+            searchTerm={searchTerm}
+            refreshKey={employeeRefreshKey}
+            selfOnly={!isElevated}
+          />
         </div>
       ) : (
       /* Projects Grid Content - Scrollable Only */

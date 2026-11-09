@@ -96,9 +96,11 @@ const Avatar: React.FC<{ emp: ITaskBoardEmployee; size?: number }> = ({ emp, siz
 interface Props {
   searchTerm: string;
   refreshKey?: number;
+  /** Employee login: show only the logged-in user's own tasks (no employee list) */
+  selfOnly?: boolean;
 }
 
-const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey }) => {
+const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly = false }) => {
   const navigate = useNavigate();
   const { data, isLoading, isFetching, error, refetch } = useGetTaskBoardEmployeesQuery(undefined, {
     pollingInterval: 30_000,
@@ -213,12 +215,17 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey }) => {
   }
 
   if (!employees.length) {
-    return <p className="text-center text-sm text-black-50 py-24">No assigned tasks yet.</p>;
+    return (
+      <p className="text-center text-sm text-black-50 py-24">
+        {selfOnly ? "No tasks assigned to you yet." : "No assigned tasks yet."}
+      </p>
+    );
   }
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 items-start">
       {/* ---------- Employees ---------- */}
+      {!selfOnly && (
       <div className="w-full lg:w-80 shrink-0 bg-white rounded-2xl border border-gray-100 overflow-hidden lg:sticky lg:top-0">
         <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
           <span className="text-sm font-semibold text-black-80">
@@ -292,6 +299,7 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey }) => {
           )}
         </div>
       </div>
+      )}
 
       {/* ---------- Tasks ---------- */}
       {selected && (
