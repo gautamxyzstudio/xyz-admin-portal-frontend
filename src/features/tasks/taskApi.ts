@@ -150,6 +150,7 @@ export interface ICreateTaskCommentPayload {
   comment: string;
   task_item: number | string;
   attachments?: number[];
+  mentions?: number[];
 }
 
 export const enhancedTaskApi = baseApi.enhanceEndpoints({
@@ -249,6 +250,7 @@ export const taskApi = enhancedTaskApi.injectEndpoints({
             comment: data.comment,
             task_item: Number(data.task_item) || data.task_item,
             attachments: data.attachments ?? [],
+            mentions: data.mentions ?? [],
           },
         },
       }),
@@ -256,6 +258,20 @@ export const taskApi = enhancedTaskApi.injectEndpoints({
     }),
 
     // 7. Get Task Comments
+    // Users that can be @mentioned in comments (Employees, HR, Management, Admin)
+    getMentionableUsers: builder.query<
+      { id: number; username: string; name: string; role?: string; photo: string | null }[],
+      void
+    >({
+      query: () => ({
+        url: endpoints.mentionableUsers,
+        method: ApiMethodType.get,
+      }),
+      transformResponse: (response: any) =>
+        Array.isArray(response) ? response : Array.isArray(response?.data) ? response.data : [],
+      keepUnusedDataFor: 600,
+    }),
+
     getTaskComments: builder.query<ITaskCommentItem[], number | string>({
       query: (taskId) => ({
         url: endpoints.taskComments,
@@ -383,6 +399,7 @@ export const {
   useDeleteTaskMutation,
   useCreateTaskCommentMutation,
   useGetTaskCommentsQuery,
+  useGetMentionableUsersQuery,
   useLazyGetTaskCommentsQuery,
   useCreateTaskOvertimeMutation,
   useGetTaskOvertimesQuery,

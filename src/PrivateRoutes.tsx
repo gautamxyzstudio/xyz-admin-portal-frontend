@@ -11,7 +11,13 @@ const PrivateRoute = () => {
 
   // If no user is logged in, redirect to login
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{ from: location.pathname + location.search }}
+      />
+    );
   }
 
   // Check if user has access to the current route

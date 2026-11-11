@@ -20,7 +20,9 @@ import {
   useCreateTaskMutation,
   useUpdateTaskMutation,
   useCreateTaskCommentMutation,
+  useDeleteTaskMutation,
   useGetTaskCommentsQuery,
+  useGetMentionableUsersQuery,
   type IProjectTaskItem,
   type TaskStatus,
 } from "../taskApi";
@@ -884,6 +886,30 @@ const ProjectTasks: React.FC = () => {
     isAdmin,
   ]);
 
+  // Everyone who can be @mentioned in a comment (all active Employees, HR, Management, Admin)
+  const { data: allMentionableUsers = [] } = useGetMentionableUsersQuery();
+  const mentionableUsers = useMemo(() => {
+    const map = new Map<string, { id: number; name: string; username: string; photo: string | null }>();
+    const add = (u: any) => {
+      if (!u?.id) return;
+      const key = String(u.id);
+      if (map.has(key) || String(u.id) === String(currentUser?.id)) return;
+      const photo = u.photo || u.profile_photo || u.image || extractEmployeePhotoUrl(u) || null;
+      map.set(key, {
+        id: Number(u.id),
+        name: u.name || u.username || "User",
+        username: u.username || u.name || "",
+        photo,
+      });
+    };
+    allMentionableUsers.forEach((u: any) =>
+      add({ ...u, photo: u.photo ? getImageUrl(u.photo) : null }),
+    );
+    projectEndpointEmployees.forEach(add);
+    tasks.forEach((t) => add(t.assigned_to));
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [allMentionableUsers, projectEndpointEmployees, tasks, currentUser]);
+
   // Selected employee object for rich Assignee dropdown
   const selectedEmployeeObj = useMemo(() => {
     if (!taskForm.assignedTo) return null;
@@ -940,6 +966,7 @@ const ProjectTasks: React.FC = () => {
   const [updateTask, { isLoading: isUpdating }] = useUpdateTaskMutation();
   const [createTaskComment, { isLoading: isPostingComment }] =
     useCreateTaskCommentMutation();
+  const [deleteTask, { isLoading: isDeleting }] = useDeleteTaskMutation();
   const [uploadFile] = useUploadFileMutation();
 
   // RTK Query: fetch comments for selected task with real-time polling
@@ -1418,7 +1445,28 @@ const ProjectTasks: React.FC = () => {
     }
   };
 
-  const handleAddComment = async () => {
+  // Only Admin, HR and Management can delete tasks (also enforced by the backend)
+  const handleDeleteTask = async () => {
+    if (!selectedTask || isDeleting) return;
+    try {
+      await deleteTask(selectedTask.id).unwrap();
+      toast.success("Task deleted successfully");
+      setSelectedTask(null);
+      if (searchParams.get("taskId") || searchParams.get("task")) {
+        const next = new URLSearchParams(searchParams);
+        next.delete("taskId");
+        next.delete("task");
+        setSearchParams(next, { replace: true });
+      }
+      refetch();
+    } catch (err: any) {
+      toast.error(
+        err?.data?.error?.message || err?.message || "Failed to delete task",
+      );
+    }
+  };
+
+  const handleAddComment = async (mentionIds: number[] = []) => {
     if (
       (!newCommentText.trim() && commentAttachments.length === 0) ||
       !selectedTask ||
@@ -1434,6 +1482,7 @@ const ProjectTasks: React.FC = () => {
         comment: commentBody,
         task_item: Number(selectedTask.id) || selectedTask.id,
         attachments: attachmentIds,
+        mentions: mentionIds,
       }).unwrap();
       setNewCommentText("");
       setCommentAttachments([]);
@@ -1871,7 +1920,7 @@ const ProjectTasks: React.FC = () => {
         isCreateUnassigned, setIsCreateUnassigned, Check, ChevronDown, CircularProgress, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, assigneeSearchQuery, attachments, estimatedHours, estimatedMinutes, extractEmployeePhotoUrl, filteredProjectEmployees, getAvatarBg, getInitials, handleCreateTaskSubmit, isAddModalOpen, isAdmin, isAssigneeDropdownOpen, isCreating, isProjectsLoading, isUploadingAttachments, modalTargetStatus, projectAssignedEmployees, projectName, renderCreatePriorityDropdown, selectedEmployeeObj, setAssigneeSearchQuery, setAttachments, setEstimatedHours, setEstimatedMinutes, setIsAddModalOpen, setIsAssigneeDropdownOpen, setIsCreatePriorityDropdownOpen, setIsUploadingAttachments, setModalTargetStatus, setTaskForm, taskForm
       }} />
 
-      <EditTaskModal {...{ isEditUnassigned, setIsEditUnassigned, Check, ChevronDown, CircularProgress, Paperclip, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, activityTab, attachments, commentAttachments, commentComposerRef, commentFileInputRef, completeHistory, currentUserName, currentUserPhoto, editAssigneeSearchQuery, editAttachments, editEstimatedHours, editEstimatedMinutes, editFilteredProjectEmployees, editSelectedEmployeeObj, editTaskForm, extractEmployeePhotoUrl, formatHistoryTime, getAvatarBg, getImageUrl, getInitials, handleAddComment, handleUpdateTaskSubmit, handleUploadCommentPhotos, isAdmin, isCommentExpanded, isCommentsLoading, isEditAssigneeDropdownOpen, isEditUploadingAttachments, isPostingComment, isProjectsLoading, isUpdating, isUploadingCommentPhoto, newCommentText, projectAssignedEmployees, selectedTask, setActivityTab, setCommentAttachments, setEditAssigneeSearchQuery, setEditAttachments, setEditEstimatedHours, setEditEstimatedMinutes, setEditTaskForm, setIsCommentFocused, setIsEditAssigneeDropdownOpen, setIsEditUploadingAttachments, setNewCommentText, setSelectedTask, viewAttachmentPreview, setViewAttachmentPreview, taskCommentsList }} />
+      <EditTaskModal {...{ isEditUnassigned, setIsEditUnassigned, Check, ChevronDown, CircularProgress, Paperclip, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, activityTab, attachments, commentAttachments, commentComposerRef, commentFileInputRef, completeHistory, currentUserName, currentUserPhoto, editAssigneeSearchQuery, editAttachments, editEstimatedHours, editEstimatedMinutes, editFilteredProjectEmployees, editSelectedEmployeeObj, editTaskForm, extractEmployeePhotoUrl, formatHistoryTime, getAvatarBg, getImageUrl, getInitials, handleAddComment, handleDeleteTask, isDeleting, mentionableUsers, handleUpdateTaskSubmit, handleUploadCommentPhotos, isAdmin, isCommentExpanded, isCommentsLoading, isEditAssigneeDropdownOpen, isEditUploadingAttachments, isPostingComment, isProjectsLoading, isUpdating, isUploadingCommentPhoto, newCommentText, projectAssignedEmployees, selectedTask, setActivityTab, setCommentAttachments, setEditAssigneeSearchQuery, setEditAttachments, setEditEstimatedHours, setEditEstimatedMinutes, setEditTaskForm, setIsCommentFocused, setIsEditAssigneeDropdownOpen, setIsEditUploadingAttachments, setNewCommentText, setSelectedTask, viewAttachmentPreview, setViewAttachmentPreview, taskCommentsList }} />
 
       {/* Lightbox Preview Modal for Task Details (Closes on backdrop click) */}
       {viewAttachmentPreview && (

@@ -5,7 +5,7 @@ import logo from "../../../../assets/images/logo-ct.webp";
 import Insta from "../../../../assets/images/instagram.svg";
 import Facebook from "../../../../assets/images/facebook.svg";
 import LinkedIn from "../../../../assets/images/linkedin.svg";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useLoadingWrapper } from "../../../../wrappers/loadingWrapper/LoadingWrapper.context";
 import FormTextInput from "../../../../shared/components/formInput/FormInput";
@@ -23,6 +23,13 @@ interface LoginValues {
 const LoginPage = () => {
   const { setIsLoading } = useLoadingWrapper();
   const navigation = useNavigate();
+  const location = useLocation();
+  // Return to the page the user originally opened (e.g. a task link from an email)
+  const fromPath = (location.state as { from?: string } | null)?.from;
+  const redirectTo =
+    fromPath && fromPath.startsWith("/") && !fromPath.startsWith("//")
+      ? fromPath
+      : "/";
   const [login] = useLoginMutation();
   const [getUserDetails] = useLazyUserDetailsQuery();
   const [showPassword, setShowPassword] = useState(false);
@@ -50,10 +57,10 @@ const LoginPage = () => {
           id: response?.user?.id,
         }).unwrap();
         if (userDetailsResponse) {
-          navigation("/");
+          navigation(redirectTo);
         }
       } else {
-        navigation("/");
+        navigation(redirectTo);
       }
     } catch (error) {
       console.error(error);

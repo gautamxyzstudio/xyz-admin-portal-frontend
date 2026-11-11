@@ -56,6 +56,7 @@ export const endpoints = {
   taskBoardEmployees: `${baseUrl}/api/task-board/employees`,
   projectTasks: `${baseUrl}/api/task-items/project`,
   taskComments: `${baseUrl}/api/task-comments`,
+  mentionableUsers: `${baseUrl}/api/task-comment-mentions/users`,
   taskOvertimes: `${baseUrl}/api/task-overtimes`,
   taskTimeSummary: (id: string | number) => `${baseUrl}/api/task-items/${id}/time-summary`,
 

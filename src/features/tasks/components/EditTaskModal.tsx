@@ -1,15 +1,100 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState, useMemo } from "react";
 import TaskOvertimeSection from "./TaskOvertimeSection";
 import TaskDueDatePicker from "./TaskDueDatePicker";
 
 interface Props { [key: string]: any }
 const EditTaskModal: React.FC<Props> = (props) => {
-  const { isEditUnassigned, setIsEditUnassigned, Check, ChevronDown, CircularProgress, Paperclip, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, activityTab, commentAttachments, commentComposerRef, commentFileInputRef, completeHistory, currentUserName, currentUserPhoto, editAssigneeSearchQuery, editAttachments, editEstimatedHours, editEstimatedMinutes, editFilteredProjectEmployees, editSelectedEmployeeObj, editTaskForm, extractEmployeePhotoUrl, formatHistoryTime, getAvatarBg, getImageUrl, getInitials, handleAddComment, handleUpdateTaskSubmit, handleUploadCommentPhotos, isAdmin, isCommentExpanded, isCommentsLoading, isEditAssigneeDropdownOpen, isEditUploadingAttachments, isPostingComment, isProjectsLoading, isUpdating, isUploadingCommentPhoto, newCommentText, projectAssignedEmployees, selectedTask, setActivityTab, setCommentAttachments, setEditAssigneeSearchQuery, setEditAttachments, setEditEstimatedHours, setEditEstimatedMinutes, setEditTaskForm, setIsCommentFocused, setIsEditAssigneeDropdownOpen, setIsEditUploadingAttachments, setNewCommentText, setSelectedTask, setViewAttachmentPreview, taskCommentsList } = props;
+  const { isEditUnassigned, setIsEditUnassigned, Check, ChevronDown, CircularProgress, Paperclip, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, activityTab, commentAttachments, commentComposerRef, commentFileInputRef, completeHistory, currentUserName, currentUserPhoto, editAssigneeSearchQuery, editAttachments, editEstimatedHours, editEstimatedMinutes, editFilteredProjectEmployees, editSelectedEmployeeObj, editTaskForm, extractEmployeePhotoUrl, formatHistoryTime, getAvatarBg, getImageUrl, getInitials, handleAddComment, handleDeleteTask, isDeleting, mentionableUsers = [], handleUpdateTaskSubmit, handleUploadCommentPhotos, isAdmin, isCommentExpanded, isCommentsLoading, isEditAssigneeDropdownOpen, isEditUploadingAttachments, isPostingComment, isProjectsLoading, isUpdating, isUploadingCommentPhoto, newCommentText, projectAssignedEmployees, selectedTask, setActivityTab, setCommentAttachments, setEditAssigneeSearchQuery, setEditAttachments, setEditEstimatedHours, setEditEstimatedMinutes, setEditTaskForm, setIsCommentFocused, setIsEditAssigneeDropdownOpen, setIsEditUploadingAttachments, setNewCommentText, setSelectedTask, setViewAttachmentPreview, taskCommentsList } = props;
   const commentsContainerRef = useRef<HTMLDivElement>(null);
   const commentsEndRef = useRef<HTMLDivElement>(null);
   const prevCommentsCountRef = useRef<number>(taskCommentsList?.length || 0);
   const prevTaskIdRef = useRef<any>(selectedTask?.id);
+
+  /* ---------------- Delete (Admin / HR / Management) ---------------- */
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  useEffect(() => {
+    setConfirmDelete(false);
+  }, [selectedTask?.id]);
+
+  /* ---------------- @mentions ---------------- */
+  const commentInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  const [mentionStart, setMentionStart] = useState(0);
+  const [mentionIndex, setMentionIndex] = useState(0);
+  const [pickedMentions, setPickedMentions] = useState<{ id: number; name: string }[]>([]);
+
+  const mentionMatches = useMemo(() => {
+    if (mentionQuery === null) return [];
+    const q = mentionQuery.toLowerCase();
+    return (mentionableUsers as any[])
+      .filter(
+        (u) =>
+          u.name.toLowerCase().includes(q) ||
+          (u.username || "").toLowerCase().includes(q),
+      )
+      .slice(0, 8);
+  }, [mentionQuery, mentionableUsers]);
+
+  const detectMention = (value: string, caret: number) => {
+    const before = value.slice(0, caret);
+    const match = before.match(/(^|\s)@([^\s@]*)$/);
+    if (match) {
+      setMentionQuery(match[2]);
+      setMentionStart(caret - match[2].length - 1);
+      setMentionIndex(0);
+    } else {
+      setMentionQuery(null);
+    }
+  };
+
+  const insertMention = (user: { id: number; name: string }) => {
+    const el = commentInputRef.current;
+    const caret = el?.selectionStart ?? newCommentText.length;
+    const next =
+      newCommentText.slice(0, mentionStart) +
+      `@${user.name} ` +
+      newCommentText.slice(caret);
+    setNewCommentText(next);
+    setPickedMentions((prev) =>
+      prev.some((m) => m.id === user.id) ? prev : [...prev, user],
+    );
+    setMentionQuery(null);
+    const pos = mentionStart + user.name.length + 2;
+    requestAnimationFrame(() => {
+      el?.focus();
+      el?.setSelectionRange(pos, pos);
+    });
+  };
+
+  // Highlight @Name of any project member inside a posted comment
+  const mentionNames = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          (mentionableUsers as any[])
+            .map((u) => u.name)
+            .concat(currentUserName ? [currentUserName] : [])
+            .filter(Boolean),
+        ),
+      ).sort((a: any, b: any) => b.length - a.length) as string[],
+    [mentionableUsers, currentUserName],
+  );
+
+  const renderCommentText = (text: string) => {
+    if (!text || !text.includes("@") || mentionNames.length === 0) return text;
+    const escaped = mentionNames.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    const re = new RegExp(`(@(?:${escaped.join("|")}))`, "g");
+    return text.split(re).map((part, i) =>
+      i % 2 === 1 ? (
+        <span key={i} className="text-primary font-semibold bg-primary-20 px-1 rounded">
+          {part}
+        </span>
+      ) : (
+        <React.Fragment key={i}>{part}</React.Fragment>
+      ),
+    );
+  };
 
   const scrollToBottom = (smooth = true) => {
     if (commentsContainerRef.current) {
@@ -51,7 +136,12 @@ const EditTaskModal: React.FC<Props> = (props) => {
   }, [selectedTask?.id, activityTab]);
 
   const handleSubmitComment = async () => {
-    await handleAddComment();
+    const mentionIds = pickedMentions
+      .filter((m) => newCommentText.includes(`@${m.name}`))
+      .map((m) => m.id);
+    await handleAddComment(mentionIds);
+    setPickedMentions([]);
+    setMentionQuery(null);
     setTimeout(() => scrollToBottom(true), 150);
     setTimeout(() => scrollToBottom(true), 400);
   };
@@ -581,14 +671,82 @@ const EditTaskModal: React.FC<Props> = (props) => {
                       </div>
 
                       <div className="flex-1 min-w-0">
+                        <div className="relative">
+                        {mentionQuery !== null && (
+                          <div className="absolute top-full left-0 mt-1.5 w-72 max-h-60 overflow-y-auto bg-white border border-slate-200 rounded-2xl shadow-xl z-[100] py-1">
+                            <p className="px-3 pt-1.5 pb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                              Mention someone
+                            </p>
+                            {mentionMatches.length === 0 && (
+                              <p className="px-3 py-2 text-xs text-slate-500">
+                                {(mentionableUsers as any[]).length === 0
+                                  ? "Loading people..."
+                                  : `No one matches "${mentionQuery}"`}
+                              </p>
+                            )}
+                            {mentionMatches.map((u: any, idx: number) => (
+                              <button
+                                key={u.id}
+                                type="button"
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  insertMention(u);
+                                }}
+                                onMouseEnter={() => setMentionIndex(idx)}
+                                className={`w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs cursor-pointer ${
+                                  idx === mentionIndex ? "bg-primary-20 text-slate-900" : "text-slate-700 hover:bg-slate-50"
+                                }`}
+                              >
+                                {u.photo ? (
+                                  <img src={u.photo} alt={u.name} className="w-6 h-6 rounded-full object-cover shrink-0" />
+                                ) : (
+                                  <span
+                                    className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
+                                    style={{ backgroundColor: getAvatarBg(u.name) }}
+                                  >
+                                    {getInitials(u.name)}
+                                  </span>
+                                )}
+                                <span className="truncate font-medium">{u.name}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
                         <textarea
+                          ref={commentInputRef}
                           rows={isCommentExpanded ? 3 : 1}
-                          placeholder="Add a comment..."
+                          placeholder="Add a comment... type @ to mention"
                           value={newCommentText}
                           onFocus={() => setIsCommentFocused(true)}
                           onClick={() => setIsCommentFocused(true)}
-                          onChange={(e) => setNewCommentText(e.target.value)}
+                          onChange={(e) => {
+                            setNewCommentText(e.target.value);
+                            detectMention(e.target.value, e.target.selectionStart ?? e.target.value.length);
+                          }}
+                          onBlur={() => setTimeout(() => setMentionQuery(null), 150)}
                           onKeyDown={(e) => {
+                            if (mentionQuery !== null && mentionMatches.length > 0) {
+                              if (e.key === "ArrowDown") {
+                                e.preventDefault();
+                                setMentionIndex((i) => (i + 1) % mentionMatches.length);
+                                return;
+                              }
+                              if (e.key === "ArrowUp") {
+                                e.preventDefault();
+                                setMentionIndex((i) => (i - 1 + mentionMatches.length) % mentionMatches.length);
+                                return;
+                              }
+                              if (e.key === "Enter" || e.key === "Tab") {
+                                e.preventDefault();
+                                insertMention(mentionMatches[mentionIndex] || mentionMatches[0]);
+                                return;
+                              }
+                              if (e.key === "Escape") {
+                                e.preventDefault();
+                                setMentionQuery(null);
+                                return;
+                              }
+                            }
                             if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
                               e.preventDefault();
                               handleSubmitComment(); }
@@ -614,6 +772,7 @@ const EditTaskModal: React.FC<Props> = (props) => {
                               : "border border-slate-200 hover:border-[#ff7300] resize-none min-h-[42px] cursor-text"
                           }`}
                         />
+                        </div>
 
                         {/* Uploaded attachments preview for new comment */}
                         {commentAttachments.length > 0 && (
@@ -771,7 +930,7 @@ const EditTaskModal: React.FC<Props> = (props) => {
                             </div>
 
                             <p className="text-xs text-slate-800 leading-relaxed whitespace-pre-wrap pl-8">
-                              {c.text}
+                              {renderCommentText(c.text)}
                             </p>
 
                             {c.attachments && c.attachments.length > 0 && (
@@ -824,7 +983,43 @@ const EditTaskModal: React.FC<Props> = (props) => {
               </div>
 
               {/* Footer */}
-              <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+              <div className="flex items-center justify-between gap-2 pt-4 border-t border-slate-100">
+                <div className="flex items-center gap-2">
+                  {isAdmin && handleDeleteTask && (
+                    confirmDelete ? (
+                      <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 border border-red-200 rounded-2xl">
+                        <span className="text-xs font-semibold text-red-700">Delete this task?</span>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await handleDeleteTask();
+                            setConfirmDelete(false);
+                          }}
+                          disabled={isDeleting}
+                          className="px-3 py-1 text-xs font-semibold bg-red-600 hover:bg-red-700 text-white rounded-xl cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                        >
+                          {isDeleting ? <CircularProgress size={12} color="inherit" /> : "Yes, delete"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDelete(false)}
+                          disabled={isDeleting}
+                          className="px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-white rounded-xl cursor-pointer"
+                        >
+                          No
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDelete(true)}
+                        className="px-4 py-2.5 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-2xl transition-all cursor-pointer"
+                      >
+                        Delete Task
+                      </button>
+                    )
+                  )}
+                </div>
 
                 <div className="flex items-center gap-2">
                   <button
