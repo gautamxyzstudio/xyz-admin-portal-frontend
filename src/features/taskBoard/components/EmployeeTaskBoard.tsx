@@ -124,7 +124,7 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
   );
 
   const visibleEmployees = useMemo(() => {
-    const term = searchTerm.toLowerCase().trim();
+    const term = selfOnly ? "" : searchTerm.toLowerCase().trim();
     const list = employees.filter(
       (e) =>
         !term ||
@@ -146,7 +146,7 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
           ? b.summary.openTasks - a.summary.openTasks
           : (a.name || "").localeCompare(b.name || ""),
     );
-  }, [employees, searchTerm, sortBy]);
+  }, [employees, searchTerm, sortBy, selfOnly]);
 
   const activeId = visibleEmployees.some((e) => e.id === selectedId)
     ? selectedId
@@ -175,7 +175,14 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
       .sort((a, b) => a.title.localeCompare(b.title));
   }, [selected]);
 
-  const tasks = projectTasks.filter((t) => matchesStatus(t, statusTab));
+  const taskTerm = selfOnly ? searchTerm.toLowerCase().trim() : "";
+  const tasks = projectTasks.filter(
+    (t) =>
+      matchesStatus(t, statusTab) &&
+      (!taskTerm ||
+        t.title?.toLowerCase().includes(taskTerm) ||
+        t.project?.title?.toLowerCase().includes(taskTerm)),
+  );
 
   const openTask = (t: IEmployeeTask) => {
     if (t.project?.title) navigate(`/tasks?project=${encodeURIComponent(t.project.title)}`);
