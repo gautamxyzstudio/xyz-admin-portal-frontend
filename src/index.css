@@ -1116,3 +1116,33 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .bell-ring { animation: none; }
 }
+
+/* ---------- Projects page ---------- */
+.proj-card {
+  animation: tdd-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.proj-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px -18px color-mix(in srgb, var(--primary) 55%, transparent);
+}
+.proj-input:hover {
+  border-color: var(--primary-50);
+}
+.proj-input:focus {
+  border-color: var(--primary);
+  background: #fff;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 16%, transparent);
+}
+.proj-chip {
+  animation: tdd-pop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.proj-form {
+  animation: tdd-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .proj-card,
+  .proj-chip,
+  .proj-form {
+    animation: none;
+  }
+}
