@@ -175,3 +175,31 @@ export const WorkingNow: React.FC = () => (
     Working now
   </Pill>
 );
+
+const formatSeconds = (secs: number) => {
+  const s = Math.max(0, Math.floor(secs));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  if (!h && !m) return s ? "<1m" : "0m";
+  return h ? `${h}h ${m}m` : `${m}m`;
+};
+
+/** Hours bar: fill is relative to `max` seconds; green while still working. */
+export const HoursBar: React.FC<{ seconds: number; max: number; live?: boolean; label?: string }> = ({
+  seconds,
+  max,
+  live = false,
+  label,
+}) => (
+  <div className="flex items-center gap-3 w-full min-w-0">
+    <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+      <div
+        className={`att-bar h-full rounded-full ${live ? "bg-emerald-500" : "bg-primary"}`}
+        style={{ width: `${seconds > 0 ? Math.max(3, Math.min(100, (seconds / Math.max(1, max)) * 100)) : 0}%` }}
+      />
+    </div>
+    <span className={`w-16 text-right text-xs font-semibold shrink-0 ${seconds ? "text-black-80" : "text-black-50"}`}>
+      {label ?? (seconds ? formatSeconds(seconds) : "—")}
+    </span>
+  </div>
+);

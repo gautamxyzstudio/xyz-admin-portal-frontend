@@ -134,6 +134,20 @@ const RANGE_OPTIONS: { value: RangePreset; label: string }[] = [
   { value: "custom", label: "Custom range…" },
 ];
 
+// today's plan: tasks in progress or worked on today, and their estimates
+const todayPlan = (emp: ITaskBoardEmployee) => {
+  const tasks = emp.tasks.filter((t) => t.todaySeconds > 0 || t.status === "in-progress");
+  const estimate = tasks.reduce((sum, t) => sum + (t.estimatedMinutes || 0) * 60, 0);
+  const worked = emp.summary.todaySeconds || 0;
+  return {
+    worked,
+    estimate,
+    count: tasks.length,
+    noEstimate: tasks.filter((t) => !t.estimatedMinutes).length,
+    pct: estimate ? Math.round((worked / estimate) * 100) : 0,
+  };
+};
+
 const TABS: [StatusTab, string][] = [
   ["open", "Open"],
   ["planned", "Planned"],
@@ -189,7 +203,8 @@ interface Props {
 
 const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly = false }) => {
   const navigate = useNavigate();
-  const [preset, setPreset] = useState<RangePreset>("all");
+  // every role (HR, Management, employees) lands on today by default
+  const [preset, setPreset] = useState<RangePreset>("today");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
   const range = resolveRange(preset, customFrom, customTo);
@@ -211,7 +226,7 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
 
   const [sortBy, setSortBy] = useState<SortKey>("plate");
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [statusTab, setStatusTab] = useState<StatusTab>("open");
+  const [statusTab, setStatusTab] = useState<StatusTab>("worked");
   const [projectFilter, setProjectFilter] = useState<number | "all">("all");
 
   const changePreset = (p: RangePreset) => {
@@ -295,7 +310,10 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
   );
 
   const openTask = (t: IEmployeeTask) => {
-    if (t.project?.title) navigate(`/tasks?project=${encodeURIComponent(t.project.title)}`);
+    if (!t.project?.title) return;
+    // open the project board with this task's details already open
+    const params = new URLSearchParams({ project: t.project.title, taskId: String(t.taskId || t.id) });
+    navigate(`/tasks?${params.toString()}`);
   };
 
   /* ---------- states ---------- */
@@ -445,7 +463,10 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
                           <>
                             <b className="text-emerald-600 font-semibold">
                               {formatDuration(emp.summary.todaySeconds)}
-                            </b>{" "}
+                            </b>
+                            {todayPlan(emp).estimate > 0 && (
+                              <span className="text-black-50"> / {formatDuration(todayPlan(emp).estimate)}</span>
+                            )}{" "}
                             today ·{" "}
                           </>
                         )}
@@ -496,20 +517,47 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
                       )}
                     </p>
                   </div>
+                  {preset !== "today" && (
                   <div className="text-right pl-4 border-l border-gray-100">
                     <p className="text-base font-semibold text-black-80">{formatDuration(f.spent)}</p>
                     <p className="text-[11px] text-black-50">
                       {ranged ? `time spent ${label}` : "time spent (all time)"}
                     </p>
                   </div>
-                  {preset !== "today" && (
-                    <div className="text-right pl-4 border-l border-gray-100">
-                      <p className="text-base font-semibold text-emerald-600">
-                        {formatDuration(selected.summary.todaySeconds)}
-                      </p>
-                      <p className="text-[11px] text-black-50">worked today</p>
-                    </div>
                   )}
+                  {(() => {
+                    const plan = todayPlan(selected);
+                    const over = plan.estimate > 0 && plan.worked > plan.estimate;
+                    return (
+                      <div
+                        className="pl-4 border-l border-gray-100 w-48"
+                        title={`Worked today vs. the estimates of ${plan.count} task${plan.count === 1 ? "" : "s"} in progress or worked on today`}
+                      >
+                        <div className="flex items-baseline justify-end gap-1">
+                          <span className="text-base font-semibold text-emerald-600">{formatDuration(plan.worked)}</span>
+                          {plan.estimate > 0 && (
+                            <span className="text-xs text-black-50">/ {formatDuration(plan.estimate)} est</span>
+                          )}
+                        </div>
+                        <div className="mt-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                          <div
+                            className={`att-bar h-full rounded-full ${over ? "bg-red-500" : "bg-emerald-500"}`}
+                            style={{ width: `${plan.estimate ? Math.min(100, Math.max(plan.worked ? 3 : 0, plan.pct)) : 0}%` }}
+                          />
+                        </div>
+                        <p className="text-[11px] text-black-50 text-right mt-0.5">
+                          worked today
+                          {plan.estimate > 0 ? (
+                            <span className={over ? "text-red-600" : "text-emerald-600"}>
+                              {" "}· {over ? `${plan.pct}% (over)` : `${plan.pct}%`}
+                            </span>
+                          ) : plan.count > 0 ? (
+                            <span className="text-orange-500"> · no estimate</span>
+                          ) : null}
+                        </p>
+                      </div>
+                    );
+                  })()}
                 </>
               );
             })()}

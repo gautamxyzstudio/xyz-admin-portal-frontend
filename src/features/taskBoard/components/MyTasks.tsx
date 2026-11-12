@@ -75,7 +75,10 @@ const MyTasks: React.FC = () => {
   }, 0);
 
   const openTask = (t: IEmployeeTask) => {
-    if (t.project?.title) navigate(`/tasks?project=${encodeURIComponent(t.project.title)}`);
+    if (!t.project?.title) return;
+    // open the project board with this task's details already open
+    const params = new URLSearchParams({ project: t.project.title, taskId: String(t.taskId || t.id) });
+    navigate(`/tasks?${params.toString()}`);
   };
 
   return (

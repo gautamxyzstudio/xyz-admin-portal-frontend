@@ -974,3 +974,107 @@ body {
     transform: translate(-50%, -50%);
   }
 }
+
+/* ---------- HR attendance toolbar ---------- */
+.att-search:hover {
+  border-color: var(--primary-50);
+}
+.att-search:focus-within,
+.att-time:focus {
+  border-color: var(--primary);
+  background: #fff;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 16%, transparent);
+}
+.att-time:hover {
+  border-color: var(--primary-50);
+}
+.att-clear {
+  animation: tdd-option-in 0.2s ease-out both;
+}
+
+/* =========================================================
+   Time Log Analytics timelines
+========================================================= */
+.tl-day {
+  background: color-mix(in srgb, var(--primary-20) 35%, #f8f8f8);
+  backdrop-filter: blur(4px);
+}
+.tl-row {
+  animation: tdd-option-in 0.3s ease-out both;
+}
+.tl-seg {
+  transform-origin: left center;
+  animation: tl-grow 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transition: filter 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+.tl-seg:hover {
+  filter: brightness(1.08);
+  transform: scaleY(1.25);
+  box-shadow: 0 4px 10px -4px rgba(0, 0, 0, 0.35);
+  z-index: 1;
+}
+/* running session: moving stripes + soft pulse */
+.tl-seg-live {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 255, 255, 0.28) 0 6px,
+    transparent 6px 12px
+  ) !important;
+  background-size: 17px 17px;
+  animation:
+    tl-grow 0.6s cubic-bezier(0.16, 1, 0.3, 1) both,
+    tl-stripes 0.9s linear infinite,
+    tl-live 1.8s ease-in-out infinite;
+}
+.tl-now {
+  box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.15);
+  animation: tl-now 2s ease-in-out infinite;
+}
+.tl-now::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #f43f5e;
+  transform: translateX(-50%);
+}
+.tl-chip {
+  animation: tdd-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.tl-tip {
+  animation: tl-tip 0.15s ease-out both;
+}
+
+@keyframes tl-grow {
+  from { transform: scaleX(0); opacity: 0.4; }
+  to { transform: scaleX(1); opacity: 1; }
+}
+@keyframes tl-stripes {
+  from { background-position: 0 0; }
+  to { background-position: 17px 0; }
+}
+@keyframes tl-live {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+  50% { box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25); }
+}
+@keyframes tl-now {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+@keyframes tl-tip {
+  from { opacity: 0; margin-top: 4px; }
+  to { opacity: 1; margin-top: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tl-row,
+  .tl-seg,
+  .tl-seg-live,
+  .tl-now,
+  .tl-chip,
+  .tl-tip {
+    animation: none !important;
+  }
+}

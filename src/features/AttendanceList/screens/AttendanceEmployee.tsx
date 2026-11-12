@@ -9,6 +9,7 @@ import CustomBox from "../../../components/CustomBox/CustomBox.js";
 import ThemedDateRange from "../../../components/ThemedDateRange";
 import { localToday, rangePresets } from "../../../components/themedDates";
 import dayjs from "dayjs";
+import { useTrackedTime } from "../../../shared/hooks/useTrackedTime";
 
 /* ---------- helpers ---------- */
 
@@ -96,6 +97,11 @@ const AttendanceEmployee = () => {
     [data, today, now],
   );
 
+  // hours worked come from the time tracker (task timers)
+  const trackedItems = useMemo(() => rows.map((r) => ({ userId: user?.id, date: r.date })), [rows, user?.id]);
+  const { tracked } = useTrackedTime(trackedItems);
+  const workedOf = (r: Row) => tracked(user?.id, r.date);
+
   const summary = useMemo(() => {
     const present = rows.filter((r) => r.in);
     const ins = present.map((r) => toMinutes(r.in)!).filter((v) => v != null);
@@ -107,11 +113,11 @@ const AttendanceEmployee = () => {
       days: present.length,
       avgIn: avgIn != null ? minutesToClock(avgIn) : "—",
       avgOut: avgOut != null ? minutesToClock(avgOut) : "—",
-      total: formatHours(rows.reduce((s, r) => s + r.seconds, 0)),
+      total: formatHours(rows.reduce((s, r) => s + tracked(user?.id, r.date).seconds, 0)),
     };
-  }, [rows]);
+  }, [rows, tracked, user?.id]);
 
-  const longest = Math.max(1, ...rows.map((r) => r.seconds));
+  const longest = Math.max(1, ...rows.map((r) => workedOf(r).seconds));
 
   if (!user || user.id === undefined) return null;
 
@@ -119,7 +125,7 @@ const AttendanceEmployee = () => {
     { icon: CalendarCheck, label: "Days present", value: String(summary.days) },
     { icon: LogIn, label: "Avg check-in", value: summary.avgIn },
     { icon: LogOut, label: "Avg check-out", value: summary.avgOut },
-    { icon: Timer, label: "Total hours", value: summary.total },
+    { icon: Timer, label: "Hours tracked", value: summary.total },
   ];
 
   return (
@@ -245,12 +251,12 @@ const AttendanceEmployee = () => {
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
                         <div
-                          className={`att-bar h-full rounded-full ${r.workingNow ? "bg-emerald-500" : "bg-primary"}`}
-                          style={{ width: `${Math.max(2, (r.seconds / longest) * 100)}%` }}
+                          className={`att-bar h-full rounded-full ${workedOf(r).live ? "bg-emerald-500" : "bg-primary"}`}
+                          style={{ width: `${workedOf(r).seconds ? Math.max(3, (workedOf(r).seconds / longest) * 100) : 0}%` }}
                         />
                       </div>
                       <span className="w-16 text-right text-xs font-semibold text-black-80 shrink-0">
-                        {r.seconds ? formatHours(r.seconds) : "—"}
+                        {workedOf(r).seconds ? formatHours(workedOf(r).seconds) : "—"}
                       </span>
                     </div>
                   </li>

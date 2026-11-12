@@ -148,6 +148,8 @@ export const endpoints = {
   markNotificationRead: (id: number | string) =>
     `${baseUrl}/api/notifications/${id}/read`,
   markAllNotificationsRead: `${baseUrl}/api/notifications/read-all`,
+  // time tracker: seconds per user per IST day
+  trackedTime: `${baseUrl}/api/work-logs/tracked-time`,
 
   // Holidays
   getHolidays: `${baseUrl}/api/holiday-lists`,

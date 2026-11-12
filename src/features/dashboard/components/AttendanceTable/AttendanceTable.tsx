@@ -1,13 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLazyGetAllAttendanceQuery } from "../../dashboardApi";
 import type { IUserAttendance } from "../../types";
 import { convertTo12HourFormat, getWeekDates } from "../../../../utils/utils";
 import { toast } from "react-toastify";
 import { Link } from "react-router";
 import { ArrowRight } from "lucide-react";
-import ThemedTable, { PersonCell, Pill, WorkingNow } from "../../../../components/ThemedTable";
+import ThemedTable, { HoursBar, PersonCell, Pill, WorkingNow } from "../../../../components/ThemedTable";
+import { useTrackedTime } from "../../../../shared/hooks/useTrackedTime";
 
 import dayjs from "dayjs";
 
@@ -80,27 +81,20 @@ const AttendanceTable = () => {
 
   const todayStr = dayjs().format("YYYY-MM-DD");
 
-  const hoursOf = (row: any) => {
-    let secs = Number(row.attendance_seconds) || 0;
-    const toMin = (t?: string | null) => {
-      if (!t) return null;
-      const [h, m] = t.split(":").map(Number);
-      return Number.isFinite(h) ? h * 60 + (m || 0) : null;
-    };
-    const inM = toMin(row.in);
-    const outM = toMin(row.out);
-    if (!secs && inM != null && outM != null) secs = Math.max(0, (outM - inM) * 60);
-    if (!secs) return null;
-    const h = Math.floor(secs / 3600);
-    const m = Math.floor((secs % 3600) / 60);
-    return h ? `${h}h ${m}m` : `${m}m`;
-  };
-
   // today first, then by check-in time
-  const rows = [...attendanceData].sort(
+  const rows = useMemo(() => [...attendanceData].sort(
     (a: any, b: any) =>
       String(b.Date).localeCompare(String(a.Date)) || String(a.in || "").localeCompare(String(b.in || "")),
+  ), [attendanceData]);
+
+  // hours worked come from the time tracker (task timers)
+  const trackedItems = useMemo(
+    () => rows.map((r: any) => ({ userId: r.user?.id, date: r.Date ? dayjs(r.Date).format("YYYY-MM-DD") : null })),
+    [rows],
   );
+  const { tracked } = useTrackedTime(trackedItems);
+  const workedOf = (r: any) => tracked(r.user?.id, r.Date ? dayjs(r.Date).format("YYYY-MM-DD") : null);
+  const longestSeconds = Math.max(1, ...rows.map((r: any) => workedOf(r).seconds));
 
   /* ================= UI ================= */
   return (
@@ -175,13 +169,9 @@ const AttendanceTable = () => {
           },
           {
             key: "hours",
-            header: "Hours",
-            width: "0.7fr",
-            align: "right",
-            render: (r) => {
-              const h = hoursOf(r);
-              return h ? <span className="font-semibold">{h}</span> : <span className="text-black-50">—</span>;
-            },
+            header: "Hours worked",
+            width: "minmax(180px,1.5fr)",
+            render: (r) => <HoursBar seconds={workedOf(r).seconds} max={longestSeconds} live={workedOf(r).live} />,
           },
         ]}
       />
