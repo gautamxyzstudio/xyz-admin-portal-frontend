@@ -7,6 +7,7 @@ import timezone from "dayjs/plugin/timezone.js";
 
 import "./index.css";
 import App from "./App";
+import AppUpdater from "./components/AppUpdater/AppUpdater";
 
 import "swiper/css";
 import "swiper/css/navigation";
@@ -21,6 +22,8 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
       <App />
+      {/* reloads the app when a new build is deployed */}
+      <AppUpdater />
     </BrowserRouter>
   </StrictMode>
 );
