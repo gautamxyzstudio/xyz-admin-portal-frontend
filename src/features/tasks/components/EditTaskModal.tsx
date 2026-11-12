@@ -2,6 +2,14 @@
 import React, { useRef, useEffect, useState, useMemo } from "react";
 import TaskOvertimeSection from "./TaskOvertimeSection";
 import TaskDueDatePicker from "./TaskDueDatePicker";
+import ThemedDropdown from "../../../components/ThemedDropdown";
+
+const PriorityLabel = ({ color, text }: { color: string; text: string }) => (
+  <span className="inline-flex items-center gap-2">
+    <span className={`w-2 h-2 rounded-full ${color}`} />
+    <span className="font-medium">{text}</span>
+  </span>
+);
 
 interface Props { [key: string]: any }
 const EditTaskModal: React.FC<Props> = (props) => {
@@ -361,10 +369,10 @@ const EditTaskModal: React.FC<Props> = (props) => {
                             className="fixed inset-0 z-40"
                             onClick={() => setIsEditAssigneeDropdownOpen(false)}
                           />
-                          <div className="absolute top-full mt-1.5 left-0 w-full z-50 bg-white border border-slate-200/90 shadow-xl rounded-2xl overflow-hidden py-1 animate-in fade-in zoom-in-95 duration-100">
+                          <div className="absolute top-full mt-1.5 left-0 w-full z-50 tdd-pop !rounded-2xl overflow-hidden py-1">
                             {projectAssignedEmployees.length > 5 && (
                               <div className="p-2 border-b border-slate-100">
-                                <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 rounded-xl border border-slate-200/70">
+                                <div className="tdd-search !m-0">
                                   <Search size={13} className="text-slate-400 shrink-0" />
                                   <input
                                     type="text"
@@ -413,10 +421,7 @@ const EditTaskModal: React.FC<Props> = (props) => {
                                         setIsEditAssigneeDropdownOpen(false);
                                         setEditAssigneeSearchQuery("");
                                       }}
-                                      className={`px-3 py-2 text-xs cursor-pointer flex items-center justify-between gap-2 transition-colors ${isSelected
-                                          ? "bg-orange-50/90 text-primary font-semibold"
-                                          : "text-slate-700 hover:bg-slate-50"
-                                        }`}
+                                      className={`tdd-item px-3 py-2 text-xs cursor-pointer flex items-center justify-between gap-2 ${isSelected ? "tdd-selected" : "text-slate-700"}`}
                                     >
                                       <div className="flex items-center gap-2.5 min-w-0">
                                         {photoUrl ? (
@@ -468,26 +473,19 @@ const EditTaskModal: React.FC<Props> = (props) => {
                     <label className="text-xs font-semibold text-slate-800 block mb-1.5">
                       Priority
                     </label>
-                    <div className="relative">
-                      <select
-                        value={editTaskForm.priority}
-                        onChange={(e) =>
-                          setEditTaskForm({
-                            ...editTaskForm,
-                            priority: e.target.value as any,
-                          })
-                        }
-                        className="w-full h-[46px] px-4 bg-[#fafafa] border border-slate-200/90 rounded-2xl text-xs text-slate-800 outline-none focus:border-primary focus:bg-white cursor-pointer appearance-none pr-9 transition-all shadow-2xs"
-                      >
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High</option>
-                      </select>
-                      <ChevronDown
-                        size={15}
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-                      />
-                    </div>
+                    <ThemedDropdown<"low" | "medium" | "high">
+                      value={editTaskForm.priority as "low" | "medium" | "high"}
+                      onChange={(priority) =>
+                        setEditTaskForm({ ...editTaskForm, priority: priority as any })
+                      }
+                      variant="field"
+                      ariaLabel="Priority"
+                      options={[
+                        { value: "low", label: <PriorityLabel color="bg-blue-500" text="Low" />, searchText: "low" },
+                        { value: "medium", label: <PriorityLabel color="bg-amber-500" text="Medium" />, searchText: "medium" },
+                        { value: "high", label: <PriorityLabel color="bg-rose-500" text="High" />, searchText: "high" },
+                      ]}
+                    />
                   </div>
                 </div>
 

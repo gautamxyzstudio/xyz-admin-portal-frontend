@@ -1,12 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import {
-  Calendar as CalendarIcon,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  X,
-} from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 import { CircularProgress } from "@mui/material";
 import {
   type TaskStatus,
@@ -16,6 +10,7 @@ import {
   useUpdateAdminTaskMutation,
 } from "../allTaskApi";
 import { extractEmployeePhotoUrl } from "../../../utils/utils";
+import ThemedDatePicker from "../../../components/ThemedDatePicker";
 import { TaskAttachmentUpload } from "../../tasks/components/TaskAttachmentUpload";
 import {
   extractTaskAttachments,
@@ -61,136 +56,16 @@ export const CustomDatePicker: React.FC<{
   onChange: (date: string) => void;
   minDate?: string;
   className?: string;
-}> = ({ value, onChange, minDate, className }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const selected = value ? new Date(value) : new Date();
-  const [currentMonth, setCurrentMonth] = useState(selected.getMonth());
-  const [currentYear, setCurrentYear] = useState(selected.getFullYear());
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const monthNames = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
-  ];
-
-  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-  const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
-
-  const handlePrevMonth = () => {
-    if (currentMonth === 0) {
-      setCurrentMonth(11);
-      setCurrentYear((y) => y - 1);
-    } else {
-      setCurrentMonth((m) => m - 1);
-    }
-  };
-
-  const handleNextMonth = () => {
-    if (currentMonth === 11) {
-      setCurrentMonth(0);
-      setCurrentYear((y) => y + 1);
-    } else {
-      setCurrentMonth((m) => m + 1);
-    }
-  };
-
-  const formatDisplay = (isoStr: string) => {
-    if (!isoStr) return "";
-    const [y, m, d] = isoStr.split("-");
-    return `${d}/${m}/${y}`;
-  };
-
-  return (
-    <div className={`relative ${className || "w-full"}`} ref={containerRef}>
-      <div
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between text-xs px-3.5 py-2.5 bg-gray-50/70 border border-gray-200 rounded-xl cursor-pointer hover:bg-white focus:border-orange-500 transition text-gray-800 font-medium"
-      >
-        <span>{formatDisplay(value)}</span>
-        <CalendarIcon className="w-4 h-4 text-gray-400 shrink-0 ml-1.5" />
-      </div>
-
-      {isOpen && (
-        <div className="absolute top-full mt-1.5 right-0 w-64 bg-white border border-gray-100 shadow-2xl rounded-2xl p-4 z-50 animate-in fade-in zoom-in-95 duration-100">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold text-gray-800">
-              {monthNames[currentMonth]} {currentYear}
-            </span>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={handlePrevMonth}
-                className="p-1 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition cursor-pointer"
-              >
-                <ChevronLeft className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={handleNextMonth}
-                className="p-1 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition cursor-pointer"
-              >
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-7 gap-1 text-center mb-1">
-            {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
-              <span key={i} className="text-[10px] font-semibold text-gray-400">
-                {d}
-              </span>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-7 gap-1 text-center">
-            {Array.from({ length: firstDayIndex }).map((_, i) => (
-              <div key={`empty-${i}`} />
-            ))}
-            {Array.from({ length: daysInMonth }).map((_, i) => {
-              const day = i + 1;
-              const formattedDate = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-              const isSelected = value === formattedDate;
-              const isDisabled = minDate ? formattedDate < minDate : false;
-
-              return (
-                <button
-                  key={day}
-                  type="button"
-                  disabled={isDisabled}
-                  onClick={() => {
-                    if (!isDisabled) {
-                      onChange(formattedDate);
-                      setIsOpen(false);
-                    }
-                  }}
-                  className={`w-7 h-7 text-xs flex items-center justify-center rounded-full transition ${isDisabled
-                      ? "text-gray-300 cursor-not-allowed"
-                      : isSelected
-                        ? "bg-orange-600 text-white font-bold shadow-xs cursor-pointer"
-                        : "text-gray-700 hover:bg-gray-100 cursor-pointer"
-                    }`}
-                >
-                  {day}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
+}> = ({ value, onChange, minDate, className }) => (
+  <ThemedDatePicker
+    value={value}
+    onChange={onChange}
+    min={minDate}
+    variant="field"
+    className={className || "w-full"}
+    triggerClassName="!min-h-0 !py-2.5 !rounded-xl !text-xs"
+  />
+);
 
 const ModalStatusSelect: React.FC<{
   value: TaskStatus;
@@ -406,7 +281,7 @@ export const AdminTaskModal: React.FC<AdminTaskModalProps> = ({
                       onClick={() => setIsEmployeeDropdownOpen(false)}
                     />
                     {/* Scrollbar hidden cleanly with Tailwind utilities */}
-                    <div className="absolute top-full mt-1.5 left-0 w-full bg-white border border-gray-100 shadow-xl rounded-xl overflow-hidden z-20 py-1 max-h-48 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    <div className="absolute top-full mt-1.5 left-0 w-full tdd-pop overflow-hidden z-20 py-1 max-h-48 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                       {employees.map((emp) => {
                         const avatarUrl = extractEmployeePhotoUrl(emp);
 
@@ -418,10 +293,7 @@ export const AdminTaskModal: React.FC<AdminTaskModalProps> = ({
                               setIsEmployeeDropdownOpen(false);
                               if (errors.employee) setErrors((prev) => ({ ...prev, employee: undefined }));
                             }}
-                            className={`px-3.5 py-2 text-xs cursor-pointer hover:bg-orange-50 flex items-center gap-2 transition ${selectedEmployeeId === emp.id
-                                ? "bg-orange-50/60 text-orange-600 font-semibold"
-                                : "text-gray-700"
-                              }`}
+                            className={`tdd-item px-3.5 py-2 text-xs cursor-pointer flex items-center gap-2 ${selectedEmployeeId === emp.id ? "tdd-selected" : "text-gray-700"}`}
                           >
                             {avatarUrl ? (
                               <img

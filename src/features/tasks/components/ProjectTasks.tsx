@@ -38,6 +38,7 @@ import {
 } from "../../../utils/utils";
 import { toast } from "react-toastify";
 import { TaskAttachmentUpload } from "./TaskAttachmentUpload";
+import ThemedDropdown from "../../../components/ThemedDropdown";
 import { useUploadFileMutation } from "../../../shared/api/sharedApi";
 import {
   extractTaskAttachments,
@@ -632,14 +633,10 @@ const ProjectTasks: React.FC = () => {
     }
   }, [projectName]);
 
-  // Priority dropdown ref for outside click
-  const priorityDropdownRef = useRef<HTMLDivElement>(null);
-
   // Filters State
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedAssignee, setSelectedAssignee] = useState<string | null>(null);
   const [selectedPriority, setSelectedPriority] = useState<string>("all");
-  const [isPriorityOpen, setIsPriorityOpen] = useState(false);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
 
   // Modal State for Add Task
@@ -660,8 +657,8 @@ const ProjectTasks: React.FC = () => {
   const [attachments, setAttachments] = useState<IUploadedAttachment[]>([]);
   const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
   const [isAssigneeDropdownOpen, setIsAssigneeDropdownOpen] = useState(false);
-  const [isCreatePriorityDropdownOpen, setIsCreatePriorityDropdownOpen] =
-    useState(false);
+  // kept for CreateTaskModal, which still resets it; the priority field is a ThemedDropdown now
+  const [, setIsCreatePriorityDropdownOpen] = useState(false);
   const [assigneeSearchQuery, setAssigneeSearchQuery] = useState("");
 
   // Modal State for Edit Task
@@ -728,16 +725,9 @@ const ProjectTasks: React.FC = () => {
     commentAttachments.length > 0 ||
     isUploadingCommentPhoto;
 
-  // Outside click listener for priority dropdown and quick move
+  // Outside click listener for the comment composer
   useEffect(() => {
     const handleGlobalMouseDown = (e: MouseEvent) => {
-      if (
-        isPriorityOpen &&
-        priorityDropdownRef.current &&
-        !priorityDropdownRef.current.contains(e.target as Node)
-      ) {
-        setIsPriorityOpen(false);
-      }
       if (
         commentComposerRef.current &&
         !commentComposerRef.current.contains(e.target as Node) &&
@@ -750,7 +740,7 @@ const ProjectTasks: React.FC = () => {
     document.addEventListener("mousedown", handleGlobalMouseDown);
     return () =>
       document.removeEventListener("mousedown", handleGlobalMouseDown);
-  }, [isPriorityOpen]);
+  }, []);
 
   // RTK Query: fetch tasks & employees for this project from /api/task-items/project
   const {
@@ -1632,74 +1622,22 @@ const ProjectTasks: React.FC = () => {
       <label className="text-xs font-semibold text-slate-800 block mb-1.5">
         Priority
       </label>
-      <div className="relative">
-        <button
-          type="button"
-          onClick={() =>
-            setIsCreatePriorityDropdownOpen(!isCreatePriorityDropdownOpen)
-          }
-          className={`w-full h-[46px] px-3.5 bg-[#fafafa] border rounded-2xl text-xs text-left outline-none transition-all shadow-2xs flex items-center justify-between gap-2 cursor-pointer ${isCreatePriorityDropdownOpen
-            ? "border-primary bg-white ring-2 ring-orange-500/10"
-            : "border-slate-200/90 hover:border-slate-300"
-            }`}
-        >
-          <div className="flex items-center gap-2">
-            <span
-              className={`w-2 h-2 rounded-full ${taskForm.priority === "high"
-                ? "bg-rose-500"
-                : taskForm.priority === "low"
-                  ? "bg-blue-500"
-                  : "bg-amber-500"
-                }`}
-            />
-            <span className="font-semibold text-slate-800 capitalize">
-              {taskForm.priority || "Medium"}
+      <ThemedDropdown
+        value={taskForm.priority || "medium"}
+        onChange={(priority) => setTaskForm({ ...taskForm, priority: priority as any })}
+        variant="field"
+        ariaLabel="Priority"
+        options={PRIORITY_OPTIONS.map((opt: any) => ({
+          value: opt.id,
+          searchText: String(opt.label),
+          label: (
+            <span className="inline-flex items-center gap-2.5">
+              <span className={`w-2 h-2 rounded-full ${opt.dotColor}`} />
+              <span className="font-medium">{opt.label}</span>
             </span>
-          </div>
-          <ChevronDown
-            size={15}
-            className={`text-slate-400 shrink-0 transition-transform duration-200 ${isCreatePriorityDropdownOpen ? "rotate-180 text-primary" : ""
-              }`}
-          />
-        </button>
-
-        {isCreatePriorityDropdownOpen && (
-          <>
-            <div
-              className="fixed inset-0 z-40 cursor-default"
-              onClick={() => setIsCreatePriorityDropdownOpen(false)}
-            />
-            <div className="absolute top-full mt-1.5 left-0 w-full z-50 bg-white border border-slate-200/90 shadow-xl rounded-2xl overflow-hidden py-1 animate-in fade-in zoom-in-95 duration-100">
-              {PRIORITY_OPTIONS.map((opt) => {
-                const isSelected = taskForm.priority === opt.id;
-                return (
-                  <div
-                    key={opt.id}
-                    onClick={() => {
-                      setTaskForm({ ...taskForm, priority: opt.id });
-                      setIsCreatePriorityDropdownOpen(false);
-                    }}
-                    className={`px-3.5 py-2.5 text-xs cursor-pointer flex items-center justify-between gap-2 transition-colors ${isSelected
-                      ? "bg-orange-50/90 text-primary font-semibold"
-                      : "text-slate-700 hover:bg-slate-50"
-                      }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <span
-                        className={`w-2 h-2 rounded-full ${opt.dotColor}`}
-                      />
-                      <span className="font-medium">{opt.label}</span>
-                    </div>
-                    {isSelected && (
-                      <Check size={14} className="text-primary shrink-0" />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        )}
-      </div>
+          ),
+        }))}
+      />
     </div>
   );
 
@@ -1847,48 +1785,20 @@ const ProjectTasks: React.FC = () => {
             </div>
           )}
 
-          {/* Priority Filter Dropdown (Closes on outside click) */}
-          <div className="relative" ref={priorityDropdownRef}>
-            <button
-              onClick={() => setIsPriorityOpen(!isPriorityOpen)}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-slate-200/90 rounded-xl text-xs font-medium text-slate-700 hover:bg-slate-50 transition-all cursor-pointer shadow-2xs"
-            >
-              <span>
-                {selectedPriority === "all"
+          {/* Priority Filter Dropdown */}
+          <ThemedDropdown
+            value={selectedPriority}
+            onChange={setSelectedPriority}
+            align="right"
+            ariaLabel="Filter by priority"
+            options={["all", "high", "medium", "low"].map((p) => ({
+              value: p,
+              label:
+                p === "all"
                   ? "All priorities"
-                  : `${selectedPriority.charAt(0).toUpperCase() + selectedPriority.slice(1)} priority`}
-              </span>
-              <ChevronDown size={13} className="text-slate-400" />
-            </button>
-
-            {isPriorityOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-20 cursor-default"
-                  onClick={() => setIsPriorityOpen(false)}
-                />
-                <div className="absolute right-0 mt-1.5 w-36 bg-white border border-slate-200 rounded-xl shadow-lg z-30 py-1 text-xs animate-in fade-in zoom-in-95 duration-100">
-                  {["all", "high", "medium", "low"].map((p) => (
-                    <button
-                      key={p}
-                      onClick={() => {
-                        setSelectedPriority(p);
-                        setIsPriorityOpen(false);
-                      }}
-                      className={`w-full text-left px-3 py-1.5 hover:bg-slate-50 transition-colors cursor-pointer ${selectedPriority === p
-                        ? "font-bold text-primary bg-primary-20/20"
-                        : "text-slate-600"
-                        }`}
-                    >
-                      {p === "all"
-                        ? "All priorities"
-                        : p.charAt(0).toUpperCase() + p.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
+                  : `${p.charAt(0).toUpperCase() + p.slice(1)} priority`,
+            }))}
+          />
         </div>
       </div>
 

@@ -39,12 +39,14 @@ export const taskBoardApi = enhancedTaskBoardApi.injectEndpoints({
     }),
     getTaskBoardEmployees: builder.query<
       ITaskBoardEmployeesResponse,
-      { projectId?: number; status?: string } | void
+      { projectId?: number; status?: string; from?: string; to?: string } | void
     >({
       query: (arg) => {
         const params: Record<string, string | number> = {};
         if (arg?.projectId) params.projectId = arg.projectId;
         if (arg?.status) params.status = arg.status;
+        if (arg?.from) params.from = arg.from;
+        if (arg?.to) params.to = arg.to;
         return {
           url: endpoints.taskBoardEmployees,
           method: ApiMethodType.get,
@@ -53,6 +55,8 @@ export const taskBoardApi = enhancedTaskBoardApi.injectEndpoints({
       },
       transformResponse: (response: any): ITaskBoardEmployeesResponse => ({
         isElevatedUser: !!response?.isElevatedUser,
+        today: response?.today ?? null,
+        range: response?.range ?? null,
         employees: Array.isArray(response?.employees) ? response.employees : [],
       }),
       providesTags: ["TaskBoard", "Tasks", "AllTasks", "TaskOvertimes"],

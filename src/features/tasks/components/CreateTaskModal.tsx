@@ -204,10 +204,10 @@ const CreateTaskModal: React.FC<Props> = (props) => {
                             className="fixed inset-0 z-40"
                             onClick={() => setIsAssigneeDropdownOpen(false)}
                           />
-                          <div className="absolute top-full mt-1.5 left-0 w-full z-50 bg-white border border-slate-200/90 shadow-xl rounded-2xl overflow-hidden py-1 animate-in fade-in zoom-in-95 duration-100">
+                          <div className="absolute top-full mt-1.5 left-0 w-full z-50 tdd-pop !rounded-2xl overflow-hidden py-1">
                             {projectAssignedEmployees.length > 5 && (
                               <div className="p-2 border-b border-slate-100">
-                                <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 rounded-xl border border-slate-200/70">
+                                <div className="tdd-search !m-0">
                                   <Search
                                     size={13}
                                     className="text-slate-400 shrink-0"
@@ -263,10 +263,7 @@ const CreateTaskModal: React.FC<Props> = (props) => {
                                         setIsAssigneeDropdownOpen(false);
                                         setAssigneeSearchQuery("");
                                       }}
-                                      className={`px-3 py-2 text-xs cursor-pointer flex items-center justify-between gap-2 transition-colors ${isSelected
-                                          ? "bg-orange-50/90 text-primary font-semibold"
-                                          : "text-slate-700 hover:bg-slate-50"
-                                        }`}
+                                      className={`tdd-item px-3 py-2 text-xs cursor-pointer flex items-center justify-between gap-2 ${isSelected ? "tdd-selected" : "text-slate-700"}`}
                                     >
                                       <div className="flex items-center gap-2.5 min-w-0">
                                         {photoUrl ? (

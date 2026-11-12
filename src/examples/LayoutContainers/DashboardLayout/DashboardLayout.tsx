@@ -1,6 +1,7 @@
 import type React from "react";
 import TopBar from "../../Topbar/TopBar";
 import SideNav from "../../Sidenav/SideNav";
+import CelebrationOverlay from "../../../components/Celebration/CelebrationOverlay";
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -10,6 +11,8 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         <TopBar />
         <div className="w-full h-full overflow-y-scroll overflow-clip scrollbar-hide">{children}</div>
       </div>
+      {/* birthday / joining / anniversary celebration, once a day */}
+      <CelebrationOverlay />
     </div>
   );
 };

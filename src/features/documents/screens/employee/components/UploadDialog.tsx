@@ -11,6 +11,7 @@ import { MdOutlineFileUpload } from "react-icons/md";
 import { toast } from "react-toastify";
 import { employeeListInState } from "../../../../employee/employeeSlice";
 import { useLocation } from "react-router";
+import ThemedDropdown from "../../../../../components/ThemedDropdown";
 
 interface Props {
   open: boolean;
@@ -97,23 +98,19 @@ const isHrAllEmployeePage =
           <label className="text-black-50 text-base font-normal">
             Select Employee
           </label>
-          <select
-            onChange={(e) => {
-              const value = Number(e.target.value);
-              setSelectedEmployeeId(value);
-            }}
-            value={selectedEmployeeId}
-            className="w-full mt-1 p-4 border border-black-20 rounded-2xl text-sm outline-none transition-all"
-          >
-            <option className="text-black-20" value="" disabled>
-              Select Employee
-            </option>
-            {filteredEmployeeList?.map((emp) => (
-              <option key={emp.id} value={emp.id}>
-                {emp.name}
-              </option>
-            ))}
-          </select>
+          <ThemedDropdown<number>
+            value={selectedEmployeeId === "" ? null : selectedEmployeeId}
+            onChange={(value) => setSelectedEmployeeId(value)}
+            variant="field"
+            className="mt-1"
+            placeholder="Select Employee"
+            searchPlaceholder="Search employee…"
+            ariaLabel="Select employee"
+            options={(filteredEmployeeList ?? []).map((emp) => ({
+              value: emp.id,
+              label: emp.name,
+            }))}
+          />
         </div>}
         <div>
           <label className="text-black-50 text-base font-normal">

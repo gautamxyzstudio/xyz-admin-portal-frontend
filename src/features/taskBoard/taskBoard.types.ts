@@ -29,6 +29,23 @@ export interface IEmployeeTask {
   totalTimeSpentSeconds: number;
   overtimeMinutes: number;
   isRunning: boolean;
+  /** Assignee's time logged today (IST) */
+  todaySeconds: number;
+  /** Only present when a date range is requested */
+  range: IEmployeeTaskRange | null;
+}
+
+export interface IEmployeeTaskRange {
+  /** task existed by the end of the range */
+  existed: boolean;
+  /** status the task had at the end of the range */
+  statusAtEnd: TaskStatus | null;
+  /** assignee's time logged inside the range */
+  seconds: number;
+  /** everyone's time logged on the task up to the end of the range */
+  loggedByEndSeconds: number;
+  /** estimate left at the end of the range (0 if done / no estimate) */
+  onPlateSeconds: number;
 }
 
 export interface IEmployeeTaskSummary {
@@ -38,6 +55,15 @@ export interface IEmployeeTaskSummary {
   highPriorityOpen: number;
   overdue: number;
   totalTimeSeconds: number;
+  todaySeconds: number;
+  range: {
+    from: string;
+    to: string;
+    seconds: number;
+    onPlateSeconds: number;
+    openTasks: number;
+    noEstimate: number;
+  } | null;
   estimatedMinutes: number;
   overtimeMinutes: number;
   runningTask: { id: number; title: string; taskId: string | null } | null;
@@ -64,5 +90,7 @@ export interface ITaskBoardEmployee {
 
 export interface ITaskBoardEmployeesResponse {
   isElevatedUser: boolean;
+  today: string | null;
+  range: { from: string; to: string } | null;
   employees: ITaskBoardEmployee[];
 }

@@ -16,7 +16,6 @@ import {
   Trash2,
   Eye,
   X,
-  ArrowRight,
   Plus,
   RotateCcw,
   Paperclip,
@@ -31,9 +30,9 @@ import {
 } from "../allTaskApi";
 import {
   AdminTaskModal,
-  CustomDatePicker,
   STATUS_CONFIG,
 } from "./AdminTaskModal";
+import ThemedDateRange from "../../../components/ThemedDateRange";
 import {
   extractTaskAttachments,
   type IUploadedAttachment,
@@ -238,40 +237,15 @@ export default function AllTasks() {
           </div>
 
           {!isTodayOnly && (
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-semibold text-slate-400 uppercase">
-                  From
-                </span>
-                <CustomDatePicker
-                  value={startDate}
-                  onChange={(d) => {
-                    setStartDate(d);
-                    // If start date is ahead of current end date, bump end date to match
-                    if (d > endDate) {
-                      setEndDate(d);
-                    }
-                  }}
-                  className="w-36"
-                />
-              </div>
-
-              <ArrowRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-semibold text-slate-400 uppercase">
-                  To
-                </span>
-                <CustomDatePicker
-                  value={endDate}
-                  minDate={startDate}
-                  onChange={(d) => {
-                    setEndDate(d);
-                  }}
-                  className="w-36"
-                />
-              </div>
-            </div>
+            <ThemedDateRange
+              from={startDate}
+              to={endDate}
+              onChange={(from, to) => {
+                setStartDate(from);
+                setEndDate(to);
+              }}
+              align="left"
+            />
           )}
 
           {hasActiveFilters && (

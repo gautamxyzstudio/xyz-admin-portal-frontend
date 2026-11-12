@@ -27,7 +27,7 @@ const TopBar = () => {
     pollingInterval: 15000,
   });
 
-  const unread = data?.filter((n: any) => !n.isRead).length;
+  const unread = (data ?? []).filter((n: any) => !n.isRead).length;
 
   const openOutlook = () => {
     window.location.href = "ms-outlook://";

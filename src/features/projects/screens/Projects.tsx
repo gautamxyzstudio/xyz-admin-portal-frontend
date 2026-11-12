@@ -25,6 +25,7 @@ import { employeeListInState } from "../../employee/employeeSlice";
 import { useGetEmployeeListQuery } from "../../employee/employeeApis";
 import { useUploadFileMutation } from "../../../shared/api/sharedApi";
 import { Icons } from "../../../assets/myAssets/exporter";
+import ThemedDropdown from "../../../components/ThemedDropdown";
 
 const Projects = () => {
   // ===== API =====
@@ -236,20 +237,19 @@ const Projects = () => {
               <label className="text-[10px] font-black text-black-50 uppercase tracking-widest ml-1">
                 Team Members
               </label>
-              <select
-                onChange={(e) => handleEmployeeSelect(Number(e.target.value))}
-                value=""
-                className="w-full mt-1 p-4 bg-primary-20/20 border border-primary-20 rounded-2xl text-sm focus:border-primary outline-none transition-all"
-              >
-                <option value="" disabled>
-                  Select Team...
-                </option>
-                {filteredEmployeeList?.map((emp) => (
-                  <option key={emp.id} value={emp.id}>
-                    {emp.name}
-                  </option>
-                ))}
-              </select>
+              <ThemedDropdown<number>
+                value={null}
+                onChange={(id) => handleEmployeeSelect(id)}
+                variant="field"
+                className="mt-1"
+                placeholder="Select Team..."
+                searchPlaceholder="Search employee…"
+                ariaLabel="Add team member"
+                options={(filteredEmployeeList ?? []).map((emp) => ({
+                  value: emp.id,
+                  label: emp.name,
+                }))}
+              />
 
               <div className="flex flex-wrap gap-2 mt-3 max-h-20 overflow-y-auto scrollbar-hide">
                 {formData.selectedEmployees.map((emp) => (

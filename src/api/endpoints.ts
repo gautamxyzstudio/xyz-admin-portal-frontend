@@ -147,6 +147,7 @@ export const endpoints = {
   getNotifications: `${baseUrl}/api/notifications/my`,
   markNotificationRead: (id: number | string) =>
     `${baseUrl}/api/notifications/${id}/read`,
+  markAllNotificationsRead: `${baseUrl}/api/notifications/read-all`,
 
   // Holidays
   getHolidays: `${baseUrl}/api/holiday-lists`,

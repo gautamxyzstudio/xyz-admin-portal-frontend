@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { CircularProgress } from "@mui/material";
 import { useGetTaskBoardEmployeesQuery } from "../taskBoardApi";
 import { getImageUrl } from "../../../utils/utils";
+import ThemedDropdown from "../../../components/ThemedDropdown";
+import ThemedDateRange from "../../../components/ThemedDateRange";
 import type { IEmployeeTask, ITaskBoardEmployee, TaskStatus } from "../taskBoard.types";
 
 /* ---------------- helpers ---------------- */
@@ -36,7 +38,61 @@ const PRIORITY_STYLE: Record<string, string> = {
   low: "text-gray-400",
 };
 
-type StatusTab = TaskStatus | "open" | "all";
+type StatusTab = TaskStatus | "open" | "all" | "worked";
+type RangePreset = "all" | "today" | "yesterday" | "7d" | "month" | "custom";
+
+/* ---- IST calendar helpers (dates as YYYY-MM-DD) ---- */
+const istToday = () => new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
+const shiftDay = (d: string, days: number) => {
+  const t = new Date(`${d}T00:00:00Z`);
+  t.setUTCDate(t.getUTCDate() + days);
+  return t.toISOString().slice(0, 10);
+};
+const shortDay = (d: string) =>
+  new Date(`${d}T00:00:00Z`).toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    timeZone: "UTC",
+  });
+
+const resolveRange = (
+  preset: RangePreset,
+  customFrom: string,
+  customTo: string,
+): { from: string; to: string } | null => {
+  const today = istToday();
+  switch (preset) {
+    case "today":
+      return { from: today, to: today };
+    case "yesterday": {
+      const y = shiftDay(today, -1);
+      return { from: y, to: y };
+    }
+    case "7d":
+      return { from: shiftDay(today, -6), to: today };
+    case "month":
+      return { from: `${today.slice(0, 8)}01`, to: today };
+    case "custom": {
+      if (!customFrom && !customTo) return null;
+      const a = customFrom || customTo;
+      const b = customTo || customFrom;
+      return a <= b ? { from: a, to: b } : { from: b, to: a };
+    }
+    default:
+      return null;
+  }
+};
+
+const rangeLabel = (r: { from: string; to: string } | null) => {
+  if (!r) return "all time";
+  const today = istToday();
+  if (r.from === r.to) {
+    if (r.from === today) return "today";
+    if (r.from === shiftDay(today, -1)) return "yesterday";
+    return `on ${shortDay(r.from)}`;
+  }
+  return `${shortDay(r.from)} – ${shortDay(r.to)}`;
+};
 type SortKey = "plate" | "time" | "open" | "name";
 
 // remaining time on one task = estimate - time already logged (never below 0)
@@ -55,6 +111,29 @@ const workInfo = (emp: ITaskBoardEmployee) => {
   };
 };
 
+// numbers shown for an employee: live (no range) or as of the end of the range
+const figures = (emp: ITaskBoardEmployee, ranged: boolean) => {
+  const r = emp.summary.range;
+  if (ranged && r) {
+    return {
+      remaining: r.onPlateSeconds,
+      openCount: r.openTasks,
+      noEstimate: r.noEstimate,
+      spent: r.seconds,
+    };
+  }
+  return { ...workInfo(emp), spent: emp.summary.totalTimeSeconds };
+};
+
+const RANGE_OPTIONS: { value: RangePreset; label: string }[] = [
+  { value: "all", label: "Live (all time)" },
+  { value: "today", label: "Today" },
+  { value: "yesterday", label: "Yesterday" },
+  { value: "7d", label: "Last 7 days" },
+  { value: "month", label: "This month" },
+  { value: "custom", label: "Custom range…" },
+];
+
 const TABS: [StatusTab, string][] = [
   ["open", "Open"],
   ["planned", "Planned"],
@@ -64,8 +143,16 @@ const TABS: [StatusTab, string][] = [
   ["all", "All"],
 ];
 
-const matchesStatus = (t: IEmployeeTask, tab: StatusTab) =>
-  tab === "all" ? true : tab === "open" ? t.status !== "completed" : t.status === tab;
+// status to filter by: the status at the end of the range when a range is set
+const statusOf = (t: IEmployeeTask, ranged: boolean): TaskStatus =>
+  (ranged && t.range?.statusAtEnd) || t.status;
+
+const matchesStatus = (t: IEmployeeTask, tab: StatusTab, ranged: boolean) => {
+  if (tab === "all") return true;
+  if (tab === "worked") return ranged ? (t.range?.seconds ?? 0) > 0 : t.todaySeconds > 0;
+  const st = statusOf(t, ranged);
+  return tab === "open" ? st !== "completed" : st === tab;
+};
 
 const Avatar: React.FC<{ emp: ITaskBoardEmployee; size?: number }> = ({ emp, size = 36 }) => {
   const [failed, setFailed] = useState(false);
@@ -102,12 +189,21 @@ interface Props {
 
 const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly = false }) => {
   const navigate = useNavigate();
-  const { data, isLoading, isFetching, error, refetch } = useGetTaskBoardEmployeesQuery(undefined, {
+  const [preset, setPreset] = useState<RangePreset>("all");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
+  const range = resolveRange(preset, customFrom, customTo);
+  const ranged = !!range;
+  const label = rangeLabel(range);
+  const { data, isLoading, isFetching, error, refetch } = useGetTaskBoardEmployeesQuery(
+    range ?? undefined,
+    {
     pollingInterval: 30_000,
     refetchOnFocus: true,
     refetchOnReconnect: true,
     refetchOnMountOrArgChange: true,
-  });
+    },
+  );
 
   useEffect(() => {
     if (refreshKey) refetch();
@@ -117,6 +213,17 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [statusTab, setStatusTab] = useState<StatusTab>("open");
   const [projectFilter, setProjectFilter] = useState<number | "all">("all");
+
+  const changePreset = (p: RangePreset) => {
+    setPreset(p);
+    // with a range, start on the tasks actually worked in it
+    setStatusTab(p === "all" ? "open" : "worked");
+    if (p === "custom" && !customFrom) {
+      const y = shiftDay(istToday(), -1);
+      setCustomFrom(y);
+      setCustomTo(y);
+    }
+  };
 
   const employees = useMemo(
     () => (data?.employees ?? []).filter((e) => e.summary.totalTasks > 0),
@@ -138,15 +245,15 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
     );
     return [...list].sort((a, b) =>
       sortBy === "plate"
-        ? workInfo(b).remaining - workInfo(a).remaining ||
-          workInfo(b).openCount - workInfo(a).openCount
+        ? figures(b, ranged).remaining - figures(a, ranged).remaining ||
+          figures(b, ranged).openCount - figures(a, ranged).openCount
         : sortBy === "time"
-        ? b.summary.totalTimeSeconds - a.summary.totalTimeSeconds
+        ? figures(b, ranged).spent - figures(a, ranged).spent
         : sortBy === "open"
-          ? b.summary.openTasks - a.summary.openTasks
+          ? figures(b, ranged).openCount - figures(a, ranged).openCount
           : (a.name || "").localeCompare(b.name || ""),
     );
-  }, [employees, searchTerm, sortBy, selfOnly]);
+  }, [employees, searchTerm, sortBy, selfOnly, ranged]);
 
   const activeId = visibleEmployees.some((e) => e.id === selectedId)
     ? selectedId
@@ -155,16 +262,19 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
 
   const selectEmployee = (id: number) => {
     setSelectedId(id);
-    setStatusTab("open");
+    setStatusTab(ranged ? "worked" : "open");
     setProjectFilter("all");
   };
 
   const projectTasks = useMemo(
     () =>
       (selected?.tasks ?? []).filter(
-        (t) => projectFilter === "all" || t.project?.id === projectFilter,
+        (t) =>
+          (projectFilter === "all" || t.project?.id === projectFilter) &&
+          // with a range, hide tasks that did not exist yet by its end
+          (!ranged || t.range?.existed !== false),
       ),
-    [selected, projectFilter],
+    [selected, projectFilter, ranged],
   );
 
   const projects = useMemo(() => {
@@ -178,7 +288,7 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
   const taskTerm = selfOnly ? searchTerm.toLowerCase().trim() : "";
   const tasks = projectTasks.filter(
     (t) =>
-      matchesStatus(t, statusTab) &&
+      matchesStatus(t, statusTab, ranged) &&
       (!taskTerm ||
         t.title?.toLowerCase().includes(taskTerm) ||
         t.project?.title?.toLowerCase().includes(taskTerm)),
@@ -229,34 +339,68 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
     );
   }
 
+  const tabs: [StatusTab, string][] = [
+    ...TABS.slice(0, 1),
+    ["worked", ranged ? "Worked on" : "Worked today"],
+    ...TABS.slice(1),
+  ];
+
   return (
+    <div className="flex flex-col gap-3">
+      {/* ---------- Date range ---------- */}
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <span className="text-xs text-black-50">Show</span>
+        <ThemedDropdown
+          value={preset}
+          options={RANGE_OPTIONS}
+          onChange={changePreset}
+          align="right"
+          ariaLabel="Date range"
+        />
+        {preset === "custom" && (
+          <ThemedDateRange
+            from={customFrom}
+            to={customTo}
+            max={istToday()}
+            onChange={(a, b) => {
+              setCustomFrom(a);
+              setCustomTo(b);
+            }}
+          />
+        )}
+        {isFetching && <CircularProgress size={12} sx={{ color: "#f17c04" }} />}
+      </div>
+
     <div className="flex flex-col lg:flex-row gap-4 items-start">
       {/* ---------- Employees ---------- */}
       {!selfOnly && (
-      <div className="w-full lg:w-80 shrink-0 bg-white rounded-2xl border border-gray-100 overflow-hidden lg:sticky lg:top-0">
+      <div className="w-full lg:w-80 shrink-0 bg-white rounded-2xl border border-gray-100 lg:sticky lg:top-0 lg:z-10">
         <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
           <span className="text-sm font-semibold text-black-80">
             Employees <span className="text-black-50 font-normal">({visibleEmployees.length})</span>
           </span>
-          <select
+          <ThemedDropdown<SortKey>
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortKey)}
-            className="text-xs text-black-50 bg-transparent outline-none cursor-pointer"
-          >
-            <option value="plate">Most on plate</option>
-            <option value="time">Most time spent</option>
-            <option value="open">Most open tasks</option>
-            <option value="name">Name</option>
-          </select>
+            onChange={setSortBy}
+            variant="plain"
+            align="right"
+            ariaLabel="Sort employees"
+            options={[
+              { value: "plate", label: "Most on plate" },
+              { value: "time", label: ranged ? `Most time ${label}` : "Most time spent" },
+              { value: "open", label: "Most open tasks" },
+              { value: "name", label: "Name" },
+            ]}
+          />
         </div>
 
-        <div className="max-h-[60vh] lg:max-h-[calc(100vh-230px)] overflow-y-auto scrollbar-hide [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="rounded-b-2xl max-h-[60vh] lg:max-h-[calc(100vh-230px)] overflow-y-auto scrollbar-hide [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {visibleEmployees.length === 0 ? (
             <p className="text-center text-xs text-black-50 py-10">No match for "{searchTerm}"</p>
           ) : (
             visibleEmployees.map((emp) => {
               const active = emp.id === activeId;
-              const work = workInfo(emp);
+              const work = figures(emp, ranged);
               return (
                 <button
                   key={emp.id}
@@ -281,7 +425,11 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
                       </p>
                       <p
                         className="text-sm font-semibold text-primary whitespace-nowrap"
-                        title="On plate: remaining time on open tasks (estimate minus time logged)"
+                        title={
+                          ranged
+                            ? `On plate at the end of ${label}: estimate minus time logged by then`
+                            : "On plate: remaining time on open tasks (estimate minus time logged)"
+                        }
                       >
                         {formatDuration(work.remaining)}
                         <span className="text-[11px] font-normal text-black-50"> on plate</span>
@@ -293,10 +441,16 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
                         <b className="text-black-80 font-semibold">{work.openCount}</b> open tasks
                       </span>
                       <span className="text-black-50 text-right" title="Time logged">
-                        <b className="text-black-80 font-semibold">
-                          {formatDuration(emp.summary.totalTimeSeconds)}
-                        </b>{" "}
-                        spent
+                        {!ranged && emp.summary.todaySeconds > 0 && (
+                          <>
+                            <b className="text-emerald-600 font-semibold">
+                              {formatDuration(emp.summary.todaySeconds)}
+                            </b>{" "}
+                            today ·{" "}
+                          </>
+                        )}
+                        <b className="text-black-80 font-semibold">{formatDuration(work.spent)}</b>{" "}
+                        {ranged ? label : "spent"}
                       </span>
                     </div>
                   </div>
@@ -323,33 +477,49 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
                 )}
               </p>
             </div>
-            <div className="text-right">
-              <p className="text-base font-semibold text-primary">
-                {formatDuration(workInfo(selected).remaining)}
-              </p>
-              <p className="text-[11px] text-black-50">
-                on plate · {workInfo(selected).openCount} open tasks
-                {workInfo(selected).noEstimate > 0 && (
-                  <span className="text-orange-500" title="These tasks have no estimate, so they are not in the remaining hours">
-                    {" "}({workInfo(selected).noEstimate} no estimate)
-                  </span>
-                )}
-              </p>
-            </div>
-            <div className="text-right pl-4 border-l border-gray-100">
-              <p className="text-base font-semibold text-black-80">
-                {formatDuration(selected.summary.totalTimeSeconds)}
-              </p>
-              <p className="text-[11px] text-black-50">time spent</p>
-            </div>
-            {isFetching && <CircularProgress size={14} sx={{ color: "#f17c04" }} />}
+            {(() => {
+              const f = figures(selected, ranged);
+              return (
+                <>
+                  <div className="text-right">
+                    <p className="text-base font-semibold text-primary">{formatDuration(f.remaining)}</p>
+                    <p className="text-[11px] text-black-50">
+                      on plate{ranged && preset !== "today" ? ` (end of ${label})` : ""} · {f.openCount} open
+                      tasks
+                      {f.noEstimate > 0 && (
+                        <span
+                          className="text-orange-500"
+                          title="These tasks have no estimate, so they are not in the remaining hours"
+                        >
+                          {" "}({f.noEstimate} no estimate)
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <div className="text-right pl-4 border-l border-gray-100">
+                    <p className="text-base font-semibold text-black-80">{formatDuration(f.spent)}</p>
+                    <p className="text-[11px] text-black-50">
+                      {ranged ? `time spent ${label}` : "time spent (all time)"}
+                    </p>
+                  </div>
+                  {preset !== "today" && (
+                    <div className="text-right pl-4 border-l border-gray-100">
+                      <p className="text-base font-semibold text-emerald-600">
+                        {formatDuration(selected.summary.todaySeconds)}
+                      </p>
+                      <p className="text-[11px] text-black-50">worked today</p>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
 
           {/* filters */}
           <div className="px-5 pt-3 flex flex-wrap items-center justify-between gap-3 border-b border-gray-100">
             <div className="flex gap-5 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {TABS.map(([key, label]) => {
-                const count = projectTasks.filter((t) => matchesStatus(t, key)).length;
+              {tabs.map(([key, tabLabel]) => {
+                const count = projectTasks.filter((t) => matchesStatus(t, key, ranged)).length;
                 const isActive = statusTab === key;
                 return (
                   <button
@@ -361,26 +531,23 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
                         : "border-transparent text-black-50 hover:text-black-80"
                     }`}
                   >
-                    {label} <span className="text-xs opacity-70">{count}</span>
+                    {tabLabel} <span className="text-xs opacity-70">{count}</span>
                   </button>
                 );
               })}
             </div>
             {projects.length > 1 && (
-              <select
+              <ThemedDropdown<number | "all">
                 value={projectFilter}
-                onChange={(e) =>
-                  setProjectFilter(e.target.value === "all" ? "all" : Number(e.target.value))
-                }
-                className="mb-2 text-xs border border-black-20 rounded-lg px-2 py-1.5 outline-none focus:border-primary cursor-pointer max-w-[200px]"
-              >
-                <option value="all">All projects</option>
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.title}
-                  </option>
-                ))}
-              </select>
+                onChange={setProjectFilter}
+                align="right"
+                className="mb-2"
+                ariaLabel="Filter by project"
+                options={[
+                  { value: "all", label: "All projects" },
+                  ...projects.map((p) => ({ value: p.id, label: p.title })),
+                ]}
+              />
             )}
           </div>
 
@@ -391,9 +558,13 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
             <ul className="divide-y divide-gray-100">
               {tasks.map((t) => {
                 const est = (t.estimatedMinutes || 0) * 60;
-                const over = est > 0 && t.timeSpentSeconds > est;
+                // with a range: logged up to its end; otherwise logged so far
+                const logged = ranged ? (t.range?.loggedByEndSeconds ?? 0) : t.timeSpentSeconds;
+                const left = ranged ? (t.range?.onPlateSeconds ?? 0) : taskRemaining(t);
+                const shownStatus = statusOf(t, ranged);
+                const over = est > 0 && logged > est;
                 const due = formatDate(t.dueDate);
-                const st = STATUS_STYLE[t.status] || STATUS_STYLE.planned;
+                const st = STATUS_STYLE[shownStatus] || STATUS_STYLE.planned;
                 return (
                   <li
                     key={t.id}
@@ -425,21 +596,34 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
                     <span className={`hidden sm:inline px-2 py-0.5 rounded-md text-xs font-medium ${st.cls}`}>
                       {st.label}
                     </span>
-                    <div className="w-36 text-right shrink-0">
-                      <p className={`text-sm font-semibold ${over ? "text-red-600" : "text-black-80"}`}>
-                        {formatDuration(t.timeSpentSeconds)}
-                      </p>
+                    <div className="w-40 text-right shrink-0">
+                      {ranged ? (
+                        <p className="text-sm font-semibold text-black-80" title={`Time logged ${label}`}>
+                          {formatDuration(t.range?.seconds ?? 0)}
+                          <span className="text-[11px] font-normal text-black-50"> {label}</span>
+                        </p>
+                      ) : (
+                        <p className={`text-sm font-semibold ${over ? "text-red-600" : "text-black-80"}`}>
+                          {formatDuration(t.timeSpentSeconds)}
+                          {t.todaySeconds > 0 && (
+                            <span className="text-[11px] font-normal text-emerald-600">
+                              {" "}({formatDuration(t.todaySeconds)} today)
+                            </span>
+                          )}
+                        </p>
+                      )}
                       {est > 0 ? (
                         <p className="text-[11px] text-black-50">
-                          of {formatDuration(est)}
-                          {t.status !== "completed" && (
+                          {ranged ? `${formatDuration(logged)} of ` : "of "}
+                          {formatDuration(est)}
+                          {shownStatus !== "completed" && (
                             <span className={over ? "text-red-600" : "text-primary"}>
-                              {" "}· {over ? "over" : `${formatDuration(taskRemaining(t))} left`}
+                              {" "}· {over ? "over" : `${formatDuration(left)} left`}
                             </span>
                           )}
                         </p>
                       ) : (
-                        t.status !== "completed" && (
+                        shownStatus !== "completed" && (
                           <p className="text-[11px] text-orange-500">no estimate</p>
                         )
                       )}
@@ -451,6 +635,7 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
           )}
         </div>
       )}
+    </div>
     </div>
   );
 };

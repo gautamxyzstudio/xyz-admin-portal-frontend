@@ -168,3 +168,809 @@ body {
   );
   animation: logo-slide-up-shimmer 1.35s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
+
+/* =========================================================
+   Themed dropdown + date pickers
+   (src/components/ThemedDropdown.tsx, ThemedDatePicker.tsx,
+    ThemedDateRange.tsx, ThemedCalendar.tsx)
+   One look for every dropdown / calendar, in the --primary colours.
+   .tdd-pop / .tdd-item can be put on hand-built popups to match.
+========================================================= */
+
+/* ---------- triggers ---------- */
+.tdd-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: 100%;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  cursor: pointer;
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    color 0.2s ease,
+    background-color 0.2s ease;
+}
+.tdd-trigger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.tdd-full {
+  display: flex;
+  width: 100%;
+}
+.tdd-boxed {
+  max-width: 240px;
+  padding: 0.375rem 0.625rem;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 0.5rem;
+  background: #fff;
+  color: #333;
+}
+.tdd-boxed.tdd-full {
+  max-width: none;
+}
+.tdd-field {
+  min-height: 46px;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  background: #fafafa;
+  color: #1e293b;
+  font-size: 0.8125rem;
+}
+.tdd-boxed:hover:not(:disabled),
+.tdd-field:hover:not(:disabled) {
+  border-color: var(--primary-50);
+}
+.tdd-boxed:focus-visible,
+.tdd-boxed.tdd-open,
+.tdd-field:focus-visible,
+.tdd-field.tdd-open {
+  border-color: var(--primary);
+  background: #fff;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
+}
+.tdd-error,
+.tdd-error:hover:not(:disabled) {
+  border-color: #ef4444 !important;
+}
+.tdd-plain {
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: #8a8a8a;
+}
+.tdd-plain:hover,
+.tdd-plain.tdd-open,
+.tdd-plain:focus-visible {
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary-20) 60%, transparent);
+}
+.tdd-placeholder {
+  color: #9ca3af;
+}
+.tdd-chevron {
+  color: #94a3b8;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease;
+}
+.tdd-open .tdd-chevron {
+  transform: rotate(180deg);
+  color: var(--primary);
+}
+.tdr-icon {
+  color: var(--primary);
+}
+
+/* ---------- popup panel ---------- */
+.tdd-menu,
+.tdd-pop {
+  background: #fff;
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, #fff) !important;
+  border-radius: 0.75rem;
+  box-shadow:
+    0 12px 28px -8px color-mix(in srgb, var(--primary) 28%, transparent),
+    0 4px 10px -4px rgba(0, 0, 0, 0.08) !important;
+}
+.tdd-menu {
+  z-index: 1600; /* above MUI dialogs (1300) */
+  display: flex;
+  flex-direction: column;
+  width: max-content;
+  max-width: min(320px, calc(100vw - 16px));
+  overflow: hidden;
+  transform-origin: top center;
+}
+.tdd-menu.tdd-up {
+  transform-origin: bottom center;
+}
+.tdd-pop {
+  transform-origin: top center;
+  animation: tdd-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+/* thin theme-coloured line along the top edge */
+.tdd-menu::before,
+.tdd-pop::before {
+  content: "";
+  display: block;
+  flex-shrink: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary-50), var(--primary), var(--primary-50));
+  transform-origin: left;
+  animation: tdd-line 0.35s ease-out both;
+}
+.tdd-pop::before {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin-top: -0.25rem;
+  margin-bottom: 0.25rem;
+}
+.tdd-menu-in {
+  animation: tdd-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.tdd-menu-out {
+  animation: tdd-out 0.14s ease-in both;
+}
+.tdd-up.tdd-menu-in {
+  animation-name: tdd-in-up;
+}
+
+.tdd-search {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.4rem 0.4rem 0.1rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid #eee;
+  border-radius: 0.6rem;
+  background: #fafafa;
+  color: #9ca3af;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+.tdd-search:focus-within {
+  border-color: var(--primary);
+  background: #fff;
+  color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 14%, transparent);
+}
+.tdd-search input {
+  width: 100%;
+  min-width: 0;
+  font-size: 0.75rem;
+  color: #333;
+  background: transparent;
+  outline: none;
+}
+.tdd-list {
+  overflow-y: auto;
+  padding: 0.3rem;
+  scrollbar-width: thin;
+}
+.tdd-empty {
+  padding: 0.75rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+/* ---------- options ---------- */
+.tdd-option,
+.tdd-item {
+  position: relative;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    padding-left 0.18s ease;
+}
+.tdd-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.45rem 0.625rem 0.45rem 0.8rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  color: #444;
+  cursor: pointer;
+  white-space: nowrap;
+  animation: tdd-option-in 0.22s ease-out both;
+}
+.tdd-item {
+  animation: tdd-option-in 0.22s ease-out both;
+}
+/* left accent bar that grows on hover / keyboard focus */
+.tdd-option::before,
+.tdd-item::before {
+  content: "";
+  position: absolute;
+  left: 0.25rem;
+  top: 50%;
+  width: 3px;
+  height: 0;
+  border-radius: 3px;
+  background: var(--primary);
+  transform: translateY(-50%);
+  transition: height 0.18s ease;
+}
+.tdd-option.tdd-active,
+.tdd-item:hover {
+  background: color-mix(in srgb, var(--primary-20) 70%, #fff) !important;
+  color: var(--primary) !important;
+}
+.tdd-option.tdd-active {
+  padding-left: 1rem;
+}
+.tdd-item:hover {
+  padding-left: calc(0.875rem + 0.25rem) !important;
+}
+.tdd-option.tdd-active::before,
+.tdd-item:hover::before {
+  height: 55%;
+}
+.tdd-option.tdd-selected,
+.tdd-item.tdd-selected {
+  color: var(--primary) !important;
+  font-weight: 600;
+}
+.tdd-item.tdd-selected {
+  background: color-mix(in srgb, var(--primary-20) 45%, #fff) !important;
+}
+.tdd-option.tdd-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.tdd-check {
+  color: var(--primary);
+  animation: tdd-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ---------- calendar ---------- */
+.tdr-panel {
+  width: 280px;
+  max-width: calc(100vw - 16px);
+}
+.tdr-cal {
+  padding: 0.6rem 0.75rem 0.75rem;
+}
+.tdr-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #333;
+  animation: tdd-option-in 0.22s ease-out both;
+}
+.tdr-nav {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  color: #666;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+.tdr-nav:hover:not(:disabled) {
+  background: var(--primary-20);
+  color: var(--primary);
+}
+.tdr-nav:active:not(:disabled) {
+  transform: scale(0.9);
+}
+.tdr-nav:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.tdr-weekday {
+  text-align: center;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #9a9a9a;
+  padding: 0.25rem 0;
+}
+.tdr-day {
+  position: relative;
+  height: 34px;
+  font-size: 0.75rem;
+  color: #333;
+  cursor: pointer;
+  background: transparent;
+}
+.tdr-day > span {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin: 0 auto;
+  border-radius: 999px;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.tdr-day:hover:not(:disabled) > span {
+  background: var(--primary-20);
+  color: var(--primary);
+  transform: scale(1.08);
+}
+.tdr-out {
+  color: #c4c4c4;
+}
+.tdr-disabled {
+  color: #d6d6d6 !important;
+  cursor: not-allowed;
+}
+.tdr-today > span {
+  box-shadow: inset 0 0 0 1px var(--primary-50);
+  font-weight: 600;
+}
+.tdr-in-range::before {
+  content: "";
+  position: absolute;
+  inset: 2px 0;
+  background: color-mix(in srgb, var(--primary-20) 75%, #fff);
+}
+.tdr-start::before {
+  left: 50%;
+}
+.tdr-end::before {
+  right: 50%;
+}
+.tdr-start.tdr-end::before {
+  display: none;
+}
+.tdr-in-range {
+  color: var(--primary);
+}
+.tdr-start > span,
+.tdr-end > span,
+.tdr-start:hover > span,
+.tdr-end:hover > span {
+  background: var(--primary) !important;
+  color: #fff !important;
+  font-weight: 600;
+  box-shadow: 0 4px 10px -3px color-mix(in srgb, var(--primary) 60%, transparent);
+  animation: tdd-pop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.tdr-chip {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary-20) 60%, #fff);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+.tdr-chip:hover {
+  background: var(--primary);
+  color: #fff;
+}
+.tdr-chip:active {
+  transform: scale(0.95);
+}
+.tdr-chip-muted {
+  color: #64748b;
+  background: #f1f5f9;
+}
+.tdr-chip-muted:hover {
+  background: #ef4444;
+  color: #fff;
+}
+.tdr-clear {
+  position: absolute;
+  right: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+.tdr-clear:hover {
+  background: color-mix(in srgb, var(--primary-20) 70%, #fff);
+  color: var(--primary);
+}
+.tdr-clear:active {
+  transform: translateY(-50%) scale(0.9);
+}
+.tdr-slide-l {
+  animation: tdr-slide-l 0.22s ease-out both;
+}
+.tdr-slide-r {
+  animation: tdr-slide-r 0.22s ease-out both;
+}
+
+/* ---------- keyframes ---------- */
+@keyframes tdd-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes tdd-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes tdd-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+@keyframes tdd-option-in {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes tdd-line {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes tdd-pop {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+@keyframes tdr-slide-l {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes tdr-slide-r {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tdd-menu-in,
+  .tdd-menu-out,
+  .tdd-pop,
+  .tdd-option,
+  .tdd-item,
+  .tdd-check,
+  .tdd-menu::before,
+  .tdd-pop::before,
+  .tdr-slide-l,
+  .tdr-slide-r,
+  .tdr-title,
+  .tdr-start > span,
+  .tdr-end > span,
+  .MuiAutocomplete-popper .MuiPaper-root,
+  .MuiPickerPopper-paper,
+  .MuiPickersPopper-paper,
+  .MuiMenu-paper {
+    animation: none !important;
+  }
+  .tdd-chevron,
+  .tdd-option,
+  .tdd-item {
+    transition: none;
+  }
+}
+
+/* ---------- range chips + attendance card ---------- */
+.tdr-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0.6rem 0.75rem 0.55rem;
+  border-bottom: 1px solid #f1f1f1;
+}
+.tdr-presets .tdr-chip {
+  animation: tdd-option-in 0.22s ease-out both;
+}
+.tdr-chip-active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 10px -4px color-mix(in srgb, var(--primary) 70%, transparent);
+}
+.tdr-sub {
+  font-size: 0.6875rem;
+  color: #9ca3af;
+  white-space: nowrap;
+}
+.att-stat {
+  animation: tdd-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+.att-stat:hover {
+  border-color: var(--primary-50);
+  box-shadow: 0 10px 22px -12px color-mix(in srgb, var(--primary) 45%, transparent);
+  transform: translateY(-1px);
+}
+.att-row {
+  animation: tdd-option-in 0.25s ease-out both;
+}
+.att-bar {
+  transform-origin: left;
+  animation: tdd-line 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tdr-presets .tdr-chip,
+  .att-stat,
+  .att-row,
+  .att-bar {
+    animation: none;
+  }
+}
+
+/* ---------- notifications drawer ---------- */
+.notif-item {
+  animation: tdd-option-in 0.28s ease-out both;
+}
+.notif-pop {
+  animation: tdd-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .notif-item,
+  .notif-pop {
+    animation: none;
+  }
+}
+
+/* ---------- themed table (src/components/ThemedTable.tsx) ---------- */
+.tt-wrap {
+  scrollbar-width: thin;
+}
+.tt-head {
+  background: color-mix(in srgb, var(--primary-20) 35%, #f8f8f8);
+}
+.tt-row {
+  position: relative;
+  transition: background-color 0.15s ease;
+  animation: tdd-option-in 0.25s ease-out both;
+}
+.tt-row::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 3px;
+  height: 0;
+  border-radius: 0 3px 3px 0;
+  background: var(--primary);
+  transform: translateY(-50%);
+  transition: height 0.18s ease;
+}
+.tt-row:hover {
+  background: color-mix(in srgb, var(--primary-20) 30%, #fff);
+}
+.tt-row:hover::before {
+  height: 55%;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tt-row {
+    animation: none;
+  }
+}
+
+/* =========================================================
+   Celebrations (birthday / joining / anniversary)
+   src/components/Celebration/CelebrationOverlay.tsx
+   src/features/announcements/components/AnnouncementCard
+========================================================= */
+.celebrate-in {
+  animation: cel-fade-in 0.25s ease-out both;
+}
+.celebrate-out {
+  animation: cel-fade-out 0.26s ease-in both;
+}
+.celebrate-in .celebrate-card {
+  animation: cel-card-in 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.celebrate-out .celebrate-card {
+  animation: cel-card-out 0.26s ease-in both;
+}
+.celebrate-emoji {
+  animation: tdd-pop 0.5s 0.15s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.celebrate-emoji-birthday {
+  animation:
+    tdd-pop 0.5s 0.15s cubic-bezier(0.34, 1.56, 0.64, 1) both,
+    cel-bounce 1.2s 0.7s ease-in-out infinite;
+}
+.celebrate-emoji-joining {
+  animation:
+    tdd-pop 0.5s 0.15s cubic-bezier(0.34, 1.56, 0.64, 1) both,
+    cel-wave 1.6s 0.7s ease-in-out infinite;
+}
+.celebrate-emoji-anniversary {
+  animation:
+    tdd-pop 0.5s 0.15s cubic-bezier(0.34, 1.56, 0.64, 1) both,
+    cel-glow 1.8s 0.7s ease-in-out infinite;
+}
+.celebrate-text {
+  animation: cel-rise 0.45s ease-out both;
+}
+.celebrate-shine {
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.45) 50%, transparent 70%);
+  transform: translateX(-100%);
+  animation: cel-shine 2.4s 0.4s ease-in-out infinite;
+}
+.celebrate-timer {
+  width: 100%;
+  transform-origin: left;
+  animation-name: cel-timer;
+  animation-timing-function: linear;
+  animation-fill-mode: both;
+}
+.celebrate-card:hover .celebrate-timer {
+  animation-play-state: paused;
+  opacity: 0.35;
+}
+
+/* ---------- announcement cards ---------- */
+.ann-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.ann-card-birthday {
+  background: linear-gradient(135deg, #fff1f7 0%, color-mix(in srgb, var(--primary-20) 70%, #fff) 100%);
+}
+.ann-card-joining {
+  background: linear-gradient(135deg, #eef8ff 0%, color-mix(in srgb, var(--primary-20) 60%, #fff) 100%);
+}
+.ann-card-anniversary {
+  background: linear-gradient(135deg, #fffbea 0%, color-mix(in srgb, var(--primary-20) 70%, #fff) 100%);
+}
+.ann-card-birthday:hover,
+.ann-card-joining:hover,
+.ann-card-anniversary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -14px color-mix(in srgb, var(--primary) 60%, transparent);
+}
+.ann-card-live {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 30%, transparent);
+  animation: cel-live 2.4s ease-in-out infinite;
+}
+.ann-deco {
+  position: absolute;
+  font-size: 14px;
+  opacity: 0.55;
+  animation: cel-float 4s ease-in-out infinite;
+}
+.ann-deco-0 {
+  right: 22%;
+  bottom: 6px;
+}
+.ann-deco-1 {
+  right: 10%;
+  bottom: 18px;
+  font-size: 18px;
+  animation-delay: 0.8s;
+}
+.ann-deco-2 {
+  right: 3%;
+  bottom: 4px;
+  animation-delay: 1.6s;
+}
+.ann-emoji-birthday {
+  animation: cel-bounce 1.4s ease-in-out infinite;
+}
+.ann-emoji-joining {
+  animation: cel-wave 2s ease-in-out infinite;
+  transform-origin: 70% 75%;
+}
+.ann-emoji-anniversary {
+  animation: cel-glow 2.2s ease-in-out infinite;
+}
+
+/* ---------- keyframes ---------- */
+@keyframes cel-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes cel-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes cel-card-in {
+  from { opacity: 0; transform: translateY(30px) scale(0.85); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes cel-card-out {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.92); }
+}
+@keyframes cel-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes cel-bounce {
+  0%, 100% { transform: translate(var(--tx, 0), var(--ty, 0)) translateY(0); }
+  50% { transform: translate(var(--tx, 0), var(--ty, 0)) translateY(-6px); }
+}
+@keyframes cel-wave {
+  0%, 60%, 100% { transform: translate(var(--tx, 0), var(--ty, 0)) rotate(0deg); }
+  10%, 30% { transform: translate(var(--tx, 0), var(--ty, 0)) rotate(16deg); }
+  20%, 40% { transform: translate(var(--tx, 0), var(--ty, 0)) rotate(-10deg); }
+}
+@keyframes cel-glow {
+  0%, 100% { transform: translate(var(--tx, 0), var(--ty, 0)) scale(1); filter: drop-shadow(0 0 0 rgba(250, 204, 21, 0)); }
+  50% { transform: translate(var(--tx, 0), var(--ty, 0)) scale(1.08); filter: drop-shadow(0 0 10px rgba(250, 204, 21, 0.7)); }
+}
+@keyframes cel-shine {
+  0% { transform: translateX(-100%); }
+  60%, 100% { transform: translateX(100%); }
+}
+@keyframes cel-timer {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+@keyframes cel-float {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50% { transform: translateY(-8px) rotate(4deg); }
+}
+@keyframes cel-live {
+  0%, 100% { box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 25%, transparent); }
+  50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 12%, transparent); }
+}
+
+/* the big emoji is centred with translate; keep that while animating */
+.celebrate-emoji {
+  --tx: -50%;
+  --ty: -50%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .celebrate-in,
+  .celebrate-out,
+  .celebrate-card,
+  .celebrate-text,
+  .celebrate-shine,
+  .ann-card-live,
+  .ann-deco,
+  .ann-emoji-birthday,
+  .ann-emoji-joining,
+  .ann-emoji-anniversary {
+    animation: none !important;
+  }
+  .celebrate-emoji {
+    animation: none !important;
+    transform: translate(-50%, -50%);
+  }
+}

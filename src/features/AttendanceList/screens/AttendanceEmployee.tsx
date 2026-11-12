@@ -1,28 +1,70 @@
 import { userInState } from "../../auth/authSlice.js";
 import { useSelector } from "react-redux";
 import { convertTo12HourFormat } from "../../../utils/utils.js";
-import { useMemo, useState } from "react";
-import type { GridColDef } from "@mui/x-data-grid";
+import { useEffect, useMemo, useState } from "react";
+import { CircularProgress } from "@mui/material";
+import { CalendarCheck, Clock3, LogIn, LogOut, Timer } from "lucide-react";
 import { useGetAttendanceListQuery } from "../attendanceApi.js";
-import CustomDataTable from "../../../shared/components/customDataTable/CustomDataTable.js";
 import CustomBox from "../../../components/CustomBox/CustomBox.js";
-import dayjs, { Dayjs } from "dayjs";
-import { DesktopDatePicker, LocalizationProvider } from "@mui/x-date-pickers";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import type { SxProps, Theme } from "@mui/material";
+import ThemedDateRange from "../../../components/ThemedDateRange";
+import { localToday, rangePresets } from "../../../components/themedDates";
+import dayjs from "dayjs";
+
+/* ---------- helpers ---------- */
+
+// "HH:mm[:ss]" -> minutes after midnight
+const toMinutes = (t: string | null | undefined) => {
+  if (!t) return null;
+  const [h, m] = t.split(":").map(Number);
+  return Number.isFinite(h) ? h * 60 + (m || 0) : null;
+};
+
+const minutesToClock = (mins: number) => {
+  const h = Math.floor(mins / 60);
+  const m = Math.round(mins % 60);
+  return convertTo12HourFormat(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
+};
+
+const formatHours = (seconds: number) => {
+  const s = Math.max(0, Math.floor(seconds));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  if (!h && !m) return "0m";
+  return h ? `${h}h ${m}m` : `${m}m`;
+};
+
+type Row = {
+  id: number;
+  date: string; // YYYY-MM-DD
+  in: string | null;
+  out: string | null;
+  workingNow: boolean;
+  seconds: number;
+};
 
 const AttendanceEmployee = () => {
   const user = useSelector(userInState);
-  const [startDate, setStartDate] = useState<Dayjs | null>(null);
-  const [endDate, setEndDate] = useState<Dayjs | null>(dayjs());
+  const today = localToday();
+  const presets = rangePresets(today);
+
+  // empty "from" = whole history up to "to"
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState(today);
+
+  // tick every minute so "working now" hours stay live
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(t);
+  }, []);
 
   const queryArgs = useMemo(
     () => ({
       id: user?.id ?? 0,
-      startDate: startDate?.format("YYYY-MM-DD"),
-      endDate: endDate?.format("YYYY-MM-DD"),
+      startDate: from || undefined,
+      endDate: to || undefined,
     }),
-    [user?.id, startDate, endDate],
+    [user?.id, from, to],
   );
   const {
     data = [],
@@ -33,123 +75,193 @@ const AttendanceEmployee = () => {
     refetchOnMountOrArgChange: true,
   });
 
+  const rows: Row[] = useMemo(
+    () =>
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (data as any[]).map((r) => {
+        const date = dayjs(r.Date).format("YYYY-MM-DD");
+        const inMin = toMinutes(r.in);
+        const outMin = toMinutes(r.out);
+        const workingNow = !!r.in && !r.out && date === today;
+        let seconds = Number(r.attendance_seconds) || 0;
+        if (!seconds && inMin != null) {
+          if (outMin != null) seconds = Math.max(0, (outMin - inMin) * 60);
+          else if (workingNow) {
+            const d = new Date(now);
+            seconds = Math.max(0, (d.getHours() * 60 + d.getMinutes() - inMin) * 60);
+          }
+        }
+        return { id: r.id, date, in: r.in, out: r.out, workingNow, seconds };
+      }),
+    [data, today, now],
+  );
+
+  const summary = useMemo(() => {
+    const present = rows.filter((r) => r.in);
+    const ins = present.map((r) => toMinutes(r.in)!).filter((v) => v != null);
+    const outs = rows.map((r) => toMinutes(r.out)).filter((v): v is number => v != null);
+    const avg = (a: number[]) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : null);
+    const avgIn = avg(ins);
+    const avgOut = avg(outs);
+    return {
+      days: present.length,
+      avgIn: avgIn != null ? minutesToClock(avgIn) : "—",
+      avgOut: avgOut != null ? minutesToClock(avgOut) : "—",
+      total: formatHours(rows.reduce((s, r) => s + r.seconds, 0)),
+    };
+  }, [rows]);
+
+  const longest = Math.max(1, ...rows.map((r) => r.seconds));
+
   if (!user || user.id === undefined) return null;
 
-  const columns: GridColDef[] = [
-    {
-      field: "date",
-      headerName: "Date",
-      width: 160,
-      renderCell: (params) => {
-        return <>{dayjs(params.row.Date).format("DD/MM/YYYY")}</>;
-      },
-    },
-    {
-      field: "in",
-      headerName: "Check In",
-      width: 160,
-      renderCell: (params) => convertTo12HourFormat(params?.row?.in),
-    },
-    {
-      field: "out",
-      headerName: "Check Out ",
-      width: 160,
-      renderCell: (params) => convertTo12HourFormat(params?.row?.out),
-    },
+  const stats = [
+    { icon: CalendarCheck, label: "Days present", value: String(summary.days) },
+    { icon: LogIn, label: "Avg check-in", value: summary.avgIn },
+    { icon: LogOut, label: "Avg check-out", value: summary.avgOut },
+    { icon: Timer, label: "Total hours", value: summary.total },
   ];
-  const Calendar = () => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-    >
-      <g opacity="0.5">
-        <path
-          fillRule="evenodd"
-          clipRule="evenodd"
-          d="M7.20039 2.4C6.88213 2.4 6.57691 2.52643 6.35186 2.75147C6.12682 2.97652 6.00039 3.28174 6.00039 3.6V4.8H4.80039C4.16387 4.8 3.55342 5.05286 3.10333 5.50295C2.65325 5.95303 2.40039 6.56348 2.40039 7.2V19.2C2.40039 19.8365 2.65325 20.447 3.10333 20.8971C3.55342 21.3471 4.16387 21.6 4.80039 21.6H19.2004C19.8369 21.6 20.4474 21.3471 20.8974 20.8971C21.3475 20.447 21.6004 19.8365 21.6004 19.2V7.2C21.6004 6.56348 21.3475 5.95303 20.8974 5.50295C20.4474 5.05286 19.8369 4.8 19.2004 4.8H18.0004V3.6C18.0004 3.28174 17.874 2.97652 17.6489 2.75147C17.4239 2.52643 17.1187 2.4 16.8004 2.4C16.4821 2.4 16.1769 2.52643 15.9519 2.75147C15.7268 2.97652 15.6004 3.28174 15.6004 3.6V4.8H8.40039V3.6C8.40039 3.28174 8.27396 2.97652 8.04892 2.75147C7.82387 2.52643 7.51865 2.4 7.20039 2.4ZM7.20039 8.4C6.88213 8.4 6.57691 8.52643 6.35186 8.75147C6.12682 8.97652 6.00039 9.28174 6.00039 9.6C6.00039 9.91826 6.12682 10.2235 6.35186 10.4485C6.57691 10.6736 6.88213 10.8 7.20039 10.8H16.8004C17.1187 10.8 17.4239 10.6736 17.6489 10.4485C17.874 10.2235 18.0004 9.91826 18.0004 9.6C18.0004 9.28174 17.874 8.97652 17.6489 8.75147C17.4239 8.52643 17.1187 8.4 16.8004 8.4H7.20039Z"
-          fill="#0D0701"
-        />
-      </g>
-    </svg>
-  );
+
   return (
-    <CustomBox customClasses="w-full h-full p-5 pb-2 flex flex-col gap-y-6">
-      <div className="w-full flex flex-row items-center-safe justify-between">
-        <h2 className="text-2xl font-semibold">Attendance</h2>
-        <div className="flex flex-row flex-nowrap items-center gap-x-1 text-primary text-base font-semibold">
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DesktopDatePicker
-              label="Start date"
-              value={dayjs(startDate, "DD/MM/YYYY", true)}
-              format="DD/MM/YYYY"
-              disableFuture
-              onChange={(newValue) => setStartDate(newValue)}
-              slots={{ openPickerIcon: Calendar }}
-              sx={pickerStyles}
-              slotProps={{
-                textField: {
-                  inputProps: {
-                    readOnly: true, 
-                  },
-                },
-              }}
-            />
-            to
-            <DesktopDatePicker
-              label="End date"
-              value={dayjs(endDate, "DD/MM/YYYY", true)}
-              format="DD/MM/YYYY"
-              disableFuture
-              onChange={(newValue) => setEndDate(newValue)}
-              slots={{ openPickerIcon: Calendar }}
-              sx={pickerStyles}
-            />
-          </LocalizationProvider>
+    <CustomBox customClasses="w-full h-full p-5 pb-3 flex flex-col gap-y-5 min-h-0">
+      {/* header */}
+      <div className="w-full flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-2xl font-semibold text-black-80">Attendance</h2>
+          <p className="text-xs text-black-50 mt-0.5">Your check-in and check-out history</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {isFetching && !isLoading && <CircularProgress size={14} sx={{ color: "var(--primary)" }} />}
+          <ThemedDateRange
+            from={from}
+            to={to}
+            max={today}
+            placeholder="All time"
+            onChange={(a, b) => {
+              setFrom(a);
+              setTo(b || today);
+            }}
+            presets={[
+              presets.today,
+              presets.yesterday,
+              presets.last7,
+              presets.thisMonth,
+              presets.lastMonth,
+              { label: "All time", from: "", to: today },
+            ]}
+          />
         </div>
       </div>
 
-      <div className="h-full w-full">
-        <CustomDataTable
-          columns={columns}
-          rows={data}
-          isDataEmpty={data.length === 0}
-          emptyViewTitle="No Attendance Found"
-          emptyViewSubTitle="Please check in and check out to see your attendance"
-          isLoading={isLoading || isFetching}
-          withPagination={false}
-        />
+      {/* summary */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {stats.map(({ icon: Icon, label, value }, i) => (
+          <div
+            key={label}
+            style={{ animationDelay: `${i * 50}ms` }}
+            className="att-stat flex items-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3"
+          >
+            <span className="grid place-items-center w-9 h-9 rounded-xl bg-primary-20 text-primary shrink-0">
+              <Icon size={17} />
+            </span>
+            <div className="min-w-0">
+              <p className="text-lg font-semibold text-black-80 leading-tight truncate">{value}</p>
+              <p className="text-[11px] text-black-50">{label}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* table */}
+      <div className="flex-1 min-h-0 rounded-2xl border border-gray-100 overflow-hidden flex flex-col">
+        <div className="grid grid-cols-[1.4fr_1fr_1fr_1.4fr] gap-4 px-5 py-3 bg-gray-50 text-xs font-semibold text-black-50 uppercase tracking-wide">
+          <span>Date</span>
+          <span>Check in</span>
+          <span>Check out</span>
+          <span>Hours worked</span>
+        </div>
+
+        <div className="flex-1 overflow-y-auto [scrollbar-width:thin]">
+          {isLoading ? (
+            <div className="flex justify-center py-16">
+              <CircularProgress size={28} sx={{ color: "var(--primary)" }} />
+            </div>
+          ) : rows.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <span className="grid place-items-center w-12 h-12 rounded-2xl bg-primary-20 text-primary mb-3">
+                <Clock3 size={22} />
+              </span>
+              <p className="text-sm font-semibold text-black-80">No attendance found</p>
+              <p className="text-xs text-black-50 mt-1">Try a different date range, or check in to start.</p>
+            </div>
+          ) : (
+            <ul className={`divide-y divide-gray-100 ${isFetching ? "opacity-60" : ""} transition-opacity`}>
+              {rows.map((r, i) => {
+                const d = dayjs(r.date);
+                const isToday = r.date === today;
+                return (
+                  <li
+                    key={r.id ?? r.date}
+                    style={{ animationDelay: `${Math.min(i, 12) * 25}ms` }}
+                    className={`att-row grid grid-cols-[1.4fr_1fr_1fr_1.4fr] gap-4 items-center px-5 py-3 text-sm hover:bg-primary-20/30 transition-colors ${
+                      isToday ? "bg-primary-20/20" : ""
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span
+                        className={`grid place-items-center w-10 h-10 rounded-xl shrink-0 leading-none ${
+                          isToday ? "bg-primary text-white" : "bg-gray-100 text-black-80"
+                        }`}
+                      >
+                        <span className="text-sm font-semibold">{d.format("DD")}</span>
+                        <span className="text-[9px] uppercase opacity-80">{d.format("MMM")}</span>
+                      </span>
+                      <div className="min-w-0">
+                        <p className="font-medium text-black-80 truncate">
+                          {isToday ? "Today" : d.format("dddd")}
+                        </p>
+                        <p className="text-[11px] text-black-50">{d.format("DD/MM/YYYY")}</p>
+                      </div>
+                    </div>
+
+                    <span className="text-black-80">{r.in ? convertTo12HourFormat(r.in) : "—"}</span>
+
+                    <span>
+                      {r.out ? (
+                        <span className="text-black-80">{convertTo12HourFormat(r.out)}</span>
+                      ) : r.workingNow ? (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-medium">
+                          <span className="relative flex w-2 h-2">
+                            <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
+                            <span className="relative w-2 h-2 rounded-full bg-emerald-500" />
+                          </span>
+                          Working now
+                        </span>
+                      ) : (
+                        <span className="text-xs text-orange-500">Not checked out</span>
+                      )}
+                    </span>
+
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                        <div
+                          className={`att-bar h-full rounded-full ${r.workingNow ? "bg-emerald-500" : "bg-primary"}`}
+                          style={{ width: `${Math.max(2, (r.seconds / longest) * 100)}%` }}
+                        />
+                      </div>
+                      <span className="w-16 text-right text-xs font-semibold text-black-80 shrink-0">
+                        {r.seconds ? formatHours(r.seconds) : "—"}
+                      </span>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
       </div>
     </CustomBox>
   );
 };
 
 export default AttendanceEmployee;
-
-const pickerStyles: SxProps<Theme> = {
-  "& .MuiPickersInputBase-sectionsContainer": {
-    width: "fit-content",
-    padding: "12px 0",
-  },
-  "& .MuiPickersOutlinedInput-root": {
-    borderRadius: "40px",
-  },
-  "& .MuiInputAdornment-root": {
-    margin: 0,
-  },
-  "& .MuiPickersInputBase-sectionContent": {
-    fontFamily: '"Plus Jakarta Sans", sans-serif',
-    fontSize: "14px",
-  },
-  "& .MuiInputLabel-root": {
-    transform: "translate(14px, 12px) scale(1)",
-  },
-  "& .MuiInputLabel-root.Mui-focused": {
-    transform: " translate(14px, -9px) scale(0.75)",
-  },
-  "& .MuiInputLabel-root.MuiFormLabel-filled": {
-    transform: " translate(14px, -9px) scale(0.75)",
-  },
-};

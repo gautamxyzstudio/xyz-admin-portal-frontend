@@ -6,8 +6,8 @@ import { useLazyGetTimeLogsQuery } from "../timeLogApi";
 import { type ICurrentTask } from "../timeLog.types";
 import { secondsToHoursMinutes } from "../../../utils/utils";
 import dayjs, { Dayjs } from "dayjs";
-import PickerInput from "../../../shared/components/pickerInput/PickerInput";
-import type { SxProps, Theme } from "@mui/material";
+import ThemedDateRange from "../../../components/ThemedDateRange";
+import { rangePresets } from "../../../components/themedDates";
 import { ImSearch } from "react-icons/im";
 import { FaRunning } from "react-icons/fa";
 import ActivityIndicator from "../../../shared/components/activityIndicator/ActivityIndicator";
@@ -390,23 +390,20 @@ const TimeLogAnalytics: React.FC = () => {
               </span>
             </div>
 
-            {/* Date Pickers */}
-            <div className="flex items-center gap-2">
-              <PickerInput
-                label="Start"
-                value={startDate}
-                setValue={setStartDate}
-                disableFuture
-                sx={pickerStyles}
-              />
-              <PickerInput
-                label="End"
-                value={endDate}
-                setValue={setEndDate}
-                disableFuture
-                sx={pickerStyles}
-              />
-            </div>
+            {/* Date range */}
+            <ThemedDateRange
+              from={startDate ? startDate.format("YYYY-MM-DD") : ""}
+              to={endDate ? endDate.format("YYYY-MM-DD") : ""}
+              max={dayjs().format("YYYY-MM-DD")}
+              presets={(() => {
+                const pr = rangePresets(dayjs().format("YYYY-MM-DD"));
+                return [pr.today, pr.yesterday, pr.last7, pr.last30, pr.thisMonth, pr.lastMonth];
+              })()}
+              onChange={(from, to) => {
+                setStartDate(from ? dayjs(from) : null);
+                setEndDate(to ? dayjs(to) : null);
+              }}
+            />
 
             {/* Export CSV */}
             <CustomButton
@@ -971,28 +968,3 @@ const TimeLogAnalytics: React.FC = () => {
 
 export default TimeLogAnalytics;
 
-const pickerStyles: SxProps<Theme> = {
-  "& .MuiPickersInputBase-sectionsContainer": {
-    width: "fit-content",
-    padding: "8px 0",
-  },
-  "& .MuiPickersOutlinedInput-root": {
-    borderRadius: "40px",
-  },
-  "& .MuiInputAdornment-root": {
-    margin: 0,
-  },
-  "& .MuiPickersInputBase-sectionContent": {
-    fontFamily: '"Plus Jakarta Sans", sans-serif',
-    fontSize: "13px",
-  },
-  "& .MuiInputLabel-root": {
-    transform: "translate(14px, 10px) scale(1)",
-  },
-  "& .MuiInputLabel-root.Mui-focused": {
-    transform: " translate(14px, -9px) scale(0.75)",
-  },
-  "& .MuiInputLabel-root.MuiFormLabel-filled": {
-    transform: " translate(14px, -9px) scale(0.75)",
-  },
-};

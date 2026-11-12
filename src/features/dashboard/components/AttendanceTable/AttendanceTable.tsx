@@ -4,11 +4,10 @@ import { useEffect, useState } from "react";
 import { useLazyGetAllAttendanceQuery } from "../../dashboardApi";
 import type { IUserAttendance } from "../../types";
 import { convertTo12HourFormat, getWeekDates } from "../../../../utils/utils";
-import CustomDataTable from "../../../../shared/components/customDataTable/CustomDataTable";
-import EmptyScreenView from "../../../../shared/components/EmptyScreenView/EmptyScreenView";
 import { toast } from "react-toastify";
-import { useAppSelector } from "../../../../state/store";
-import { selectLeaveRequests } from "../../screens/dashboardHrSlice";
+import { Link } from "react-router";
+import { ArrowRight } from "lucide-react";
+import ThemedTable, { PersonCell, Pill, WorkingNow } from "../../../../components/ThemedTable";
 
 import dayjs from "dayjs";
 
@@ -17,7 +16,17 @@ const AttendanceTable = () => {
     useLazyGetAllAttendanceQuery();
 
   const [attendanceData, setAttendanceData] = useState<IUserAttendance[]>([]);
-  const [page, setPage] = useState(1);
+  const [, setPage] = useState(1);
+
+  const isTodayOrYesterday = (date?: string) => {
+    if (!date) return false;
+
+    const recordDate = dayjs(date).startOf("day");
+    const today = dayjs().startOf("day");
+    const yesterday = dayjs().subtract(1, "day").startOf("day");
+
+    return recordDate.isSame(today) || recordDate.isSame(yesterday);
+  };
 
   /* ================= FETCH ================= */
   const fetchAttendance = async (isFirst?: boolean, pageNo?: number) => {
@@ -68,96 +77,114 @@ const AttendanceTable = () => {
     }
   }, [error]);
 
-  const isTodayOrYesterday = (date?: string) => {
-    if (!date) return false;
 
-    const recordDate = dayjs(date).startOf("day");
-    const today = dayjs().startOf("day");
-    const yesterday = dayjs().subtract(1, "day").startOf("day");
+  const todayStr = dayjs().format("YYYY-MM-DD");
 
-    return recordDate.isSame(today) || recordDate.isSame(yesterday);
+  const hoursOf = (row: any) => {
+    let secs = Number(row.attendance_seconds) || 0;
+    const toMin = (t?: string | null) => {
+      if (!t) return null;
+      const [h, m] = t.split(":").map(Number);
+      return Number.isFinite(h) ? h * 60 + (m || 0) : null;
+    };
+    const inM = toMin(row.in);
+    const outM = toMin(row.out);
+    if (!secs && inM != null && outM != null) secs = Math.max(0, (outM - inM) * 60);
+    if (!secs) return null;
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    return h ? `${h}h ${m}m` : `${m}m`;
   };
 
-  const leaveRequestsFromStore = useAppSelector(selectLeaveRequests);
-
-  /* ================= TABLE COLUMNS ================= */
-  const columns = [
-    {
-      field: "empCode",
-      headerName: "Emp Code",
-      width: 90,
-      renderCell: ({ row }: any) => row.user?.user_detial?.empCode,
-    },
-    {
-      field: "employee",
-      headerName: "Employee",
-      width: 200,
-      renderCell: (params: any) => params?.row?.user?.user_detial?.name,
-    },
-
-    {
-      field: "date",
-      headerName: "Date",
-      width: 140,
-      renderCell: (params: any) => (
-        <span>
-          {params.row.Date ? dayjs(params.row.Date).format("DD/MM/YYYY") : "-"}
-        </span>
-      ),
-    },
-
-    {
-      field: "checkIn",
-      headerName: "Check In",
-      width: 140,
-      renderCell: ({ row }: any) => convertTo12HourFormat(row.in),
-    },
-    {
-      field: "checkOut",
-      headerName: "Check Out",
-      width: 140,
-      renderCell: ({ row }: any) => convertTo12HourFormat(row.out),
-    },
-  ];
+  // today first, then by check-in time
+  const rows = [...attendanceData].sort(
+    (a: any, b: any) =>
+      String(b.Date).localeCompare(String(a.Date)) || String(a.in || "").localeCompare(String(b.in || "")),
+  );
 
   /* ================= UI ================= */
   return (
-    <div className="w-full h-100 bg-white rounded-xl flex flex-col">
-      {/* ===== Sticky Header ===== */}
-      <div className="sticky top-0 z-10 bg-white px-4 py-3 flex justify-between rounded-2xl ">
-        <h3 className="text-[24px] font-semibold text-black">
-          Attendance Logs
-        </h3>
-
-        {leaveRequestsFromStore?.length > 0 && (
-          <a
-            className="px-4 py-2  text-primary rounded-lg text-base font-bold cursor-pointer"
-            href="/attendance"
-          >
-            View All
-          </a>
-        )}
+    <div className="w-full bg-white rounded-2xl flex flex-col p-5 gap-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h3 className="text-2xl font-semibold text-black-80">Attendance Logs</h3>
+          <p className="text-xs text-black-50 mt-0.5">Check-ins for today and yesterday</p>
+        </div>
+        <Link
+          to="/attendance"
+          className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-primary hover:bg-primary-20 transition-colors"
+        >
+          View All
+          <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
+        </Link>
       </div>
 
-      {/* ===== Scrollable Table Area ===== */}
-      <div className="flex-1 overflow-y-auto px-4 py-3">
-        {!isLoading && attendanceData.length === 0 ? (
-          <EmptyScreenView
-            isDataEmpty
-            emptyViewTitle="No attendance data found"
-            emptyViewSubTitle="Please check back later"
-          />
-        ) : (
-          <CustomDataTable
-            columns={columns}
-            rows={attendanceData}
-            isLoading={isLoading}
-            withPagination
-            page={page}
-            onPressPageChange={(_, p) => fetchAttendance(false, p)}
-          />
-        )}
-      </div>
+      <ThemedTable<any>
+        className="max-h-[420px]"
+        rows={rows}
+        rowKey={(r) => r.id}
+        loading={isLoading}
+        emptyTitle="No attendance data found"
+        emptySubtitle="Check-ins from today and yesterday will show here."
+        columns={[
+          {
+            key: "employee",
+            header: "Employee",
+            width: "minmax(200px,2fr)",
+            render: (r) => (
+              <PersonCell
+                name={r.user?.user_detial?.name}
+                sub={r.user?.user_detial?.empCode}
+                photo={r.user?.user_detial?.Photo?.[0]?.url}
+              />
+            ),
+          },
+          {
+            key: "date",
+            header: "Date",
+            width: "1.1fr",
+            render: (r) => {
+              const d = dayjs(r.Date);
+              const isToday = d.format("YYYY-MM-DD") === todayStr;
+              return (
+                <div className="flex items-center gap-2">
+                  <Pill tone={isToday ? "orange" : "gray"}>{isToday ? "Today" : "Yesterday"}</Pill>
+                  <span className="text-xs text-black-50">{d.format("DD/MM/YYYY")}</span>
+                </div>
+              );
+            },
+          },
+          {
+            key: "in",
+            header: "Check in",
+            width: "0.8fr",
+            render: (r) => (r.in ? convertTo12HourFormat(r.in) : <span className="text-black-50">—</span>),
+          },
+          {
+            key: "out",
+            header: "Check out",
+            width: "1fr",
+            render: (r) =>
+              r.out ? (
+                convertTo12HourFormat(r.out)
+              ) : r.in && dayjs(r.Date).format("YYYY-MM-DD") === todayStr ? (
+                <WorkingNow />
+              ) : (
+                <span className="text-xs text-orange-500">Not checked out</span>
+              ),
+          },
+          {
+            key: "hours",
+            header: "Hours",
+            width: "0.7fr",
+            align: "right",
+            render: (r) => {
+              const h = hoursOf(r);
+              return h ? <span className="font-semibold">{h}</span> : <span className="text-black-50">—</span>;
+            },
+          },
+        ]}
+      />
     </div>
   );
 };

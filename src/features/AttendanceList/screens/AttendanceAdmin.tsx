@@ -24,7 +24,8 @@ import { Icons } from "../../../assets/myAssets/exporter.js";
 import LinearGradient from "../../../components/LinearGradient/LinearGradient.js";
 import CustomButton from "../../../components/CustomButton/CustomButton.js";
 import dayjs from "dayjs";
-import PickerInput from "../../../shared/components/pickerInput/PickerInput.js";
+import ThemedDateRange from "../../../components/ThemedDateRange";
+import { rangePresets } from "../../../components/themedDates";
 import { useDebounce } from "../../../hooks/useDebounce.js";
 import { FiDownload } from "react-icons/fi";
 import * as XLSX from "xlsx";
@@ -447,43 +448,39 @@ const AttendanceAdmin = () => {
         {dateError && <Alert severity="error">{dateError}</Alert>}
 
         {/* <Stack direction="row" spacing={9} flexWrap="wrap"> */}
-        <div className="flex  justify-between w-full gap-x-4 items-center">
+        <div className="flex flex-wrap md:flex-nowrap w-full gap-3 md:gap-x-4 items-center">
           <TextField
             label="Search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by employee"
-            className="w-full"
+            className="flex-1 min-w-[220px]"
           />
-          <PickerInput
-            label="Start Date"
-            value={startDate}
-            setValue={(date) => {
-              setStartDate(date);
-
-              // Reset end date if it becomes invalid
-              if (endDate && date.isAfter(endDate)) {
-                setEndDate(null);
-              }
+          <div className="w-full md:w-80 shrink-0">
+          <ThemedDateRange
+            variant="field"
+            className="[&_.tdd-field]:min-h-[56px] [&_.tdd-field]:rounded-xl [&_.tdd-field]:bg-white"
+            fullWidth
+            from={startDate ? startDate.format("YYYY-MM-DD") : ""}
+            to={endDate ? endDate.format("YYYY-MM-DD") : ""}
+            min={minDate.format("YYYY-MM-DD")}
+            max={maxDate.format("YYYY-MM-DD")}
+            placeholder="Select dates"
+            presets={(() => {
+              const pr = rangePresets(maxDate.format("YYYY-MM-DD"));
+              return [pr.today, pr.yesterday, pr.last7, pr.thisMonth, pr.lastMonth];
+            })()}
+            onChange={(from, to) => {
+              setStartDate(from ? dayjs(from) : null);
+              setEndDate(to ? dayjs(to) : null);
             }}
-            shouldDisableDate={(date) =>
-              date.isBefore(minDate) || date.isAfter(maxDate)
-            }
           />
-
-          <PickerInput
-            label="End Date"
-            value={endDate}
-            setValue={setEndDate}
-            shouldDisableDate={(date) =>
-              (startDate && date.isBefore(startDate)) || date.isAfter(maxDate)
-            }
-          />
+          </div>
 
           <CustomButton
             label="Clear"
             onClick={handleClearFilter}
-            customStyles=" w-30 p-2!"
+            customStyles="w-30 shrink-0 p-2!"
             buttonStyle="primary"
           // icon={<CgClose size={24} />}
           />
