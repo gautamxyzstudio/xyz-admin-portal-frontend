@@ -11,6 +11,7 @@ import { Logout } from "@mui/icons-material";
 import PermIdentityIcon from "@mui/icons-material/PermIdentity";
 import LockResetIcon from "@mui/icons-material/LockReset";
 import { useNotificationsQuery } from "../../shared/api/sharedApi";
+import { useNotificationChime } from "../../shared/hooks/notificationSound";
 import ChangePasswordModal from "../../components/ChangePasswordModal/ChangePasswordModal";
 
 const TopBar = () => {
@@ -28,6 +29,8 @@ const TopBar = () => {
   });
 
   const unread = (data ?? []).filter((n: any) => !n.isRead).length;
+  // plays the notification tune when something new arrives
+  const arrivals = useNotificationChime(data);
 
   const openOutlook = () => {
     window.location.href = "ms-outlook://";
@@ -59,7 +62,12 @@ const TopBar = () => {
           onClick={() => setOpenDrawer(true)}
           className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-100 cursor-pointer relative"
         >
-          <img src={Icons.NOTIFICATION} alt="" />
+          <img
+            key={arrivals}
+            src={Icons.NOTIFICATION}
+            alt=""
+            className={arrivals ? "bell-ring" : ""}
+          />
 
           {unread > 0 && (
             <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white animate-in fade-in zoom-in duration-300">

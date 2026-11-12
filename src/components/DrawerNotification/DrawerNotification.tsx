@@ -5,6 +5,10 @@ import { useNavigate } from "react-router";
 import Drawer from "@mui/material/Drawer";
 import dayjs from "dayjs";
 import {
+  AtSign,
+  MessageSquare,
+  Volume2,
+  VolumeX,
   AlertTriangle,
   Bell,
   BellOff,
@@ -32,6 +36,7 @@ import {
   getIstTodayDateString,
   toIstDayjs,
 } from "../../utils/istDateUtils";
+import { playNotificationSound, useSoundMuted } from "../../shared/hooks/notificationSound";
 
 type Props = {
   open: boolean;
@@ -160,12 +165,14 @@ const getNotificationDestination = (
 
 /* ---------------- presentation helpers ---------------- */
 
-type NotifKind = "task" | "leave_ok" | "leave_no" | "leave_new" | "handbook" | "announcement" | "alert" | "other";
+type NotifKind = "mention" | "comment" | "task" | "leave_ok" | "leave_no" | "leave_new" | "handbook" | "announcement" | "alert" | "other";
 
 const kindOf = (item: any): NotifKind => {
   const type = String(item?.notificationType || item?.type || "").toLowerCase();
   const title = String(item?.title || "").toLowerCase();
   if (type === "no_task_alert" || title.includes("alert")) return "alert";
+  if (type === "task_mention" || title.includes("mention")) return "mention";
+  if (type === "task_comment" || title.includes("comment")) return "comment";
   if (type.includes("task") || title.includes("task")) return "task";
   if (type === "leave_approved" || title.includes("approved")) return "leave_ok";
   if (type === "leave_declined" || title.includes("declined") || title.includes("rejected")) return "leave_no";
@@ -176,6 +183,8 @@ const kindOf = (item: any): NotifKind => {
 };
 
 const KIND_STYLE: Record<NotifKind, { Icon: React.ElementType; cls: string; label: string }> = {
+  mention: { Icon: AtSign, cls: "bg-fuchsia-50 text-fuchsia-600", label: "Mention" },
+  comment: { Icon: MessageSquare, cls: "bg-sky-50 text-sky-600", label: "Comment" },
   task: { Icon: ClipboardList, cls: "bg-primary-20 text-primary", label: "Task" },
   leave_ok: { Icon: CheckCircle2, cls: "bg-emerald-50 text-emerald-600", label: "Leave" },
   leave_no: { Icon: XCircle, cls: "bg-rose-50 text-rose-600", label: "Leave" },
@@ -237,6 +246,7 @@ const DrawerNotification = ({ open, onClose }: Props) => {
   const [markRead] = useMarkNotificationReadMutation();
   const [markAllRead, { isLoading: markingAll }] = useMarkAllNotificationsReadMutation();
   const [tab, setTab] = useState<"all" | "unread">("all");
+  const [muted, setMuted] = useSoundMuted();
 
   // refresh as soon as the drawer opens instead of waiting for the next poll
   useEffect(() => {
@@ -291,6 +301,21 @@ const DrawerNotification = ({ open, onClose }: Props) => {
                 </span>
               )}
             </div>
+            <div className="flex items-center gap-1">
+            <button
+              onClick={() => {
+                const next = !muted;
+                setMuted(next);
+                if (!next) playNotificationSound(); // preview the tune when turning it on
+              }}
+              aria-label={muted ? "Turn notification sound on" : "Mute notification sound"}
+              title={muted ? "Sound off — click to turn on" : "Sound on — click to mute"}
+              className={`grid place-items-center w-8 h-8 rounded-full transition-colors cursor-pointer ${
+                muted ? "text-gray-400 hover:text-primary hover:bg-primary-20" : "text-primary bg-primary-20/60 hover:bg-primary-20"
+              }`}
+            >
+              {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+            </button>
             <button
               onClick={onClose}
               aria-label="Close notifications"
@@ -298,6 +323,7 @@ const DrawerNotification = ({ open, onClose }: Props) => {
             >
               <X size={18} />
             </button>
+            </div>
           </div>
 
           <div className="mt-3 flex items-center justify-between gap-2">
