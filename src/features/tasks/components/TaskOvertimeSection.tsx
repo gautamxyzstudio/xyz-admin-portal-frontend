@@ -1,15 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useMemo } from "react";
 import {
-  formatIstDate,
   formatIstDateTime,
   toIstDayjs,
 } from "../../../utils/utils";
 import { baseUrl } from "../../../api/endpoints";
-import {
-  useGetTaskOvertimesQuery,
-  useGetTaskTimeSummaryQuery,
-} from "../taskApi";
+import { useGetTaskTimeSummaryQuery } from "../taskApi";
 
 const AVATAR_COLORS = [
   "#b45309",
@@ -76,29 +72,6 @@ const formatDuration = (mins: number) => {
   return `${m}m`;
 };
 
-const getCalendarTime = (createdAt?: string) => {
-  if (!createdAt) return "0m";
-  const start = toIstDayjs(createdAt);
-  if (!start || !start.isValid()) return "0m";
-  const now = toIstDayjs(new Date());
-  if (!now) return "0m";
-
-  const diffMins = Math.max(0, now.diff(start, "minute"));
-  const days = Math.floor(diffMins / (24 * 60));
-  const hours = Math.floor((diffMins % (24 * 60)) / 60);
-  const mins = diffMins % 60;
-
-  if (days > 0) {
-    return `${days}d ${hours}h`;
-  }
-  if (hours > 0 && mins > 0) {
-    return `${hours}h ${mins}m`;
-  }
-  if (hours > 0) {
-    return `${hours}h`;
-  }
-  return `${mins}m`;
-};
 
 const getExpectedFinish = (remainingMinutes: number) => {
   if (remainingMinutes <= 0) return "Completed";
@@ -117,14 +90,9 @@ export const TaskOvertimeSection: React.FC<TaskOvertimeSectionProps> = ({
   const isCompleted =
     (currentStatus || selectedTask?.status || "").toLowerCase() === "completed";
 
-  // 1. Fetch overtimes from GET /api/task-overtimes?taskItem={taskId}
-  const { data: overtimesData, isLoading: isLoadingOvertimes } =
-    useGetTaskOvertimesQuery(taskId as number | string, {
-      skip: !taskId,
-    });
 
   // 1b. Fetch time summary from GET /api/task-items/{taskId}/time-summary
-  const { data: timeSummaryData } =
+  const { data: timeSummaryData, isError: timeSummaryFailed, error: timeSummaryError } =
     useGetTaskTimeSummaryQuery(taskId as number | string, {
       skip: !taskId,
       pollingInterval: 4000,
@@ -132,50 +100,12 @@ export const TaskOvertimeSection: React.FC<TaskOvertimeSectionProps> = ({
       refetchOnReconnect: true,
     });
 
-  // Combine backend overtimes from GET query and selectedTask.taskOvertimes
-  const activeBackendEntries = useMemo<IOvertimeEntry[]>(() => {
-    if (!taskId) return [];
 
-    const raw =
-      overtimesData && Array.isArray(overtimesData) && overtimesData.length > 0
-        ? overtimesData
-        : selectedTask?.taskOvertimes &&
-          Array.isArray(selectedTask.taskOvertimes) &&
-          selectedTask.taskOvertimes.length > 0
-        ? selectedTask.taskOvertimes
-        : overtimesData && Array.isArray(overtimesData)
-        ? overtimesData
-        : [];
-
-    return raw.map((ot: any) => {
-      const totalMins = Number(ot.timeInMinutes) || 0;
-      const dateSource = ot.date || ot.createdAt;
-      return {
-        id: String(ot.id),
-        date: dateSource,
-        formattedDate: formatIstDate(dateSource, "medium") || dateSource,
-        hours: Math.floor(totalMins / 60),
-        minutes: totalMins % 60,
-        totalMinutes: totalMins,
-        note: ot.workInfo || ot.note || "",
-        user: ot.user,
-        createdAt: ot.createdAt,
-      };
-    });
-  }, [taskId, overtimesData, selectedTask?.taskOvertimes]);
-
-  const activeEntries = activeBackendEntries;
 
   // Tracked time from API and backend overtimes
   const trackedSeconds = Number(timeSummaryData?.totalTimeSpent) || 0;
   const trackedMinutes = Math.round(trackedSeconds / 60);
 
-  const totalOvertimeMinutes = useMemo(() => {
-    return activeEntries.reduce(
-      (sum, item) => sum + (Number(item.totalMinutes) || 0),
-      0
-    );
-  }, [activeEntries]);
 
   // Inspect task history for completion details
   const completionHistory = useMemo(() => {
@@ -190,59 +120,18 @@ export const TaskOvertimeSection: React.FC<TaskOvertimeSectionProps> = ({
     );
   }, [selectedTask?.taskHistory]);
 
-  const inProgressHistory = useMemo(() => {
-    if (!selectedTask?.taskHistory || !Array.isArray(selectedTask.taskHistory)) {
-      return null;
-    }
-    return (
-      selectedTask.taskHistory.find(
-        (h: any) => (h.newStatus || "").toLowerCase() === "in-progress"
-      ) || null
-    );
-  }, [selectedTask?.taskHistory]);
 
   // Calculate duration between in-progress and completed from history
-  const completionDurationMinutes = useMemo(() => {
-    if (completionHistory?.createdAt && inProgressHistory?.createdAt) {
-      const cTime = toIstDayjs(completionHistory.createdAt);
-      const pTime = toIstDayjs(inProgressHistory.createdAt);
-      if (cTime && pTime && cTime.isValid() && pTime.isValid()) {
-        const diff = cTime.diff(pTime, "minute");
-        if (diff > 0) return diff;
-      }
-    }
-    return 0;
-  }, [completionHistory, inProgressHistory]);
 
   const estimatedMinutes = Number(selectedTask?.estimatedMinutes) || 0;
 
-  // Base worked minutes (actual tracked timer + logged overtime)
-  const baseWorkedMinutes = useMemo(() => {
-    if (trackedSeconds > 0) {
-      return trackedMinutes;
-    }
-    return totalOvertimeMinutes;
-  }, [trackedSeconds, trackedMinutes, totalOvertimeMinutes]);
+  // Base worked minutes: timer time only (manually logged overtime is shown separately)
+  const baseWorkedMinutes = trackedMinutes;
 
   // Total worked minutes: when completed, if no timer was running,
   // show the real time taken (history diff or estimatedMinutes) so it reflects 100% completion
-  const workedMinutes: number = useMemo(() => {
-    if (isCompleted && baseWorkedMinutes <= 0) {
-      if (completionDurationMinutes > 0) {
-        return completionDurationMinutes;
-      }
-      if (estimatedMinutes > 0) {
-        return estimatedMinutes;
-      }
-      return 60; // 1h fallback if no estimate
-    }
-    return baseWorkedMinutes;
-  }, [
-    isCompleted,
-    baseWorkedMinutes,
-    completionDurationMinutes,
-    estimatedMinutes,
-  ]);
+  // actual timer running time only (never estimated or invented)
+  const workedMinutes: number = baseWorkedMinutes;
 
   const remainingMinutes: number = estimatedMinutes - workedMinutes;
 
@@ -252,15 +141,6 @@ export const TaskOvertimeSection: React.FC<TaskOvertimeSectionProps> = ({
     if (estimatedMinutes <= 0) return workedMinutes > 0 ? 100 : 0;
     return Math.min(100, Math.round((workedMinutes / estimatedMinutes) * 100));
   }, [isCompleted, workedMinutes, estimatedMinutes]);
-
-  const workingDays = useMemo(() => {
-    if (estimatedMinutes <= 0) return "0";
-    return (estimatedMinutes / 480).toFixed(1);
-  }, [estimatedMinutes]);
-
-  const calendarTime = useMemo(() => {
-    return getCalendarTime(selectedTask?.createdAt);
-  }, [selectedTask?.createdAt]);
 
   const expectedFinish = useMemo(() => {
     return getExpectedFinish(Math.max(0, remainingMinutes));
@@ -334,99 +214,169 @@ export const TaskOvertimeSection: React.FC<TaskOvertimeSectionProps> = ({
     });
   }, [displayBreakdown, currentAssigneeId, currentAssigneeName]);
 
-  // Standard work day limit = 8 hours (480 minutes)
-  // If time exceeds 8 hours, it automatically triggers overtime!
-  const isOvertimeLimitExceeded = workedMinutes > 480;
-  const autoOvertimeMinutes = isOvertimeLimitExceeded ? workedMinutes - 480 : 0;
-  const hasOvertime = isOvertimeLimitExceeded || activeEntries.length > 0;
 
   return (
     <div className="space-y-3">
       {/* Estimation & Worked Time Progress Card */}
       {selectedTask && (
         <div className="bg-[#fafafa] border border-slate-200/90 rounded-2xl p-3.5 sm:p-4 space-y-2.5 shadow-2xs">
-          {/* Progress Bar (Full when completed!) */}
-          <div className="w-full bg-slate-200/90 rounded-full h-2 overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all duration-300 ${
-                isCompleted
-                  ? "bg-emerald-500"
-                  : remainingMinutes < 0
-                  ? "bg-rose-500"
-                  : "bg-[#ff7300]"
-              }`}
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
+          {timeSummaryFailed && (
+            <p className="text-[11px] text-rose-600 bg-rose-50 border border-rose-200/80 rounded-lg px-2.5 py-1.5">
+              Couldn't load tracked time for this task — the numbers below may be incomplete.
+              {(() => {
+                // the portal's API layer turns errors into { message, statusCode }
+                const e = timeSummaryError as
+                  | { statusCode?: number; message?: string; status?: number | string; error?: string }
+                  | undefined;
+                const code = e?.statusCode ?? e?.status;
+                const msg = e?.message || e?.error;
+                return (
+                  <span className="block text-rose-500/90 mt-0.5">
+                    {code === 0 ? "Network error (request didn't reach the server)" : code ? `Error ${String(code)}` : "Error"}
+                    {msg ? `: ${msg}` : ""}
+                  </span>
+                );
+              })()}
+            </p>
+          )}
 
-          {/* First Line: Worked X of Y estimated (Z working days) · W left / Completed */}
-          <div className="text-xs text-slate-600 leading-relaxed flex items-center justify-between flex-wrap gap-1">
-            <div>
-              Worked{" "}
-              <span className="font-bold text-slate-800">
+          {(timeSummaryData?.running?.length ?? 0) > 0 && (
+            <StillWorking running={timeSummaryData!.running} formatDuration={formatDuration} />
+          )}
+
+          {(timeSummaryData?.longSessions?.length ?? 0) > 0 && (
+            <div className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200/80 rounded-lg px-2.5 py-1.5 leading-relaxed">
+              <b>Check the timer:</b>{" "}
+              {timeSummaryData!.longSessions.map((ls, i) => (
+                <span key={i}>
+                  {i > 0 && "; "}
+                  one session ran <b>{formatDuration(Math.round(ls.seconds / 60))}</b> (
+                  {formatIstDateTime(ls.start)} → {formatIstDateTime(ls.end)})
+                </span>
+              ))}
+              . It was probably left running — this is included in Time spent.
+            </div>
+          )}
+
+          {/* ---- headline numbers ---- */}
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-xl bg-white border border-slate-200/70 px-3 py-2">
+              <p className="text-[10.5px] font-semibold uppercase tracking-wide text-slate-500">Time spent</p>
+              <p className={`text-lg font-bold leading-tight ${timeSummaryData?.isRunning ? "text-emerald-600" : "text-slate-800"}`}>
                 {formatDuration(workedMinutes)}
-              </span>{" "}
-              of{" "}
-              <span className="font-bold text-slate-800">
-                {formatDuration(estimatedMinutes)}
-              </span>{" "}
-              estimated{" "}
-              {estimatedMinutes > 0 && (
-                <span className="text-slate-500">
-                  ({workingDays} working {workingDays === "1.0" ? "day" : "days"})
-                </span>
-              )}
+              </p>
+              <p className="text-[10.5px] text-slate-500">
+                {timeSummaryData?.isRunning ? (
+                  <span className="text-emerald-600 font-medium">● timer running</span>
+                ) : (
+                  "from the timer"
+                )}
+              </p>
             </div>
+            <div className="rounded-xl bg-white border border-slate-200/70 px-3 py-2">
+              <p className="text-[10.5px] font-semibold uppercase tracking-wide text-slate-500">Estimate</p>
+              <p className="text-lg font-bold leading-tight text-slate-800">
+                {estimatedMinutes > 0 ? formatDuration(estimatedMinutes) : "—"}
+              </p>
+              <p className="text-[10.5px] text-slate-500">{estimatedMinutes > 0 ? "planned for this task" : "no estimate set"}</p>
+            </div>
+            <div
+              className={`rounded-xl border px-3 py-2 ${
+                isCompleted
+                  ? "bg-emerald-50 border-emerald-200/80"
+                  : estimatedMinutes > 0 && remainingMinutes < 0
+                    ? "bg-rose-50 border-rose-200/80"
+                    : "bg-white border-slate-200/70"
+              }`}
+            >
+              <p className="text-[10.5px] font-semibold uppercase tracking-wide text-slate-500">
+                {isCompleted ? "Status" : estimatedMinutes > 0 && remainingMinutes < 0 ? "Over by" : "Remaining"}
+              </p>
+              <p
+                className={`text-lg font-bold leading-tight ${
+                  isCompleted
+                    ? "text-emerald-700"
+                    : estimatedMinutes > 0 && remainingMinutes < 0
+                      ? "text-rose-600"
+                      : "text-primary"
+                }`}
+              >
+                {isCompleted
+                  ? "Done ✓"
+                  : estimatedMinutes <= 0
+                    ? "—"
+                    : formatDuration(Math.abs(remainingMinutes))}
+              </p>
+              <p className="text-[10.5px] text-slate-500">
+                {isCompleted
+                  ? completionHistory?.createdAt
+                    ? `finished ${formatIstDateTime(completionHistory.createdAt)}`
+                    : "completed"
+                  : estimatedMinutes > 0
+                    ? `${Math.round((workedMinutes / estimatedMinutes) * 100)}% of estimate used`
+                    : ""}
+              </p>
+            </div>
+          </div>
 
+          {/* ---- progress against the estimate ---- */}
+          {estimatedMinutes > 0 && (
             <div>
-              {isCompleted ? (
-                <span className="font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/90 px-2 py-0.5 rounded-lg inline-flex items-center gap-1 text-[11px]">
-                  <span>Completed</span>
-                  <span className="text-[10px]">✓</span>
-                </span>
-              ) : (
-                <span
-                  className={
-                    remainingMinutes < 0
-                      ? "font-bold text-rose-600"
-                      : "text-slate-600"
-                  }
-                >
-                  {estimatedMinutes <= 0
-                    ? ""
-                    : remainingMinutes < 0
-                    ? `+${formatDuration(Math.abs(remainingMinutes))} over estimate`
-                    : `${formatDuration(remainingMinutes)} left`}
-                </span>
-              )}
+              <div className="w-full bg-slate-200/90 rounded-full h-2 overflow-hidden">
+                <div
+                  className={`att-bar h-full rounded-full ${
+                    isCompleted ? "bg-emerald-500" : remainingMinutes < 0 ? "bg-rose-500" : "bg-primary"
+                  }`}
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-[10.5px] text-slate-500 mt-1">
+                <span>0</span>
+                <span>estimate {formatDuration(estimatedMinutes)}</span>
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Second Line: Calendar time X · expected finish Y / Finished */}
-          <div className="text-xs text-slate-500 leading-relaxed">
-            Calendar time{" "}
-            <span className="font-medium text-slate-700">
-              {calendarTime}
-            </span>
-            {" · "}
-            {isCompleted ? (
-              <span>
-                Finished{" "}
-                <span className="font-bold text-slate-800">
-                  {completionHistory?.createdAt
-                    ? formatIstDateTime(completionHistory.createdAt)
-                    : "Completed ✓"}
-                </span>
-              </span>
+          {/* ---- plain-language summary ---- */}
+          <p className="text-xs text-slate-600 leading-relaxed">
+            {(timeSummaryData?.days?.length ?? 0) > 0 ? (
+              <>
+                Worked on <b className="text-slate-800">{timeSummaryData!.days.length}</b>{" "}
+                {timeSummaryData!.days.length === 1 ? "day" : "days"}
+                {timeSummaryData!.days.length > 0 && (
+                  <>
+                    {" "}since{" "}
+                    <b className="text-slate-800">
+                      {new Date(`${timeSummaryData!.days[timeSummaryData!.days.length - 1].date}T00:00:00Z`).toLocaleDateString(
+                        "en-IN",
+                        { day: "2-digit", month: "short", timeZone: "UTC" },
+                      )}
+                    </b>
+                  </>
+                )}
+                {!isCompleted && estimatedMinutes > 0 && remainingMinutes > 0 && expectedFinish && (
+                  <>
+                    {" "}· at this pace it should be done by <b className="text-slate-800">{expectedFinish}</b>
+                  </>
+                )}
+                .
+              </>
+            ) : workedMinutes > 0 ? (
+              <>This time was recorded without start/stop times, so it can't be split by day.</>
             ) : (
-              <span>
-                expected finish{" "}
-                <span className="font-bold text-slate-800">
-                  {expectedFinish || "N/A"}
-                </span>
-              </span>
+              <>No time tracked yet — start the timer on this task to record time.</>
             )}
-          </div>
+          </p>
+
+          {/* Time by day (timer sessions per IST day) */}
+          {(timeSummaryData?.days?.length ?? 0) > 0 && (
+            <TimeByDay
+              days={timeSummaryData!.days}
+              isRunning={!!timeSummaryData?.isRunning}
+              people={displayBreakdown}
+              formatDuration={formatDuration}
+            />
+          )}
 
           {/* Member Time Breakdown (from /api/task-items/{id}/time-summary) */}
           {displayBreakdown.length > 0 && (
@@ -617,102 +567,148 @@ export const TaskOvertimeSection: React.FC<TaskOvertimeSectionProps> = ({
         </div>
       )}
 
-      {/* Automatic & Backend Overtime Section (Auto-shown when time > 8h or when backend has overtime records) */}
-      {(hasOvertime || isLoadingOvertimes) && (
-        <div className="space-y-2 pt-1 border-t border-slate-100">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <label className="text-xs font-semibold text-slate-800">
-                Overtime
-              </label>
-              {isOvertimeLimitExceeded && (
-                <span className="px-1.5 py-0.2 bg-rose-50 text-rose-600 border border-rose-200/80 rounded-full text-[9px] font-bold">
-                  &gt;8h Daily Limit
-                </span>
-              )}
-            </div>
-            {isOvertimeLimitExceeded && (
-              <span className="text-xs font-bold text-rose-600">
-                +{formatDuration(autoOvertimeMinutes)} overtime
-              </span>
-            )}
-          </div>
-
-          {/* Loading State for Edit Modal */}
-          {taskId && isLoadingOvertimes && activeEntries.length === 0 && (
-            <div className="py-2 text-center text-xs text-slate-400 animate-pulse">
-              Checking overtime records...
-            </div>
-          )}
-
-          {/* Automatic Overtime Badge if worked > 8h */}
-          {isOvertimeLimitExceeded && (
-            <div className="flex items-center justify-between px-3.5 py-2.5 bg-rose-50/70 border border-rose-200/80 rounded-2xl text-xs text-rose-900 shadow-2xs">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-                <span className="font-semibold">
-                  Automatic Overtime Triggered
-                </span>
-                <span className="text-slate-500 text-[11px]">
-                  (Worked {formatDuration(workedMinutes)} total)
-                </span>
-              </div>
-              <span className="px-2.5 py-0.5 bg-white text-rose-700 font-bold rounded-xl text-[11px] border border-rose-200 shadow-2xs">
-                +{formatDuration(autoOvertimeMinutes)}
-              </span>
-            </div>
-          )}
-
-          {/* Overtime Entries List from GET API */}
-          {activeEntries.length > 0 && (
-            <div className="space-y-1.5 max-h-48 overflow-y-auto scrollbar-hide">
-              {activeEntries.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between px-3.5 py-2 bg-[#fafafa] border border-slate-200/90 rounded-2xl text-xs text-slate-700 shadow-2xs"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    {/* User avatar if returned by backend */}
-                    {item.user?.photo ? (
-                      <img
-                        src={item.user.photo}
-                        alt={item.user?.username || "User"}
-                        className="w-5 h-5 rounded-full object-cover shrink-0 border border-slate-200"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLElement).style.display = "none";
-                        }}
-                      />
-                    ) : item.user?.username ? (
-                      <div className="w-5 h-5 rounded-full bg-orange-100 text-[#ff7300] font-bold text-[10px] flex items-center justify-center shrink-0 border border-orange-200">
-                        {item.user.username.charAt(0).toUpperCase()}
-                      </div>
-                    ) : null}
-
-                    {/* Duration Badge */}
-                    <span className="px-2 py-0.5 bg-orange-50 border border-orange-200/80 text-[#ff7300] font-bold rounded-xl text-[11px] shrink-0">
-                      {formatDuration(item.totalMinutes)}
-                    </span>
-
-                    {/* Date */}
-                    <span className="text-slate-700 font-semibold shrink-0">
-                      {item.formattedDate || item.date}
-                    </span>
-
-                    {/* Description */}
-                    {item.note && (
-                      <span className="text-slate-500 truncate max-w-xs sm:max-w-md">
-                        · {item.note}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 };
 
 export default TaskOvertimeSection;
+
+/* ---------- Time by day ---------- */
+
+const todayIstStr = () => new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
+const shiftIstDay = (d: string, n: number) => {
+  const t = new Date(`${d}T00:00:00Z`);
+  t.setUTCDate(t.getUTCDate() + n);
+  return t.toISOString().slice(0, 10);
+};
+
+function TimeByDay({
+  days,
+  isRunning,
+  people,
+  formatDuration,
+}: {
+  days: { date: string; totalSeconds: number; employees: { employeeId: number; seconds: number }[] }[];
+  isRunning: boolean;
+  people: any[];
+  formatDuration: (minutes: number) => string;
+}) {
+  const [showAll, setShowAll] = React.useState(false);
+  const today = todayIstStr();
+  const yesterday = shiftIstDay(today, -1);
+  const max = Math.max(1, ...days.map((d) => d.totalSeconds));
+  const shown = showAll ? days : days.slice(0, 5);
+  const nameOf = (id: number) =>
+    people.find((p: any) => Number(p.employeeId) === Number(id))?.employeeName || "Member";
+  const label = (d: string) => {
+    const date = new Date(`${d}T00:00:00Z`);
+    const nice = date.toLocaleDateString("en-IN", { weekday: "short", day: "2-digit", month: "short", timeZone: "UTC" });
+    return d === today ? `Today · ${nice}` : d === yesterday ? `Yesterday · ${nice}` : nice;
+  };
+
+  return (
+    <div className="border-t border-slate-200/80 pt-2.5 mt-2 space-y-2">
+      <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600">
+        <span className="flex items-center gap-1.5">
+          Time by day
+          <span className="px-1.5 bg-slate-200/80 text-slate-700 rounded-full text-[10px] font-bold">{days.length}</span>
+        </span>
+        <span className="text-[10px] text-slate-500 font-semibold">
+          {formatDuration(Math.round(days.reduce((s, d) => s + d.totalSeconds, 0) / 60))} tracked
+        </span>
+      </div>
+      <ul className="space-y-1.5">
+        {shown.map((d, i) => {
+          const live = isRunning && d.date === today;
+          return (
+            <li
+              key={d.date}
+              className="tl-row px-2.5 py-2 bg-white border border-slate-200/70 rounded-xl"
+              style={{ animationDelay: `${i * 40}ms` }}
+            >
+              <div className="flex items-center gap-3 text-xs">
+                <span className={`w-36 shrink-0 font-semibold ${d.date === today ? "text-primary" : "text-slate-700"}`}>
+                  {label(d.date)}
+                </span>
+                <div className="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                  <div
+                    className={`att-bar h-full rounded-full ${live ? "bg-emerald-500" : "bg-primary"}`}
+                    style={{ width: `${Math.max(3, (d.totalSeconds / max) * 100)}%` }}
+                  />
+                </div>
+                <span className={`w-16 text-right shrink-0 font-bold ${live ? "text-emerald-600" : "text-slate-800"}`}>
+                  {formatDuration(Math.max(1, Math.round(d.totalSeconds / 60)))}
+                </span>
+              </div>
+              {d.employees.length > 1 && (
+                <div className="flex flex-wrap gap-1.5 mt-1.5 pl-[9.75rem]">
+                  {d.employees.map((e) => (
+                    <span key={e.employeeId} className="px-1.5 py-0.5 rounded-md bg-slate-50 text-[10px] text-slate-600">
+                      {nameOf(e.employeeId)} · <b className="text-slate-800">{formatDuration(Math.max(1, Math.round(e.seconds / 60)))}</b>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      {days.length > 5 && (
+        <button
+          type="button"
+          onClick={() => setShowAll((v) => !v)}
+          className="text-[11px] font-semibold text-primary hover:underline cursor-pointer"
+        >
+          {showAll ? "Show less" : `Show all ${days.length} days`}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* ---------- "Still working on this" banner ---------- */
+
+function StillWorking({
+  running,
+  formatDuration,
+}: {
+  running: { employeeId: number; employeeName: string | null; since: string | null }[];
+  formatDuration: (minutes: number) => string;
+}) {
+  // tick every 30s so the running time stays current
+  const [now, setNow] = React.useState(() => Date.now());
+  React.useEffect(() => {
+    const t = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(t);
+  }, []);
+  const clock = (iso: string) =>
+    new Date(iso).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" });
+
+  return (
+    <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200/80">
+      <span className="relative flex w-2.5 h-2.5 mt-1 shrink-0">
+        <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
+        <span className="relative w-2.5 h-2.5 rounded-full bg-emerald-500" />
+      </span>
+      <div className="text-xs text-emerald-900 leading-relaxed">
+        <p className="font-semibold">Still working on this</p>
+        {running.map((r) => {
+          const since = r.since ? Date.parse(r.since) : NaN;
+          const mins = isNaN(since) ? 0 : Math.max(0, Math.round((now - since) / 60000));
+          return (
+            <p key={r.employeeId}>
+              <b>{r.employeeName || "Someone"}</b>
+              {r.since ? (
+                <>
+                  {" "}started the timer at <b>{clock(r.since)}</b> · running <b>{formatDuration(mins)}</b>
+                </>
+              ) : (
+                " has the timer running"
+              )}
+            </p>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

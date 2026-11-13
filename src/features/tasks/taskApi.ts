@@ -119,11 +119,27 @@ export interface ITaskEmployeeTimeBreakdown {
   totalTimeSpent: number; // in seconds
 }
 
+export interface ITaskTimeDay {
+  date: string; // YYYY-MM-DD (IST)
+  totalSeconds: number;
+  employees: { employeeId: number; seconds: number }[];
+}
+
 export interface ITaskTimeSummaryResponse {
   taskItemId: number;
   totalTimeSpent: number; // in seconds
+  todaySeconds: number;
+  isRunning: boolean;
   employeeCount: number;
   employeeBreakdown: ITaskEmployeeTimeBreakdown[];
+  /** time per IST day from the timer sessions, newest first */
+  days: ITaskTimeDay[];
+  /** timer time recorded without readable start/stop (not in `days`) */
+  untimedSeconds: number;
+  /** people whose timer is running on this task right now */
+  running: { employeeId: number; employeeName: string | null; since: string | null }[];
+  /** single sessions over 12h — usually a timer left running */
+  longSessions: { employeeId: number; start: string; end: string; seconds: number }[];
 }
 
 export interface ICreateTaskOvertimePayload {
@@ -333,6 +349,23 @@ export const taskApi = enhancedTaskApi.injectEndpoints({
               data.totalTime ??
               0
           ),
+          todaySeconds: Number(data.todaySeconds ?? 0),
+          isRunning: !!data.isRunning,
+          untimedSeconds: Number(data.untimedSeconds ?? 0),
+          longSessions: Array.isArray(data.longSessions) ? data.longSessions : [],
+          running: Array.isArray(data.running) ? data.running : [],
+          days: Array.isArray(data.days)
+            ? data.days.map((d: any) => ({
+                date: String(d.date),
+                totalSeconds: Number(d.totalSeconds) || 0,
+                employees: Array.isArray(d.employees)
+                  ? d.employees.map((e: any) => ({
+                      employeeId: Number(e.employeeId) || 0,
+                      seconds: Number(e.seconds) || 0,
+                    }))
+                  : [],
+              }))
+            : [],
           employeeCount: Number(
             data.employeeCount ??
               data.employee_count ??

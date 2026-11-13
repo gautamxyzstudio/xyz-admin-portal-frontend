@@ -29,6 +29,8 @@ export interface IEmployeeTask {
   totalTimeSpentSeconds: number;
   overtimeMinutes: number;
   isRunning: boolean;
+  /** when the running timer was started (ISO), if running */
+  runningSince?: string | null;
   /** Assignee's time logged today (IST) */
   todaySeconds: number;
   /** Only present when a date range is requested */

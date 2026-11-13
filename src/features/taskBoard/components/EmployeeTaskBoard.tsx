@@ -660,6 +660,18 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
                           )}
                         </p>
                       )}
+                      {t.isRunning && (
+                        <p className="text-[11px] font-medium text-emerald-600">
+                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 align-middle animate-pulse" />
+                          still working
+                          {t.runningSince &&
+                            ` · since ${new Date(t.runningSince).toLocaleTimeString("en-IN", {
+                              hour: "numeric",
+                              minute: "2-digit",
+                              timeZone: "Asia/Kolkata",
+                            })}`}
+                        </p>
+                      )}
                       {est > 0 ? (
                         <p className="text-[11px] text-black-50">
                           {ranged ? `${formatDuration(logged)} of ` : "of "}
