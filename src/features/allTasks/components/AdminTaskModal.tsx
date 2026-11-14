@@ -11,6 +11,9 @@ import {
 } from "../allTaskApi";
 import { extractEmployeePhotoUrl } from "../../../utils/utils";
 import ThemedDatePicker from "../../../components/ThemedDatePicker";
+import RichTextEditor from "../../../components/RichTextEditor/RichTextEditor";
+import ModalSizeButton from "../../../components/ModalSizeButton/ModalSizeButton";
+import { useTaskModalSize } from "../../../shared/hooks/useTaskModalSize";
 import { TaskAttachmentUpload } from "../../tasks/components/TaskAttachmentUpload";
 import {
   extractTaskAttachments,
@@ -116,6 +119,7 @@ export const AdminTaskModal: React.FC<AdminTaskModalProps> = ({
   const [taskDate, setTaskDate] = useState(todayStr);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const modalSize = useTaskModalSize();
   const [status, setStatus] = useState<TaskStatus>("planned");
   const [hours, setHours] = useState<number | string>("");
   const [minutes, setMinutes] = useState<number | string>("");
@@ -212,18 +216,21 @@ export const AdminTaskModal: React.FC<AdminTaskModalProps> = ({
 
   return createPortal(
     <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-[99999]">
-      <div className="bg-white w-full max-w-lg rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto scrollbar-hide animate-in fade-in zoom-in-95 duration-150">
+      <div className={`bg-white p-6 sm:p-8 shadow-2xl overflow-y-auto scrollbar-hide animate-in fade-in zoom-in-95 duration-150 ${modalSize.panelClass}`}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-bold text-gray-800">
             {taskToEdit ? "Edit Task" : "Assign Task"}
           </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            <ModalSizeButton isFull={modalSize.isFull} onClick={modalSize.toggle} />
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         <form onSubmit={handleModalSubmit} noValidate className="flex flex-col gap-4">
@@ -355,12 +362,11 @@ export const AdminTaskModal: React.FC<AdminTaskModalProps> = ({
             <label className="text-xs font-semibold text-gray-600 block mb-1">
               Description
             </label>
-            <textarea
-              rows={4}
-              placeholder="Add key objectives, links, or task notes... (optional)"
+            <RichTextEditor
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full min-h-[85px] text-xs px-3.5 py-2.5 border border-gray-200 rounded-xl outline-none bg-gray-50/70 focus:bg-white focus:border-orange-500 transition resize-y leading-relaxed text-gray-800 placeholder:text-gray-400 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              onChange={setDescription}
+              placeholder="Add key objectives, links, or task notes… (optional)"
+              minHeight={modalSize.isFull ? 260 : 150}
             />
           </div>
 

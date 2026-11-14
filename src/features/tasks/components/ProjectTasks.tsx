@@ -39,6 +39,7 @@ import {
 import { toast } from "react-toastify";
 import { TaskAttachmentUpload } from "./TaskAttachmentUpload";
 import ThemedDropdown from "../../../components/ThemedDropdown";
+import { htmlToText, isRichTextEmpty } from "../../../utils/richText";
 import { useUploadFileMutation } from "../../../shared/api/sharedApi";
 import {
   extractTaskAttachments,
@@ -1119,7 +1120,7 @@ const ProjectTasks: React.FC = () => {
           `task-${t.id}`.toLowerCase().includes(query) ||
           String(t.id).includes(query);
         const titleMatch = t.title.toLowerCase().includes(query);
-        const descMatch = (t.description || "").toLowerCase().includes(query);
+        const descMatch = htmlToText(t.description).toLowerCase().includes(query);
         if (!keyMatch && !titleMatch && !descMatch) return false;
       }
 
@@ -1194,7 +1195,7 @@ const ProjectTasks: React.FC = () => {
       toast.error("Please enter a task title");
       return;
     }
-    if (!taskForm.description.trim()) {
+    if (isRichTextEmpty(taskForm.description)) {
       toast.error("Please enter a task description");
       return;
     }

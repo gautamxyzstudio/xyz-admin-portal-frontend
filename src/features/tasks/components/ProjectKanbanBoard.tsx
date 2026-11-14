@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { IProjectTaskItem, TaskStatus } from "../taskApi";
 import type { IUploadedAttachment } from "../utils/taskAttachmentUtils";
+import { htmlToText } from "../../../utils/richText";
 
 export interface ProjectKanbanBoardProps {
   isLoading: boolean;
@@ -462,7 +463,7 @@ const ProjectKanbanBoard: React.FC<ProjectKanbanBoardProps> = ({
                           {/* Task Description */}
                           {task.description && (
                             <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
-                              {task.description}
+                              {htmlToText(task.description)}
                             </p>
                           )}
 

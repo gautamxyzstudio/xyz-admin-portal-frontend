@@ -2,6 +2,9 @@
 import React, { useRef, useEffect, useState, useMemo } from "react";
 import TaskOvertimeSection from "./TaskOvertimeSection";
 import TaskDueDatePicker from "./TaskDueDatePicker";
+import RichTextEditor from "../../../components/RichTextEditor/RichTextEditor";
+import ModalSizeButton from "../../../components/ModalSizeButton/ModalSizeButton";
+import { useTaskModalSize } from "../../../shared/hooks/useTaskModalSize";
 import ThemedDropdown from "../../../components/ThemedDropdown";
 
 const PriorityLabel = ({ color, text }: { color: string; text: string }) => (
@@ -13,6 +16,7 @@ const PriorityLabel = ({ color, text }: { color: string; text: string }) => (
 
 interface Props { [key: string]: any }
 const EditTaskModal: React.FC<Props> = (props) => {
+  const modalSize = useTaskModalSize();
   const { isEditUnassigned, setIsEditUnassigned, Check, ChevronDown, CircularProgress, Paperclip, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, activityTab, commentAttachments, commentComposerRef, commentFileInputRef, completeHistory, currentUserName, currentUserPhoto, editAssigneeSearchQuery, editAttachments, editEstimatedHours, editEstimatedMinutes, editFilteredProjectEmployees, editSelectedEmployeeObj, editTaskForm, extractEmployeePhotoUrl, formatHistoryTime, getAvatarBg, getImageUrl, getInitials, handleAddComment, handleDeleteTask, isDeleting, mentionableUsers = [], handleUpdateTaskSubmit, handleUploadCommentPhotos, isAdmin, isCommentExpanded, isCommentsLoading, isEditAssigneeDropdownOpen, isEditUploadingAttachments, isPostingComment, isProjectsLoading, isUpdating, isUploadingCommentPhoto, newCommentText, projectAssignedEmployees, selectedTask, setActivityTab, setCommentAttachments, setEditAssigneeSearchQuery, setEditAttachments, setEditEstimatedHours, setEditEstimatedMinutes, setEditTaskForm, setIsCommentFocused, setIsEditAssigneeDropdownOpen, setIsEditUploadingAttachments, setNewCommentText, setSelectedTask, setViewAttachmentPreview, taskCommentsList } = props;
   const commentsContainerRef = useRef<HTMLDivElement>(null);
   const commentsEndRef = useRef<HTMLDivElement>(null);
@@ -162,7 +166,7 @@ const EditTaskModal: React.FC<Props> = (props) => {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-3xl p-6 sm:p-7 w-full max-w-xl shadow-2xl border border-slate-100 max-h-[92vh] overflow-y-auto scrollbar-hide animate-in fade-in zoom-in-95 duration-150"
+            className={`bg-white p-6 sm:p-8 shadow-2xl border border-slate-100 overflow-y-auto scrollbar-hide animate-in fade-in zoom-in-95 duration-150 ${modalSize.panelClass}`}
           >
             {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -174,13 +178,16 @@ const EditTaskModal: React.FC<Props> = (props) => {
                   {selectedTask.taskId || `#${selectedTask.id}`}
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={() => setSelectedTask(null)}
-                className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
-              >
-                <X size={18} />
-              </button>
+              <div className="flex items-center gap-1">
+                <ModalSizeButton isFull={modalSize.isFull} onClick={modalSize.toggle} />
+                <button
+                  type="button"
+                  onClick={() => setSelectedTask(null)}
+                  className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
             </div>
 
             <form onSubmit={handleUpdateTaskSubmit} className="space-y-4 mt-4">
@@ -206,17 +213,12 @@ const EditTaskModal: React.FC<Props> = (props) => {
                 <label className="text-xs font-semibold text-slate-800 block mb-1.5">
                   Description
                 </label>
-                <textarea
-                  rows={3}
+                <RichTextEditor
                   value={editTaskForm.description}
-                  onChange={(e) =>
-                    setEditTaskForm({
-                      ...editTaskForm,
-                      description: e.target.value,
-                    })
-                  }
-                  className="w-full px-4 py-3 bg-[#fafafa] border border-slate-200/90 rounded-2xl text-xs text-slate-800 outline-none focus:border-primary focus:bg-white resize-y transition-all shadow-2xs leading-relaxed"
-                  placeholder="Task details and notes..."
+                  onChange={(html) => setEditTaskForm((f: any) => ({ ...f, description: html }))}
+                  placeholder="Task details and notes…"
+                  minHeight={modalSize.isFull ? 280 : 170}
+                  disabled={isUpdating}
                 />
               </div>
 

@@ -1146,3 +1146,62 @@ body {
     animation: none;
   }
 }
+
+/* =========================================================
+   Rich text (task descriptions) — editor + read-only view
+========================================================= */
+.rte-focused {
+  border-color: var(--primary);
+  background: #fff;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 14%, transparent);
+}
+.rte:hover:not(.rte-focused) {
+  border-color: var(--primary-50);
+}
+.rich-text {
+  line-height: 1.6;
+  word-break: break-word;
+}
+.rich-text > :first-child { margin-top: 0; }
+.rich-text > :last-child { margin-bottom: 0; }
+.rich-text p,
+.rich-text div { margin: 0 0 0.5em; }
+.rich-text h2 { font-size: 1.05rem; font-weight: 700; margin: 0.9em 0 0.4em; color: #1e293b; }
+.rich-text h3 { font-size: 0.98rem; font-weight: 700; margin: 0.8em 0 0.35em; color: #1e293b; }
+.rich-text h4 { font-size: 0.92rem; font-weight: 700; margin: 0.7em 0 0.3em; }
+.rich-text b, .rich-text strong { font-weight: 700; }
+.rich-text i, .rich-text em { font-style: italic; }
+.rich-text u { text-decoration: underline; text-underline-offset: 2px; }
+.rich-text s, .rich-text strike, .rich-text del { text-decoration: line-through; }
+.rich-text ul { list-style: disc; padding-left: 1.4em; margin: 0.3em 0 0.6em; }
+.rich-text ol { list-style: decimal; padding-left: 1.4em; margin: 0.3em 0 0.6em; }
+.rich-text li { margin: 0.15em 0; }
+.rich-text li > p { margin: 0; }
+.rich-text blockquote {
+  margin: 0.5em 0;
+  padding: 0.35em 0.9em;
+  border-left: 3px solid var(--primary);
+  background: color-mix(in srgb, var(--primary-20) 35%, #fff);
+  border-radius: 0 0.5rem 0.5rem 0;
+  color: #475569;
+}
+.rich-text a { color: var(--primary); text-decoration: underline; text-underline-offset: 2px; }
+.rich-text code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85em;
+  padding: 0.1em 0.35em;
+  border-radius: 0.3rem;
+  background: #f1f5f9;
+}
+.rich-text pre {
+  padding: 0.6em 0.8em;
+  border-radius: 0.5rem;
+  background: #f1f5f9;
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+/* ---------- task modal width (normal / wide / full screen) ---------- */
+.task-modal {
+  transition: max-width 0.25s ease, width 0.25s ease, height 0.25s ease, border-radius 0.25s ease;
+}

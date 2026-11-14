@@ -33,6 +33,9 @@ import {
   STATUS_CONFIG,
 } from "./AdminTaskModal";
 import ThemedDateRange from "../../../components/ThemedDateRange";
+import { RichTextView } from "../../../components/RichTextEditor/RichTextEditor";
+import ModalSizeButton from "../../../components/ModalSizeButton/ModalSizeButton";
+import { useTaskModalSize } from "../../../shared/hooks/useTaskModalSize";
 import {
   extractTaskAttachments,
   type IUploadedAttachment,
@@ -81,6 +84,7 @@ export default function AllTasks() {
   const todayStr = getIstTodayDateString();
 
   const [isTodayOnly, setIsTodayOnly] = useState<boolean>(true);
+  const viewSize = useTaskModalSize();
 
   // Directly bound query dates
   const [startDate, setStartDate] = useState<string>(todayStr);
@@ -593,7 +597,7 @@ export default function AllTasks() {
         createPortal(
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[99999] animate-in fade-in duration-200">
             <div
-              className="bg-white rounded-3xl border border-slate-100 shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200"
+              className={`bg-white border border-slate-100 shadow-2xl overflow-y-auto animate-in zoom-in-95 duration-200 ${viewSize.panelClass}`}
               onClick={(e) => e.stopPropagation()}
             >
               {/* Top Header Banner */}
@@ -610,12 +614,15 @@ export default function AllTasks() {
                   )}
                 </div>
 
-                <button
-                  onClick={() => setViewingTask(null)}
-                  className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-white/80 transition-all cursor-pointer shadow-2xs"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-1">
+                  <ModalSizeButton isFull={viewSize.isFull} onClick={viewSize.toggle} />
+                  <button
+                    onClick={() => setViewingTask(null)}
+                    className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-white/80 transition-all cursor-pointer shadow-2xs"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
               {/* Modal Body */}
@@ -645,11 +652,11 @@ export default function AllTasks() {
                     <ListTodo className="w-3.5 h-3.5 text-orange-500" />
                     <span>Description</span>
                   </div>
-                  <p className="text-slate-700 whitespace-pre-wrap leading-relaxed text-xs">
-                    {viewingTask.task.description || (
-                      <span className="text-slate-400 italic">No description provided for this task.</span>
-                    )}
-                  </p>
+                  <RichTextView
+                    value={viewingTask.task.description}
+                    className="text-slate-700 text-sm"
+                    empty={<p className="text-slate-400 italic text-xs">No description provided for this task.</p>}
+                  />
                 </div>
 
                 {/* Attachments Display in View Modal */}

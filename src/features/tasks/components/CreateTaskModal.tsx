@@ -1,10 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import TaskDueDatePicker from "./TaskDueDatePicker";
+import RichTextEditor from "../../../components/RichTextEditor/RichTextEditor";
+import ModalSizeButton from "../../../components/ModalSizeButton/ModalSizeButton";
+import { useTaskModalSize } from "../../../shared/hooks/useTaskModalSize";
 
 interface Props { [key: string]: any }
 const CreateTaskModal: React.FC<Props> = (props) => {
   const { isCreateUnassigned, setIsCreateUnassigned, Check, ChevronDown, CircularProgress, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, assigneeSearchQuery, attachments, estimatedHours, estimatedMinutes, extractEmployeePhotoUrl, filteredProjectEmployees, getAvatarBg, getInitials, handleCreateTaskSubmit, isAddModalOpen, isAdmin, isAssigneeDropdownOpen, isCreating, isProjectsLoading, isUploadingAttachments, modalTargetStatus, projectAssignedEmployees, projectName, renderCreatePriorityDropdown, selectedEmployeeObj, setAssigneeSearchQuery, setAttachments, setEstimatedHours, setEstimatedMinutes, setIsAddModalOpen, setIsAssigneeDropdownOpen, setIsCreatePriorityDropdownOpen, setIsUploadingAttachments, setModalTargetStatus, setTaskForm, taskForm } = props;
+  const modalSize = useTaskModalSize();
   return (
     <>
 {/* Modal: Create Task (Does not close on outside click) */}
@@ -14,12 +18,14 @@ const CreateTaskModal: React.FC<Props> = (props) => {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-3xl p-6 w-full max-w-lg shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto scrollbar-hide animate-in zoom-in-95 duration-150"
+            className={`bg-white p-6 sm:p-8 shadow-2xl border border-slate-100 overflow-y-auto scrollbar-hide animate-in zoom-in-95 duration-150 ${modalSize.panelClass}`}
           >
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="text-base font-bold text-slate-900">
                 Create Task in {projectName}
               </h3>
+              <div className="flex items-center gap-1">
+              <ModalSizeButton isFull={modalSize.isFull} onClick={modalSize.toggle} />
               <button
                 type="button"
                 onClick={() => {
@@ -30,6 +36,7 @@ const CreateTaskModal: React.FC<Props> = (props) => {
               >
                 <X size={18} />
               </button>
+              </div>
             </div>
 
             <form onSubmit={handleCreateTaskSubmit} className="space-y-4 mt-4">
@@ -53,15 +60,12 @@ const CreateTaskModal: React.FC<Props> = (props) => {
                 <label className="text-xs font-semibold text-slate-800 block mb-1.5">
                   Description <span className="text-rose-500">*</span>
                 </label>
-                <textarea
-                  required
-                  rows={3}
-                  placeholder="Description"
+                <RichTextEditor
                   value={taskForm.description}
-                  onChange={(e) =>
-                    setTaskForm({ ...taskForm, description: e.target.value })
-                  }
-                  className="w-full px-4 py-3 bg-[#fafafa] border border-slate-200/90 rounded-2xl text-xs text-slate-800 outline-none focus:border-primary focus:bg-white resize-none transition-all shadow-2xs"
+                  onChange={(html) => setTaskForm((f: any) => ({ ...f, description: html }))}
+                  placeholder="What needs to be done? Use the toolbar for bold, italic, underline, lists…"
+                  minHeight={modalSize.isFull ? 260 : 160}
+                  disabled={isCreating}
                 />
               </div>
 
