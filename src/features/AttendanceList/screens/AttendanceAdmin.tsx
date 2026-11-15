@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import {
   useLazyGetAllAttendanceQuery,
   useUpdateAttendanceMutation,
@@ -31,6 +31,9 @@ const useAttendanceData = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const { setIsLoading } = useLoadingWrapper();
+  // every fetch gets an id; only the newest one may update the table, so a
+  // slower older request (e.g. "all dates") can't overwrite the current filter
+  const latestRequest = useRef(0);
 
   const fetchAttendance = useCallback(
     async (
@@ -42,6 +45,7 @@ const useAttendanceData = () => {
       },
       showLoading: boolean = true,
     ) => {
+      const requestId = ++latestRequest.current;
       if (showLoading) setIsLoading(true);
 
       try {
@@ -52,6 +56,8 @@ const useAttendanceData = () => {
           endDate: params.endDate,
           search: params.search,
         }).unwrap();
+
+        if (requestId !== latestRequest.current) return; // stale response
 
         const mappedData = (response.data || []).map((item: any) => ({
           ...item,
@@ -66,14 +72,16 @@ const useAttendanceData = () => {
         }));
 
         setAttendanceData(mappedData);
-        setTotalPages(response.meta.pagination.pageCount);
+        setTotalPages(response.meta?.pagination?.pageCount || 0);
         setPage(params.page);
       } catch (error) {
+        if (requestId !== latestRequest.current) return;
         setAttendanceData([]);
+        setTotalPages(0);
         throw error;
       } finally {
         if (showLoading) setIsLoading(false);
-        setIsInitialLoading(false);
+        if (requestId === latestRequest.current) setIsInitialLoading(false);
       }
     },
     [getAllAttendance, setIsLoading],
@@ -182,6 +190,9 @@ const AttendanceAdmin = () => {
  useEffect(() => {
   const loadAttendance = async () => {
     if (startDate && !endDate) return;
+    // first render: dates aren't set to "today" yet — wait, otherwise we'd
+    // fetch every attendance record ever (the 134-page bug)
+    if (isInitialLoad && !startDate && !endDate) return;
 
     const currentStart = startDate?.format("YYYY-MM-DD") || "";
     const currentEnd = endDate?.format("YYYY-MM-DD") || "";
@@ -236,16 +247,18 @@ const AttendanceAdmin = () => {
     try {
       let allRows: any[] = [];
 
-      //  Fetch ALL pages data
-      for (let p = 1; p <= totalPages; p++) {
-        const res = await getAllAttendance({
-          page: p,
-          pageSize: 10,
-          startDate: startDate?.format("YYYY-MM-DD") || "",
-          endDate: endDate?.format("YYYY-MM-DD") || "",
-          search: searchQuery || "",
-        }).unwrap();
-
+      //  Fetch ALL pages for the current filters (page count comes from the
+      //  server for these exact filters, not from what the table last showed)
+      const exportParams = {
+        pageSize: 100,
+        startDate: startDate?.format("YYYY-MM-DD") || "",
+        endDate: endDate?.format("YYYY-MM-DD") || "",
+        search: debouncedSearch || "",
+      };
+      let exportPages = 1;
+      for (let p = 1; p <= exportPages; p++) {
+        const res = await getAllAttendance({ ...exportParams, page: p }).unwrap();
+        if (p === 1) exportPages = res.meta?.pagination?.pageCount || 1;
         allRows = [...allRows, ...(res.data || [])];
       }
 
@@ -344,7 +357,7 @@ const AttendanceAdmin = () => {
           page,
           startDate: startDate?.format("YYYY-MM-DD") || "",
           endDate: endDate?.format("YYYY-MM-DD") || "",
-          search: searchQuery,
+          search: debouncedSearch,
         },
         false,
       );
