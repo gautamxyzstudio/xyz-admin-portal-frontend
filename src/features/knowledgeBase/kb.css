@@ -1,0 +1,22 @@
+/* Knowledge Base article typography (no Tailwind typography plugin in this app) */
+.kb-prose { color: #2b2b2b; font-size: 14.5px; line-height: 1.7; word-wrap: break-word; }
+.kb-prose > :first-child { margin-top: 0; }
+.kb-prose p, .kb-prose div { margin: 0 0 0.7em; }
+.kb-prose h1 { font-size: 1.6em; font-weight: 700; margin: 1.2em 0 0.5em; color: #111; }
+.kb-prose h2 { font-size: 1.3em; font-weight: 700; margin: 1.2em 0 0.45em; color: #111; }
+.kb-prose h3 { font-size: 1.1em; font-weight: 600; margin: 1em 0 0.4em; color: #111; }
+.kb-prose h4 { font-size: 1em; font-weight: 600; margin: 1em 0 0.4em; }
+.kb-prose ul { list-style: disc; padding-left: 1.5em; margin: 0 0 0.8em; }
+.kb-prose ol { list-style: decimal; padding-left: 1.5em; margin: 0 0 0.8em; }
+.kb-prose ul ul { list-style: circle; }
+.kb-prose li { margin: 0.15em 0; }
+.kb-prose a { color: #F17C04; text-decoration: underline; text-underline-offset: 2px; }
+.kb-prose blockquote { border-left: 3px solid #F17C04; background: #fff7ef; margin: 0.8em 0; padding: 0.5em 0.9em; border-radius: 0 8px 8px 0; color: #4a4a4a; }
+.kb-prose pre { background: #1f2430; color: #e6e6e6; padding: 0.8em 1em; border-radius: 10px; overflow-x: auto; font-size: 13px; margin: 0.8em 0; white-space: pre-wrap; }
+.kb-prose code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 0.9em; }
+.kb-prose :not(pre) > code { background: #f3f3f3; padding: 0.1em 0.35em; border-radius: 4px; }
+.kb-prose img { max-width: 100%; height: auto; border-radius: 10px; margin: 0.6em 0; border: 1px solid #eee; }
+.kb-prose hr { border: 0; border-top: 1px solid #e5e5e5; margin: 1.4em 0; }
+.kb-prose table { border-collapse: collapse; margin: 0.8em 0; }
+.kb-prose td, .kb-prose th { border: 1px solid #e5e5e5; padding: 0.35em 0.6em; }
+.kb-editable:empty::before { content: attr(data-placeholder); color: #aaa; pointer-events: none; }

@@ -48,6 +48,14 @@ export const getRoutes = (
       permissions: ["Admin", "Employee", "Hr", "Management"],
     },
     {
+      name: "Knowledge Base",
+      key: "knowledge-base",
+      icon: Icons.KNOWLEDGE_BASE,
+      iconFill: Icons.KNOWLEDGE_BASE_FILL,
+      route: "/knowledge-base",
+      permissions: ["Admin", "Employee", "Hr", "Management"],
+    },
+    {
       name: "Employee Handbook",
       key: "handbook",
       icon: Icons.HANDBOOK,

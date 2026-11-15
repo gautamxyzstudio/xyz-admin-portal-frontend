@@ -3,6 +3,7 @@ import React, { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowUpRight,
+  BookOpen,
   Check,
   FolderKanban,
   ImagePlus,
@@ -574,12 +575,21 @@ const Projects = () => {
                       ) : (
                         <span className="text-[11px] text-orange-500">No team assigned</span>
                       )}
+                      <div className="flex items-center shrink-0">
+                      <button
+                        onClick={() => navigate(`/knowledge-base?project=${item.id}`)}
+                        title="Knowledge base / documentation"
+                        className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold text-black-50 hover:text-primary hover:bg-primary-20 transition-colors cursor-pointer shrink-0"
+                      >
+                        <BookOpen size={13} /> Docs
+                      </button>
                       <button
                         onClick={() => navigate(`/tasks?project=${encodeURIComponent(item.title)}`)}
                         className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-primary hover:bg-primary-20 transition-colors cursor-pointer shrink-0"
                       >
                         Open board <ArrowUpRight size={13} />
                       </button>
+                      </div>
                     </div>
                   </div>
                 );

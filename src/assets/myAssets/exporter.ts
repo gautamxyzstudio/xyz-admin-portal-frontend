@@ -58,6 +58,8 @@ import TIMELOG from "./icons/timelog.svg";
 import TIMELOG_UNFILL from "./icons/Timelog_unfill.svg";
 import PROJECT_UNFILL from "./icons/project_unfill.svg";
 import PROJECT_FILL from "./icons/project_fill.svg";
+import KNOWLEDGE_BASE from "./icons/knowledge_base.svg";
+import KNOWLEDGE_BASE_FILL from "./icons/knowledge_base_fill.svg";
 import HANDBOOK from "./icons/handbook.svg";
 import HANDBOOK_FILL from "./icons/handbook_fill.svg";
 import TASKS from "./icons/Tasks.svg";
@@ -123,6 +125,8 @@ export const Icons = {
   TIMELOG_UNFILL,
   PROJECT_UNFILL,
   PROJECT_FILL,
+  KNOWLEDGE_BASE,
+  KNOWLEDGE_BASE_FILL,
   HANDBOOK,
   HANDBOOK_FILL,
   TASKS,

@@ -33,6 +33,7 @@ import TimeLogAnalytics from "./features/timeLogAnalytics/screens/TimeLogAnalyti
 import Projects from "./features/projects/screens/Projects.js";
 import LeaveBalances from "./features/leaves/screens/leaveBalances/LeaveBalances.js";
 import HandBook from "./features/handbook/screens/HandBook.js";
+import KnowledgeBase from "./features/knowledgeBase/screens/KnowledgeBase";
 import ViewAllActivityLogs from "./features/dashboard/components/activityLog/ViewAllActivityLogs.js";
 import ProjectTasks from "./features/tasks/components/ProjectTasks";
 import AllTasks from "./features/allTasks/components/AllTasks.tsx";
@@ -291,6 +292,14 @@ const App: React.FC = () => {
                       element={
                         <DashboardLayout>
                           <ViewAllActivityLogs />
+                        </DashboardLayout>
+                      }
+                    />
+                    <Route
+                      path="knowledge-base"
+                      element={
+                        <DashboardLayout>
+                          <KnowledgeBase />
                         </DashboardLayout>
                       }
                     />

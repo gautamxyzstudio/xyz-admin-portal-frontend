@@ -54,6 +54,12 @@ export const endpoints = {
   getAllTasks: `${baseUrl}/api/task-assigneds`,
   taskBoard: `${baseUrl}/api/task-board`,
   taskBoardEmployees: `${baseUrl}/api/task-board/employees`,
+
+  // Knowledge Base (per-project documentation)
+  kbProjects: `${baseUrl}/api/knowledge-base/projects`,
+  kbArticles: (projectId: number | string) =>
+    `${baseUrl}/api/knowledge-base/projects/${projectId}/articles`,
+  kbArticle: (id: number | string) => `${baseUrl}/api/knowledge-base/articles/${id}`,
   projectTasks: `${baseUrl}/api/task-items/project`,
   taskComments: `${baseUrl}/api/task-comments`,
   mentionableUsers: `${baseUrl}/api/task-comment-mentions/users`,
