@@ -16,6 +16,7 @@ import { Link } from "react-router";
 import StatusDetailsDialog from "../../../components/StatusDetailsDialog/StatusDetailsDialog";
 import { useSelector } from "react-redux";
 import ActivityLog from "../components/activityLog/ActivityLog";
+import SelfAttendance from "../components/markAttendance/SelfAttendance";
 
 interface DashboardStats {
   totalEmployees: number;
@@ -99,8 +100,13 @@ const HrDashboard = () => {
 
   if (!stats) return null;
 
+  // HR also marks their own attendance from the dashboard
+  const canSelfCheckIn = (userBasic?.user_type || "").toLowerCase() === "hr";
+
   return (
     <div className="w-full h-auto flex flex-col gap-y-5">
+      <div className="w-full flex flex-row gap-x-5 items-stretch">
+      <div className={`${canSelfCheckIn ? "w-[71%]" : "w-full"} flex flex-col gap-y-5`}>
       {/* HEADER */}
       <div className="w-full relative overflow-clip rounded-2xl bg-primary flex items-center justify-between py-11 px-8">
         <div className="w-65.75 h-65.75 bg-white rounded-full absolute -left-36.25 -top-39 opacity-20" />
@@ -170,6 +176,9 @@ const HrDashboard = () => {
             iconBgColor="bg-[#FF00001A]"
           />
         </div>
+      </div>
+      </div>
+      {canSelfCheckIn && <SelfAttendance />}
       </div>
 
       <div className="w-full h-full flex flex-row gap-x-5 items-start">
