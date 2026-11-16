@@ -3,6 +3,10 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useSearchParams } from "react-router-dom";
 import {
   BookOpen,
+  Maximize2,
+  Minimize2,
+  PanelLeftClose,
+  PanelLeftOpen,
   Check,
   Download,
   FileText,
@@ -23,9 +27,12 @@ import {
 } from "../knowledgeBaseApi";
 import type { KbArticle, KbProject } from "../knowledgeBase.types";
 import RichEditor from "../components/RichEditor";
+import ShareMenu from "../components/ShareMenu";
 import {
+  buildPdfFile,
   downloadAsPdf,
   downloadAsWord,
+  kbShareUrl,
   formatDate,
   isHtmlEmpty,
   plainTextExcerpt,
@@ -83,6 +90,24 @@ const KnowledgeBase: React.FC = () => {
   const [editorKey, setEditorKey] = useState(0);
   const dirtyRef = useRef(false);
   const [pdfBusy, setPdfBusy] = useState<"all" | number | null>(null);
+  const [fullscreen, setFullscreen] = useState(false);
+  const [showList, setShowList] = useState(true);
+
+  /* full-screen: Esc closes it, page behind doesn't scroll */
+  useEffect(() => {
+    if (!fullscreen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      // let Esc close open menus/dialogs first; only exit when nothing else is focused-open
+      if (e.key === "Escape" && !document.querySelector(".swal2-container")) setFullscreen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [fullscreen]);
 
   const { data: projData, isLoading: projLoading } = useGetKbProjectsQuery();
   const projects = useMemo(() => projData?.projects ?? [], [projData]);
@@ -266,7 +291,7 @@ const KnowledgeBase: React.FC = () => {
     <div className="w-full">
       <div className="flex flex-col lg:flex-row gap-5 items-start">
         {/* ===== projects ===== */}
-        <aside className="w-full lg:w-72 shrink-0 bg-white rounded-2xl border border-gray-100 p-4 lg:sticky lg:top-4">
+        <aside className={`${fullscreen ? "hidden" : ""} w-full lg:w-72 shrink-0 bg-white rounded-2xl border border-gray-100 p-4 lg:sticky lg:top-4`}>
           <div className="flex items-center gap-3 mb-4">
             <span className="grid place-items-center w-10 h-10 rounded-xl bg-primary-20 text-primary">
               <BookOpen size={18} />
@@ -323,7 +348,13 @@ const KnowledgeBase: React.FC = () => {
         </aside>
 
         {/* ===== project docs ===== */}
-        <section className="flex-1 min-w-0 w-full bg-white rounded-2xl border border-gray-100">
+        <section
+          className={
+            fullscreen
+              ? "fixed inset-0 z-[1000] bg-white overflow-y-auto"
+              : "flex-1 min-w-0 w-full bg-white rounded-2xl border border-gray-100"
+          }
+        >
           {!project ? (
             <div className="flex flex-col items-center text-center py-24 px-6">
               <span className="grid place-items-center w-12 h-12 rounded-2xl bg-primary-20 text-primary mb-3">
@@ -336,7 +367,11 @@ const KnowledgeBase: React.FC = () => {
           ) : (
             <>
               {/* header */}
-              <div className="flex flex-wrap items-center gap-3 justify-between px-5 py-4 border-b border-gray-100">
+              <div
+                className={`flex flex-wrap items-center gap-3 justify-between px-5 py-4 border-b border-gray-100 ${
+                  fullscreen ? "sticky top-0 bg-white z-20" : ""
+                }`}
+              >
                 <div className="flex items-center gap-3 min-w-0">
                   <ProjectLogo title={project.title} url={project.logo_url} size={40} />
                   <div className="min-w-0">
@@ -347,7 +382,30 @@ const KnowledgeBase: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => setShowList((v) => !v)}
+                    title={showList ? "Hide article list" : "Show article list"}
+                    className="hidden md:grid place-items-center w-9 h-9 rounded-xl border border-gray-200 text-black-50 hover:border-primary hover:text-primary transition-colors cursor-pointer"
+                  >
+                    {showList ? <PanelLeftClose size={16} /> : <PanelLeftOpen size={16} />}
+                  </button>
+                  <button
+                    onClick={() => setFullscreen((v) => !v)}
+                    title={fullscreen ? "Exit full screen (Esc)" : "Full screen"}
+                    className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl border border-gray-200 text-sm font-medium text-black-80 hover:border-primary hover:text-primary transition-colors cursor-pointer"
+                  >
+                    {fullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+                    {fullscreen ? "Exit" : "Full screen"}
+                  </button>
+                  <ShareMenu
+                    title={`${project.title} — Knowledge base`}
+                    url={kbShareUrl(project.id)}
+                    getPdf={() => {
+                      if (!articles.length) return Promise.reject(new Error("No articles"));
+                      return buildPdfFile(project.title, articles);
+                    }}
+                  />
                   <button
                     onClick={() => runPdf("all", articles)}
                     disabled={!!pdfBusy}
@@ -373,9 +431,13 @@ const KnowledgeBase: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex flex-col md:flex-row min-h-[520px]">
+              <div className={`flex flex-col md:flex-row ${fullscreen ? "min-h-[calc(100vh-73px)]" : "min-h-[520px]"}`}>
                 {/* article list */}
-                <div className="md:w-64 shrink-0 border-b md:border-b-0 md:border-r border-gray-100 p-3">
+                <div
+                  className={`${showList ? "" : "md:hidden"} md:w-64 shrink-0 border-b md:border-b-0 md:border-r border-gray-100 p-3 ${
+                    fullscreen ? "md:sticky md:top-[73px] md:self-start" : ""
+                  }`}
+                >
                   <label className="group flex items-center gap-2 h-9 px-3 mb-2 rounded-xl border border-gray-200 bg-[#fafafa]">
                     <Search size={14} className="text-gray-400 group-focus-within:text-primary shrink-0" />
                     <input
@@ -427,9 +489,11 @@ const KnowledgeBase: React.FC = () => {
                 </div>
 
                 {/* reader / editor */}
-                <div className="flex-1 min-w-0 p-5">
+                <div className={`flex-1 min-w-0 p-5 ${fullscreen ? "md:px-10 md:py-8" : ""}`}>
+                  <div className={fullscreen ? "max-w-5xl mx-auto" : ""}>
                   {mode !== "view" ? (
                     <div className="space-y-3">
+                      <div className="flex items-center gap-2">
                       <input
                         autoFocus={mode === "new"}
                         value={draftTitle}
@@ -439,10 +503,21 @@ const KnowledgeBase: React.FC = () => {
                         }}
                         maxLength={200}
                         placeholder="Article title, e.g. Deployment guide"
-                        className="w-full h-12 px-4 rounded-xl border border-gray-200 text-lg font-semibold text-black-80 outline-none focus:border-primary placeholder:font-normal placeholder:text-gray-400"
+                        className="flex-1 min-w-0 h-12 px-4 rounded-xl border border-gray-200 text-lg font-semibold text-black-80 outline-none focus:border-primary placeholder:font-normal placeholder:text-gray-400"
                       />
+                      <button
+                        type="button"
+                        onClick={() => setFullscreen((v) => !v)}
+                        title={fullscreen ? "Exit full window (Esc)" : "Write in full window"}
+                        className="shrink-0 inline-flex items-center gap-1.5 h-12 px-3.5 rounded-xl border border-gray-200 text-sm font-medium text-black-80 hover:border-primary hover:text-primary transition-colors cursor-pointer"
+                      >
+                        {fullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+                        <span className="hidden sm:inline">{fullscreen ? "Exit full window" : "Full window"}</span>
+                      </button>
+                      </div>
                       <RichEditor
                         key={editorKey}
+                        tall={fullscreen}
                         initialHtml={draftHtml}
                         placeholder="Write the documentation — setup steps, credentials location, how things work, decisions…"
                         onChange={(html) => {
@@ -483,6 +558,12 @@ const KnowledgeBase: React.FC = () => {
                           >
                             <Pencil size={13} /> Edit
                           </button>
+                          <ShareMenu
+                            compact
+                            title={`${article.title} — ${project.title}`}
+                            url={kbShareUrl(project.id, article.id)}
+                            getPdf={() => buildPdfFile(project.title, [article], article.title)}
+                          />
                           <button
                             onClick={() => runPdf(article.id, [article], article.title)}
                             disabled={!!pdfBusy}
@@ -540,6 +621,7 @@ const KnowledgeBase: React.FC = () => {
                       )}
                     </div>
                   )}
+                  </div>
                 </div>
               </div>
             </>

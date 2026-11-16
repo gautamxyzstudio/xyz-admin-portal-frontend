@@ -108,16 +108,11 @@ const EditTaskModal: React.FC<Props> = (props) => {
     );
   };
 
+  // comments are listed newest-first, so "latest" is at the top of the list
   const scrollToBottom = (smooth = true) => {
-    if (commentsContainerRef.current) {
-      commentsContainerRef.current.scrollTo({
-        top: commentsContainerRef.current.scrollHeight,
-        behavior: smooth ? "smooth" : "auto",
-      });
-    }
-    commentsEndRef.current?.scrollIntoView({
+    commentsContainerRef.current?.scrollTo({
+      top: 0,
       behavior: smooth ? "smooth" : "auto",
-      block: "nearest",
     });
   };
 

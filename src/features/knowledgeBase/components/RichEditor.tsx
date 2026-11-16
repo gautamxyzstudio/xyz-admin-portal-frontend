@@ -26,6 +26,8 @@ interface Props {
   initialHtml: string;
   onChange: (html: string) => void;
   placeholder?: string;
+  /** Fill the window height (full-window mode). */
+  tall?: boolean;
 }
 
 const ToolBtn: React.FC<{
@@ -55,7 +57,7 @@ const ToolBtn: React.FC<{
 
 const Divider = () => <span className="w-px h-5 bg-gray-200 mx-1" />;
 
-const RichEditor: React.FC<Props> = ({ initialHtml, onChange, placeholder }) => {
+const RichEditor: React.FC<Props> = ({ initialHtml, onChange, placeholder, tall }) => {
   const ref = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const savedRange = useRef<Range | null>(null);
@@ -259,7 +261,7 @@ const RichEditor: React.FC<Props> = ({ initialHtml, onChange, placeholder }) => 
         onPaste={onPaste}
         onDrop={onDrop}
         onKeyDown={onKeyDown}
-        className="kb-prose kb-editable min-h-[360px] px-5 py-4 outline-none"
+        className={`kb-prose kb-editable ${tall ? "min-h-[calc(100vh-270px)]" : "min-h-[360px]"} px-5 py-4 outline-none`}
       />
     </div>
   );

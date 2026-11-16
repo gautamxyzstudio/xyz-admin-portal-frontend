@@ -1067,8 +1067,12 @@ const ProjectTasks: React.FC = () => {
         text: commentText,
         time: formatRelativeTime(createdAt),
         attachments: parsedAttachments,
+        createdAtMs: createdAt ? new Date(createdAt).getTime() || 0 : 0,
+        order: itemIdx,
       };
-    });
+    })
+      // newest comment first
+      .sort((a: any, b: any) => b.createdAtMs - a.createdAtMs || b.order - a.order);
   }, [taskCommentsData]);
 
   // Merge server tasks with local optimistic overrides

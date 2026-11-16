@@ -169,113 +169,225 @@ export const downloadAsWord = (projectTitle: string, articles: KbArticle[], file
   );
 };
 
-/* ---------- real PDF download (html2pdf.js, loaded on demand) ---------- */
+/* ---------- real PDF download (pdfmake: real text, proper line wrapping & page breaks) ---------- */
 
-const PDF_STYLES = `
-  .kb-pdf { width: 718px; padding: 0; background: #fff; color: #222; font-family: Arial, Helvetica, sans-serif; font-size: 12.5px; line-height: 1.6; }
-  .kb-pdf .kb-doc-title { font-size: 26px; font-weight: 700; color: #F17C04; margin: 0 0 4px; }
-  .kb-pdf .kb-doc-meta { color: #777; font-size: 11px; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 2px solid #F17C04; }
-  .kb-pdf .kb-toc-title { font-size: 15px; font-weight: 700; margin: 0 0 6px; }
-  .kb-pdf .kb-toc { margin: 0 0 8px; padding-left: 22px; list-style: decimal; }
-  .kb-pdf .kb-toc li { margin: 2px 0; }
-  .kb-pdf .kb-article-title { font-size: 20px; font-weight: 700; color: #111; margin: 0 0 4px; padding-bottom: 6px; border-bottom: 1px solid #eee; }
-  .kb-pdf .kb-article-meta { color: #888; font-size: 10.5px; margin: 0 0 12px; }
-  .kb-pdf p, .kb-pdf div { margin: 0 0 8px; }
-  .kb-pdf h1 { font-size: 20px; font-weight: 700; margin: 16px 0 6px; }
-  .kb-pdf h2 { font-size: 17px; font-weight: 700; margin: 14px 0 6px; }
-  .kb-pdf h3 { font-size: 14.5px; font-weight: 700; margin: 12px 0 5px; }
-  .kb-pdf ul { list-style: disc; padding-left: 22px; margin: 0 0 8px; }
-  .kb-pdf ol { list-style: decimal; padding-left: 22px; margin: 0 0 8px; }
-  .kb-pdf a { color: #F17C04; text-decoration: underline; }
-  .kb-pdf blockquote { border-left: 3px solid #F17C04; background: #fff7ef; margin: 8px 0; padding: 6px 12px; color: #444; }
-  .kb-pdf pre { background: #f4f4f4; border: 1px solid #e5e5e5; padding: 8px 10px; border-radius: 6px; white-space: pre-wrap; font-family: Consolas, "Courier New", monospace; font-size: 11px; }
-  .kb-pdf code { font-family: Consolas, "Courier New", monospace; }
-  .kb-pdf img { max-width: 100%; height: auto; margin: 6px 0; border-radius: 6px; }
-  .kb-pdf hr { border: 0; border-top: 1px solid #ddd; margin: 14px 0; }
-  .kb-pdf table { border-collapse: collapse; } .kb-pdf td, .kb-pdf th { border: 1px solid #ccc; padding: 4px 6px; }
-  .kb-pdf .kb-page-break { page-break-before: always; break-before: page; }
-`;
+const ORANGE = "#F17C04";
+const CONTENT_WIDTH = 515; // A4 width (595pt) minus 40pt margins each side
 
-const buildPdfBody = (projectTitle: string, articles: KbArticle[]) => {
-  const single = articles.length === 1;
-  const toc =
-    articles.length > 1
-      ? `<div class="kb-toc-title">Contents</div><ol class="kb-toc">${articles.map((a) => `<li>${escapeHtml(a.title)}</li>`).join("")}</ol>`
-      : "";
-  const body = articles
-    .map(
-      (a) => `
-      <section class="${single ? "" : "kb-page-break"}">
-        <div class="kb-article-title">${escapeHtml(a.title)}</div>
-        <div class="kb-article-meta">
-          ${a.author ? `By ${escapeHtml(a.author.username)} · ` : ""}Last updated ${escapeHtml(formatDate(a.updatedAt))}${
-            a.lastEditedBy && a.lastEditedBy.id !== a.author?.id ? ` by ${escapeHtml(a.lastEditedBy.username)}` : ""
-          }
-        </div>
-        ${sanitizeHtml(a.content) || '<p style="color:#999"><i>No content.</i></p>'}
-      </section>`,
-    )
-    .join("");
-  return `
-    <div class="kb-doc-title">${escapeHtml(projectTitle)}</div>
-    <div class="kb-doc-meta">Knowledge base${single ? "" : ` · ${articles.length} articles`} · Exported ${escapeHtml(
-      dayjs().format("DD MMM YYYY, hh:mm A"),
-    )}</div>
-    ${toc}
-    ${body}`;
+const blobToDataUrl = (blob: Blob) =>
+  new Promise<string>((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = reject;
+    r.readAsDataURL(blob);
+  });
+
+/** pdfmake needs images as data URLs (png/jpeg). WebP/GIF are converted via a canvas. */
+const imageToDataUrl = async (src: string): Promise<string | null> => {
+  try {
+    const res = await fetch(src, { mode: "cors" });
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    if (/image\/(png|jpe?g)/i.test(blob.type)) return await blobToDataUrl(blob);
+    // convert other formats to PNG
+    const url = URL.createObjectURL(blob);
+    try {
+      const img = await new Promise<HTMLImageElement>((ok, fail) => {
+        const i = new Image();
+        i.onload = () => ok(i);
+        i.onerror = fail;
+        i.src = url;
+      });
+      const c = document.createElement("canvas");
+      c.width = img.naturalWidth;
+      c.height = img.naturalHeight;
+      c.getContext("2d")?.drawImage(img, 0, 0);
+      return c.toDataURL("image/png");
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  } catch {
+    return null; // usually a CORS block on the storage bucket
+  }
 };
 
-/** Generates and downloads a real .pdf file (A4, page numbers, page break per article). */
-export const downloadAsPdf = async (projectTitle: string, articles: KbArticle[], fileTitle?: string) => {
-  const { default: html2pdf } = await import("html2pdf.js");
+/** Inline images as data URLs; any that can't be loaded become a link instead. */
+const prepareHtmlForPdf = async (html: string) => {
+  const doc = new DOMParser().parseFromString(`<body>${sanitizeHtml(html)}</body>`, "text/html");
+  await Promise.all(
+    [...doc.body.querySelectorAll("img")].map(async (img) => {
+      const src = img.getAttribute("src") || "";
+      const data = src.startsWith("data:image/png") || src.startsWith("data:image/jp") ? src : await imageToDataUrl(src);
+      if (data) {
+        img.setAttribute("src", data);
+        img.removeAttribute("width");
+      } else {
+        const a = doc.createElement("a");
+        a.setAttribute("href", src);
+        a.textContent = `[Image: ${img.getAttribute("alt") || "open link"}]`;
+        img.replaceWith(a);
+      }
+    }),
+  );
+  // links: show the URL after the text so it's useful on paper too
+  doc.body.querySelectorAll("a").forEach((a) => a.removeAttribute("target"));
+  return doc.body.innerHTML;
+};
 
-  const host = document.createElement("div");
-  host.style.cssText = "position:fixed;left:-10000px;top:0;z-index:-1;background:#fff;";
-  host.innerHTML = `<style>${PDF_STYLES}</style><div class="kb-pdf">${buildPdfBody(projectTitle, articles)}</div>`;
-  document.body.appendChild(host);
-
-  try {
-    const target = host.querySelector(".kb-pdf") as HTMLElement;
-    // wait for images so they appear in the PDF
-    await Promise.all(
-      [...target.querySelectorAll("img")].map(
-        (img) =>
-          img.complete
-            ? Promise.resolve()
-            : new Promise<void>((res) => {
-                img.onload = () => res();
-                img.onerror = () => res();
-              }),
-      ),
-    );
-
-    const filename = `${safeFileName(fileTitle || `${projectTitle}-knowledge-base`)}.pdf`;
-    const worker: any = (html2pdf() as any)
-      .set({
-        margin: [14, 12, 16, 12],
-        filename,
-        image: { type: "jpeg", quality: 0.95 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-        pagebreak: { mode: ["css", "legacy"], avoid: ["img", "pre", "blockquote", "tr", "li", ".kb-article-title"] },
-      })
-      .from(target)
-      .toPdf();
-
-    // footer: project name + page numbers
-    const pdf = await worker.get("pdf");
-    const total = pdf.internal.getNumberOfPages();
-    const w = pdf.internal.pageSize.getWidth();
-    const h = pdf.internal.pageSize.getHeight();
-    for (let i = 1; i <= total; i++) {
-      pdf.setPage(i);
-      pdf.setFontSize(8);
-      pdf.setTextColor(150);
-      pdf.text(`${projectTitle} — Knowledge base`, 12, h - 7);
-      pdf.text(`Page ${i} of ${total}`, w - 12, h - 7, { align: "right" });
-    }
-    await worker.save();
-  } finally {
-    host.remove();
+/** Make every image fit the page width and keep code blocks / quotes readable. */
+const fixNodes = (node: any): any => {
+  if (Array.isArray(node)) return node.map(fixNodes);
+  if (!node || typeof node !== "object") return node;
+  if (node.image) {
+    delete node.width;
+    delete node.height;
+    node.fit = [CONTENT_WIDTH, 640];
+    node.margin = [0, 4, 0, 8];
   }
+  if (node.stack) node.stack = fixNodes(node.stack);
+  if (node.text && Array.isArray(node.text)) node.text = fixNodes(node.text);
+  if (node.ul) node.ul = fixNodes(node.ul);
+  if (node.ol) node.ol = fixNodes(node.ol);
+  if (node.columns) node.columns = fixNodes(node.columns);
+  if (node.table?.body) node.table.body = node.table.body.map((row: any[]) => row.map(fixNodes));
+  return node;
+};
+
+let pdfMakePromise: Promise<any> | null = null;
+const loadPdfMake = () => {
+  if (!pdfMakePromise) {
+    pdfMakePromise = Promise.all([
+      import("pdfmake/build/pdfmake"),
+      import("pdfmake/build/vfs_fonts"),
+    ]).then(([pm, fonts]: any[]) => {
+      const pdfMake = pm.default || pm;
+      const vfs = fonts.default?.pdfMake?.vfs || fonts.pdfMake?.vfs || fonts.default || fonts;
+      if (typeof pdfMake.addVirtualFileSystem === "function") pdfMake.addVirtualFileSystem(vfs);
+      else pdfMake.vfs = vfs;
+      return pdfMake;
+    });
+  }
+  return pdfMakePromise;
+};
+
+/** Generates and downloads a real .pdf (A4, selectable text, page numbers, one article per page). */
+/** Builds the pdfmake document (shared by download and share). */
+const createKbPdf = async (projectTitle: string, articles: KbArticle[], fileTitle?: string) => {
+  const [pdfMake, { default: htmlToPdfmake }] = await Promise.all([
+    loadPdfMake(),
+    import("html-to-pdfmake") as Promise<any>,
+  ]);
+
+  const htmlOptions = {
+    window,
+    removeExtraBlanks: true,
+    defaultStyles: {
+      p: { margin: [0, 0, 0, 6] },
+      div: { margin: [0, 0, 0, 4] },
+      h1: { fontSize: 18, bold: true, margin: [0, 10, 0, 6] },
+      h2: { fontSize: 15, bold: true, margin: [0, 10, 0, 5] },
+      h3: { fontSize: 13, bold: true, margin: [0, 8, 0, 4] },
+      h4: { fontSize: 11.5, bold: true, margin: [0, 6, 0, 3] },
+      a: { color: ORANGE, decoration: "underline" },
+      ul: { margin: [0, 0, 0, 6] },
+      ol: { margin: [0, 0, 0, 6] },
+      li: { margin: [0, 1, 0, 1] },
+      blockquote: { italics: false, color: "#444444", background: "#FFF7EF", margin: [8, 4, 0, 8] },
+      pre: { fontSize: 9, background: "#F4F4F4", margin: [0, 4, 0, 8], preserveLeadingSpaces: true },
+      code: { fontSize: 9, background: "#F4F4F4" },
+      th: { bold: true, fillColor: "#F7F7F7" },
+      hr: { margin: [0, 8, 0, 8] },
+    },
+  };
+
+  const single = articles.length === 1;
+  const content: any[] = [
+    { text: projectTitle, fontSize: 22, bold: true, color: ORANGE, margin: [0, 0, 0, 2] },
+    {
+      text: `Knowledge base${single ? "" : ` · ${articles.length} articles`} · Exported ${dayjs().format("DD MMM YYYY, hh:mm A")}`,
+      fontSize: 9,
+      color: "#888888",
+      margin: [0, 0, 0, 6],
+    },
+    { canvas: [{ type: "line", x1: 0, y1: 0, x2: CONTENT_WIDTH, y2: 0, lineWidth: 1.5, lineColor: ORANGE }], margin: [0, 0, 0, 14] },
+  ];
+
+  if (!single) {
+    content.push({
+      toc: { title: { text: "Contents", fontSize: 14, bold: true, margin: [0, 0, 0, 8] } },
+      margin: [0, 0, 0, 10],
+    });
+  }
+
+  for (let i = 0; i < articles.length; i++) {
+    const a = articles[i];
+    const meta = `${a.author ? `By ${a.author.username} · ` : ""}Last updated ${formatDate(a.updatedAt)}${
+      a.lastEditedBy && a.lastEditedBy.id !== a.author?.id ? ` by ${a.lastEditedBy.username}` : ""
+    }`;
+    const body = isHtmlEmpty(a.content)
+      ? [{ text: "No content.", italics: true, color: "#999999" }]
+      : fixNodes(htmlToPdfmake(await prepareHtmlForPdf(a.content), htmlOptions));
+
+    content.push({
+      stack: [
+        {
+          text: a.title,
+          fontSize: 17,
+          bold: true,
+          color: "#111111",
+          tocItem: !single,
+          tocMargin: [0, 2, 0, 2],
+          margin: [0, 0, 0, 3],
+        },
+        { text: meta, fontSize: 8.5, color: "#888888", margin: [0, 0, 0, 4] },
+        { canvas: [{ type: "line", x1: 0, y1: 0, x2: CONTENT_WIDTH, y2: 0, lineWidth: 0.5, lineColor: "#E5E5E5" }], margin: [0, 0, 0, 10] },
+        ...(Array.isArray(body) ? body : [body]),
+      ],
+      // multi-article export: each article starts on a fresh page (after the contents page)
+      pageBreak: single ? undefined : "before",
+    });
+  }
+
+  const docDefinition = {
+    pageSize: "A4",
+    pageMargins: [40, 40, 40, 50],
+    info: { title: `${projectTitle} — Knowledge base`, author: "XYZ Studio" },
+    defaultStyle: { font: "Roboto", fontSize: 10.5, lineHeight: 1.3, color: "#222222" },
+    content,
+    footer: (currentPage: number, pageCount: number) => ({
+      margin: [40, 16, 40, 0],
+      columns: [
+        { text: `${projectTitle} — Knowledge base`, fontSize: 8, color: "#999999" },
+        { text: `Page ${currentPage} of ${pageCount}`, fontSize: 8, color: "#999999", alignment: "right" },
+      ],
+    }),
+  };
+
+  const filename = `${safeFileName(fileTitle || `${projectTitle}-knowledge-base`)}.pdf`;
+  return { pdf: pdfMake.createPdf(docDefinition), filename };
+};
+
+/** Generates and downloads a real .pdf (A4, selectable text, page numbers, one article per page). */
+export const downloadAsPdf = async (projectTitle: string, articles: KbArticle[], fileTitle?: string) => {
+  const { pdf, filename } = await createKbPdf(projectTitle, articles, fileTitle);
+  await new Promise<void>((resolve) => {
+    pdf.download(filename, () => resolve());
+    // older builds don't call back reliably — don't leave the button spinning
+    setTimeout(resolve, 4000);
+  });
+};
+
+/** Same PDF as a File object — used by the share menu. */
+export const buildPdfFile = async (projectTitle: string, articles: KbArticle[], fileTitle?: string) => {
+  const { pdf, filename } = await createKbPdf(projectTitle, articles, fileTitle);
+  const blob: Blob = await new Promise((resolve) => pdf.getBlob((b: Blob) => resolve(b)));
+  return new File([blob], filename, { type: "application/pdf" });
+};
+
+/** Portal deep link to a project's knowledge base or one article (recipient must log in & have access). */
+export const kbShareUrl = (projectId: number, articleId?: number) => {
+  const url = new URL("/knowledge-base", window.location.origin);
+  url.searchParams.set("project", String(projectId));
+  if (articleId) url.searchParams.set("article", String(articleId));
+  return url.toString();
 };
