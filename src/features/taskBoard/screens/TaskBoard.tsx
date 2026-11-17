@@ -14,7 +14,6 @@ import { useGetTaskBoardProjectsQuery } from "../taskBoardApi";
 import { getImageUrl } from "../../../utils/utils";
 import type { ITaskBoardProject } from "../taskBoard.types";
 import EmployeeTaskBoard from "../components/EmployeeTaskBoard";
-import MyTasks from "../components/MyTasks";
 import { useSelector } from "react-redux";
 import { userInState, userDetailsInState } from "../../auth/authSlice";
 
@@ -23,12 +22,19 @@ const TaskBoard: React.FC = () => {
   const currentUser = useSelector(userInState);
   const userDetails = useSelector(userDetailsInState);
   const userRole = (currentUser?.user_type || userDetails?.role || "").toLowerCase();
-  const showMyTasks = userRole === "hr";
+  // HR & Management get a separate "My Tasks" tab (their own assigned tasks)
+  const showMyTasksTab = userRole === "hr" || userRole === "management";
   const isElevated = ["admin", "hr", "management"].includes(userRole);
   const [searchParams, setSearchParams] = useSearchParams();
-  const view: "projects" | "employees" =
-    searchParams.get("view") === "employees" ? "employees" : "projects";
-  const setView = (v: "projects" | "employees") => {
+  type View = "projects" | "employees" | "mytasks";
+  const rawView = searchParams.get("view");
+  const view: View =
+    rawView === "employees"
+      ? "employees"
+      : rawView === "mytasks" && showMyTasksTab
+        ? "mytasks"
+        : "projects";
+  const setView = (v: View) => {
     const next = new URLSearchParams(searchParams);
     if (v === "projects") next.delete("view");
     else next.set("view", v);
@@ -89,7 +95,9 @@ const TaskBoard: React.FC = () => {
           <p className="text-sm text-black-50 mt-1">
             {view === "projects"
               ? "Select a project to view and manage tasks"
-              : isElevated
+              : view === "mytasks"
+                ? "Tasks assigned to you — status, priority and due dates"
+                : isElevated
                 ? "See who is working on what — status, priority and time spent per employee"
                 : "Your tasks — status, priority and time spent"}
           </p>
@@ -118,6 +126,16 @@ const TaskBoard: React.FC = () => {
                 </>
               )}
             </button>
+            {showMyTasksTab && (
+              <button
+                onClick={() => setView("mytasks")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  view === "mytasks" ? "bg-primary text-white" : "text-black-50 hover:text-black-80"
+                }`}
+              >
+                <ClipboardList size={14} /> My Tasks
+              </button>
+            )}
           </div>
         </div>
 
@@ -134,7 +152,7 @@ const TaskBoard: React.FC = () => {
               placeholder={
                 view === "projects"
                   ? "Search projects..."
-                  : isElevated
+                  : isElevated && view !== "mytasks"
                     ? "Search employee, task or project..."
                     : "Search task or project..."
               }
@@ -161,7 +179,13 @@ const TaskBoard: React.FC = () => {
                 : setEmployeeRefreshKey((k) => k + 1)
             }
             disabled={view === "projects" && isFetching}
-            title={view === "projects" ? "Refresh Projects" : "Refresh Employees"}
+            title={
+              view === "projects"
+                ? "Refresh Projects"
+                : view === "mytasks"
+                  ? "Refresh My Tasks"
+                  : "Refresh Employees"
+            }
             className="p-2.5 bg-white border border-black-20 rounded-xl text-black-50 hover:text-primary hover:border-primary transition-all shadow-xs disabled:opacity-50 cursor-pointer"
           >
             <RotateCcw
@@ -172,7 +196,15 @@ const TaskBoard: React.FC = () => {
         </div>
       </div>
 
-      {view === "employees" ? (
+      {view === "mytasks" ? (
+        <div className="flex-1 min-h-0 overflow-y-auto pr-1 pb-6 scrollbar-hide [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <EmployeeTaskBoard
+            searchTerm={searchTerm}
+            refreshKey={employeeRefreshKey}
+            onlyUserId={currentUser?.id ?? null}
+          />
+        </div>
+      ) : view === "employees" ? (
         <div className="flex-1 min-h-0 overflow-y-auto pr-1 pb-6 scrollbar-hide [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <EmployeeTaskBoard
             searchTerm={searchTerm}
@@ -183,7 +215,6 @@ const TaskBoard: React.FC = () => {
       ) : (
       /* Projects Grid Content - Scrollable Only */
       <div className="flex-1 min-h-0 overflow-y-auto pr-1 pb-6 scrollbar-hide [scrollbar-width:none] [&::-webkit-scrollbar]:hidden flex flex-col gap-5">
-        {showMyTasks && <MyTasks />}
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-28 gap-3">
             <CircularProgress size={36} sx={{ color: "#f17c04" }} />

@@ -199,9 +199,12 @@ interface Props {
   refreshKey?: number;
   /** Employee login: show only the logged-in user's own tasks (no employee list) */
   selfOnly?: boolean;
+  /** HR / Management "My Tasks" tab: show only this user's tasks */
+  onlyUserId?: number | string | null;
 }
 
-const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly = false }) => {
+const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly = false, onlyUserId = null }) => {
+  const isSelf = selfOnly || onlyUserId != null;
   const navigate = useNavigate();
   // every role (HR, Management, employees) lands on today by default
   const [preset, setPreset] = useState<RangePreset>("today");
@@ -241,12 +244,17 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
   };
 
   const employees = useMemo(
-    () => (data?.employees ?? []).filter((e) => e.summary.totalTasks > 0),
-    [data],
+    () =>
+      (data?.employees ?? []).filter(
+        (e) =>
+          e.summary.totalTasks > 0 &&
+          (onlyUserId == null || String(e.id) === String(onlyUserId)),
+      ),
+    [data, onlyUserId],
   );
 
   const visibleEmployees = useMemo(() => {
-    const term = selfOnly ? "" : searchTerm.toLowerCase().trim();
+    const term = isSelf ? "" : searchTerm.toLowerCase().trim();
     const list = employees.filter(
       (e) =>
         !term ||
@@ -268,7 +276,7 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
           ? figures(b, ranged).openCount - figures(a, ranged).openCount
           : (a.name || "").localeCompare(b.name || ""),
     );
-  }, [employees, searchTerm, sortBy, selfOnly, ranged]);
+  }, [employees, searchTerm, sortBy, isSelf, ranged]);
 
   const activeId = visibleEmployees.some((e) => e.id === selectedId)
     ? selectedId
@@ -300,7 +308,7 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
       .sort((a, b) => a.title.localeCompare(b.title));
   }, [selected]);
 
-  const taskTerm = selfOnly ? searchTerm.toLowerCase().trim() : "";
+  const taskTerm = isSelf ? searchTerm.toLowerCase().trim() : "";
   const tasks = projectTasks.filter(
     (t) =>
       matchesStatus(t, statusTab, ranged) &&
@@ -352,7 +360,7 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
   if (!employees.length) {
     return (
       <p className="text-center text-sm text-black-50 py-24">
-        {selfOnly ? "No tasks assigned to you yet." : "No assigned tasks yet."}
+        {isSelf ? "No tasks assigned to you yet." : "No assigned tasks yet."}
       </p>
     );
   }
@@ -391,7 +399,7 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
 
     <div className="flex flex-col lg:flex-row gap-4 items-start">
       {/* ---------- Employees ---------- */}
-      {!selfOnly && (
+      {!isSelf && (
       <div className="w-full lg:w-80 shrink-0 bg-white rounded-2xl border border-gray-100 lg:sticky lg:top-0 lg:z-10">
         <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
           <span className="text-sm font-semibold text-black-80">
