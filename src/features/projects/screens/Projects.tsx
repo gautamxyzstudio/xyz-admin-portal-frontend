@@ -138,7 +138,7 @@ const Projects = () => {
   const teamOptions = useMemo(
     () =>
       (employeeList || []).filter(
-        (e: any) => e.id !== user?.id && e.role !== "Management" && e.status === true,
+        (e: any) => e.id !== user?.id && e.status === true,
       ),
     [employeeList, user?.id],
   );

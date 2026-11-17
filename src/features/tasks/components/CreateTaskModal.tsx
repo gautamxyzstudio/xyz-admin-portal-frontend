@@ -7,7 +7,7 @@ import { useTaskModalSize } from "../../../shared/hooks/useTaskModalSize";
 
 interface Props { [key: string]: any }
 const CreateTaskModal: React.FC<Props> = (props) => {
-  const { isCreateUnassigned, setIsCreateUnassigned, Check, ChevronDown, CircularProgress, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, assigneeSearchQuery, attachments, estimatedHours, estimatedMinutes, extractEmployeePhotoUrl, filteredProjectEmployees, getAvatarBg, getInitials, handleCreateTaskSubmit, isAddModalOpen, isAdmin, isAssigneeDropdownOpen, isCreating, isProjectsLoading, isUploadingAttachments, modalTargetStatus, projectAssignedEmployees, projectName, renderCreatePriorityDropdown, selectedEmployeeObj, setAssigneeSearchQuery, setAttachments, setEstimatedHours, setEstimatedMinutes, setIsAddModalOpen, setIsAssigneeDropdownOpen, setIsCreatePriorityDropdownOpen, setIsUploadingAttachments, setModalTargetStatus, setTaskForm, taskForm } = props;
+  const { isCreateMgmtAssignee, isCreateUnassigned, setIsCreateUnassigned, Check, ChevronDown, CircularProgress, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, assigneeSearchQuery, attachments, estimatedHours, estimatedMinutes, extractEmployeePhotoUrl, filteredProjectEmployees, getAvatarBg, getInitials, handleCreateTaskSubmit, isAddModalOpen, isAdmin, isAssigneeDropdownOpen, isCreating, isProjectsLoading, isUploadingAttachments, modalTargetStatus, projectAssignedEmployees, projectName, renderCreatePriorityDropdown, selectedEmployeeObj, setAssigneeSearchQuery, setAttachments, setEstimatedHours, setEstimatedMinutes, setIsAddModalOpen, setIsAssigneeDropdownOpen, setIsCreatePriorityDropdownOpen, setIsUploadingAttachments, setModalTargetStatus, setTaskForm, taskForm } = props;
   const modalSize = useTaskModalSize();
   return (
     <>
@@ -319,6 +319,11 @@ const CreateTaskModal: React.FC<Props> = (props) => {
                 </div>
 
               {/* Estimated Time (Hours & Minutes) */}
+              {isCreateMgmtAssignee ? (
+                <p className="text-[11px] text-slate-500 bg-slate-50 border border-slate-200/80 rounded-2xl px-4 py-2.5">
+                  Management task — no estimated time or time tracking.
+                </p>
+              ) : (
               <div>
                 <label className="text-xs font-semibold text-slate-800 block mb-1.5">
                   Estimated Time <span className="text-rose-500">*</span>
@@ -377,6 +382,7 @@ const CreateTaskModal: React.FC<Props> = (props) => {
                   </div>
                 </div>
               </div>
+              )}
 
               {/* Due Date (Optional) */}
               <div>

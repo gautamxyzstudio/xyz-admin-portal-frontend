@@ -17,7 +17,7 @@ const PriorityLabel = ({ color, text }: { color: string; text: string }) => (
 interface Props { [key: string]: any }
 const EditTaskModal: React.FC<Props> = (props) => {
   const modalSize = useTaskModalSize();
-  const { isEditUnassigned, setIsEditUnassigned, Check, ChevronDown, CircularProgress, Paperclip, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, activityTab, commentAttachments, commentComposerRef, commentFileInputRef, completeHistory, currentUserName, currentUserPhoto, editAssigneeSearchQuery, editAttachments, editEstimatedHours, editEstimatedMinutes, editFilteredProjectEmployees, editSelectedEmployeeObj, editTaskForm, extractEmployeePhotoUrl, formatHistoryTime, getAvatarBg, getImageUrl, getInitials, handleAddComment, handleDeleteTask, isDeleting, mentionableUsers = [], handleUpdateTaskSubmit, handleUploadCommentPhotos, isAdmin, isCommentExpanded, isCommentsLoading, isEditAssigneeDropdownOpen, isEditUploadingAttachments, isPostingComment, isProjectsLoading, isUpdating, isUploadingCommentPhoto, newCommentText, projectAssignedEmployees, selectedTask, setActivityTab, setCommentAttachments, setEditAssigneeSearchQuery, setEditAttachments, setEditEstimatedHours, setEditEstimatedMinutes, setEditTaskForm, setIsCommentFocused, setIsEditAssigneeDropdownOpen, setIsEditUploadingAttachments, setNewCommentText, setSelectedTask, setViewAttachmentPreview, taskCommentsList } = props;
+  const { isEditMgmtAssignee, isEditUnassigned, setIsEditUnassigned, Check, ChevronDown, CircularProgress, Paperclip, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, activityTab, commentAttachments, commentComposerRef, commentFileInputRef, completeHistory, currentUserName, currentUserPhoto, editAssigneeSearchQuery, editAttachments, editEstimatedHours, editEstimatedMinutes, editFilteredProjectEmployees, editSelectedEmployeeObj, editTaskForm, extractEmployeePhotoUrl, formatHistoryTime, getAvatarBg, getImageUrl, getInitials, handleAddComment, handleDeleteTask, isDeleting, mentionableUsers = [], handleUpdateTaskSubmit, handleUploadCommentPhotos, isAdmin, isCommentExpanded, isCommentsLoading, isEditAssigneeDropdownOpen, isEditUploadingAttachments, isPostingComment, isProjectsLoading, isUpdating, isUploadingCommentPhoto, newCommentText, projectAssignedEmployees, selectedTask, setActivityTab, setCommentAttachments, setEditAssigneeSearchQuery, setEditAttachments, setEditEstimatedHours, setEditEstimatedMinutes, setEditTaskForm, setIsCommentFocused, setIsEditAssigneeDropdownOpen, setIsEditUploadingAttachments, setNewCommentText, setSelectedTask, setViewAttachmentPreview, taskCommentsList } = props;
   const commentsContainerRef = useRef<HTMLDivElement>(null);
   const commentsEndRef = useRef<HTMLDivElement>(null);
   const prevCommentsCountRef = useRef<number>(taskCommentsList?.length || 0);
@@ -487,6 +487,11 @@ const EditTaskModal: React.FC<Props> = (props) => {
                 </div>
 
               {/* Estimated Time */}
+              {isEditMgmtAssignee ? (
+                <p className="text-[11px] text-slate-500 bg-slate-50 border border-slate-200/80 rounded-2xl px-4 py-2.5">
+                  Management task — no estimated time or time tracking.
+                </p>
+              ) : (
               <div>
                 <label className="text-xs font-semibold text-slate-800 block mb-1.5">
                   Estimated Time <span className="text-rose-500">*</span>
@@ -545,6 +550,7 @@ const EditTaskModal: React.FC<Props> = (props) => {
                   </div>
                 </div>
               </div>
+              )}
 
               {/* Due Date (Optional) */}
               <div>
@@ -563,12 +569,14 @@ const EditTaskModal: React.FC<Props> = (props) => {
                 />
               </div>
 
-              {/* Overtime Section */}
-              <TaskOvertimeSection
-                taskId={selectedTask?.id}
-                selectedTask={selectedTask}
-                currentStatus={editTaskForm.status}
-              />
+              {/* Overtime Section (not shown for Management tasks – no time tracking) */}
+              {!isEditMgmtAssignee && (
+                <TaskOvertimeSection
+                  taskId={selectedTask?.id}
+                  selectedTask={selectedTask}
+                  currentStatus={editTaskForm.status}
+                />
+              )}
 
               {/* Activity Section (Comments / History) */}
               <div className="pt-3 border-t border-slate-100">

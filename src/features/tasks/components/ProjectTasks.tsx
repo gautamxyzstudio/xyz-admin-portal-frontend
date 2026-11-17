@@ -776,6 +776,9 @@ const ProjectTasks: React.FC = () => {
   const isProjectsLoading = false;
 
   // Employees available for task assignment in this project
+  // All active users (incl. Management) – Management can be assigned on any project
+  const { data: allActiveUsers = [] } = useGetMentionableUsersQuery();
+
   const projectAssignedEmployees = useMemo(() => {
     const map = new Map<string, any>();
 
@@ -853,6 +856,22 @@ const ProjectTasks: React.FC = () => {
       }
     });
 
+    // 2b. Management users (including yourself if you are Management) can be
+    //     assigned on every project without being added to the project team.
+    //     Only Admin / HR / Management see them.
+    if (isAdmin) {
+      (allActiveUsers as any[]).forEach((u: any) => {
+        if (String(u?.role || "").toLowerCase().trim() !== "management") return;
+        const key = String(u.id);
+        if (map.has(key)) return;
+        map.set(key, {
+          ...formatEmp({ ...u, photo: u.photo ? getImageUrl(u.photo) : null }),
+          role: "Management",
+          user_type: "Management",
+        });
+      });
+    }
+
     // 3. Current logged-in user: ONLY self-assignment for regular employees (never HR or Admin)
     if (!isAdmin && currentUser?.id && !map.has(String(currentUser.id))) {
       map.set(String(currentUser.id), {
@@ -868,6 +887,7 @@ const ProjectTasks: React.FC = () => {
 
     return Array.from(map.values()).filter((emp) => !hideUser(emp));
   }, [
+    allActiveUsers,
     projectEndpointEmployees,
     tasks,
     currentUser,
@@ -933,6 +953,15 @@ const ProjectTasks: React.FC = () => {
       ) || null
     );
   }, [projectAssignedEmployees, editTaskForm.assignedTo]);
+
+  // Management users can be assigned tasks, but their time is not tracked
+  // (no estimated time, no timer / overtime section).
+  const isManagementEmp = (emp: any) =>
+    [emp?.role?.name, emp?.role, emp?.user_type].some(
+      (r) => typeof r === "string" && r.toLowerCase().trim() === "management",
+    );
+  const isCreateMgmtAssignee = isManagementEmp(selectedEmployeeObj);
+  const isEditMgmtAssignee = isManagementEmp(editSelectedEmployeeObj);
 
   // Filtered employees for search inside Edit Modal
   const editFilteredProjectEmployees = useMemo(() => {
@@ -1204,10 +1233,11 @@ const ProjectTasks: React.FC = () => {
       return;
     }
 
-    const totalMinutes =
-      (Number(estimatedHours) || 0) * 60 + (Number(estimatedMinutes) || 0);
+    const totalMinutes = isCreateMgmtAssignee
+      ? 0
+      : (Number(estimatedHours) || 0) * 60 + (Number(estimatedMinutes) || 0);
 
-    if (totalMinutes <= 0) {
+    if (!isCreateMgmtAssignee && totalMinutes <= 0) {
       toast.error(
         "Please enter a valid estimated time (greater than 0 minutes)",
       );
@@ -1316,11 +1346,12 @@ const ProjectTasks: React.FC = () => {
       return;
     }
 
-    const totalMinutes =
-      (Number(editEstimatedHours) || 0) * 60 +
-      (Number(editEstimatedMinutes) || 0);
+    const totalMinutes = isEditMgmtAssignee
+      ? 0
+      : (Number(editEstimatedHours) || 0) * 60 +
+        (Number(editEstimatedMinutes) || 0);
 
-    if (totalMinutes <= 0) {
+    if (!isEditMgmtAssignee && totalMinutes <= 0) {
       toast.error(
         "Please enter a valid estimated time (greater than 0 minutes)",
       );
@@ -1365,7 +1396,10 @@ const ProjectTasks: React.FC = () => {
       });
     }
 
-    if (totalMinutes !== (Number(selectedTask.estimatedMinutes) || 0)) {
+    if (
+      !isEditMgmtAssignee &&
+      totalMinutes !== (Number(selectedTask.estimatedMinutes) || 0)
+    ) {
       changes.push({
         action: `updated estimated time to ${formatTime(totalMinutes)}`,
         dot: "bg-sky-500",
@@ -1832,10 +1866,10 @@ const ProjectTasks: React.FC = () => {
       />
 
       <CreateTaskModal {...{
-        isCreateUnassigned, setIsCreateUnassigned, Check, ChevronDown, CircularProgress, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, assigneeSearchQuery, attachments, estimatedHours, estimatedMinutes, extractEmployeePhotoUrl, filteredProjectEmployees, getAvatarBg, getInitials, handleCreateTaskSubmit, isAddModalOpen, isAdmin, isAssigneeDropdownOpen, isCreating, isProjectsLoading, isUploadingAttachments, modalTargetStatus, projectAssignedEmployees, projectName, renderCreatePriorityDropdown, selectedEmployeeObj, setAssigneeSearchQuery, setAttachments, setEstimatedHours, setEstimatedMinutes, setIsAddModalOpen, setIsAssigneeDropdownOpen, setIsCreatePriorityDropdownOpen, setIsUploadingAttachments, setModalTargetStatus, setTaskForm, taskForm
+        isCreateMgmtAssignee, isCreateUnassigned, setIsCreateUnassigned, Check, ChevronDown, CircularProgress, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, assigneeSearchQuery, attachments, estimatedHours, estimatedMinutes, extractEmployeePhotoUrl, filteredProjectEmployees, getAvatarBg, getInitials, handleCreateTaskSubmit, isAddModalOpen, isAdmin, isAssigneeDropdownOpen, isCreating, isProjectsLoading, isUploadingAttachments, modalTargetStatus, projectAssignedEmployees, projectName, renderCreatePriorityDropdown, selectedEmployeeObj, setAssigneeSearchQuery, setAttachments, setEstimatedHours, setEstimatedMinutes, setIsAddModalOpen, setIsAssigneeDropdownOpen, setIsCreatePriorityDropdownOpen, setIsUploadingAttachments, setModalTargetStatus, setTaskForm, taskForm
       }} />
 
-      <EditTaskModal {...{ isEditUnassigned, setIsEditUnassigned, Check, ChevronDown, CircularProgress, Paperclip, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, activityTab, attachments, commentAttachments, commentComposerRef, commentFileInputRef, completeHistory, currentUserName, currentUserPhoto, editAssigneeSearchQuery, editAttachments, editEstimatedHours, editEstimatedMinutes, editFilteredProjectEmployees, editSelectedEmployeeObj, editTaskForm, extractEmployeePhotoUrl, formatHistoryTime, getAvatarBg, getImageUrl, getInitials, handleAddComment, handleDeleteTask, isDeleting, mentionableUsers, handleUpdateTaskSubmit, handleUploadCommentPhotos, isAdmin, isCommentExpanded, isCommentsLoading, isEditAssigneeDropdownOpen, isEditUploadingAttachments, isPostingComment, isProjectsLoading, isUpdating, isUploadingCommentPhoto, newCommentText, projectAssignedEmployees, selectedTask, setActivityTab, setCommentAttachments, setEditAssigneeSearchQuery, setEditAttachments, setEditEstimatedHours, setEditEstimatedMinutes, setEditTaskForm, setIsCommentFocused, setIsEditAssigneeDropdownOpen, setIsEditUploadingAttachments, setNewCommentText, setSelectedTask, viewAttachmentPreview, setViewAttachmentPreview, taskCommentsList }} />
+      <EditTaskModal {...{ isEditMgmtAssignee, isEditUnassigned, setIsEditUnassigned, Check, ChevronDown, CircularProgress, Paperclip, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, activityTab, attachments, commentAttachments, commentComposerRef, commentFileInputRef, completeHistory, currentUserName, currentUserPhoto, editAssigneeSearchQuery, editAttachments, editEstimatedHours, editEstimatedMinutes, editFilteredProjectEmployees, editSelectedEmployeeObj, editTaskForm, extractEmployeePhotoUrl, formatHistoryTime, getAvatarBg, getImageUrl, getInitials, handleAddComment, handleDeleteTask, isDeleting, mentionableUsers, handleUpdateTaskSubmit, handleUploadCommentPhotos, isAdmin, isCommentExpanded, isCommentsLoading, isEditAssigneeDropdownOpen, isEditUploadingAttachments, isPostingComment, isProjectsLoading, isUpdating, isUploadingCommentPhoto, newCommentText, projectAssignedEmployees, selectedTask, setActivityTab, setCommentAttachments, setEditAssigneeSearchQuery, setEditAttachments, setEditEstimatedHours, setEditEstimatedMinutes, setEditTaskForm, setIsCommentFocused, setIsEditAssigneeDropdownOpen, setIsEditUploadingAttachments, setNewCommentText, setSelectedTask, viewAttachmentPreview, setViewAttachmentPreview, taskCommentsList }} />
 
       {/* Lightbox Preview Modal for Task Details (Closes on backdrop click) */}
       {viewAttachmentPreview && (
