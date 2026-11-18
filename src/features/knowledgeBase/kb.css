@@ -43,3 +43,4 @@
 .kb-alert-important { border-left-color: #8250df; background: #f6f1ff; } .kb-alert-important .kb-alert-title { color: #8250df; }
 .kb-alert-warning { border-left-color: #9a6700; background: #fff8e6; } .kb-alert-warning .kb-alert-title { color: #9a6700; }
 .kb-alert-caution { border-left-color: #cf222e; background: #fff0f0; } .kb-alert-caution .kb-alert-title { color: #cf222e; }
+.kb-mermaid-error-note { color: #b42318; font-size: 12px; margin: 0 0 6px !important; }

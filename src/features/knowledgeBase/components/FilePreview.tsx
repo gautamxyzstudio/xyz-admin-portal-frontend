@@ -67,12 +67,37 @@ const enhanceMarkdownHtml = (html: string, mermaidCount: number) => {
   return doc.body.innerHTML;
 };
 
+/**
+ * In state & sequence diagrams a ";" ends the statement, so labels like
+ * "Client visits gym; owner scans QR" break the diagram. Escape it as #59; (mermaid's entity code).
+ */
+const fixMermaidSource = (src: string) => {
+  const type = src.match(/^\s*([\w-]+)/)?.[1] || "";
+  if (!/^(stateDiagram|sequenceDiagram)/.test(type)) return src;
+  return src
+    .split("\n")
+    .map((line) => {
+      if (/^\s*(classDef|style|class |%%)/.test(line)) return line;
+      const i = line.indexOf(":");
+      return i < 0 ? line : line.slice(0, i + 1) + line.slice(i + 1).replace(/;/g, "#59;");
+    })
+    .join("\n");
+};
+
+let mermaidSeq = 0;
+
 let mermaidPromise: Promise<any> | null = null;
 const loadMermaid = () => {
   if (!mermaidPromise) {
     mermaidPromise = import("mermaid").then((m) => {
       const mermaid = m.default;
-      mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: "neutral", fontFamily: "inherit" });
+      mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: "strict",
+        theme: "neutral",
+        fontFamily: "inherit",
+        suppressErrorRendering: true, // never inject the "Syntax error" bomb into the page
+      });
       return mermaid;
     });
   }
@@ -155,14 +180,23 @@ const FilePreview: React.FC<Props> = ({ articleId, file, tall, expanded, onClose
       for (const slot of slots) {
         if (cancelled) return;
         const src = diagrams[Number(slot.dataset.mermaid)] || "";
+        const id = `kbm-${articleId}-${++mermaidSeq}`;
         try {
-          const { svg } = await mermaid.render(`kbm-${articleId}-${slot.dataset.mermaid}-${Date.now()}`, src);
+          const { svg } = await mermaid.render(id, fixMermaidSource(src));
           if (!cancelled) slot.innerHTML = svg; // strict mode: mermaid sanitises labels
-        } catch {
-          // show the diagram source instead of a broken diagram
+        } catch (err: any) {
+          // mermaid renders in temporary nodes on <body>; on errors they can be left behind
+          // (the successful SVG carries the same id, so only clean up here)
+          document.getElementById(id)?.remove();
+          document.getElementById(`d${id}`)?.remove();
+          document.getElementById(`i${id}`)?.remove();
+          // show the diagram source with the reason instead of a broken diagram
+          const note = document.createElement("p");
+          note.className = "kb-mermaid-error-note";
+          note.textContent = `Diagram couldn't be drawn: ${String(err?.message || err).split("\n")[0]}`;
           const pre = document.createElement("pre");
           pre.textContent = src;
-          slot.replaceChildren(pre);
+          slot.replaceChildren(note, pre);
           slot.classList.add("kb-mermaid-error");
         }
       }
