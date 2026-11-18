@@ -60,6 +60,9 @@ export const endpoints = {
   kbArticles: (projectId: number | string) =>
     `${baseUrl}/api/knowledge-base/projects/${projectId}/articles`,
   kbArticle: (id: number | string) => `${baseUrl}/api/knowledge-base/articles/${id}`,
+  kbUploadDocument: (projectId: number | string) =>
+    `${baseUrl}/api/knowledge-base/projects/${projectId}/files`,
+  kbArticleFile: (id: number | string) => `${baseUrl}/api/knowledge-base/articles/${id}/file`,
   projectTasks: `${baseUrl}/api/task-items/project`,
   taskComments: `${baseUrl}/api/task-comments`,
   mentionableUsers: `${baseUrl}/api/task-comment-mentions/users`,

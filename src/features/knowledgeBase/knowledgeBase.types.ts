@@ -26,6 +26,17 @@ export interface KbArticle {
   author: KbUserRef | null;
   lastEditedBy: KbUserRef | null;
   canDelete: boolean;
+  /** Set when the article is an uploaded document (PDF / Word / Markdown / text). */
+  file?: KbFile | null;
+}
+
+export interface KbFile {
+  id: number;
+  name: string;
+  ext: string; // ".pdf", ".docx", ".md" …
+  mime: string;
+  size: number; // bytes
+  url: string;
 }
 
 export interface KbArticlesResponse {

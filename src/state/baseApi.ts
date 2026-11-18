@@ -22,7 +22,7 @@ const baseQuery = fetchBaseQuery({
       headers.set("Authorization", `Bearer ${token}`);
     }
 
-    if (api.endpoint === "uploadFile") {
+    if (api.endpoint === "uploadFile" || api.endpoint === "uploadKbDocument") {
       headers.delete("Content-Type");
       headers.delete("Accept");
     }

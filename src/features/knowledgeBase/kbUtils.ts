@@ -98,6 +98,44 @@ export const plainTextExcerpt = (html: string, max = 120) => {
 export const formatDate = (d?: string | null) => (d ? dayjs(d).format("DD MMM YYYY, hh:mm A") : "");
 
 /* ------------------------------------------------------------------ */
+/* Uploaded documents                                                  */
+/* ------------------------------------------------------------------ */
+
+export const ACCEPTED_DOC_EXT = [".pdf", ".docx", ".doc", ".md", ".markdown", ".txt"];
+export const ACCEPTED_DOC_INPUT = ACCEPTED_DOC_EXT.join(",");
+export const MAX_DOC_BYTES = 25 * 1024 * 1024; // keep in sync with the API (25 MB)
+
+export type DocKind = "pdf" | "docx" | "doc" | "markdown" | "text" | "other";
+
+/** Accepts ".pdf", "pdf" or a file name. */
+export const fileKind = (extOrName: string): DocKind => {
+  const ext = (String(extOrName || "").toLowerCase().match(/\.?([a-z0-9]+)$/)?.[1]) || "";
+  if (ext === "pdf") return "pdf";
+  if (ext === "docx") return "docx";
+  if (ext === "doc") return "doc";
+  if (ext === "md" || ext === "markdown") return "markdown";
+  if (ext === "txt") return "text";
+  return "other";
+};
+
+export const isAcceptedDoc = (name: string) => fileKind(name) !== "other";
+
+export const formatBytes = (bytes: number) => {
+  if (!bytes) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+};
+
+/** Article HTML for exports — uploaded files get a line pointing at the attachment. */
+const exportHtml = (a: KbArticle) =>
+  a.file
+    ? `${a.content || ""}<p><em>Attached file:</em> <a href="${a.file.url.replace(/"/g, "&quot;")}">${a.file.name
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")}</a></p>`
+    : a.content;
+
+/* ------------------------------------------------------------------ */
 /* Downloads                                                           */
 /* ------------------------------------------------------------------ */
 
@@ -130,7 +168,7 @@ const articleBlock = (a: KbArticle, i: number) => `
       ${a.author ? `By ${escapeHtml(a.author.username)} · ` : ""}Last updated ${escapeHtml(formatDate(a.updatedAt))}
       ${a.lastEditedBy && a.lastEditedBy.id !== a.author?.id ? ` by ${escapeHtml(a.lastEditedBy.username)}` : ""}
     </div>
-    ${sanitizeHtml(a.content)}
+    ${sanitizeHtml(exportHtml(a))}
   </div>`;
 
 const buildDocument = (projectTitle: string, articles: KbArticle[], withToc: boolean) => {
@@ -324,9 +362,10 @@ const createKbPdf = async (projectTitle: string, articles: KbArticle[], fileTitl
     const meta = `${a.author ? `By ${a.author.username} · ` : ""}Last updated ${formatDate(a.updatedAt)}${
       a.lastEditedBy && a.lastEditedBy.id !== a.author?.id ? ` by ${a.lastEditedBy.username}` : ""
     }`;
-    const body = isHtmlEmpty(a.content)
+    const html = exportHtml(a);
+    const body = isHtmlEmpty(html)
       ? [{ text: "No content.", italics: true, color: "#999999" }]
-      : fixNodes(htmlToPdfmake(await prepareHtmlForPdf(a.content), htmlOptions));
+      : fixNodes(htmlToPdfmake(await prepareHtmlForPdf(html), htmlOptions));
 
     content.push({
       stack: [

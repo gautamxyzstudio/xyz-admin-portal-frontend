@@ -36,6 +36,18 @@ export const knowledgeBaseApi = api.injectEndpoints({
       ],
     }),
 
+    uploadKbDocument: builder.mutation<{ data: KbArticle }, { projectId: number; form: FormData }>({
+      query: ({ projectId, form }) => ({
+        url: endpoints.kbUploadDocument(projectId),
+        method: "POST",
+        body: form,
+      }),
+      invalidatesTags: (_r, _e, { projectId }) => [
+        { type: "KbArticles", id: projectId },
+        "KbProjects",
+      ],
+    }),
+
     updateKbArticle: builder.mutation<
       { data: KbArticle },
       { id: number; projectId: number; data: Partial<KbArticlePayload> }
@@ -65,6 +77,7 @@ export const {
   useGetKbProjectsQuery,
   useGetKbArticlesQuery,
   useCreateKbArticleMutation,
+  useUploadKbDocumentMutation,
   useUpdateKbArticleMutation,
   useDeleteKbArticleMutation,
 } = knowledgeBaseApi;

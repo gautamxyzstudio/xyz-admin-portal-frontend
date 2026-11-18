@@ -15,6 +15,7 @@ import {
   Plus,
   Search,
   Trash2,
+  Upload,
   X,
 } from "lucide-react";
 import { toast } from "react-toastify";
@@ -24,11 +25,17 @@ import {
   useGetKbArticlesQuery,
   useGetKbProjectsQuery,
   useUpdateKbArticleMutation,
+  useUploadKbDocumentMutation,
 } from "../knowledgeBaseApi";
 import type { KbArticle, KbProject } from "../knowledgeBase.types";
 import RichEditor from "../components/RichEditor";
 import ShareMenu from "../components/ShareMenu";
+import FilePreview from "../components/FilePreview";
+import FileBadge from "../components/FileBadge";
 import {
+  ACCEPTED_DOC_INPUT,
+  MAX_DOC_BYTES,
+  isAcceptedDoc,
   buildPdfFile,
   downloadAsPdf,
   downloadAsWord,
@@ -92,6 +99,11 @@ const KnowledgeBase: React.FC = () => {
   const [pdfBusy, setPdfBusy] = useState<"all" | number | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
   const [showList, setShowList] = useState(true);
+  const [uploadingNames, setUploadingNames] = useState<string[]>([]);
+  const [dragOver, setDragOver] = useState(false);
+  const [docFull, setDocFull] = useState(false);
+  const closeDocFull = useCallback(() => setDocFull(false), []);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   /* full-screen: Esc closes it, page behind doesn't scroll */
   useEffect(() => {
@@ -120,6 +132,7 @@ const KnowledgeBase: React.FC = () => {
   const [createArticle, { isLoading: creating }] = useCreateKbArticleMutation();
   const [updateArticle, { isLoading: updating }] = useUpdateKbArticleMutation();
   const [deleteArticle] = useDeleteKbArticleMutation();
+  const [uploadDocument] = useUploadKbDocumentMutation();
   const saving = creating || updating;
 
   const project: KbProject | undefined = projects.find((p) => p.id === projectId);
@@ -232,6 +245,49 @@ const KnowledgeBase: React.FC = () => {
     return () => window.removeEventListener("keydown", h);
   }, [mode, save]);
 
+  /* ---------- upload PDF / Word / Markdown documents ---------- */
+  const uploadDocs = async (list: File[]) => {
+    if (!projectId || !list.length || uploadingNames.length) return;
+    if (!okToLeaveEditor()) return;
+    const valid: File[] = [];
+    for (const f of list) {
+      if (!isAcceptedDoc(f.name)) toast.error(`${f.name}: only PDF, Word, Markdown or text files`);
+      else if (f.size > MAX_DOC_BYTES) toast.error(`${f.name} is larger than 25 MB`);
+      else if (!f.size) toast.error(`${f.name} is empty`);
+      else valid.push(f);
+    }
+    if (!valid.length) return;
+    resetEditor();
+    setUploadingNames(valid.map((f) => f.name));
+    let lastId: number | null = null;
+    let ok = 0;
+    for (const f of valid) {
+      const form = new FormData();
+      form.append("file", f, f.name);
+      try {
+        const res = await uploadDocument({ projectId, form }).unwrap();
+        lastId = res.data.id;
+        ok++;
+      } catch (err) {
+        toast.error(errMsg(err, `Couldn't upload ${f.name}`));
+      } finally {
+        setUploadingNames((names) => names.filter((n) => n !== f.name));
+      }
+    }
+    setUploadingNames([]);
+    if (ok) {
+      toast.success(ok === 1 ? "Document uploaded" : `${ok} documents uploaded`);
+      if (lastId) setParams({ project: String(projectId), article: String(lastId) });
+    }
+  };
+
+  const openFilePicker = () => {
+    if (!okToLeaveEditor()) return;
+    fileInputRef.current?.click();
+  };
+
+  const hasFiles = (e: React.DragEvent) => [...(e.dataTransfer?.types || [])].includes("Files");
+
   const remove = async (a: KbArticle) => {
     if (!projectId) return;
     if (!(await confirmDelete({ itemName: `"${a.title}"` }))) return;
@@ -279,9 +335,17 @@ const KnowledgeBase: React.FC = () => {
     const q = articleSearch.trim().toLowerCase();
     if (!q) return articles;
     return articles.filter(
-      (a) => a.title.toLowerCase().includes(q) || plainTextExcerpt(a.content, 100000).toLowerCase().includes(q),
+      (a) =>
+        a.title.toLowerCase().includes(q) ||
+        (a.file?.name || "").toLowerCase().includes(q) ||
+        plainTextExcerpt(a.content, 100000).toLowerCase().includes(q),
     );
   }, [articles, articleSearch]);
+
+  /* leave document full screen when switching article / mode */
+  useEffect(() => {
+    setDocFull(false);
+  }, [articleId, projectId, mode]);
 
   const safeArticleHtml = useMemo(() => (article ? sanitizeHtml(article.content) : ""), [article]);
 
@@ -352,9 +416,45 @@ const KnowledgeBase: React.FC = () => {
           className={
             fullscreen
               ? "fixed inset-0 z-[1000] bg-white overflow-y-auto"
-              : "flex-1 min-w-0 w-full bg-white rounded-2xl border border-gray-100"
+              : "relative flex-1 min-w-0 w-full bg-white rounded-2xl border border-gray-100"
           }
+          onDragOver={(e) => {
+            if (!project || mode !== "view" || !hasFiles(e)) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "copy";
+            if (!dragOver) setDragOver(true);
+          }}
+          onDragLeave={(e) => {
+            if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOver(false);
+          }}
+          onDrop={(e) => {
+            if (!project || mode !== "view" || !hasFiles(e)) return;
+            e.preventDefault();
+            setDragOver(false);
+            uploadDocs([...e.dataTransfer.files]);
+          }}
         >
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept={ACCEPTED_DOC_INPUT}
+            className="hidden"
+            onChange={(e) => {
+              const files = [...(e.target.files || [])];
+              e.target.value = "";
+              uploadDocs(files);
+            }}
+          />
+          {dragOver && (
+            <div className="pointer-events-none absolute inset-2 z-30 rounded-2xl border-2 border-dashed border-primary bg-primary-20/80 grid place-items-center">
+              <div className="text-center">
+                <Upload size={28} className="mx-auto text-primary mb-2" />
+                <p className="text-sm font-semibold text-primary">Drop to upload to {project?.title}</p>
+                <p className="text-xs text-black-50 mt-0.5">PDF, Word (.docx), Markdown (.md) or text · max 25 MB</p>
+              </div>
+            </div>
+          )}
           {!project ? (
             <div className="flex flex-col items-center text-center py-24 px-6">
               <span className="grid place-items-center w-12 h-12 rounded-2xl bg-primary-20 text-primary mb-3">
@@ -423,6 +523,15 @@ const KnowledgeBase: React.FC = () => {
                     <FileText size={15} /> Word
                   </button>
                   <button
+                    onClick={openFilePicker}
+                    disabled={!!uploadingNames.length}
+                    title="Upload PDF, Word or Markdown files (or drag them here)"
+                    className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl border border-primary text-sm font-semibold text-primary hover:bg-primary-20 disabled:opacity-60 transition-colors cursor-pointer"
+                  >
+                    {uploadingNames.length ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />}
+                    {uploadingNames.length ? "Uploading…" : "Upload file"}
+                  </button>
+                  <button
                     onClick={startNew}
                     className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-primary text-white text-sm font-semibold hover:brightness-105 active:scale-[0.98] transition cursor-pointer"
                   >
@@ -453,6 +562,12 @@ const KnowledgeBase: React.FC = () => {
                     </div>
                   ) : (
                     <ul className="space-y-1 max-h-[40vh] md:max-h-[calc(100vh-300px)] overflow-y-auto">
+                      {uploadingNames.map((n) => (
+                        <li key={`up-${n}`} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 text-sm text-black-50">
+                          <Loader2 size={13} className="animate-spin text-primary shrink-0" />
+                          <span className="truncate">{n}</span>
+                        </li>
+                      ))}
                       {mode === "new" && (
                         <li className="px-3 py-2 rounded-xl bg-primary-20 text-sm font-semibold text-primary truncate">
                           {draftTitle.trim() || "Untitled article"}
@@ -469,7 +584,11 @@ const KnowledgeBase: React.FC = () => {
                               }`}
                             >
                               <span className={`flex items-center gap-1.5 text-sm truncate ${active ? "font-semibold text-primary" : "font-medium text-black-80"}`}>
-                                <FileText size={13} className="shrink-0 opacity-70" />
+                                {a.file ? (
+                                  <FileBadge ext={a.file.ext || a.file.name} size={18} />
+                                ) : (
+                                  <FileText size={13} className="shrink-0 opacity-70" />
+                                )}
                                 <span className="truncate">{a.title}</span>
                               </span>
                               <span className="block text-[11px] text-black-50 truncate mt-0.5">
@@ -479,7 +598,7 @@ const KnowledgeBase: React.FC = () => {
                           </li>
                         );
                       })}
-                      {!filteredArticles.length && mode !== "new" && (
+                      {!filteredArticles.length && mode !== "new" && !uploadingNames.length && (
                         <li className="text-xs text-black-50 text-center py-8 px-2">
                           {articles.length ? "No articles match" : "No documentation yet."}
                         </li>
@@ -519,7 +638,11 @@ const KnowledgeBase: React.FC = () => {
                         key={editorKey}
                         tall={fullscreen}
                         initialHtml={draftHtml}
-                        placeholder="Write the documentation — setup steps, credentials location, how things work, decisions…"
+                        placeholder={
+                          mode === "edit" && article?.file
+                            ? `Optional notes shown above ${article.file.name}…`
+                            : "Write the documentation — setup steps, credentials location, how things work, decisions…"
+                        }
                         onChange={(html) => {
                           dirtyRef.current = true;
                           setDraftHtml(html);
@@ -558,12 +681,27 @@ const KnowledgeBase: React.FC = () => {
                           >
                             <Pencil size={13} /> Edit
                           </button>
+                          <button
+                            onClick={() => (article.file ? setDocFull(true) : setFullscreen((v) => !v))}
+                            title={
+                              article.file
+                                ? "View document full screen"
+                                : fullscreen
+                                  ? "Exit full screen (Esc)"
+                                  : "Read in full screen"
+                            }
+                            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold text-black-50 hover:text-primary hover:bg-gray-50 cursor-pointer"
+                          >
+                            {!article.file && fullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+                            {!article.file && fullscreen ? "Exit" : "Full screen"}
+                          </button>
                           <ShareMenu
                             compact
                             title={`${article.title} — ${project.title}`}
                             url={kbShareUrl(project.id, article.id)}
                             getPdf={() => buildPdfFile(project.title, [article], article.title)}
                           />
+                          {!article.file && (
                           <button
                             onClick={() => runPdf(article.id, [article], article.title)}
                             disabled={!!pdfBusy}
@@ -572,6 +710,7 @@ const KnowledgeBase: React.FC = () => {
                           >
                             {pdfBusy === article.id ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />} PDF
                           </button>
+                          )}
                           {article.canDelete && (
                             <button
                               onClick={() => remove(article)}
@@ -593,9 +732,24 @@ const KnowledgeBase: React.FC = () => {
                         )}
                       </p>
                       {safeArticleHtml && !isHtmlEmpty(safeArticleHtml) ? (
-                        <div className="kb-prose" dangerouslySetInnerHTML={{ __html: safeArticleHtml }} />
+                        <div
+                          className={`kb-prose ${article.file ? "mb-5" : ""}`}
+                          dangerouslySetInnerHTML={{ __html: safeArticleHtml }}
+                        />
                       ) : (
-                        <p className="text-sm text-black-50 italic">This article is empty. Click Edit to add content.</p>
+                        !article.file && (
+                          <p className="text-sm text-black-50 italic">This article is empty. Click Edit to add content.</p>
+                        )
+                      )}
+                      {article.file && (
+                        <FilePreview
+                          key={article.file.id}
+                          articleId={article.id}
+                          file={article.file}
+                          tall={fullscreen}
+                          expanded={docFull}
+                          onCloseExpanded={closeDocFull}
+                        />
                       )}
                     </article>
                   ) : (
@@ -611,12 +765,21 @@ const KnowledgeBase: React.FC = () => {
                           <p className="text-xs text-black-50 mt-1 mb-4 max-w-xs">
                             Add setup notes, guides, credentials locations, decisions — anything the team should know.
                           </p>
-                          <button
-                            onClick={startNew}
-                            className="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl bg-primary text-white text-sm font-semibold cursor-pointer"
-                          >
-                            <Plus size={15} /> Write the first article
-                          </button>
+                          <div className="flex flex-wrap justify-center gap-2">
+                            <button
+                              onClick={startNew}
+                              className="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl bg-primary text-white text-sm font-semibold cursor-pointer"
+                            >
+                              <Plus size={15} /> Write the first article
+                            </button>
+                            <button
+                              onClick={openFilePicker}
+                              className="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl border border-primary text-primary text-sm font-semibold hover:bg-primary-20 cursor-pointer"
+                            >
+                              <Upload size={15} /> Upload a file
+                            </button>
+                          </div>
+                          <p className="text-[11px] text-black-50 mt-3">or drag PDF, Word or Markdown files here</p>
                         </>
                       )}
                     </div>
