@@ -777,7 +777,19 @@ const ProjectTasks: React.FC = () => {
 
   // Employees available for task assignment in this project
   // All active users (incl. Management) – Management can be assigned on any project
-  const { data: allActiveUsers = [] } = useGetMentionableUsersQuery();
+  const { data: allActiveUsers = [], isSuccess: activeUsersLoaded } =
+    useGetMentionableUsersQuery();
+
+  // IDs of active users (not blocked, employee status = Active). Inactive
+  // employees must not appear in the assignee picker or @mention list.
+  const activeUserIds = useMemo(
+    () => new Set((allActiveUsers as any[]).map((u: any) => String(u?.id))),
+    [allActiveUsers],
+  );
+  const isInactiveUser = (id: any) =>
+    activeUsersLoaded &&
+    String(id) !== String(currentUser?.id) &&
+    !activeUserIds.has(String(id));
 
   const projectAssignedEmployees = useMemo(() => {
     const map = new Map<string, any>();
@@ -885,9 +897,13 @@ const ProjectTasks: React.FC = () => {
       });
     }
 
-    return Array.from(map.values()).filter((emp) => !hideUser(emp));
+    return Array.from(map.values()).filter(
+      (emp) => !hideUser(emp) && !isInactiveUser(emp.id),
+    );
   }, [
     allActiveUsers,
+    activeUserIds,
+    activeUsersLoaded,
     projectEndpointEmployees,
     tasks,
     currentUser,
@@ -905,6 +921,7 @@ const ProjectTasks: React.FC = () => {
       if (!u?.id) return;
       const key = String(u.id);
       if (map.has(key) || String(u.id) === String(currentUser?.id)) return;
+      if (isInactiveUser(u.id)) return;
       const photo = u.photo || u.profile_photo || u.image || extractEmployeePhotoUrl(u) || null;
       map.set(key, {
         id: Number(u.id),
@@ -919,7 +936,7 @@ const ProjectTasks: React.FC = () => {
     projectEndpointEmployees.forEach(add);
     tasks.forEach((t) => add(t.assigned_to));
     return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [allMentionableUsers, projectEndpointEmployees, tasks, currentUser]);
+  }, [allMentionableUsers, projectEndpointEmployees, tasks, currentUser, activeUserIds, activeUsersLoaded]);
 
   // Selected employee object for rich Assignee dropdown
   const selectedEmployeeObj = useMemo(() => {
@@ -947,12 +964,18 @@ const ProjectTasks: React.FC = () => {
   // Selected employee for Edit Modal
   const editSelectedEmployeeObj = useMemo(() => {
     if (!editTaskForm.assignedTo) return null;
-    return (
-      projectAssignedEmployees.find(
-        (emp) => String(emp.id) === String(editTaskForm.assignedTo),
-      ) || null
+    const match = projectAssignedEmployees.find(
+      (emp) => String(emp.id) === String(editTaskForm.assignedTo),
     );
-  }, [projectAssignedEmployees, editTaskForm.assignedTo]);
+    if (match) return match;
+    // Task is still assigned to someone who is now inactive: show their name,
+    // but they are no longer offered as an option in the dropdown.
+    const a = (selectedTask as any)?.assigned_to;
+    if (a && String(a.id) === String(editTaskForm.assignedTo)) {
+      return { id: a.id, username: a.username, name: a.username, photo: a.photo, profile_photo: a.photo, image: a.photo, email: "" };
+    }
+    return null;
+  }, [projectAssignedEmployees, editTaskForm.assignedTo, selectedTask]);
 
   // Management users can be assigned tasks, but their time is not tracked
   // (no estimated time, no timer / overtime section).

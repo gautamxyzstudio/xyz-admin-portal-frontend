@@ -35,12 +35,22 @@ export const announcementListApi = enhancedAnnouncementListApi.injectEndpoints({
       transformResponse: (
         response: IAnnouncementResponse
       ): IAnnouncementUI[] => {
-        return response.data.map((item) => ({
-          id: item.id,
-          title: item.attributes.Title,
-          description: item.attributes.Description,
-          date: item.attributes.Date,
-        }));
+        // Drop exact duplicates (same title + text + day) so a doubled
+        // cron run never shows the same announcement twice.
+        const seen = new Set<string>();
+        return response.data
+          .map((item) => ({
+            id: item.id,
+            title: item.attributes.Title,
+            description: item.attributes.Description,
+            date: item.attributes.Date,
+          }))
+          .filter((a) => {
+            const key = `${a.title}|${a.description}|${String(a.date || "").slice(0, 10)}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
       },
     }),
 
