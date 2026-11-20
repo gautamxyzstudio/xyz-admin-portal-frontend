@@ -12,7 +12,7 @@ import {
   Calendar,
 } from "lucide-react";
 import type { IProjectTaskItem, TaskStatus } from "../taskApi";
-import type { IUploadedAttachment } from "../utils/taskAttachmentUtils";
+import { type IUploadedAttachment, isImageAttachment } from "../utils/taskAttachmentUtils";
 import { htmlToText } from "../../../utils/richText";
 
 export interface ProjectKanbanBoardProps {
@@ -323,6 +323,9 @@ const ProjectKanbanBoard: React.FC<ProjectKanbanBoardProps> = ({
                       const taskAttachments = extractTaskAttachments(
                         task.attachments,
                       );
+                      const coverAttachment = taskAttachments.find(
+                        (att) => isImageAttachment(att) && (att.url || att.previewUrl),
+                      );
                       const taskTag =
                         task.project?.title || projectName || "General";
                       const timestampInfo = formatTaskTimestamp ? formatTaskTimestamp(task) : formatTaskCardTimestamp(task, formatTime);
@@ -440,14 +443,12 @@ const ProjectKanbanBoard: React.FC<ProjectKanbanBoardProps> = ({
                             }`}
                           >
                           {/* Cover image thumbnail if attachments exist */}
-                          {taskAttachments.length > 0 &&
-                            (taskAttachments[0].url ||
-                              taskAttachments[0].previewUrl) && (
+                          {coverAttachment && (
                               <div className="w-full h-28 rounded-xl overflow-hidden bg-slate-100 border border-slate-100/90 mb-0.5 shrink-0">
                                 <img
                                   src={
-                                    taskAttachments[0].previewUrl ||
-                                    getImageUrl(taskAttachments[0].url)
+                                    coverAttachment.previewUrl ||
+                                    getImageUrl(coverAttachment.url)
                                   }
                                   alt={task.title}
                                   className="w-full h-full object-cover"

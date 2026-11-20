@@ -15,7 +15,12 @@ import { getImageUrl } from "../../../utils/utils";
 import {
   type IUploadedAttachment,
   formatFileSize,
+  ATTACHMENT_ACCEPT,
+  MAX_ATTACHMENT_SIZE,
+  isAllowedAttachmentFile,
+  isImageAttachment,
 } from "../utils/taskAttachmentUtils";
+import { AttachmentFileTile } from "./AttachmentFileTile";
 
 export type { IUploadedAttachment };
 
@@ -38,7 +43,7 @@ export const TaskAttachmentUpload: React.FC<TaskAttachmentUploadProps> = ({
   maxFiles = 10,
   className = "",
   label = "Attachments",
-  helperText = "Drop images here, choose files, or paste a screenshot into the description.",
+  helperText = "Drop images, PDF, Word or Excel files here, choose files, or paste a screenshot into the description.",
 }) => {
   const [uploadFile] = useUploadFileMutation();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -67,17 +72,25 @@ export const TaskAttachmentUpload: React.FC<TaskAttachmentUploadProps> = ({
 
     // Check max files limit
     if (currentAttachments.length + fileList.length > maxFiles) {
-      toast.error(`You can only upload up to ${maxFiles} image attachments.`);
+      toast.error(`You can only upload up to ${maxFiles} attachments.`);
       return;
     }
 
-    // Filter valid images
+    // Allow images, PDF, Word and Excel files
     const validImageFiles = fileList.filter((file) => {
-      const isImg = file.type.startsWith("image/");
-      if (!isImg) {
-        toast.error(`"${file.name}" is not an image file.`);
+      if (!isAllowedAttachmentFile(file)) {
+        toast.error(
+          `"${file.name}" isn't supported. Upload an image, PDF, Word or Excel file.`
+        );
+        return false;
       }
-      return isImg;
+      if (file.size > MAX_ATTACHMENT_SIZE) {
+        toast.error(
+          `"${file.name}" is larger than ${formatFileSize(MAX_ATTACHMENT_SIZE)}.`
+        );
+        return false;
+      }
+      return true;
     });
 
     if (!validImageFiles.length) return;
@@ -88,7 +101,7 @@ export const TaskAttachmentUpload: React.FC<TaskAttachmentUploadProps> = ({
         id: -Date.now() - index, // temporary negative ID
         name: file.name,
         url: "",
-        previewUrl: URL.createObjectURL(file),
+        previewUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,
         size: file.size,
         mime: file.type,
         isUploading: true,
@@ -244,7 +257,7 @@ export const TaskAttachmentUpload: React.FC<TaskAttachmentUploadProps> = ({
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept={ATTACHMENT_ACCEPT}
           multiple
           disabled={disabled || attachments.length >= maxFiles}
           className="hidden"
@@ -266,13 +279,14 @@ export const TaskAttachmentUpload: React.FC<TaskAttachmentUploadProps> = ({
           >
             <Paperclip className="w-4.5 h-4.5 text-slate-500 group-hover:text-slate-700 transition-colors mb-1.5" />
             <span className="text-xs font-medium text-slate-600 group-hover:text-slate-800">
-              Add photo
+              Add file
             </span>
           </button>
         )}
 
         {/* Uploaded attachments thumbnails */}
         {attachments.map((att) => {
+          const isImage = isImageAttachment(att);
           const displayUrl = att.previewUrl || getImageUrl(att.url);
 
           return (
@@ -280,7 +294,9 @@ export const TaskAttachmentUpload: React.FC<TaskAttachmentUploadProps> = ({
               key={att.id}
               className="group relative w-24 h-20 rounded-xl overflow-hidden border border-slate-200 bg-white shadow-2xs hover:shadow-xs transition-all shrink-0"
             >
-              {displayUrl ? (
+              {!isImage ? (
+                <AttachmentFileTile name={att.name} mime={att.mime} url={att.url} />
+              ) : displayUrl ? (
                 <img
                   src={displayUrl}
                   alt={att.name}
@@ -309,9 +325,13 @@ export const TaskAttachmentUpload: React.FC<TaskAttachmentUploadProps> = ({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setPreviewImage(att);
+                      if (isImage) {
+                        setPreviewImage(att);
+                      } else if (att.url) {
+                        window.open(getImageUrl(att.url), "_blank", "noopener,noreferrer");
+                      }
                     }}
-                    title="Preview Image"
+                    title={isImage ? "Preview Image" : "Open file"}
                     className="p-1.5 rounded-lg bg-white/90 text-slate-700 hover:bg-white hover:text-primary transition-all cursor-pointer shadow-xs"
                   >
                     <Eye size={13} />

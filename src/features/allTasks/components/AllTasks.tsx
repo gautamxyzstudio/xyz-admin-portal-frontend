@@ -39,7 +39,9 @@ import { useTaskModalSize } from "../../../shared/hooks/useTaskModalSize";
 import {
   extractTaskAttachments,
   type IUploadedAttachment,
+  isImageAttachment,
 } from "../../tasks/utils/taskAttachmentUtils";
+import { AttachmentFileTile } from "../../tasks/components/AttachmentFileTile";
 import { getImageUrl } from "../../../utils/utils";
 
 // Helper function to resolve photo arrays, nested formats, and absolute/relative URLs
@@ -678,11 +680,15 @@ export default function AllTasks() {
                           className="group relative aspect-video rounded-xl overflow-hidden border border-slate-200 bg-white hover:border-orange-500 transition-all block shadow-2xs"
                           title={att.name}
                         >
-                          <img
-                            src={getImageUrl(att.url)}
-                            alt={att.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                          />
+                          {isImageAttachment(att) ? (
+                            <img
+                              src={getImageUrl(att.url)}
+                              alt={att.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                            />
+                          ) : (
+                            <AttachmentFileTile name={att.name} mime={att.mime} url={att.url} />
+                          )}
                         </a>
                       ))}
                     </div>
