@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Activity,
   ChevronRight,
@@ -69,6 +70,7 @@ const colorOf = (project: string) =>
 interface Seg {
   key: string;
   workLogId: number | string;
+  taskId: number | null;
   title: string;
   project: string;
   start: number; // ms
@@ -77,6 +79,7 @@ interface Seg {
 }
 interface TaskSum {
   workLogId: number | string;
+  taskId: number | null;
   title: string;
   project: string;
   seconds: number;
@@ -113,6 +116,7 @@ const buildRows = (employees: any[], from: string, to: string, now: number): Emp
           byDay.get(day)!.push({
             key: `${i}-${a}`,
             workLogId: s.work_log_id,
+            taskId: s.task_item_id ?? null,
             title: s.title || "Untitled task",
             project: s.project_name || "General",
             start: a,
@@ -152,6 +156,7 @@ const buildRows = (employees: any[], from: string, to: string, now: number): Emp
         const k = String(sg.workLogId);
         const t = tasks.get(k) || {
           workLogId: sg.workLogId,
+          taskId: sg.taskId,
           title: sg.title,
           project: sg.project,
           seconds: 0,
@@ -281,6 +286,14 @@ const Track: React.FC<{
 
 const TimeLogAnalytics: React.FC = () => {
   const today = todayIST();
+  const navigate = useNavigate();
+  // open the task on its project board (Task Board auto-opens ?taskId=)
+  const openTask = (taskId: number | null, project: string) => {
+    if (!taskId) return;
+    const params = new URLSearchParams({ taskId: String(taskId) });
+    if (project && project !== "General") params.set("project", project);
+    navigate(`/tasks?${params.toString()}`);
+  };
   const presets = rangePresets(today);
   const [from, setFrom] = useState(today);
   const [to, setTo] = useState(today);
@@ -690,7 +703,18 @@ const TimeLogAnalytics: React.FC = () => {
                                           <div className="flex items-center justify-between gap-3 text-sm">
                                             <div className="flex items-center gap-2 min-w-0">
                                               <span className="w-2 h-2 rounded-full shrink-0" style={{ background: c.bar }} />
-                                              <span className="truncate font-medium text-black-80">{t.title}</span>
+                                              {t.taskId ? (
+                                                <button
+                                                  type="button"
+                                                  onClick={() => openTask(t.taskId, t.project)}
+                                                  title="Open task"
+                                                  className="truncate font-medium text-black-80 hover:text-primary hover:underline cursor-pointer text-left"
+                                                >
+                                                  {t.title}
+                                                </button>
+                                              ) : (
+                                                <span className="truncate font-medium text-black-80">{t.title}</span>
+                                              )}
                                               {t.running && (
                                                 <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 rounded-full">
                                                   LIVE
@@ -728,7 +752,18 @@ const TimeLogAnalytics: React.FC = () => {
                                             {fmtClock(sg.start)} – {sg.running ? "now" : fmtClock(sg.end)}
                                           </span>
                                           <span className="w-1 self-stretch rounded-full" style={{ background: c.bar }} />
-                                          <span className="flex-1 truncate text-black-80">{sg.title}</span>
+                                          {sg.taskId ? (
+                                            <button
+                                              type="button"
+                                              onClick={() => openTask(sg.taskId, sg.project)}
+                                              title="Open task"
+                                              className="flex-1 truncate text-black-80 hover:text-primary hover:underline cursor-pointer text-left"
+                                            >
+                                              {sg.title}
+                                            </button>
+                                          ) : (
+                                            <span className="flex-1 truncate text-black-80">{sg.title}</span>
+                                          )}
                                           <span className={`shrink-0 font-semibold ${sg.running ? "text-emerald-600" : "text-black-80"}`}>
                                             {fmtDur((sg.end - sg.start) / 1000)}
                                           </span>

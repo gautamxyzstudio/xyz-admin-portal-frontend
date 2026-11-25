@@ -625,7 +625,13 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
                   <li
                     key={t.id}
                     onClick={() => openTask(t)}
-                    className="px-5 py-3.5 flex items-center gap-4 hover:bg-gray-50 cursor-pointer"
+                    className={`px-5 py-3.5 flex items-center gap-4 cursor-pointer border-l-4 transition-colors ${
+                      over
+                        ? "bg-red-50 border-l-red-500 hover:bg-red-100/70"
+                        : shownStatus === "completed" && est > 0
+                          ? "bg-emerald-50 border-l-emerald-500 hover:bg-emerald-100/70"
+                          : "border-l-transparent hover:bg-gray-50"
+                    }`}
                   >
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-black-80 truncate">
@@ -684,9 +690,13 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
                         <p className="text-[11px] text-black-50">
                           {ranged ? `${formatDuration(logged)} of ` : "of "}
                           {formatDuration(est)}
-                          {shownStatus !== "completed" && (
+                          {shownStatus === "completed" ? (
+                            over && (
+                              <span className="text-red-600"> · {formatDuration(logged - est)} over</span>
+                            )
+                          ) : (
                             <span className={over ? "text-red-600" : "text-primary"}>
-                              {" "}· {over ? "over" : `${formatDuration(left)} left`}
+                              {" "}· {over ? `${formatDuration(logged - est)} over` : `${formatDuration(left)} left`}
                             </span>
                           )}
                         </p>
@@ -694,6 +704,31 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
                         shownStatus !== "completed" && (
                           <p className="text-[11px] text-orange-500">no estimate</p>
                         )
+                      )}
+                      {est > 0 && (
+                        <div
+                          className="mt-1 h-1.5 w-full rounded-full bg-gray-100 overflow-hidden"
+                          title={
+                            over
+                              ? "Over the estimate"
+                              : shownStatus === "completed"
+                                ? "Completed within the estimate"
+                                : "Time used of the estimate"
+                          }
+                        >
+                          <div
+                            className={`h-full rounded-full ${
+                              over ? "bg-red-500" : shownStatus === "completed" ? "bg-emerald-500" : "bg-primary"
+                            }`}
+                            style={{
+                              width: `${
+                                shownStatus === "completed"
+                                  ? 100
+                                  : Math.min(100, Math.max(logged > 0 ? 3 : 0, (logged / est) * 100))
+                              }%`,
+                            }}
+                          />
+                        </div>
                       )}
                     </div>
                   </li>

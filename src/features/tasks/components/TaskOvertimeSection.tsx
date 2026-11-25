@@ -134,6 +134,8 @@ export const TaskOvertimeSection: React.FC<TaskOvertimeSectionProps> = ({
   const workedMinutes: number = baseWorkedMinutes;
 
   const remainingMinutes: number = estimatedMinutes - workedMinutes;
+  // Time spent went past the estimate (applies to completed tasks too)
+  const isOverEstimate = estimatedMinutes > 0 && remainingMinutes < 0;
 
   // Progress Bar percentage: Always 100% when completed!
   const progressPercent = useMemo(() => {
@@ -262,7 +264,7 @@ export const TaskOvertimeSection: React.FC<TaskOvertimeSectionProps> = ({
           <div className="grid grid-cols-3 gap-2">
             <div className="rounded-xl bg-white border border-slate-200/70 px-3 py-2">
               <p className="text-[10.5px] font-semibold uppercase tracking-wide text-slate-500">Time spent</p>
-              <p className={`text-lg font-bold leading-tight ${timeSummaryData?.isRunning ? "text-emerald-600" : "text-slate-800"}`}>
+              <p className={`text-lg font-bold leading-tight ${isOverEstimate ? "text-rose-600" : timeSummaryData?.isRunning ? "text-emerald-600" : "text-slate-800"}`}>
                 {formatDuration(workedMinutes)}
               </p>
               <p className="text-[10.5px] text-slate-500">
@@ -325,14 +327,20 @@ export const TaskOvertimeSection: React.FC<TaskOvertimeSectionProps> = ({
               <div className="w-full bg-slate-200/90 rounded-full h-2 overflow-hidden">
                 <div
                   className={`att-bar h-full rounded-full ${
-                    isCompleted ? "bg-emerald-500" : remainingMinutes < 0 ? "bg-rose-500" : "bg-primary"
+                    isOverEstimate ? "bg-rose-500" : isCompleted ? "bg-emerald-500" : "bg-primary"
                   }`}
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
               <div className="flex justify-between text-[10.5px] text-slate-500 mt-1">
                 <span>0</span>
-                <span>estimate {formatDuration(estimatedMinutes)}</span>
+                {isOverEstimate ? (
+                  <span className="text-rose-600 font-semibold">
+                    {formatDuration(Math.abs(remainingMinutes))} over estimate ({formatDuration(estimatedMinutes)})
+                  </span>
+                ) : (
+                  <span>estimate {formatDuration(estimatedMinutes)}</span>
+                )}
               </div>
             </div>
           )}
@@ -373,6 +381,7 @@ export const TaskOvertimeSection: React.FC<TaskOvertimeSectionProps> = ({
             <TimeByDay
               days={timeSummaryData!.days}
               isRunning={!!timeSummaryData?.isRunning}
+              isOverEstimate={isOverEstimate}
               people={displayBreakdown}
               formatDuration={formatDuration}
             />
@@ -585,11 +594,13 @@ const shiftIstDay = (d: string, n: number) => {
 function TimeByDay({
   days,
   isRunning,
+  isOverEstimate = false,
   people,
   formatDuration,
 }: {
   days: { date: string; totalSeconds: number; employees: { employeeId: number; seconds: number }[] }[];
   isRunning: boolean;
+  isOverEstimate?: boolean;
   people: any[];
   formatDuration: (minutes: number) => string;
 }) {
@@ -632,7 +643,7 @@ function TimeByDay({
                 </span>
                 <div className="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
                   <div
-                    className={`att-bar h-full rounded-full ${live ? "bg-emerald-500" : "bg-primary"}`}
+                    className={`att-bar h-full rounded-full ${live ? "bg-emerald-500" : isOverEstimate ? "bg-rose-500" : "bg-primary"}`}
                     style={{ width: `${Math.max(3, (d.totalSeconds / max) * 100)}%` }}
                   />
                 </div>
