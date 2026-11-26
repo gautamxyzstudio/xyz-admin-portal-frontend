@@ -13,6 +13,8 @@ export interface ITaskItem {
   estimatedMinutes?: number;
   date: string;
   task_created_by?: string | null;
+  /** creator's employee name (falls back to username) */
+  task_created_by_name?: string | null;
   attachments?: any;
   taskComments?: any[];
 
@@ -48,6 +50,8 @@ export interface IProjectTaskItem {
   };
   Task_assigned_to?: string | null;
   task_created_by?: string | null;
+  /** creator's employee name (falls back to username) */
+  task_created_by_name?: string | null;
   assigned_to?: {
     id: number;
     username: string;
@@ -169,8 +173,26 @@ export interface ICreateTaskCommentPayload {
   mentions?: number[];
 }
 
+export interface ITaskManualTimeEntry {
+  key: string;
+  date: string;
+  seconds: number;
+  note: string;
+  addedBy: { id: number; name: string } | null;
+  addedAt: string | null;
+}
+
+export interface ITaskManualTime {
+  /** assignee is Management / HR */
+  allowed: boolean;
+  canEdit: boolean;
+  entries: ITaskManualTimeEntry[];
+  manualSeconds: number;
+  totalSeconds: number;
+}
+
 export const enhancedTaskApi = baseApi.enhanceEndpoints({
-  addTagTypes: ["Tasks", "TaskComments", "TaskOvertimes"],
+  addTagTypes: ["Tasks", "TaskComments", "TaskOvertimes", "TaskManualTime", "TaskBoard"],
 });
 
 export const taskApi = enhancedTaskApi.injectEndpoints({
@@ -318,6 +340,37 @@ export const taskApi = enhancedTaskApi.injectEndpoints({
       invalidatesTags: ["Tasks", "TaskOvertimes"],
     }),
 
+    // Manual time (tasks assigned to Management / HR)
+    getTaskManualTime: builder.query<ITaskManualTime, number | string>({
+      query: (taskId) => ({ url: endpoints.taskManualTime(taskId), method: ApiMethodType.get }),
+      transformResponse: (r: any): ITaskManualTime => ({
+        allowed: !!r?.allowed,
+        canEdit: !!r?.canEdit,
+        entries: Array.isArray(r?.entries) ? r.entries : [],
+        manualSeconds: Number(r?.manualSeconds) || 0,
+        totalSeconds: Number(r?.totalSeconds) || 0,
+      }),
+      providesTags: ["TaskManualTime"],
+    }),
+    addTaskManualTime: builder.mutation<
+      unknown,
+      { taskId: number | string; date: string; minutes: number; note?: string }
+    >({
+      query: ({ taskId, ...body }) => ({
+        url: endpoints.taskManualTime(taskId),
+        method: ApiMethodType.post,
+        body,
+      }),
+      invalidatesTags: ["TaskManualTime", "Tasks", "TaskOvertimes", "TaskBoard"],
+    }),
+    deleteTaskManualTime: builder.mutation<unknown, { taskId: number | string; key: string }>({
+      query: ({ taskId, key }) => ({
+        url: endpoints.taskManualTimeEntry(taskId, key),
+        method: ApiMethodType.delete,
+      }),
+      invalidatesTags: ["TaskManualTime", "Tasks", "TaskOvertimes", "TaskBoard"],
+    }),
+
     // 10. Get Task Time Summary
     getTaskTimeSummary: builder.query<ITaskTimeSummaryResponse, number | string>({
       query: (taskId) => ({
@@ -439,4 +492,7 @@ export const {
   useLazyGetTaskOvertimesQuery,
   useGetTaskTimeSummaryQuery,
   useLazyGetTaskTimeSummaryQuery,
+  useGetTaskManualTimeQuery,
+  useAddTaskManualTimeMutation,
+  useDeleteTaskManualTimeMutation,
 } = taskApi;

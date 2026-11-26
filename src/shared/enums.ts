@@ -127,7 +127,8 @@ export const ROUTE_PERMISSIONS: Record<string, readonly string[]> = {
     "/activity-logs",
     "/employee-tasks",
     "/task-board",
-    "/tasks"
+    "/tasks",
+    "/form-submissions"
   ],
 } as const;
 

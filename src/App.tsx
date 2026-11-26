@@ -38,6 +38,7 @@ import ViewAllActivityLogs from "./features/dashboard/components/activityLog/Vie
 import ProjectTasks from "./features/tasks/components/ProjectTasks";
 import AllTasks from "./features/allTasks/components/AllTasks.tsx";
 import TaskBoard from "./features/taskBoard/screens/TaskBoard";
+import FormSubmissions from "./features/formSubmissions/screens/FormSubmissions";
 
 const App: React.FC = () => {
   const [isBlocked, setIsBlocked] = useState(false);
@@ -166,6 +167,15 @@ const App: React.FC = () => {
                       element={
                         <DashboardLayout>
                           <TaskBoard />
+                        </DashboardLayout>
+                      }
+                    />
+
+                    <Route
+                      path="form-submissions"
+                      element={
+                        <DashboardLayout>
+                          <FormSubmissions />
                         </DashboardLayout>
                       }
                     />

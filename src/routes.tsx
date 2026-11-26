@@ -4,6 +4,7 @@ import type { IUserAdvance } from "./features/auth/types";
 export const getRoutes = (
   user: IUserAdvance | null,
   unreadCount: number = 0,
+  formSubmissionUnread: number = 0,
 ) => {
   return [
     {
@@ -70,6 +71,15 @@ export const getRoutes = (
       iconFill: Icons.LEAVES_FILL,
       route: "/leaves",
       permissions: ["Employee"],
+    },
+    {
+      name: "Form Submissions",
+      key: "form-submissions",
+      icon: Icons.FORM_SUBMISSION,
+      iconFill: Icons.FORM_SUBMISSION_FILL,
+      route: "/form-submissions",
+      permissions: ["Management"],
+      count: formSubmissionUnread > 0 && formSubmissionUnread,
     },
     {
       name: "Announcement",

@@ -14,8 +14,22 @@ import { useGetTaskBoardProjectsQuery } from "../taskBoardApi";
 import { getImageUrl } from "../../../utils/utils";
 import type { ITaskBoardProject } from "../taskBoard.types";
 import EmployeeTaskBoard from "../components/EmployeeTaskBoard";
+import ThemedDropdown from "../../../components/ThemedDropdown";
 import { useSelector } from "react-redux";
 import { userInState, userDetailsInState } from "../../auth/authSlice";
+
+type ProjectSort = "default" | "open" | "inProgress" | "planned" | "blocked" | "total" | "leastDone" | "name";
+
+const PROJECT_SORT_OPTIONS: { value: ProjectSort; label: string }[] = [
+  { value: "default", label: "Sort: Default" },
+  { value: "open", label: "Most open tasks" },
+  { value: "inProgress", label: "Most in progress" },
+  { value: "planned", label: "Most planned" },
+  { value: "blocked", label: "Most blocked" },
+  { value: "total", label: "Most tasks" },
+  { value: "leastDone", label: "Least complete" },
+  { value: "name", label: "Name (A–Z)" },
+];
 
 const TaskBoard: React.FC = () => {
   const navigate = useNavigate();
@@ -69,12 +83,55 @@ const TaskBoard: React.FC = () => {
     refetchOnMountOrArgChange: true, // coming back from a project board
   });
 
-  // Filter projects by search term
+  // Sort for the projects grid (remembered per browser)
+  const [projectSort, setProjectSortState] = useState<ProjectSort>(() => {
+    try {
+      const v = localStorage.getItem("taskBoard.projectSort") as ProjectSort | null;
+      return v && PROJECT_SORT_OPTIONS.some((o) => o.value === v) ? v : "default";
+    } catch {
+      return "default";
+    }
+  });
+  const setProjectSort = (v: ProjectSort) => {
+    setProjectSortState(v);
+    try {
+      localStorage.setItem("taskBoard.projectSort", v);
+    } catch {
+      /* storage unavailable */
+    }
+  };
+
+  // Filter projects by search term, then sort
   const filteredProjects = useMemo(() => {
     const term = searchTerm.toLowerCase().trim();
-    if (!term) return projects;
-    return projects.filter((p) => p.title.toLowerCase().includes(term));
-  }, [projects, searchTerm]);
+    const list = term ? projects.filter((p) => p.title.toLowerCase().includes(term)) : [...projects];
+    if (projectSort === "default") return list;
+    const n = (v?: number) => Number(v) || 0;
+    const stats = (p: ITaskBoardProject) => {
+      const planned = n(p.planned_tasks_count);
+      const inProgress = n(p.in_progress_tasks_count);
+      const blocked = n(p.blocked_tasks_count);
+      const completed = n(p.completed_tasks_count);
+      const total = planned + inProgress + blocked + completed;
+      return { planned, inProgress, blocked, completed, total, open: total - completed, pct: total ? completed / total : 0 };
+    };
+    const byName = (a: ITaskBoardProject, b: ITaskBoardProject) => a.title.localeCompare(b.title);
+    const cmp: Record<Exclude<ProjectSort, "default">, (a: ITaskBoardProject, b: ITaskBoardProject) => number> = {
+      name: byName,
+      open: (a, b) => stats(b).open - stats(a).open || byName(a, b),
+      inProgress: (a, b) => stats(b).inProgress - stats(a).inProgress || stats(b).open - stats(a).open || byName(a, b),
+      planned: (a, b) => stats(b).planned - stats(a).planned || byName(a, b),
+      blocked: (a, b) => stats(b).blocked - stats(a).blocked || byName(a, b),
+      total: (a, b) => stats(b).total - stats(a).total || byName(a, b),
+      leastDone: (a, b) => {
+        const sa = stats(a), sb = stats(b);
+        // projects with no tasks go last
+        if (!sa.total !== !sb.total) return sa.total ? -1 : 1;
+        return sa.pct - sb.pct || sb.open - sa.open || byName(a, b);
+      },
+    };
+    return list.sort(cmp[projectSort]);
+  }, [projects, searchTerm, projectSort]);
 
   return (
     <div className="w-full h-full flex flex-col p-6 overflow-hidden min-h-0 gap-5">
@@ -170,6 +227,17 @@ const TaskBoard: React.FC = () => {
               </button>
             )}
           </div>
+
+          {/* Sort (projects grid only) */}
+          {view === "projects" && (
+            <ThemedDropdown<ProjectSort>
+              value={projectSort}
+              options={PROJECT_SORT_OPTIONS}
+              onChange={setProjectSort}
+              align="right"
+              ariaLabel="Sort projects"
+            />
+          )}
 
           {/* Refresh Button */}
           <button

@@ -42,6 +42,8 @@ export interface IEmployeeTaskRange {
   existed: boolean;
   /** status the task had at the end of the range */
   statusAtEnd: TaskStatus | null;
+  /** task was marked completed inside the range */
+  completedInRange?: boolean;
   /** assignee's time logged inside the range */
   seconds: number;
   /** everyone's time logged on the task up to the end of the range */

@@ -7,6 +7,7 @@ import { Link, useLocation, useNavigate } from "react-router";
 import { getRoutes } from "../../routes";
 import { userDetailsInState, userInState } from "../../features/auth/authSlice";
 import { useGetLeaveRequestsQuery } from "../../features/leaves/leavesApi";
+import { useGetFormSubmissionsUnreadCountQuery } from "../../features/formSubmissions/formSubmissionsApi";
  
 const SideNav = () => {
   const dispatcher = useDispatch();
@@ -24,7 +25,15 @@ const SideNav = () => {
       refetchOnFocus:true
     });
    
-      const routes = getRoutes(userDetail, data?.data?.length);
+    // new website enquiries badge — Management only
+    const isManagement = user?.user_type === "Management";
+    const { data: formUnread = 0 } = useGetFormSubmissionsUnreadCountQuery(undefined, {
+      skip: !isManagement,
+      pollingInterval: 60_000,
+      refetchOnFocus: true,
+    });
+
+      const routes = getRoutes(userDetail, data?.data?.length, isManagement ? formUnread : 0);
 
 
   if (!user) return null;

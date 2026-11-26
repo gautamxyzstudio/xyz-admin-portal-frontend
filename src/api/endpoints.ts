@@ -55,6 +55,11 @@ export const endpoints = {
   taskBoard: `${baseUrl}/api/task-board`,
   taskBoardEmployees: `${baseUrl}/api/task-board/employees`,
 
+  // Form submissions (website enquiries, Management only)
+  formSubmissions: `${baseUrl}/api/form-submissions`,
+  formSubmissionsUnreadCount: `${baseUrl}/api/form-submissions/unread-count`,
+  formSubmissionRead: (id: number | string) => `${baseUrl}/api/form-submissions/${id}/read`,
+
   // Knowledge Base (per-project documentation)
   kbProjects: `${baseUrl}/api/knowledge-base/projects`,
   kbArticles: (projectId: number | string) =>
@@ -68,6 +73,9 @@ export const endpoints = {
   mentionableUsers: `${baseUrl}/api/task-comment-mentions/users`,
   taskOvertimes: `${baseUrl}/api/task-overtimes`,
   taskTimeSummary: (id: string | number) => `${baseUrl}/api/task-items/${id}/time-summary`,
+  taskManualTime: (id: string | number) => `${baseUrl}/api/task-items/${id}/manual-time`,
+  taskManualTimeEntry: (id: string | number, key: string) =>
+    `${baseUrl}/api/task-items/${id}/manual-time/${key}`,
 
   // Attendance
   getAttendanceLegacy: `${baseUrl}/api/daily-attendances/?populate=*&sort=id`,

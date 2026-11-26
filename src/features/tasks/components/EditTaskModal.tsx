@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useRef, useEffect, useState, useMemo } from "react";
 import TaskOvertimeSection from "./TaskOvertimeSection";
+import TaskManualTimeSection from "./TaskManualTimeSection";
 import TaskDueDatePicker from "./TaskDueDatePicker";
 import RichTextEditor from "../../../components/RichTextEditor/RichTextEditor";
 import ModalSizeButton from "../../../components/ModalSizeButton/ModalSizeButton";
@@ -486,10 +487,36 @@ const EditTaskModal: React.FC<Props> = (props) => {
                   </div>
                 </div>
 
+              {/* Assigned by (task creator) */}
+              {(selectedTask?.task_created_by_name || selectedTask?.task_created_by) && (() => {
+                const by = selectedTask.task_created_by_name || selectedTask.task_created_by;
+                const on = selectedTask.createdAt
+                  ? new Date(selectedTask.createdAt).toLocaleDateString("en-IN", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                      timeZone: "Asia/Kolkata",
+                    })
+                  : null;
+                return (
+                  <div className="flex items-center gap-2 text-xs text-slate-500 -mt-1">
+                    <span>Assigned by</span>
+                    <span
+                      className="w-5 h-5 rounded-full text-white text-[9px] font-bold flex items-center justify-center"
+                      style={{ backgroundColor: getAvatarBg(by) }}
+                    >
+                      {getInitials(by)}
+                    </span>
+                    <span className="font-semibold text-slate-800">{by}</span>
+                    {on && <span className="text-slate-400">· {on}</span>}
+                  </div>
+                );
+              })()}
+
               {/* Estimated Time */}
               {isEditMgmtAssignee ? (
                 <p className="text-[11px] text-slate-500 bg-slate-50 border border-slate-200/80 rounded-2xl px-4 py-2.5">
-                  Management task — no estimated time or time tracking.
+                  Management task — no estimate or timer. Add time spent manually below.
                 </p>
               ) : (
               <div>
@@ -568,6 +595,9 @@ const EditTaskModal: React.FC<Props> = (props) => {
                   disabled={isUpdating}
                 />
               </div>
+
+              {/* Manual time — shows only when the assignee is Management / HR */}
+              <TaskManualTimeSection taskId={selectedTask?.id} />
 
               {/* Overtime Section (not shown for Management tasks – no time tracking) */}
               {!isEditMgmtAssignee && (

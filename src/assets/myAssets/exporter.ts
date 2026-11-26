@@ -64,6 +64,8 @@ import HANDBOOK from "./icons/handbook.svg";
 import HANDBOOK_FILL from "./icons/handbook_fill.svg";
 import TASKS from "./icons/Tasks.svg";
 import TASKS_FILL from "./icons/Tasks_FILL.svg";
+import FORM_SUBMISSION from "./icons/formSubmission.svg";
+import FORM_SUBMISSION_FILL from "./icons/formSubmissionFill.svg";
 
 export const Icons = {
   CROSS_ICON,
@@ -120,6 +122,8 @@ export const Icons = {
   NO_DATA,
   ANNOUNCEMENT_MENU,
   ANNOUNCEMENT_MENU_FILL,
+  FORM_SUBMISSION,
+  FORM_SUBMISSION_FILL,
   DELETEICON,
   TIMELOG,
   TIMELOG_UNFILL,

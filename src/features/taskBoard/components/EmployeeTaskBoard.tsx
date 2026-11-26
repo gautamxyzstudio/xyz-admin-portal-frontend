@@ -161,11 +161,44 @@ const TABS: [StatusTab, string][] = [
 const statusOf = (t: IEmployeeTask, ranged: boolean): TaskStatus =>
   (ranged && t.range?.statusAtEnd) || t.status;
 
-const matchesStatus = (t: IEmployeeTask, tab: StatusTab, ranged: boolean) => {
+type DayRange = { from: string; to: string };
+
+// was the task finished inside the range? (older API without completedInRange:
+// fall back to its last update falling inside the range, in IST days)
+const completedInRange = (t: IEmployeeTask, range: DayRange) => {
+  if (typeof t.range?.completedInRange === "boolean") return t.range.completedInRange;
+  const ms = Date.parse(t.updatedAt);
+  if (isNaN(ms)) return false;
+  const day = new Date(ms + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
+  return day >= range.from && day <= range.to;
+};
+
+const matchesStatus = (t: IEmployeeTask, tab: StatusTab, range: DayRange | null) => {
+  const ranged = !!range;
   if (tab === "all") return true;
   if (tab === "worked") return ranged ? (t.range?.seconds ?? 0) > 0 : t.todaySeconds > 0;
   const st = statusOf(t, ranged);
+  // with a range, "Completed" = finished inside that range, not every task ever completed
+  if (tab === "completed" && range) return st === "completed" && completedInRange(t, range);
   return tab === "open" ? st !== "completed" : st === tab;
+};
+
+// completed tasks (in the range, when one is set): estimate vs. actual time logged
+const completedStats = (emp: ITaskBoardEmployee, range: DayRange | null) => {
+  const done = emp.tasks.filter(
+    (t) => (!range || t.range?.existed !== false) && matchesStatus(t, "completed", range),
+  );
+  let est = 0;
+  let actual = 0; // actual time on the tasks that have an estimate (fair comparison)
+  let noEstimate = 0;
+  for (const t of done) {
+    const logged = range ? (t.range?.loggedByEndSeconds ?? 0) : t.timeSpentSeconds;
+    if (t.estimatedMinutes) {
+      est += t.estimatedMinutes * 60;
+      actual += logged;
+    } else noEstimate++;
+  }
+  return { count: done.length, est, actual, noEstimate };
 };
 
 const Avatar: React.FC<{ emp: ITaskBoardEmployee; size?: number }> = ({ emp, size = 36 }) => {
@@ -311,7 +344,7 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
   const taskTerm = isSelf ? searchTerm.toLowerCase().trim() : "";
   const tasks = projectTasks.filter(
     (t) =>
-      matchesStatus(t, statusTab, ranged) &&
+      matchesStatus(t, statusTab, range) &&
       (!taskTerm ||
         t.title?.toLowerCase().includes(taskTerm) ||
         t.project?.title?.toLowerCase().includes(taskTerm)),
@@ -495,9 +528,9 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
       {selected && (
         <div className="flex-1 min-w-0 w-full bg-white rounded-2xl border border-gray-100">
           {/* header */}
-          <div className="px-5 py-4 flex items-center gap-3 border-b border-gray-100">
+          <div className="px-5 py-4 flex flex-wrap items-center gap-x-3 gap-y-3 border-b border-gray-100">
             <Avatar emp={selected} size={40} />
-            <div className="min-w-0 flex-1">
+            <div className="min-w-[180px] flex-1">
               <p className="text-base font-semibold text-black-80 truncate">{selected.name}</p>
               <p className="text-xs text-black-50 truncate">
                 {selected.designation || selected.username}
@@ -509,11 +542,11 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
             {(() => {
               const f = figures(selected, ranged);
               return (
-                <>
+                <div className="flex flex-wrap items-center justify-end gap-y-3 ml-auto">
                   <div className="text-right">
                     <p className="text-base font-semibold text-primary">{formatDuration(f.remaining)}</p>
                     <p className="text-[11px] text-black-50">
-                      on plate{ranged && preset !== "today" ? ` (end of ${label})` : ""} · {f.openCount} open
+                      on plate{ranged && preset !== "today" ? ` (end of ${label.replace(/^on /, "")})` : ""} · {f.openCount} open
                       tasks
                       {f.noEstimate > 0 && (
                         <span
@@ -525,14 +558,45 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
                       )}
                     </p>
                   </div>
-                  {preset !== "today" && (
-                  <div className="text-right pl-4 border-l border-gray-100">
-                    <p className="text-base font-semibold text-black-80">{formatDuration(f.spent)}</p>
-                    <p className="text-[11px] text-black-50">
-                      {ranged ? `time spent ${label}` : "time spent (all time)"}
-                    </p>
-                  </div>
-                  )}
+                  {(() => {
+                    const c = completedStats(selected, range);
+                    const diff = c.actual - c.est;
+                    return (
+                      <div className="text-right pl-4 border-l border-gray-100">
+                        {preset !== "today" && (
+                          <>
+                            <p className="text-base font-semibold text-black-80">{formatDuration(f.spent)}</p>
+                            <p className="text-[11px] text-black-50">
+                              {ranged ? `time spent ${label}` : "time spent (all time)"}
+                            </p>
+                          </>
+                        )}
+                        <p
+                          className={`text-[11px] text-black-50 ${preset !== "today" ? "mt-1 pt-1 border-t border-gray-100" : ""}`}
+                          title="Completed tasks: total estimate vs. actual time logged on them (tasks without an estimate are left out of both)"
+                        >
+                          <span className="font-semibold text-emerald-700">{c.count} completed</span>
+                          {c.est > 0 ? (
+                            <>
+                              {" "}· est <span className="font-semibold text-black-80">{formatDuration(c.est)}</span>
+                              {" "}· actual{" "}
+                              <span className={`font-semibold ${diff > 0 ? "text-red-600" : "text-emerald-600"}`}>
+                                {formatDuration(c.actual)}
+                              </span>
+                              {diff !== 0 && (
+                                <span className={diff > 0 ? "text-red-600" : "text-emerald-600"}>
+                                  {" "}({formatDuration(Math.abs(diff))} {diff > 0 ? "over" : "under"})
+                                </span>
+                              )}
+                            </>
+                          ) : null}
+                          {c.noEstimate > 0 && (
+                            <span className="text-orange-500"> · {c.noEstimate} no est</span>
+                          )}
+                        </p>
+                      </div>
+                    );
+                  })()}
                   {(() => {
                     const plan = todayPlan(selected);
                     const over = plan.estimate > 0 && plan.worked > plan.estimate;
@@ -566,7 +630,7 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
                       </div>
                     );
                   })()}
-                </>
+                </div>
               );
             })()}
           </div>
@@ -575,7 +639,7 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
           <div className="px-5 pt-3 flex flex-wrap items-center justify-between gap-3 border-b border-gray-100">
             <div className="flex gap-5 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {tabs.map(([key, tabLabel]) => {
-                const count = projectTasks.filter((t) => matchesStatus(t, key, ranged)).length;
+                const count = projectTasks.filter((t) => matchesStatus(t, key, range)).length;
                 const isActive = statusTab === key;
                 return (
                   <button
