@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { CircularProgress } from "@mui/material";
 import { useGetTaskBoardEmployeesQuery } from "../taskBoardApi";
 import { getImageUrl } from "../../../utils/utils";
@@ -225,6 +225,16 @@ const Avatar: React.FC<{ emp: ITaskBoardEmployee; size?: number }> = ({ emp, siz
   );
 };
 
+type SavedView = {
+  preset: RangePreset;
+  customFrom: string;
+  customTo: string;
+  sortBy: SortKey;
+  selectedId: number | null;
+  statusTab: StatusTab;
+  projectFilter: number | "all";
+};
+
 /* ---------------- component ---------------- */
 
 interface Props {
@@ -239,10 +249,23 @@ interface Props {
 const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly = false, onlyUserId = null }) => {
   const isSelf = selfOnly || onlyUserId != null;
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Remember the view (employee, range, tab, filters) for this browser tab, so
+  // coming back from a task (closing it) lands on the same place.
+  const storageKey = `taskBoard.employeeView.${onlyUserId != null ? "mine" : selfOnly ? "self" : "all"}`;
+  const [saved] = useState<Partial<SavedView>>(() => {
+    try {
+      return JSON.parse(sessionStorage.getItem(storageKey) || "{}") || {};
+    } catch {
+      return {};
+    }
+  });
+
   // every role (HR, Management, employees) lands on today by default
-  const [preset, setPreset] = useState<RangePreset>("today");
-  const [customFrom, setCustomFrom] = useState("");
-  const [customTo, setCustomTo] = useState("");
+  const [preset, setPreset] = useState<RangePreset>(saved.preset ?? "today");
+  const [customFrom, setCustomFrom] = useState(saved.customFrom ?? "");
+  const [customTo, setCustomTo] = useState(saved.customTo ?? "");
   const range = resolveRange(preset, customFrom, customTo);
   const ranged = !!range;
   const label = rangeLabel(range);
@@ -260,10 +283,19 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
     if (refreshKey) refetch();
   }, [refreshKey, refetch]);
 
-  const [sortBy, setSortBy] = useState<SortKey>("plate");
-  const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [statusTab, setStatusTab] = useState<StatusTab>("worked");
-  const [projectFilter, setProjectFilter] = useState<number | "all">("all");
+  const [sortBy, setSortBy] = useState<SortKey>(saved.sortBy ?? "plate");
+  const [selectedId, setSelectedId] = useState<number | null>(saved.selectedId ?? null);
+  const [statusTab, setStatusTab] = useState<StatusTab>(saved.statusTab ?? "worked");
+  const [projectFilter, setProjectFilter] = useState<number | "all">(saved.projectFilter ?? "all");
+
+  useEffect(() => {
+    try {
+      const v: SavedView = { preset, customFrom, customTo, sortBy, selectedId, statusTab, projectFilter };
+      sessionStorage.setItem(storageKey, JSON.stringify(v));
+    } catch {
+      /* storage unavailable */
+    }
+  }, [storageKey, preset, customFrom, customTo, sortBy, selectedId, statusTab, projectFilter]);
 
   const changePreset = (p: RangePreset) => {
     setPreset(p);
@@ -353,7 +385,13 @@ const EmployeeTaskBoard: React.FC<Props> = ({ searchTerm, refreshKey, selfOnly =
   const openTask = (t: IEmployeeTask) => {
     if (!t.project?.title) return;
     // open the project board with this task's details already open
-    const params = new URLSearchParams({ project: t.project.title, taskId: String(t.taskId || t.id) });
+    // remember the employee shown, and come back here when the task is closed
+    if (selected) setSelectedId(selected.id);
+    const params = new URLSearchParams({
+      project: t.project.title,
+      taskId: String(t.taskId || t.id),
+      returnTo: location.pathname + location.search,
+    });
     navigate(`/tasks?${params.toString()}`);
   };
 

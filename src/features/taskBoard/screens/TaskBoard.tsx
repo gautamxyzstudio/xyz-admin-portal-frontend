@@ -8,6 +8,7 @@ import {
   ChevronRight,
   Users,
   ClipboardList,
+  Plus,
 } from "lucide-react";
 import { CircularProgress } from "@mui/material";
 import { useGetTaskBoardProjectsQuery } from "../taskBoardApi";
@@ -30,6 +31,91 @@ const PROJECT_SORT_OPTIONS: { value: ProjectSort; label: string }[] = [
   { value: "leastDone", label: "Least complete" },
   { value: "name", label: "Name (A–Z)" },
 ];
+
+/* Management / HR: create a task — pick the project first, then the project's
+   own Create Task form opens (assignee, estimate, attachments, etc.) */
+const CreateTaskProjectPicker: React.FC<{
+  projects: ITaskBoardProject[];
+  onClose: () => void;
+  onPick: (p: ITaskBoardProject) => void;
+}> = ({ projects, onClose, onPick }) => {
+  const [q, setQ] = useState("");
+  const list = useMemo(() => {
+    const t = q.toLowerCase().trim();
+    return [...projects]
+      .filter((p) => !t || p.title.toLowerCase().includes(t))
+      .sort((a, b) => a.title.localeCompare(b.title));
+  }, [projects, q]);
+
+  return (
+    <div
+      className="fixed inset-0 z-99 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden"
+      >
+        <div className="flex items-center justify-between px-6 pt-5 pb-3">
+          <div>
+            <h3 className="text-base font-bold text-slate-900">Create Task</h3>
+            <p className="text-xs text-slate-500">Choose the project for this task</p>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 cursor-pointer" title="Close">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="px-6 pb-3">
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-black-50" size={16} />
+            <input
+              autoFocus
+              type="text"
+              placeholder="Search projects..."
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && list[0] && onPick(list[0])}
+              className="w-full pl-10 pr-3 py-2.5 bg-white border border-black-20 rounded-xl text-xs text-black-80 placeholder:text-black-50 outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+            />
+          </div>
+        </div>
+        <div className="flex-1 overflow-y-auto px-3 pb-4">
+          {list.length === 0 ? (
+            <p className="text-sm text-black-50 text-center py-8">No projects found</p>
+          ) : (
+            list.map((p) => {
+              const logo = p.logo_url ? getImageUrl(p.logo_url) : null;
+              const open =
+                (Number(p.planned_tasks_count) || 0) +
+                (Number(p.in_progress_tasks_count) || 0) +
+                (Number(p.blocked_tasks_count) || 0);
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => onPick(p)}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-orange-50 text-left cursor-pointer group"
+                >
+                  <span className="w-9 h-9 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shrink-0">
+                    {logo ? (
+                      <img src={logo} alt="" className="w-6 h-6 object-contain" />
+                    ) : (
+                      <span className="text-sm font-bold text-primary">{p.title[0]?.toUpperCase()}</span>
+                    )}
+                  </span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-sm font-medium text-black-80 truncate">{p.title}</span>
+                    <span className="block text-[11px] text-black-50">{open} open tasks</span>
+                  </span>
+                  <ChevronRight size={16} className="text-black-50 group-hover:text-primary" />
+                </button>
+              );
+            })
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const TaskBoard: React.FC = () => {
   const navigate = useNavigate();
@@ -57,6 +143,7 @@ const TaskBoard: React.FC = () => {
   };
   const [employeeRefreshKey, setEmployeeRefreshKey] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isCreatePickerOpen, setIsCreatePickerOpen] = useState(false);
   const [failedLogos, setFailedLogos] = useState<Record<number, boolean>>({});
   const [loadedLogos, setLoadedLogos] = useState<Record<number, boolean>>({});
 
@@ -237,6 +324,16 @@ const TaskBoard: React.FC = () => {
               align="right"
               ariaLabel="Sort projects"
             />
+          )}
+
+          {/* Create Task (Admin / HR / Management) */}
+          {isElevated && (
+            <button
+              onClick={() => setIsCreatePickerOpen(true)}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-primary text-white text-xs font-semibold shadow-xs hover:opacity-90 transition-all cursor-pointer whitespace-nowrap"
+            >
+              <Plus size={16} /> Create Task
+            </button>
           )}
 
           {/* Refresh Button */}
@@ -426,6 +523,16 @@ const TaskBoard: React.FC = () => {
           </div>
         )}
       </div>
+      )}
+      {isCreatePickerOpen && (
+        <CreateTaskProjectPicker
+          projects={projects}
+          onClose={() => setIsCreatePickerOpen(false)}
+          onPick={(p) => {
+            setIsCreatePickerOpen(false);
+            navigate(`/tasks?project=${encodeURIComponent(p.title)}&create=1`);
+          }}
+        />
       )}
     </div>
   );

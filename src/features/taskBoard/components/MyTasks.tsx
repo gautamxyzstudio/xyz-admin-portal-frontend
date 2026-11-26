@@ -77,7 +77,11 @@ const MyTasks: React.FC = () => {
   const openTask = (t: IEmployeeTask) => {
     if (!t.project?.title) return;
     // open the project board with this task's details already open
-    const params = new URLSearchParams({ project: t.project.title, taskId: String(t.taskId || t.id) });
+    const params = new URLSearchParams({
+      project: t.project.title,
+      taskId: String(t.taskId || t.id),
+      returnTo: window.location.pathname + window.location.search,
+    });
     navigate(`/tasks?${params.toString()}`);
   };
 

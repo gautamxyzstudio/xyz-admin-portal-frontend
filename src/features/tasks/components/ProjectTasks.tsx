@@ -1339,6 +1339,33 @@ const ProjectTasks: React.FC = () => {
     setIsCommentFocused(false);
   };
 
+  // Task opened from the Task Board (?returnTo=/task-board?...): closing it
+  // (X, save or delete) goes back there instead of staying on this project board
+  const returnTo = searchParams.get("returnTo");
+  const safeReturnTo = returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo : null;
+  const wasTaskOpenRef = useRef(false);
+  useEffect(() => {
+    if (selectedTask) {
+      wasTaskOpenRef.current = true;
+      return;
+    }
+    if (wasTaskOpenRef.current && safeReturnTo) {
+      wasTaskOpenRef.current = false;
+      navigate(safeReturnTo);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTask]);
+
+  // "Create Task" from the Task Board: /tasks?project=X&create=1 opens the create form once
+  useEffect(() => {
+    if (searchParams.get("create") !== "1") return;
+    handleOpenAddModal("planned");
+    const next = new URLSearchParams(searchParams);
+    next.delete("create");
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   // Auto-open task modal if taskId or task is passed in URL query params (e.g. from notification click)
   const openedFromUrlRef = useRef<string | null>(null);
   useEffect(() => {
