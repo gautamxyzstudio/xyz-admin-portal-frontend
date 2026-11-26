@@ -691,6 +691,7 @@ const ProjectTasks: React.FC = () => {
     IUploadedAttachment[]
   >([]);
   const [isUploadingCommentPhoto, setIsUploadingCommentPhoto] = useState(false);
+  const [commentUploadingCount, setCommentUploadingCount] = useState(0);
   const commentFileInputRef = useRef<HTMLInputElement>(null);
   const commentComposerRef = useRef<HTMLDivElement>(null);
   const [isCommentFocused, setIsCommentFocused] = useState(false);
@@ -1079,6 +1080,9 @@ const ProjectTasks: React.FC = () => {
         "";
 
       const rawAtts =
+        (Array.isArray(item.attachmentFiles) && item.attachmentFiles.length > 0
+          ? item.attachmentFiles
+          : null) ||
         item.attachments || attrs.attachments?.data || attrs.attachments || [];
 
       const parsedAttachments = Array.isArray(rawAtts)
@@ -1108,6 +1112,8 @@ const ProjectTasks: React.FC = () => {
             name,
             url,
             isImage,
+            size: att?.size ? Number(att.size) * 1024 : undefined, // Strapi stores size in KB
+            mime: att?.mime || "",
           };
         })
         : [];
@@ -1487,40 +1493,61 @@ const ProjectTasks: React.FC = () => {
     }
   };
 
+  // Upload photos AND files (PDF, Word, Excel, PPT, ZIP, text…) for a comment.
+  const COMMENT_MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB
+  const COMMENT_BLOCKED_EXT = /\.(exe|bat|cmd|com|msi|sh|ps1|vbs|js|jar|scr|dll|apk)$/i;
+
   const handleUploadCommentPhotos = async (files: FileList | File[]) => {
     const fileList = Array.from(files);
-    const imageFiles = fileList.filter((f) => f.type.startsWith("image/"));
-    if (imageFiles.length === 0) {
-      toast.error("Please select an image file.");
-      return;
+    const valid: File[] = [];
+    for (const f of fileList) {
+      if (COMMENT_BLOCKED_EXT.test(f.name)) {
+        toast.error(`"${f.name}" can't be attached (blocked file type).`);
+        continue;
+      }
+      if (f.size > COMMENT_MAX_FILE_SIZE) {
+        toast.error(`"${f.name}" is larger than 25 MB.`);
+        continue;
+      }
+      valid.push(f);
     }
+    if (valid.length === 0) return;
+
     setIsUploadingCommentPhoto(true);
+    setCommentUploadingCount(valid.length);
+    let failed = 0;
     try {
-      for (const file of imageFiles) {
-        const formData = new FormData();
-        formData.append("files", file);
-        const res: any = await uploadFile(formData).unwrap();
-        const uploadedMedia = Array.isArray(res) ? res[0] : res;
-        if (uploadedMedia?.id) {
-          setCommentAttachments((prev) => [
-            ...prev,
-            {
+      // upload in parallel, keep the order the user picked them in
+      const results = await Promise.all(
+        valid.map(async (file) => {
+          try {
+            const formData = new FormData();
+            formData.append("files", file);
+            const res: any = await uploadFile(formData).unwrap();
+            const uploadedMedia = Array.isArray(res) ? res[0] : res;
+            if (!uploadedMedia?.id) throw new Error("no id");
+            const isImg = file.type.startsWith("image/");
+            return {
               id: uploadedMedia.id,
-              name: uploadedMedia.name || file.name,
+              name: file.name || uploadedMedia.name,
               url: uploadedMedia.url || "",
-              previewUrl: URL.createObjectURL(file),
-              size: uploadedMedia.size || file.size,
+              previewUrl: isImg ? URL.createObjectURL(file) : undefined,
+              size: file.size,
               mime: uploadedMedia.mime || file.type,
               isUploading: false,
-            },
-          ]);
-        }
-      }
-    } catch (err: any) {
-      console.error("Failed to upload comment photo:", err);
-      toast.error("Failed to upload image");
+            };
+          } catch {
+            failed += 1;
+            return null;
+          }
+        }),
+      );
+      const ok = results.filter(Boolean) as any[];
+      if (ok.length) setCommentAttachments((prev) => [...prev, ...ok]);
+      if (failed) toast.error(`${failed} file${failed > 1 ? "s" : ""} failed to upload`);
     } finally {
       setIsUploadingCommentPhoto(false);
+      setCommentUploadingCount(0);
     }
   };
 
@@ -1919,7 +1946,7 @@ const ProjectTasks: React.FC = () => {
         isCreateMgmtAssignee, isCreateUnassigned, setIsCreateUnassigned, Check, ChevronDown, CircularProgress, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, assigneeSearchQuery, attachments, estimatedHours, estimatedMinutes, extractEmployeePhotoUrl, filteredProjectEmployees, getAvatarBg, getInitials, handleCreateTaskSubmit, isAddModalOpen, isAdmin, isAssigneeDropdownOpen, isCreating, isProjectsLoading, isUploadingAttachments, modalTargetStatus, projectAssignedEmployees, projectName, renderCreatePriorityDropdown, selectedEmployeeObj, setAssigneeSearchQuery, setAttachments, setEstimatedHours, setEstimatedMinutes, setIsAddModalOpen, setIsAssigneeDropdownOpen, setIsCreatePriorityDropdownOpen, setIsUploadingAttachments, setModalTargetStatus, setTaskForm, taskForm
       }} />
 
-      <EditTaskModal {...{ isEditMgmtAssignee, isEditUnassigned, setIsEditUnassigned, Check, ChevronDown, CircularProgress, Paperclip, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, activityTab, attachments, commentAttachments, commentComposerRef, commentFileInputRef, completeHistory, currentUserName, currentUserPhoto, editAssigneeSearchQuery, editAttachments, editEstimatedHours, editEstimatedMinutes, editFilteredProjectEmployees, editSelectedEmployeeObj, editTaskForm, extractEmployeePhotoUrl, formatHistoryTime, getAvatarBg, getImageUrl, getInitials, handleAddComment, handleDeleteTask, isDeleting, mentionableUsers, handleUpdateTaskSubmit, handleUploadCommentPhotos, isAdmin, isCommentExpanded, isCommentsLoading, isEditAssigneeDropdownOpen, isEditUploadingAttachments, isPostingComment, isProjectsLoading, isUpdating, isUploadingCommentPhoto, newCommentText, projectAssignedEmployees, selectedTask, setActivityTab, setCommentAttachments, setEditAssigneeSearchQuery, setEditAttachments, setEditEstimatedHours, setEditEstimatedMinutes, setEditTaskForm, setIsCommentFocused, setIsEditAssigneeDropdownOpen, setIsEditUploadingAttachments, setNewCommentText, setSelectedTask, viewAttachmentPreview, setViewAttachmentPreview, taskCommentsList }} />
+      <EditTaskModal {...{ isEditMgmtAssignee, isEditUnassigned, setIsEditUnassigned, Check, ChevronDown, CircularProgress, Paperclip, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, activityTab, attachments, commentAttachments, commentComposerRef, commentFileInputRef, completeHistory, currentUserName, currentUserPhoto, editAssigneeSearchQuery, editAttachments, editEstimatedHours, editEstimatedMinutes, editFilteredProjectEmployees, editSelectedEmployeeObj, editTaskForm, extractEmployeePhotoUrl, formatHistoryTime, getAvatarBg, getImageUrl, getInitials, handleAddComment, handleDeleteTask, isDeleting, mentionableUsers, handleUpdateTaskSubmit, handleUploadCommentPhotos, commentUploadingCount, isAdmin, isCommentExpanded, isCommentsLoading, isEditAssigneeDropdownOpen, isEditUploadingAttachments, isPostingComment, isProjectsLoading, isUpdating, isUploadingCommentPhoto, newCommentText, projectAssignedEmployees, selectedTask, setActivityTab, setCommentAttachments, setEditAssigneeSearchQuery, setEditAttachments, setEditEstimatedHours, setEditEstimatedMinutes, setEditTaskForm, setIsCommentFocused, setIsEditAssigneeDropdownOpen, setIsEditUploadingAttachments, setNewCommentText, setSelectedTask, viewAttachmentPreview, setViewAttachmentPreview, taskCommentsList }} />
 
       {/* Lightbox Preview Modal for Task Details (Closes on backdrop click) */}
       {viewAttachmentPreview && (

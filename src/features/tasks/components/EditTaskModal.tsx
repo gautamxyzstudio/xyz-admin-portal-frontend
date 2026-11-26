@@ -7,6 +7,58 @@ import RichTextEditor from "../../../components/RichTextEditor/RichTextEditor";
 import ModalSizeButton from "../../../components/ModalSizeButton/ModalSizeButton";
 import { useTaskModalSize } from "../../../shared/hooks/useTaskModalSize";
 import ThemedDropdown from "../../../components/ThemedDropdown";
+import {
+  Link2,
+  FileText,
+  FileSpreadsheet,
+  File as FileIcon,
+  Image as ImageIcon,
+  Download,
+  ExternalLink,
+  UploadCloud,
+} from "lucide-react";
+import {
+  getAttachmentKind,
+  formatFileSize,
+} from "../utils/taskAttachmentUtils";
+
+/* ---------- comment helpers: links + file icons ---------- */
+// [label](https://url)  OR  bare https://url / www.url
+const COMMENT_LINK_RE =
+  /\[([^\]\n]{1,120})\]\((https?:\/\/[^\s)]+)\)|((?:https?:\/\/|www\.)[^\s<>"']+[^\s<>"'.,;:!?)\]])/gi;
+
+const normalizeUrl = (raw: string): string | null => {
+  let v = raw.trim();
+  if (!v) return null;
+  if (!/^https?:\/\//i.test(v)) v = `https://${v}`;
+  try {
+    const u = new URL(v);
+    if (!u.hostname.includes(".")) return null;
+    return u.toString();
+  } catch {
+    return null;
+  }
+};
+
+const prettyUrl = (url: string) => {
+  try {
+    const u = new URL(url);
+    const path = u.pathname === "/" ? "" : u.pathname;
+    const out = u.hostname.replace(/^www\./, "") + path;
+    return out.length > 48 ? out.slice(0, 45) + "…" : out;
+  } catch {
+    return url;
+  }
+};
+
+const AttachmentKindIcon = ({ name, mime, size = 16 }: { name?: string; mime?: string; size?: number }) => {
+  const kind = getAttachmentKind({ name, mime });
+  if (kind === "image") return <ImageIcon size={size} className="text-sky-500" />;
+  if (kind === "pdf") return <FileText size={size} className="text-red-500" />;
+  if (kind === "word") return <FileText size={size} className="text-blue-600" />;
+  if (kind === "excel") return <FileSpreadsheet size={size} className="text-emerald-600" />;
+  return <FileIcon size={size} className="text-slate-500" />;
+};
 
 const PriorityLabel = ({ color, text }: { color: string; text: string }) => (
   <span className="inline-flex items-center gap-2">
@@ -18,7 +70,7 @@ const PriorityLabel = ({ color, text }: { color: string; text: string }) => (
 interface Props { [key: string]: any }
 const EditTaskModal: React.FC<Props> = (props) => {
   const modalSize = useTaskModalSize();
-  const { isEditMgmtAssignee, isEditUnassigned, setIsEditUnassigned, Check, ChevronDown, CircularProgress, Paperclip, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, activityTab, commentAttachments, commentComposerRef, commentFileInputRef, completeHistory, currentUserName, currentUserPhoto, editAssigneeSearchQuery, editAttachments, editEstimatedHours, editEstimatedMinutes, editFilteredProjectEmployees, editSelectedEmployeeObj, editTaskForm, extractEmployeePhotoUrl, formatHistoryTime, getAvatarBg, getImageUrl, getInitials, handleAddComment, handleDeleteTask, isDeleting, mentionableUsers = [], handleUpdateTaskSubmit, handleUploadCommentPhotos, isAdmin, isCommentExpanded, isCommentsLoading, isEditAssigneeDropdownOpen, isEditUploadingAttachments, isPostingComment, isProjectsLoading, isUpdating, isUploadingCommentPhoto, newCommentText, projectAssignedEmployees, selectedTask, setActivityTab, setCommentAttachments, setEditAssigneeSearchQuery, setEditAttachments, setEditEstimatedHours, setEditEstimatedMinutes, setEditTaskForm, setIsCommentFocused, setIsEditAssigneeDropdownOpen, setIsEditUploadingAttachments, setNewCommentText, setSelectedTask, setViewAttachmentPreview, taskCommentsList } = props;
+  const { isEditMgmtAssignee, isEditUnassigned, setIsEditUnassigned, Check, ChevronDown, CircularProgress, Paperclip, STATUS_OPTIONS, Search, TaskAttachmentUpload, X, activityTab, commentAttachments, commentComposerRef, commentFileInputRef, completeHistory, currentUserName, currentUserPhoto, editAssigneeSearchQuery, editAttachments, editEstimatedHours, editEstimatedMinutes, editFilteredProjectEmployees, editSelectedEmployeeObj, editTaskForm, extractEmployeePhotoUrl, formatHistoryTime, getAvatarBg, getImageUrl, getInitials, handleAddComment, handleDeleteTask, isDeleting, mentionableUsers = [], handleUpdateTaskSubmit, handleUploadCommentPhotos, commentUploadingCount = 0, isAdmin, isCommentExpanded, isCommentsLoading, isEditAssigneeDropdownOpen, isEditUploadingAttachments, isPostingComment, isProjectsLoading, isUpdating, isUploadingCommentPhoto, newCommentText, projectAssignedEmployees, selectedTask, setActivityTab, setCommentAttachments, setEditAssigneeSearchQuery, setEditAttachments, setEditEstimatedHours, setEditEstimatedMinutes, setEditTaskForm, setIsCommentFocused, setIsEditAssigneeDropdownOpen, setIsEditUploadingAttachments, setNewCommentText, setSelectedTask, setViewAttachmentPreview, taskCommentsList } = props;
   const commentsContainerRef = useRef<HTMLDivElement>(null);
   const commentsEndRef = useRef<HTMLDivElement>(null);
   const prevCommentsCountRef = useRef<number>(taskCommentsList?.length || 0);
@@ -94,20 +146,106 @@ const EditTaskModal: React.FC<Props> = (props) => {
     [mentionableUsers, currentUserName],
   );
 
-  const renderCommentText = (text: string) => {
-    if (!text || !text.includes("@") || mentionNames.length === 0) return text;
+  const renderMentions = (text: string, keyPrefix: string) => {
+    if (!text || !text.includes("@") || mentionNames.length === 0)
+      return [<React.Fragment key={keyPrefix}>{text}</React.Fragment>];
     const escaped = mentionNames.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
     const re = new RegExp(`(@(?:${escaped.join("|")}))`, "g");
     return text.split(re).map((part, i) =>
       i % 2 === 1 ? (
-        <span key={i} className="text-primary font-semibold bg-primary-20 px-1 rounded">
+        <span key={`${keyPrefix}-${i}`} className="text-primary font-semibold bg-primary-20 px-1 rounded">
           {part}
         </span>
       ) : (
-        <React.Fragment key={i}>{part}</React.Fragment>
+        <React.Fragment key={`${keyPrefix}-${i}`}>{part}</React.Fragment>
       ),
     );
   };
+
+  // Clickable links ([label](url) or bare urls) + @mention highlight
+  const renderCommentText = (text: string) => {
+    if (!text) return text;
+    const out: React.ReactNode[] = [];
+    let last = 0;
+    let idx = 0;
+    const linkRe = new RegExp(COMMENT_LINK_RE.source, "gi");
+    let m: RegExpExecArray | null;
+    while ((m = linkRe.exec(text)) !== null) {
+      if (m.index > last) out.push(...renderMentions(text.slice(last, m.index), `t${idx}`));
+      const label = m[1];
+      const href = normalizeUrl(m[2] || m[3] || "");
+      if (href) {
+        out.push(
+          <a
+            key={`l${idx}`}
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={href}
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center gap-1 max-w-full align-baseline px-1.5 py-px rounded-md bg-orange-50 text-[#e06600] hover:bg-orange-100 hover:underline font-medium break-all"
+          >
+            <Link2 size={11} className="shrink-0" />
+            <span className="truncate">{label || prettyUrl(href)}</span>
+          </a>,
+        );
+      } else {
+        out.push(<React.Fragment key={`r${idx}`}>{m[0]}</React.Fragment>);
+      }
+      last = m.index + m[0].length;
+      idx += 1;
+    }
+    if (last < text.length) out.push(...renderMentions(text.slice(last), `t${idx}`));
+    return out;
+  };
+
+  /* ---------------- links / files in the composer ---------------- */
+  const commentDocInputRef = useRef<HTMLInputElement | null>(null);
+  const linkUrlInputRef = useRef<HTMLInputElement | null>(null);
+  const [isLinkFormOpen, setIsLinkFormOpen] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
+  const [linkLabel, setLinkLabel] = useState("");
+  const [linkError, setLinkError] = useState("");
+  const [isComposerDragOver, setIsComposerDragOver] = useState(false);
+
+  const resetLinkForm = () => {
+    setIsLinkFormOpen(false);
+    setLinkUrl("");
+    setLinkLabel("");
+    setLinkError("");
+  };
+
+  const insertLink = () => {
+    const href = normalizeUrl(linkUrl);
+    if (!href) {
+      setLinkError("Enter a valid link, e.g. https://example.com");
+      return;
+    }
+    const label = linkLabel.trim().replace(/[[\]]/g, "");
+    const token = label ? `[${label}](${href})` : href;
+    const el = commentInputRef.current;
+    const caret = el?.selectionStart ?? newCommentText.length;
+    const before = newCommentText.slice(0, caret);
+    const after = newCommentText.slice(caret);
+    const pre = before && !/\s$/.test(before) ? " " : "";
+    const post = after && !/^\s/.test(after) ? " " : "";
+    setNewCommentText(before + pre + token + post + after);
+    setIsCommentFocused(true);
+    resetLinkForm();
+    requestAnimationFrame(() => commentInputRef.current?.focus());
+  };
+
+  const commentLinksPreview = useMemo(() => {
+    const found: { href: string; label?: string }[] = [];
+    if (!newCommentText) return found;
+    const linkRe = new RegExp(COMMENT_LINK_RE.source, "gi");
+    let m: RegExpExecArray | null;
+    while ((m = linkRe.exec(newCommentText)) !== null) {
+      const href = normalizeUrl(m[2] || m[3] || "");
+      if (href && !found.some((f) => f.href === href)) found.push({ href, label: m[1] });
+    }
+    return found;
+  }, [newCommentText]);
 
   // comments are listed newest-first, so "latest" is at the top of the list
   const scrollToBottom = (smooth = true) => {
@@ -678,6 +816,24 @@ const EditTaskModal: React.FC<Props> = (props) => {
                     <div
                       ref={commentComposerRef}
                       className="flex items-start gap-3"
+                      onDragOver={(e) => {
+                        if (e.dataTransfer?.types?.includes("Files")) {
+                          e.preventDefault();
+                          if (!isComposerDragOver) setIsComposerDragOver(true);
+                        }
+                      }}
+                      onDragLeave={(e) => {
+                        if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsComposerDragOver(false);
+                      }}
+                      onDrop={(e) => {
+                        const files = e.dataTransfer?.files;
+                        setIsComposerDragOver(false);
+                        if (files && files.length > 0) {
+                          e.preventDefault();
+                          setIsCommentFocused(true);
+                          handleUploadCommentPhotos(files);
+                        }
+                      }}
                     >
                       {currentUserPhoto ? (
                         <img
@@ -705,6 +861,12 @@ const EditTaskModal: React.FC<Props> = (props) => {
 
                       <div className="flex-1 min-w-0">
                         <div className="relative">
+                        {isComposerDragOver && (
+                          <div className="absolute inset-0 z-[90] flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#ff7300] bg-orange-50/95 text-xs font-semibold text-[#e06600] pointer-events-none">
+                            <UploadCloud size={16} />
+                            Drop photos or files to attach
+                          </div>
+                        )}
                         {mentionQuery !== null && (
                           <div className="absolute top-full left-0 mt-1.5 w-72 max-h-60 overflow-y-auto bg-white border border-slate-200 rounded-2xl shadow-xl z-[100] py-1">
                             <p className="px-3 pt-1.5 pb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
@@ -748,7 +910,7 @@ const EditTaskModal: React.FC<Props> = (props) => {
                         <textarea
                           ref={commentInputRef}
                           rows={isCommentExpanded ? 3 : 1}
-                          placeholder="Add a comment... type @ to mention"
+                          placeholder="Add a comment… type @ to mention, paste a link, or drop files"
                           value={newCommentText}
                           onFocus={() => setIsCommentFocused(true)}
                           onClick={() => setIsCommentFocused(true)}
@@ -787,17 +949,10 @@ const EditTaskModal: React.FC<Props> = (props) => {
                           onPaste={(e) => {
                             const files = e.clipboardData?.files;
                             if (files && files.length > 0) {
+                              e.preventDefault();
                               handleUploadCommentPhotos(files);
                             }
                           }}
-                          onDrop={(e) => {
-                            e.preventDefault();
-                            const files = e.dataTransfer?.files;
-                            if (files && files.length > 0) {
-                              handleUploadCommentPhotos(files);
-                            }
-                          }}
-                          onDragOver={(e) => e.preventDefault()}
                           disabled={isPostingComment}
                           className={`w-full px-3.5 py-2.5 bg-white rounded-2xl text-xs text-slate-800 placeholder:text-slate-400 outline-none leading-relaxed transition-all ${
                             isCommentExpanded
@@ -807,21 +962,31 @@ const EditTaskModal: React.FC<Props> = (props) => {
                         />
                         </div>
 
+                        {/* Links detected in the draft */}
+                        {commentLinksPreview.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mt-2">
+                            {commentLinksPreview.map((l) => (
+                              <a
+                                key={l.href}
+                                href={l.href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 max-w-[260px] px-2.5 py-1 rounded-xl border border-orange-200 bg-orange-50 text-[11px] font-medium text-[#e06600] hover:bg-orange-100"
+                                title={l.href}
+                              >
+                                <Link2 size={12} className="shrink-0" />
+                                <span className="truncate">{l.label || prettyUrl(l.href)}</span>
+                              </a>
+                            ))}
+                          </div>
+                        )}
+
                         {/* Uploaded attachments preview for new comment */}
                         {commentAttachments.length > 0 && (
                           <div className="flex flex-wrap gap-2 mt-2">
-                            {commentAttachments.map((att: any) => (
-                              <div
-                                key={att.id}
-                                className="relative group w-16 h-16 rounded-xl overflow-hidden border border-slate-200 bg-slate-50 shrink-0"
-                              >
-                                <img
-                                  src={att.previewUrl || getImageUrl(att.url)}
-                                  alt={att.name}
-                                  className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                                  onClick={() => setViewAttachmentPreview?.({ id: att.id, name: att.name, url: att.previewUrl || att.url })}
-                                  title="Click to preview"
-                                />
+                            {commentAttachments.map((att: any) => {
+                              const isImg = getAttachmentKind(att) === "image";
+                              const removeBtn = (
                                 <button
                                   type="button"
                                   onClick={() =>
@@ -830,12 +995,44 @@ const EditTaskModal: React.FC<Props> = (props) => {
                                     )
                                   }
                                   className="absolute top-1 right-1 w-5 h-5 bg-black/60 hover:bg-black/80 text-white rounded-full flex items-center justify-center transition-colors cursor-pointer"
-                                  title="Remove photo"
+                                  title="Remove"
                                 >
                                   <X size={11} />
                                 </button>
-                              </div>
-                            ))}
+                              );
+                              return isImg ? (
+                                <div
+                                  key={att.id}
+                                  className="relative group w-16 h-16 rounded-xl overflow-hidden border border-slate-200 bg-slate-50 shrink-0"
+                                >
+                                  <img
+                                    src={att.previewUrl || getImageUrl(att.url)}
+                                    alt={att.name}
+                                    className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                    onClick={() => setViewAttachmentPreview?.({ id: att.id, name: att.name, url: att.previewUrl || att.url })}
+                                    title="Click to preview"
+                                  />
+                                  {removeBtn}
+                                </div>
+                              ) : (
+                                <div
+                                  key={att.id}
+                                  className="relative flex items-center gap-2 h-16 w-52 pl-3 pr-7 rounded-xl border border-slate-200 bg-slate-50 shrink-0"
+                                  title={att.name}
+                                >
+                                  <span className="w-9 h-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center shrink-0">
+                                    <AttachmentKindIcon name={att.name} mime={att.mime} size={18} />
+                                  </span>
+                                  <span className="min-w-0">
+                                    <span className="block text-[11px] font-semibold text-slate-800 truncate">{att.name}</span>
+                                    <span className="block text-[10px] text-slate-400 uppercase">
+                                      {(att.name?.split(".").pop() || "file")} {att.size ? `· ${formatFileSize(att.size)}` : ""}
+                                    </span>
+                                  </span>
+                                  {removeBtn}
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
 
@@ -843,7 +1040,61 @@ const EditTaskModal: React.FC<Props> = (props) => {
                         {isUploadingCommentPhoto && (
                           <div className="flex items-center gap-2 mt-1.5 text-xs text-orange-600 font-medium">
                             <CircularProgress size={13} color="inherit" />
-                            <span>Uploading photo...</span>
+                            <span>
+                              Uploading {commentUploadingCount > 1 ? `${commentUploadingCount} files` : "file"}...
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Add-link mini form */}
+                        {isCommentExpanded && isLinkFormOpen && (
+                          <div className="mt-2 p-2.5 rounded-2xl border border-slate-200 bg-white shadow-2xs space-y-2">
+                            <div className="flex flex-col sm:flex-row gap-2">
+                              <input
+                                ref={linkUrlInputRef}
+                                type="url"
+                                value={linkUrl}
+                                placeholder="Paste link — https://…"
+                                onChange={(e) => {
+                                  setLinkUrl(e.target.value);
+                                  setLinkError("");
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") { e.preventDefault(); insertLink(); }
+                                  if (e.key === "Escape") { e.preventDefault(); resetLinkForm(); }
+                                }}
+                                className="flex-1 min-w-0 px-3 py-2 text-xs rounded-xl border border-slate-200 focus:border-[#ff7300] focus:ring-2 focus:ring-[#ff7300]/20 outline-none"
+                              />
+                              <input
+                                type="text"
+                                value={linkLabel}
+                                placeholder="Title (optional)"
+                                onChange={(e) => setLinkLabel(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") { e.preventDefault(); insertLink(); }
+                                  if (e.key === "Escape") { e.preventDefault(); resetLinkForm(); }
+                                }}
+                                className="sm:w-40 px-3 py-2 text-xs rounded-xl border border-slate-200 focus:border-[#ff7300] focus:ring-2 focus:ring-[#ff7300]/20 outline-none"
+                              />
+                            </div>
+                            {linkError && <p className="text-[11px] text-red-500">{linkError}</p>}
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={insertLink}
+                                disabled={!linkUrl.trim()}
+                                className="px-3 py-1.5 bg-[#ff7300] hover:bg-[#e06600] disabled:opacity-50 text-white text-xs font-semibold rounded-xl cursor-pointer"
+                              >
+                                Add link
+                              </button>
+                              <button
+                                type="button"
+                                onClick={resetLinkForm}
+                                className="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 rounded-xl hover:bg-slate-100 cursor-pointer"
+                              >
+                                Cancel
+                              </button>
+                            </div>
                           </div>
                         )}
 
@@ -873,6 +1124,7 @@ const EditTaskModal: React.FC<Props> = (props) => {
                                 onClick={() => {
                                   setNewCommentText("");
                                   setCommentAttachments([]);
+                                  resetLinkForm();
                                   setIsCommentFocused(false);
                                 }}
                                 disabled={isPostingComment}
@@ -880,22 +1132,55 @@ const EditTaskModal: React.FC<Props> = (props) => {
                               >
                                 Cancel
                               </button>
+                              <span className="w-px h-5 bg-slate-200 mx-0.5" />
                               <button
                                 type="button"
-                                onClick={() =>
-                                  commentFileInputRef.current?.click()
-                                }
-                                disabled={
-                                  isPostingComment || isUploadingCommentPhoto
-                                }
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+                                onClick={() => commentFileInputRef.current?.click()}
+                                disabled={isPostingComment || isUploadingCommentPhoto}
+                                title="Attach photos"
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer disabled:opacity-50"
                               >
-                                <Paperclip
-                                  size={13}
-                                  className="text-slate-600 -rotate-45"
-                                />
+                                <ImageIcon size={13} className="text-slate-600" />
                                 <span>Photo</span>
                               </button>
+                              <button
+                                type="button"
+                                onClick={() => commentDocInputRef.current?.click()}
+                                disabled={isPostingComment || isUploadingCommentPhoto}
+                                title="Attach files (PDF, Word, Excel, PPT, ZIP… up to 25 MB)"
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer disabled:opacity-50"
+                              >
+                                <Paperclip size={13} className="text-slate-600 -rotate-45" />
+                                <span>File</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setIsLinkFormOpen((v) => !v);
+                                  setLinkError("");
+                                  requestAnimationFrame(() => linkUrlInputRef.current?.focus());
+                                }}
+                                disabled={isPostingComment}
+                                title="Add a link"
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-xl transition-colors cursor-pointer disabled:opacity-50 ${
+                                  isLinkFormOpen ? "bg-orange-50 text-[#e06600]" : "text-slate-700 hover:text-slate-900 hover:bg-slate-100"
+                                }`}
+                              >
+                                <Link2 size={13} />
+                                <span>Link</span>
+                              </button>
+                              <input
+                                ref={commentDocInputRef}
+                                type="file"
+                                multiple
+                                className="hidden"
+                                onChange={(e) => {
+                                  if (e.target.files && e.target.files.length > 0) {
+                                    handleUploadCommentPhotos(e.target.files);
+                                    e.target.value = "";
+                                  }
+                                }}
+                              />
                               <input
                                 ref={commentFileInputRef}
                                 type="file"
@@ -931,7 +1216,7 @@ const EditTaskModal: React.FC<Props> = (props) => {
                         No comments yet.
                       </p>
                     ) : (
-                      <div ref={commentsContainerRef} className="max-h-[170px] overflow-y-auto space-y-2.5 scrollbar-hide [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+                      <div ref={commentsContainerRef} className="max-h-[320px] overflow-y-auto space-y-2.5 scrollbar-hide [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
                         {taskCommentsList.map((c: any) => (
                           <div
                             key={c.id}
@@ -962,9 +1247,11 @@ const EditTaskModal: React.FC<Props> = (props) => {
                               </span>
                             </div>
 
-                            <p className="text-xs text-slate-800 leading-relaxed whitespace-pre-wrap pl-8">
-                              {renderCommentText(c.text)}
-                            </p>
+                            {c.text && (
+                              <p className="text-xs text-slate-800 leading-relaxed whitespace-pre-wrap break-words pl-8">
+                                {renderCommentText(c.text)}
+                              </p>
+                            )}
 
                             {c.attachments && c.attachments.length > 0 && (
                               <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100/80 pl-8">
@@ -995,11 +1282,24 @@ const EditTaskModal: React.FC<Props> = (props) => {
                                       href={getImageUrl(att.url)}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="flex items-center gap-1.5 px-2.5 py-1 bg-white border border-slate-200 rounded-xl text-[11px] text-slate-700 hover:text-primary hover:border-primary/50 transition-colors shadow-2xs"
+                                      download={att.name}
+                                      title={`Open ${att.name}`}
+                                      className="group flex items-center gap-2 h-16 w-56 px-3 bg-white border border-slate-200 rounded-xl hover:border-primary/50 hover:shadow-xs transition-all shrink-0"
                                     >
-                                      <Paperclip size={12} className="text-slate-400" />
-                                      <span className="truncate max-w-[150px]">
-                                        {att.name}
+                                      <span className="w-9 h-9 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
+                                        <AttachmentKindIcon name={att.name} mime={att.mime} size={18} />
+                                      </span>
+                                      <span className="min-w-0 flex-1">
+                                        <span className="block text-[11px] font-semibold text-slate-800 truncate group-hover:text-primary">
+                                          {att.name}
+                                        </span>
+                                        <span className="block text-[10px] text-slate-400 uppercase">
+                                          {(att.name?.split(".").pop() || "file")} {att.size ? `· ${formatFileSize(att.size)}` : ""}
+                                        </span>
+                                      </span>
+                                      <span className="flex flex-col gap-1 text-slate-400 shrink-0">
+                                        <ExternalLink size={12} className="group-hover:text-primary" />
+                                        <Download size={12} className="group-hover:text-primary" />
                                       </span>
                                     </a>
                                   ),
